@@ -24,12 +24,16 @@ Deliberately not being built yet:
   shifting at the mixer, or IF/digital beamforming behind an ADC — is a
   recorded design decision that waits on the ratified spec. It is not a
   default and nothing here assumes one answer.
-- **A chosen receive band.** The band is the first row the ratification
-  issue has to settle, because the LNA matching network, the mixer's LO
-  range, and the IF plan all follow from it. Candidates are listed in the
-  draft table below; none is ratified.
+- **A ratified receive band.** The draft below commits to the Ka-band
+  satellite downlink, 17.7–21.2 GHz, because that is where this PDK's SiGe
+  HBTs (about 300 GHz fT, 450 GHz fmax) are decisive and a 130 nm CMOS
+  open PDK cannot follow. The LNA matching network, the mixer's LO range,
+  and the IF plan all follow from that row, so it is the first thing the
+  ratification issue settles — and the one row the ratification may still
+  move (to the Ku-band downlink, 10.7–12.75 GHz) if open-tool EM
+  verification at 20 GHz proves the binding constraint.
 
-Until the band is ratified, the only work is testbench methodology: what
+Until the spec is ratified, the only work is testbench methodology: what
 ngspice can and cannot measure for S-parameters, noise figure, and
 conversion gain on this PDK, stated with every assumption.
 
@@ -48,24 +52,31 @@ using IHP SG13G2, not just this repo.
 
 | Parameter | Target (DRAFT) | Stretch (DRAFT) |
 |---|---|---|
-| Receive band | Candidates: L/S-band 1–4 GHz (GNSS, LEO IoT, S-band TT&C) or Ku-band 10.7–12.75 GHz downlink — ratification picks one | Ku-band if L/S is ratified first |
-| LNA gain (S21) | ≥ 15 dB across the ratified band | ≥ 20 dB |
-| LNA noise figure | ≤ 1.5 dB across band, all corners | ≤ 1.0 dB |
+| Receive band | Ka-band satellite downlink, 17.7–21.2 GHz (K-band by ITU letter), every row below held across the full band | Fallback if ratification moves it: Ku-band downlink, 10.7–12.75 GHz |
+| LNA gain (S21) | ≥ 20 dB across band (two-stage cascode) | ≥ 25 dB |
+| LNA noise figure | ≤ 2.5 dB across band, all corners | ≤ 2.0 dB |
 | Input match (S11) | ≤ −10 dB across band | ≤ −15 dB |
 | Stability | Unconditional (k > 1) across band, all corners | — |
-| LNA IIP3 | ≥ −10 dBm | ≥ −5 dBm |
-| Mixer conversion gain | ≥ 5 dB | ≥ 10 dB |
-| Mixer noise figure (SSB) | ≤ 12 dB | ≤ 8 dB |
-| Mixer IIP3 | ≥ 0 dBm | — |
-| LO-to-RF leakage | ≤ −30 dBm at the RF port | — |
-| IF bandwidth | ≥ 100 MHz | ≥ 500 MHz |
-| Supply / power (LNA + mixer) | 1.2–2.5 V, ≤ 30 mW | ≤ 15 mW |
+| LNA IIP3 | ≥ −15 dBm | ≥ −10 dBm |
+| Mixer conversion gain | ≥ 8 dB (active, Gilbert-cell class) | ≥ 12 dB |
+| Mixer noise figure (SSB) | ≤ 12 dB | ≤ 9 dB |
+| Mixer IIP3 | ≥ −5 dBm | ≥ 0 dBm |
+| LO range / LO-to-RF leakage | 16.7–20.2 GHz (1 GHz IF, low-side) / ≤ −30 dBm at the RF port | LO from an on-PDK LC VCO (sg13g2-vco class) |
+| IF bandwidth | ≥ 500 MHz (one LEO broadband channel) | ≥ 1 GHz |
+| Supply / power (LNA + mixer) | ≤ 2.5 V rails, HBTs kept inside BVCEO by cascoding; ≤ 40 mW | ≤ 25 mW |
 | AREA | Ratified absolute bound — to be set at ratification | — |
 | AREA-EFF | Efficiency composite per klayout-tools#1086 (dead margins, bbox tightness, utilization floor, economy review) | — |
 
 All S-parameters, gain, and match figures are defined at 50 Ω reference
-impedance at both ports. Every row is DRAFT: values come from general SiGe
-LNA and active-mixer literature, not from any simulation of this PDK.
+impedance at both ports. Every row is DRAFT: values come from published SiGe Ka-band LNA and
+active-mixer results and the SG13G2 device menu's static process numbers,
+not from any simulation of this PDK. The band and the targets are sized to
+exploit the PDK, not to be easy: at 20 GHz the HBTs still have an fT/f
+ratio near 15, so gain and noise headroom are real, while on-chip inductors
+and transmission lines on the thick top metals are small enough to sit on
+the die. That also fixes the array geometry the chip serves: half-wave
+element spacing at 20 GHz is about 7.5 mm, so one front end per element is
+a natural tiling.
 
 ## Repo layout
 

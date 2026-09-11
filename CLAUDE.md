@@ -21,8 +21,9 @@ designed and verified by AI agents — an **analog** block.
   LNA and a mixer. The antenna elements, the array, the ADC, and the
   beamformer are out of scope until a decision record in `spec/` admits a
   piece of them — do not let the array ambition pull board-level or digital
-  work into the block. The receive band is the first ratification decision:
-  do not size a matching network for a band nobody has ratified, and do not
+  work into the block. The draft band is the Ka-band downlink (17.7–21.2 GHz) and it is
+  ratified before it is designed to: do not size a matching network for a
+  band nobody has ratified, and do not
   call a design "wideband" unless every spec row holds across the whole
   ratified band at every corner, not at one center frequency.
 
