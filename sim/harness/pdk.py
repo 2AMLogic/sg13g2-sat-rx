@@ -231,11 +231,3 @@ def find_pdk(sim_dir: Path | None = None) -> Pdk:
         "Looked for %s variant %r in:\n  %s\n\n%s"
         % (name, variant, "\n  ".join(tried), INSTALL_HINT)
     )
-
-
-def pdk_available(sim_dir: Path | None = None) -> bool:
-    try:
-        find_pdk(sim_dir)
-    except (PdkNotFound, PdkConfigError):
-        return False
-    return True
