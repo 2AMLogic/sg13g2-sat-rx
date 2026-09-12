@@ -143,8 +143,19 @@ def sabotage(corner_list: list[Corner]) -> list[Corner]:
     fail. If they pass, corner switching is not taking effect and every
     downstream evidence record is worthless. Force ``--no-write`` whenever
     this is used -- a sabotaged run must never enter the evidence tree.
+
+    ``typical`` is taken from ``corner_list[0]`` rather than the hardcoded
+    global ``CORNERS["tt"]`` -- the built-in five-MOS-corner set happens to
+    list "tt" first, so this is behavior-preserving for every existing MOS
+    caller, but it also makes ``sabotage()`` work for a block-registered
+    corner set whose "typical" entry has a different name (this repo's own
+    ``CORNER_SETS["hbt"]`` lists ``hbt_typ`` first, by the same "typical
+    goes first" convention -- see the SG13G2 HBT extension below). An empty
+    ``corner_list`` has nothing to sabotage to and is returned unchanged.
     """
-    typical = CORNERS["tt"].sections
+    if not corner_list:
+        return []
+    typical = corner_list[0].sections
     return [
         Corner(name=corner.name, sections=typical, description=f"SABOTAGED ({corner.description})")
         for corner in corner_list
@@ -201,3 +212,50 @@ def build_grid(
             itertools.product(corners, temperatures, supplies)
         )
     ]
+
+
+# ---------------------------------------------------------------------------
+# SG13G2 block extension: HBT (bipolar) process corners.
+#
+# This is an EXTENSION, not an edit to the generic core above -- per this
+# module's own docstring, a block calls register_corner()/register_corner_set()
+# to add corners the generic five-MOS-corner default does not cover, rather
+# than editing CORNERS/CORNER_SETS in place. This repo's first two benches
+# (sim/lna-sparam-nf, sim/mixer-conversion-iip3) instantiate npn13G2 only --
+# no MOS device appears anywhere in either testbench fragment -- so the
+# built-in "mos"/"tt"/"ff"/"ss"/"fs"/"sf" corner set (which references .lib
+# sections that do not exist in this repo's model_lib, cornerHBT.lib) is
+# simply unused, not removed; a future bench that does instantiate
+# sg13_lv_mos/sg13_hv_mos can still reach for it unmodified.
+#
+# sim/pdk.json's model_lib is libs.tech/ngspice/models/cornerHBT.lib. Reading
+# that file against the installed PDK (confirmed 2026-09-12, IHP-Open-PDK
+# v0.3.0 per sim/pdk.json) shows exactly three non-mismatch .LIB sections:
+#
+#     hbt_typ   -- typical (all vbic_*/sgp_mpa_* corner multipliers = 1.0)
+#     hbt_bcs   -- best-case-speed  (vbic_tf=0.89, i.e. faster/less-delay
+#                  transit-time corner -- higher fT/beta)
+#     hbt_wcs   -- worst-case-speed (vbic_tf=1.11 -- slower transit time,
+#                  lower fT/beta)
+#
+# (cornerHBT.lib also ships hbt_typ_mismatch/hbt_bcs_mismatch/
+# hbt_wcs_mismatch/hbt_typ_stat sections for per-instance local-mismatch and
+# statistical-variation studies; neither bench here needs those yet -- see
+# sim/README.md if a future Monte-Carlo bench needs them.)
+#
+# FAMILIES stays ("mos",) unchanged: it is only an arity label for
+# register_corner()'s "one section per family" check, not a claim about which
+# device this repo actually sweeps. Renaming it to "hbt" would only cause an
+# unnecessary merge conflict with a future MOS-family addition; the label is
+# never surfaced in an evidence record (report.py records section names and
+# descriptions, not the FAMILIES tuple itself).
+register_corner("hbt_typ", ("hbt_typ",), "typical HBT (VBIC Rev.1.15, cornerHBT.lib)")
+register_corner(
+    "hbt_bcs", ("hbt_bcs",),
+    "best-case-speed HBT (vbic_tf=0.89 -- faster transit time, higher fT/beta)",
+)
+register_corner(
+    "hbt_wcs", ("hbt_wcs",),
+    "worst-case-speed HBT (vbic_tf=1.11 -- slower transit time, lower fT/beta)",
+)
+register_corner_set("hbt", ("hbt_typ", "hbt_bcs", "hbt_wcs"))

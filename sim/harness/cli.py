@@ -105,8 +105,23 @@ def cmd_run(args: argparse.Namespace) -> int:
     started = _dt.datetime.now(_dt.timezone.utc)
     git = git_provenance(SIM_DIR.parent)
 
+    # Allocate the record id BEFORE running the grid (not after, as a prior
+    # version of this function did) so a real (write) run can log each PVT
+    # point straight into sim/<slug>/corners/<record-id>/ -- the directory
+    # runner.py's own module docstring already names as "the sim/<slug>/
+    # corners/<record-id>/ directory a block's evidence convention should
+    # use", and .gitignore already carves an exception out for
+    # sim/*/corners/**/*.log on that same assumption. Without this, a real
+    # run's raw ngspice logs landed in the disposable `_build` workdir and
+    # were never preserved as evidence at all -- only the --no-write/
+    # --sabotage scratch path (corners/_scratch) ever populated corners/.
+    record_id = allocate_record_id(SIM_DIR.parent, tb.experiment_dir / "records", started, git)
+
     workdir = Path(args.workdir) if args.workdir else tb.experiment_dir / "_build"
-    log_dir = tb.experiment_dir / "corners" / "_scratch" if args.no_write else None
+    log_dir = (
+        tb.experiment_dir / "corners" / "_scratch" if args.no_write
+        else tb.experiment_dir / "corners" / record_id
+    )
     results = run_grid(
         tb, pdk, points, workdir, jobs=args.jobs, log_dir=log_dir, num_threads=args.num_threads
     )
@@ -125,7 +140,6 @@ def cmd_run(args: argparse.Namespace) -> int:
         print("--no-write (or --sabotage): nothing recorded")
         return 1 if failures or n_ok != len(results) else 0
 
-    record_id = allocate_record_id(SIM_DIR.parent, tb.experiment_dir / "records", started, git)
     wall_seconds = (_dt.datetime.now(_dt.timezone.utc) - started).total_seconds()
     record = build_record(
         tb, pdk, points, results, ngspice, SIM_DIR.parent, record_id,
@@ -149,7 +163,13 @@ def cmd_selftest(args: argparse.Namespace) -> int:
     if pdk is None:
         return 1
 
-    normal = resolve_corners(None)
+    # --corners defaults to the testbench's OWN declared corner set (tb.json's
+    # "corners" field) rather than the global default_corner_set -- a block
+    # that registers its own corner set (see corners.py's SG13G2 HBT
+    # extension) would otherwise always be self-tested against the built-in
+    # five-MOS-corner set, which its own fragment does not use at all.
+    corner_names = args.corners.split(",") if args.corners else list(tb.corners)
+    normal = resolve_corners(corner_names)
     sabotaged = sabotage(normal)
     temperatures = tb.temperatures_c
     supplies = supply_points(tb.nominal_supply_v, tb.supply_tolerance)
@@ -211,6 +231,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_selftest = sub.add_parser("selftest", help="negative-control corner-switching self-test")
     p_selftest.add_argument("experiment")
+    p_selftest.add_argument(
+        "--corners", default="",
+        help="comma-separated corner or corner-set names (default: the testbench's own tb.json 'corners' field)",
+    )
     p_selftest.add_argument("--jobs", type=int, default=1)
     p_selftest.add_argument("--workdir", default="")
     p_selftest.set_defaults(func=cmd_selftest)

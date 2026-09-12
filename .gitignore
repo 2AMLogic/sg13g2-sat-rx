@@ -9,6 +9,13 @@ __pycache__/
 # (append-only record trail), so they escape the *.log rule.
 !sim/*/corners/**/*.log
 sim/build/
+# sim/harness/cli.py's actual scratch-workdir defaults (per experiment, not
+# the single top-level sim/build/ above): "_build" (cmd_run's generated-deck
+# scratch dir) and "_selftest" (cmd_selftest's normal/sabotaged run dirs).
+# Disposable by runner.py's own docstring ("workdir holds the generated deck
+# (scratch, disposable)") -- never evidence, unlike sim/*/corners/**/*.log.
+sim/*/_build/
+sim/*/_selftest/
 # local klt install, created by the setup script
 .venv/
 # >>> loom-managed (do not edit) >>>

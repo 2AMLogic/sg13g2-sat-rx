@@ -1,0 +1,125 @@
+* Single-HBT active-mixer placeholder: conversion gain, LO-to-RF leakage, and
+* two-tone IIP3 via transient + coherent-bin FFT.
+*
+* PLACEHOLDER CIRCUIT, NOT A DESIGN CANDIDATE -- same status as
+* sim/lna-sparam-nf/testbench/lna_ce_placeholder.spice: design/ has no
+* ratified mixer topology yet (spec/target-spec.md is DRAFT, not ratified --
+* ratification is a separate, later two-key event; see that file's own
+* header). This is the SIMPLEST active mixer that exists: RF (two tones) and
+* LO are both AC-coupled onto the same npn13G2 base, summing there and
+* relying on the device's own exponential Vbe/Ic nonlinearity to produce the
+* RF x LO mixing products at the collector -- NOT a Gilbert-cell /
+* double-balanced topology (spec/target-spec.md row 9's "active,
+* Gilbert-cell class assumed" target), so LO-to-RF isolation and LO/RF
+* feedthrough rejection are much worse here than a balanced design would
+* show; see this experiment's tb.json "claim" for the explicit disclaimer.
+*
+* Method -- conversion gain, LO-to-RF leakage, and IIP3 all read off ONE
+* transient run's FFT, no S-parameter/AC-based method applies to a
+* LO-pumped, time-varying operating point:
+*
+*   RF drive: two tones f1=19.4375 GHz, f2=19.4625 GHz (25 MHz spacing,
+*     centered on the Ka-band downlink DRAFT's 19.45 GHz band center),
+*     amplitude {vrf} each, each through its own Z0=50 ohm source resistor
+*     (available-power reference) and 1 pF coupling cap into the base.
+*   LO drive: single tone at 18.45 GHz (low-side LO, 1 GHz IF, per
+*     spec/target-spec.md's DRAFT "LO range / LO-to-RF leakage" row),
+*     amplitude {vlo}, through its
+*     own Z0=50 ohm source resistor and 1 pF coupling cap into the SAME base
+*     node.
+*
+*   Mixing products appear at the collector at f1-fLO=987.5 MHz,
+*   f2-fLO=1012.5 MHz (the two IF fundamentals) and 2*f1-f2-fLO=962.5 MHz,
+*   2*f2-f1-fLO=1037.5 MHz (the third-order intermodulation pair) -- all four
+*   spaced 25 MHz apart, by construction (frequency conversion preserves tone
+*   spacing).
+*
+* Coherent-bin FFT: the transient runs from t=20 ns (settle time, several
+* RC time constants of this fixture's coupling/bias network -- excludes the
+* startup transient from the measurement window) to t=100 ns, an 80 ns
+* window. Every tone above (LO, both RF tones, both IF fundamentals, both
+* IM3 products) is an EXACT integer multiple of 12.5 MHz = 1/80ns, so an
+* ideal (infinite-precision, unpadded) FFT of this window would place every
+* one of them exactly on a bin with zero spectral leakage. In practice
+* ngspice's `fft` command zero-pads its input to the next power-of-two
+* length (confirmed during development: an 8001-sample input becomes a
+* 8192-point FFT, i.e. a slightly different -- not exactly 12.5 MHz --
+* actual bin spacing), so this bench does NOT hardcode a bin index: it reads
+* the FFT's own reported bin spacing back (`frequency[1]-frequency[0]`) and
+* computes `floor(f_target/bin_spacing + 0.5)` for each target frequency at
+* run time, in tb.json's "analyses". This is robust to whatever padding
+* ngspice applies, at the cost of a small (bounded by the standard
+* rectangular-window worst-case scalloping loss, ~3.9 dB) amplitude error
+* when the true padded bin spacing does not divide a target frequency
+* exactly -- an accepted, documented approximation for a harness-bootstrap
+* placeholder, not appropriate to carry forward uncritically into a
+* spec-compliance measurement of a real design.
+*
+* LO-to-RF leakage: read from the SAME transient's FFT of v(prf) (the RF
+* port node, i.e. the side of the RF source resistor facing the DUT) at the
+* LO frequency -- how much LO signal appears back at the RF port through
+* whatever coupling path exists (here, directly through the shared base
+* node and the RF coupling cap).
+*
+* Conversion gain / IIP3 dBm convention: this fixture has NO output port
+* impedance termination (the collector node is not terminated in Z0 the way
+* the LNA bench's ports are) -- reported dBm figures use Z0=50 ohm purely as
+* a REPORTING reference for converting a simulated voltage amplitude to a
+* power-equivalent number (P = V_peak^2/(2*Z0) at the output; P =
+* V_peak^2/(8*Z0), the standard AVAILABLE POWER from a Thevenin source with
+* series Z0, at the input), not as an assertion that the output is actually
+* delivering power into a matched 50 ohm load. Both dBc-difference
+* quantities (the IIP3 extrapolation's Pfund_dBm - Pim3_dBm; the
+* conversion_gain_db measurement's Pfund_dBm - Pin_dBm) are insensitive to
+* this approximation (both terms use the identical conversion, so the
+* assumed impedance cancels in the difference); only the absolute Pin_dBm
+* term depends on Z0 being a reasonable stand-in for the real RF source
+* impedance. Per spec/target-spec.md row 9's port convention, power
+* conversion gain into 50 ohm (conversion_gain_db, Pfund_dBm - Pin_dBm) is
+* the PRIMARY figure; a bare voltage ratio (20*log10(vif1/vrf), reported as
+* conv_gain_voltage_secondary_db) is retained only as the explicitly-labelled
+* secondary that same row permits.
+*
+* SSB noise figure: NOT SIMULATED in this bench. ngspice has no
+* periodic-steady-state / periodic-noise (pnoise) analysis, so there is no
+* way to correctly linearize noise about the LO-pumped, time-varying
+* operating point this mixer actually runs at; ngspice's plain `.noise`
+* analysis is only valid around a FIXED (non-time-varying) DC operating
+* point, which a mixer under LO drive does not have. Running `.noise`
+* against this circuit with the LO held off would produce a NUMBER, but it
+* would silently misrepresent the LO-pumped mixer's actual noise behavior --
+* exactly the "plausible-but-wrong methodology" trap this issue's curator
+* note flagged. This is a real ngspice/general-SPICE tooling gap, not a
+* klayout-tools gap (klayout-tools is not invoked anywhere in this bench),
+* so it is documented here and in this experiment's tb.json evidence notes
+* rather than filed against klayout-tools.
+*
+* Same "no PDK inductor model" note as the LNA bench applies here: no
+* inductor of any kind appears in this fixture; LO/RF/IF paths are all
+* resistive-source / capacitive-coupling only.
+
+.param z0=50
+.param nx_mx=4 rc_mx=300 re_mx=10 rbias_mx=3k vbb_mx=0.90
+.param vrf=0.01 vlo=0.08
+
+* ---- bias: single npn13G2 stage, RF+LO summed at the base ----
+Vdd vdd 0 DC {vdd_val}
+Rc vdd coll {rc_mx}
+Xq1 coll base emit 0 npn13G2 Nx={nx_mx}
+Re emit 0 {re_mx}
+Vbb bb 0 DC {vbb_mx}
+Rbias bb base {rbias_mx}
+
+* ---- RF port: two-tone drive, Z0 source impedance, AC-coupled to base ----
+Vrf rfsrc 0 DC 0 SIN(0 {vrf} 19.4375e9)
+Rrf rfsrc prf {z0}
+Cin_rf prf base 1p
+
+Vrf2 rfsrc2 0 DC 0 SIN(0 {vrf} 19.4625e9)
+Rrf2 rfsrc2 prf2 {z0}
+Cin_rf2 prf2 base 1p
+
+* ---- LO port: single tone, Z0 source impedance, AC-coupled to base ----
+Vlo losrc 0 DC 0 SIN(0 {vlo} 18.45e9)
+Rlo losrc plo {z0}
+Cin_lo plo base 1p
