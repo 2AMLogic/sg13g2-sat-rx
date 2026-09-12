@@ -92,7 +92,15 @@ def cmd_run(args: argparse.Namespace) -> int:
         return 3
     tc_summary = toolchain_mod.summary(drifts, pins, allowed=args.allow_toolchain_drift)
 
-    corner_names = args.corners.split(",") if args.corners else None
+    # --corners defaults to the testbench's OWN declared corner set (tb.json's
+    # "corners" field), exactly as cmd_selftest below does, NOT to the generic
+    # core's global default_corner_set. A block registering its own corner set
+    # (see corners.py's SG13G2 HBT extension) would otherwise have a bare
+    # `run <experiment>` resolve the built-in five MOS corners, whose .LIB
+    # sections its own model fragment does not define -- every point errors out
+    # and a status:error record with zero successful measurements is written
+    # into the append-only evidence tree.
+    corner_names = args.corners.split(",") if args.corners else list(tb.corners)
     corners = resolve_corners(corner_names)
     if args.sabotage:
         corners = sabotage(corners)
@@ -217,7 +225,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_run = sub.add_parser("run", help="run a testbench's PVT grid")
     p_run.add_argument("experiment", help="sim/<experiment-slug>/ (or its testbench/ dir)")
-    p_run.add_argument("--corners", default="", help="comma-separated corner or corner-set names")
+    p_run.add_argument(
+        "--corners", default="",
+        help="comma-separated corner or corner-set names (default: the testbench's own tb.json 'corners' field)",
+    )
     p_run.add_argument("--jobs", type=int, default=1)
     p_run.add_argument("--num-threads", type=int, default=0)
     p_run.add_argument("--workdir", default="")
