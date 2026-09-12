@@ -1,0 +1,82 @@
+{
+  "name": "lna-sparam-nf",
+  "description": "S-parameter (S11/S21/S22/S12), k-factor, and noise-figure bench for a single common-emitter npn13G2 HBT placeholder stage, at three points across the Ka-band downlink DRAFT band (17.7 / 19.45 / 21.2 GHz).",
+  "claim": "PLACEHOLDER, NOT SPEC EVIDENCE: this bench proves the S-parameter/NF extraction methodology works end to end against the real npn13G2 model, across the full HBT process x temperature x supply PVT grid. It does NOT claim any DRAFT target-spec row (spec/target-spec.md) is met -- the DUT has no input/output matching network (no PDK inductor model exists at all, see evidence.notes) and is a single unmatched CE stage, not the two-stage cascode row 2's DRAFT target assumes. Re-point this tb.json's netlist at design/'s ratified schematic once issue #1's spec is ratified and a real topology exists in design/.",
+  "netlist": "lna_ce_placeholder.spice",
+  "netlist_provenance": "schematic (placeholder harness-exercising stub; no ratified schematic exists in design/ yet -- design/README.md is still empty -- so this is neither the ratified schematic deck nor ever taken through layout, hence the parenthetical per testbench.py's PROVENANCE_RULE)",
+  "nominal_supply_v": 2.5,
+  "supply_tolerance": 0.10,
+  "temperatures_c": [-40.0, 27.0, 125.0],
+  "corners": ["hbt"],
+  "analyses": [
+    "ac lin 3 17.7e9 21.2e9",
+    "alterparam mag1 = 0",
+    "alterparam mag2 = 1",
+    "reset",
+    "ac lin 3 17.7e9 21.2e9",
+    "alterparam mag1 = 1",
+    "alterparam mag2 = 0",
+    "reset",
+    "noise v(p2) vs1 lin 3 17.7e9 21.2e9",
+    "let s11 = 2*ac1.v(p1) - 1",
+    "let s21 = 2*ac1.v(p2)",
+    "let s22 = 2*ac2.v(p2) - 1",
+    "let s12 = 2*ac2.v(p1)",
+    "let delta_det = s11*s22 - s12*s21",
+    "let kfactor = (1 - mag(s11)*mag(s11) - mag(s22)*mag(s22) + mag(delta_det)*mag(delta_det)) / (2*mag(s12)*mag(s21))"
+  ],
+  "measure": {
+    "s11_db_lo": "db(s11)[0]",
+    "s11_db_mid": "db(s11)[1]",
+    "s11_db_hi": "db(s11)[2]",
+    "s21_db_lo": "db(s21)[0]",
+    "s21_db_mid": "db(s21)[1]",
+    "s21_db_hi": "db(s21)[2]",
+    "s22_db_lo": "db(s22)[0]",
+    "s22_db_mid": "db(s22)[1]",
+    "s22_db_hi": "db(s22)[2]",
+    "s12_db_lo": "db(s12)[0]",
+    "s12_db_mid": "db(s12)[1]",
+    "s12_db_hi": "db(s12)[2]",
+    "k_lo": "real(kfactor[0])",
+    "k_mid": "real(kfactor[1])",
+    "k_hi": "real(kfactor[2])",
+    "nf_db_lo": "10*log10((noise2.inoise_spectrum[0]*noise2.inoise_spectrum[0])/(4*1.380649e-23*300.15*50))",
+    "nf_db_mid": "10*log10((noise2.inoise_spectrum[1]*noise2.inoise_spectrum[1])/(4*1.380649e-23*300.15*50))",
+    "nf_db_hi": "10*log10((noise2.inoise_spectrum[2]*noise2.inoise_spectrum[2])/(4*1.380649e-23*300.15*50))"
+  },
+  "params": {
+    "mag1": 1,
+    "mag2": 0
+  },
+  "checks": {
+    "s21_db_mid": {
+      "min_spread_pct_by_axis": {
+        "process": 0.01,
+        "temperature": 0.01,
+        "supply": 0.01
+      },
+      "description": "Sensitivity floor only (NOT a spec-compliance check): proves the PVT grid genuinely perturbs the placeholder's gain rather than silently simulating one corner for all requested points. Do not read this as 'meets the 20 dB DRAFT gain target' -- see the testbench claim above."
+    },
+    "nf_db_mid": {
+      "min_spread_pct_by_axis": {
+        "process": 0.01,
+        "temperature": 0.01,
+        "supply": 0.01
+      },
+      "description": "Sensitivity floor only (NOT a spec-compliance check) -- see s21_db_mid's check for why."
+    }
+  },
+  "evidence": {
+    "record_kind": "characterization",
+    "data_provenance": "simulated (ngspice, real npn13G2 VBIC model, no PDK inductor model used anywhere in this fixture -- see notes)",
+    "notes": [
+      "S-parameter method: power-wave injection via a Thevenin Z0=50 ohm source per port, toggled forward/reverse via alterparam+reset between two .ac calls in one deck (ngspice has no native .SP/S-parameter analysis). Full derivation: this experiment's testbench/lna_ce_placeholder.spice header comment.",
+      "Noise-figure method: F = inoise_spectrum^2/(4*k*T0*Z0), NF_dB = 10*log10(F), T0 = 300.15 K (27 C) fixed regardless of the corner's actual .temp -- matches sg13g2-lna's hbt-characterization convention exactly (spec/porting-plan.md S1 'Ports directly'), not the IEEE textbook 290 K. Rs1 (the reference source resistor) carries an explicit TEMP=27 override so its own simulated noise is always at exactly 300.15 K -- see testbench/lna_ce_placeholder.spice's port-1 comment for why this avoids a Y-factor-method artifact spec/porting-plan.md flags. IMPORTANT: ngspice's .noise command's inoise_total/onoise_total vectors are BANDWIDTH-INTEGRATED RMS totals across the whole swept analysis range, not per-frequency spectral densities -- using them directly for a per-frequency NF overstates NF by roughly 10*log10(swept_bandwidth_Hz) (confirmed ~48 dB too high for this bench's 3.5 GHz sweep during development). This bench uses the separate noise2.inoise_spectrum vector (the 'Noise Spectral Density Curves' plot, distinct from the trailing 'Integrated Noise' plot) instead.",
+      "Frequency plan: `ac lin 3 17.7e9 21.2e9` lands its 3 points exactly on the Ka-band downlink DRAFT band's low/mid/high edges (17.7 / 19.45 / 21.2 GHz), the minimum evaluation set spec/target-spec.md's 'Frequency coverage' section states (band edges + centre; DRAFT, not yet ratified -- issue #1). This is a 3-point discretization of the band, not a continuous sweep -- CLAUDE.md's 'every spec row holds across the whole ratified band' bar requires a denser sweep once a real design exists; spec/target-spec.md itself states a swept result 'supersedes the three-point set; the three points are a floor, not a target.'",
+      "No PDK inductor model exists for SG13G2 (confirmed absent in IHP-Open-PDK -- see sg13g2-vco's known_model_gaps note, restated in sim/README.md). This fixture avoids the gap entirely rather than substituting an unvalidated model: no inductor of any kind (PDK, analytic, or EM-derived) appears anywhere in the circuit -- the input/output ports are bare 50 ohm resistive terminations with no reactive matching network, and the base bias path uses a resistor (Rbias) rather than an RF choke. Every S11/S21/S22/S12/k/NF number in this record is therefore for an UNMATCHED stage and must not be compared to a matched design's numbers.",
+      "PLACEHOLDER CIRCUIT: single common-emitter npn13G2 stage (Nx=4), not the two-stage cascode row 2's DRAFT target assumes. No klayout-tools gap was hit producing this record -- this bench does no layout/DRC/LVS work; klt is out of scope for a pre-layout S-parameter/NF bench.",
+      "Stability: k-factor measures well below 1 across the whole PVT grid (see this record's Summary) -- this placeholder is NOT unconditionally stable (k > 1 is the DRAFT target spec's stability row). Consistent with having no stabilization/matching network of any kind; not a claim about a real design's stability, which would need its own k-factor evaluation once one exists."
+    ]
+  }
+}

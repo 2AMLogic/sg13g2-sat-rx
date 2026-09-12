@@ -1,0 +1,16 @@
+{
+  "_comment": "Required by sim/harness/pdk.py (see its module docstring for the schema). This is the block-authored config the generic harness core resolves an SG13G2 install against; it does not pin an exact PDK release the way sg13g2-lna/sg13g2-vco/sg13g2-comparator's sim/pdk.json fact-sheets do (those repos' harness cores are per-repo forks that also embed release-pin fields the generic core here does not read) -- see sim/README.md 'PDK pin' for this repo's pinning statement instead.",
+  "name": "sg13g2",
+  "default_variant": "ihp-sg13g2",
+  "model_lib": "libs.tech/ngspice/models/cornerHBT.lib",
+  "_model_lib_note": "cornerHBT.lib is the HBT (bipolar) corner-selectable model library this repo's benches load -- see corners.py's SG13G2 HBT extension. It is NOT cornerMOSlv.lib/cornerMOShv.lib (this repo's first two benches, sim/lna-sparam-nf and sim/mixer-conversion-iip3, instantiate npn13G2 only, no MOS devices) and it needs no OSDI/Verilog-A compile step: npn13G2 is a native ngspice VBIC (level=9) SPICE model card, confirmed against the installed checkout below -- matches sg13g2-lna's sim/pdk.json note about the same device.",
+  "_local_install_verified": {
+    "path_checked": "$HOME/share/pdk/ihp-sg13g2 (one of sim/harness/pdk.py's BUILTIN_SEARCH_ROOTS, '~/share/pdk' -- no sim/pdk.local.json override needed in this environment)",
+    "fetched_version_file": "<PDK install>/.fetched-version",
+    "value_read": "0.3.0",
+    "checked": "2026-09-12",
+    "source": "IHP-GmbH/IHP-Open-PDK",
+    "note": "This repo does not itself pin a release_tag/tarball_sha256 the way sg13g2-lna/sg13g2-vco/sg13g2-comparator's sim/pdk.json fact-sheets do, because those fields are consumed by nothing in THIS generic harness core (sim/harness/pdk.py reads only name/default_variant/model_lib/design_include/search_roots -- see its docstring). Every evidence record under sim/*/records/ instead states the resolved pdk.version (read from the install's own SOURCES file if present) and discovered_via path directly (report.py's environment() -> pdk.provenance()), so a record is self-describing without needing this file to carry a release pin. If a future record needs to assert a specific upstream release/commit, add it as a sibling fact next to this note rather than repurposing a key the harness core parses."
+  },
+  "search_roots": []
+}

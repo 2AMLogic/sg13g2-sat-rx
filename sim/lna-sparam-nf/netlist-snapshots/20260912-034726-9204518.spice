@@ -1,0 +1,140 @@
+* Frozen netlist snapshot for record 20260912-034726-9204518
+* sha256     : 3624bea0d55414a46b2092f5b1913e2e4863baafc2f506948a30ccde75070cd3
+* This is a verbatim copy taken at record time. Do not edit.
+* LNA S-parameter / noise-figure two-port test fixture.
+*
+* PLACEHOLDER CIRCUIT, NOT A DESIGN CANDIDATE. design/ has no ratified
+* schematic yet -- issue #1 drafted spec/target-spec.md and
+* spec/porting-plan.md, but spec/target-spec.md's own header states "Status:
+* DRAFT. Nothing in this file is ratified" (ratification is a separate,
+* later two-key event) -- so this is a single common-emitter npn13G2 (SiGe
+* HBT) stage, sized only well enough to bias sanely and demonstrate the
+* bench's S-parameter/NF extraction methodology end to end against a real
+* device model. It has NO input/output matching network (source/load are
+* both the bare 50 ohm port reference), so its S11/S21/S22/k-factor/NF
+* numbers are not comparable to the DRAFT target spec (spec/target-spec.md)
+* and MUST NOT be quoted as evidence that any spec row is met -- see this
+* experiment's testbench/tb.json "claim" and sim/README.md for the explicit
+* disclaimer this bench's own evidence records carry.
+*
+* Two-port test method (S-parameters via power-wave injection, since ngspice
+* has no native .SP/S-parameter analysis):
+*
+*   Each port is driven by an ideal Thevenin source (Vs, AC magnitude 1 or 0)
+*   in series with a Z0=50 ohm resistor, DC-blocked into the DUT with a 1 pF
+*   coupling cap. With only port 1's source active (mag1=1, mag2=0) and port 2
+*   simply terminated in its own Z0 (mag2=0, i.e. that port's own Thevenin
+*   source contributes no excitation, so port 2 look like a bare Z0 load):
+*
+*       a1 = Vsource/(2*sqrt(Z0))         (constant; independent of the DUT)
+*       S11 = 2*V(p1)/Vsource - 1
+*       S21 = 2*V(p2)/Vsource
+*
+*   and symmetrically for S22/S12 with mag1=0, mag2=1. With Vsource amplitude
+*   normalized to 1 V (mag1/mag2 ARE the AC magnitude in volts), this reduces
+*   to S11 = 2*V(p1) - 1, S21 = 2*V(p2), etc. -- see this file's derivation
+*   comment reproduced in testbench/tb.json's "evidence.notes" for the full
+*   derivation from the standard a_i/b_i power-wave definitions (a_i = (V_i +
+*   Z0*I_i)/(2*sqrt(Z0)), b_i = (V_i - Z0*I_i)/(2*sqrt(Z0))). This is the
+*   textbook "inject 1 V into a Z0-terminated port, read the wave quantities
+*   off node voltages" SPICE S-parameter extraction method; it needs TWO
+*   separate AC analyses (forward: port 1 driven / port 2 passive; reverse:
+*   port 2 driven / port 1 passive) because ngspice's AC analysis sums
+*   contributions from every AC source by superposition in a single run, so
+*   the two drive states cannot come from one .ac call. tb.json's "analyses"
+*   toggles mag1/mag2 via ngspice's "alterparam"+"reset" between two .ac
+*   calls in the same deck, landing the results in ngspice's auto-numbered
+*   "ac1" (forward) and "ac2" (reverse) plots.
+*
+* Noise figure: port 1's Thevenin source (Vs1) is also the .noise analysis's
+* reference source, so ngspice's noise plot is directly comparable to the
+* same Z0=50 ohm port. IMPORTANT ngspice pitfall (this bench's own trap,
+* found while building it): ngspice's `.noise` command produces TWO separate
+* plots, not one -- a "Noise Spectral Density Curves" plot (this file's
+* second-to-last auto-numbered "noiseN" plot, holding inoise_spectrum /
+* onoise_spectrum vs. frequency) and a SEPARATE "Integrated Noise" plot (the
+* LAST auto-numbered "noise(N+1)" plot, holding inoise_total/onoise_total --
+* the RMS noise integrated across the ENTIRE swept analysis bandwidth, a
+* single scalar that has nothing to do with the noise density at any one
+* frequency). Naively printing inoise_total/onoise_total and comparing it to
+* 4*k*T0*Z0 -- exactly the "plausible-but-wrong" trap the curator note
+* flagged for this issue -- overstates NF by roughly
+* 10*log10(swept_bandwidth_Hz) (measured ~48 dB too high for this bench's
+* 3.5 GHz sweep during development). tb.json's "measure" block therefore
+* references the spectral-density plot's vectors by explicit plot prefix
+* (noise2.inoise_spectrum), NOT the bare inoise_total/inoise_spectrum names,
+* and indexes a specific frequency point rather than using the aggregate.
+*
+* Noise figure convention: F = inoise_spectrum^2 / (4*k*T0*Z0), NF_dB =
+* 10*log10(F), with the fixed reference temperature T0 = 300.15 K (27 C) --
+* matching sg13g2-lna's hbt-characterization bench convention exactly, per
+* spec/porting-plan.md S1 "Ports directly" ("the noise-figure derivation from
+* ngspice's .noise output... ports unchanged for the LNA"), NOT the IEEE
+* textbook T0 = 290 K. Rs1 (the port-1 source resistor F is referenced
+* against) carries an explicit TEMP=27 override (see the port 1 comment
+* below), so its own simulated thermal noise is ALWAYS at exactly 300.15 K
+* regardless of this PVT point's swept ambient -- unlike a naive
+* implementation where the source resistor's noise would drift with the
+* corner's `.temp` (the Y-factor-method subtlety spec/porting-plan.md warns
+* about), this bench's temperature-corner NF spread is therefore entirely
+* the DUT's own added-noise temperature dependence, not a source-resistor
+* artifact. SSB vs. DSB does not apply here (SSB/DSB is a mixer image-band
+* convention; a two-port LNA has no image band).
+*
+* Frequency plan: one .ac lin 3 sweep covering the low/mid/high band edges of
+* the Ka-band downlink DRAFT band (17.7 GHz / 19.45 GHz / 21.2 GHz, per
+* spec/target-spec.md's "Frequency coverage" section -- band edges + centre
+* is the stated minimum evaluation set; DRAFT, not yet ratified, issue #1) --
+* a lin sweep with exactly 3 points over [17.7e9, 21.2e9] lands on exactly
+* those three frequencies (linear spacing splits the span into (n-1) equal
+* steps, so n=3 gives start, midpoint, stop exactly). This is a 3-POINT, NOT a
+* continuous, band characterization -- CLAUDE.md's "every spec row holds
+* across the whole ratified band" bar is not fully met by three points; a
+* denser sweep is a straightforward extension of this same tb.json once a
+* real (non-placeholder) design exists and dense-sweep runtime matters.
+*
+* No PDK inductor model is used anywhere in this fixture (SG13G2 ships no
+* ngspice-simulatable inductor model at all -- see sg13g2-vco's
+* known_model_gaps note, ported into this repo's own sim/README.md). The
+* input/output "matching" is therefore a bare 50 ohm resistive port with no
+* reactive matching network of any kind (not even an LC one substituted with
+* an analytic/EM inductor model), and the base bias network uses a plain
+* resistor (Rbias) rather than an RF choke inductor -- a deliberately lossy
+* stand-in that a real design would replace with an actual matching network
+* once a topology is ratified.
+
+.param z0=50
+.param mag1=1 mag2=0
+.param nx_ce=4 rc_ce=200 re_ce=10 rbias_ce=3k vbb_ce=0.92
+
+* ---- bias: single common-emitter npn13G2 stage ----
+* vdd_val is the harness-supplied PVT-point supply (sim/harness/runner.py's
+* compose_deck .param, NOT a node) -- Vdd below is this fragment's own supply
+* source, driven at that value.
+Vdd vdd 0 DC {vdd_val}
+Rc vdd coll {rc_ce}
+Xq1 coll base emit 0 npn13G2 Nx={nx_ce}
+Re emit 0 {re_ce}
+Vbb bb 0 DC {vbb_ce}
+Rbias bb base {rbias_ce}
+
+* ---- port 1 (input): Thevenin Z0 source, toggled fwd/rev via mag1 ----
+* Rs1 carries TEMP=27 -- pinned at room temperature regardless of this PVT
+* point's swept ambient (.temp), per the fleet's established convention
+* (sg13g2-lna's hbt-characterization bench, restated in this repo's own
+* spec/porting-plan.md S1 "Ports directly"): an external 50 ohm source
+* represents off-chip test/measurement equipment, which does not sit at the
+* DUT's corner temperature. Confirmed during development that ngspice's
+* per-instance resistor TEMP= parameter overrides the noise/tempco
+* calculation for that one device while every other device (including Rs2
+* below) still follows the deck's global .temp.
+Vs1 s1n 0 DC 0 AC {mag1}
+Rs1 s1n p1 {z0} TEMP=27
+Cin p1 base 1p
+
+* ---- port 2 (output): Thevenin Z0 source, toggled fwd/rev via mag2 ----
+* Rs2 is NOT pinned -- per the same fleet convention, the output load models
+* on-die hardware, which DOES sit at the DUT's swept ambient temperature.
+Vs2 s2n 0 DC 0 AC {mag2}
+Rs2 s2n p2 {z0}
+Cout p2 coll 1p
