@@ -75,3 +75,12 @@ in `target-spec.md`.
 The same applies to the band edges themselves (17.7–21.2 GHz) and the LEO
 channel-bandwidth assumption behind the IF row: both are flagged
 `NEEDS-VERIFICATION` in place rather than presented as sourced.
+
+## Where the downstream consequences are tracked
+
+[Issue #4](https://github.com/2AMLogic/sg13g2-sat-rx/issues/4) — the
+gap-to-T1 tracker — holds the honest, artifact-presence survey of everything
+that sits downstream of ratification. T1 items 5 (full corner verification),
+7 (post-layout) and 8 (characterization report) all grade against a
+**ratified** spec, so none of them can close until this directory's table
+stops being DRAFT.
