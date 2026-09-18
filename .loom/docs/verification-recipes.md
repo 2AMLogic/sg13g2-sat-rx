@@ -231,13 +231,35 @@ git show <port-commit>^:<path/to/script.sh> > /tmp/ref.sh
 #    cannot name is a finding; a class you can name is a decision to record.
 ```
 
+**Generate every input FIELD, not just the interesting one.** The first version
+of the `extract-refs` corpus populated `body` and left `comments` empty in all
+700 cases, so the whole comment half of the function — the self-comment loop
+suppression the subcommand exists for — was never reached. That is invisible
+from a green run, and it is not the same failure as a thin grammar: the grammar
+for `body` was thorough. Mutation-measured (#8094), gutting `comment_counts()`
+to `true` or making `normalise_login()` the identity left the suite green, while
+every mutation to the body half turned it red. The extension replays 350
+comment-bearing cases and both mutations now fail; the fourth divergence in
+#8011 — the shell lower-cased only the supplied `--bot-login` while normalising
+the comment author fully — is the class that corpus can finally see.
+
+**Assert the corpus's discriminating power, not just its size.** "700 cases" and
+"1000 cases" say nothing about which code they reach. `differential_extract_refs.rs`
+counts, as part of the test, how many cases would change answer under each
+mutation it was blind to (the filter ingesting everything; the identity
+normalisation) and fails below a floor. A size assertion cannot catch a corpus
+that quietly stops exercising a field; this one does.
+
 **Freeze the answers, not the reference.** Once the old implementation is
 deleted, re-running it needs either a full-history checkout (CI checks out
 shallow) or vendoring dead code plus its runtime dependencies into the test. So
 capture its answers once into a fixture with a provenance record and assert
 against that — see `loom-daemon/tests/differential_extract_refs.rs` and
-`loom-daemon/tests/fixtures/extract_refs_shell_oracle.jsonl`, which pin the
-three accepted divergences and fail on a fourth.
+`loom-daemon/tests/fixtures/extract_refs_shell_oracle.jsonl`, which pin the four
+accepted divergences and fail on a fifth. Extending a frozen oracle is additive
+rather than a regeneration — replay the existing cases against the same pinned
+rev to confirm they still reproduce (700 of 700 did), then append the new cases
+and their own provenance record below them.
 
 **Recognise each divergence class by its MECHANISM, not by a property of the
 input that correlates with it.** This is the sharpest trap in the whole recipe,
@@ -262,10 +284,94 @@ report the same set but different text — ordering, separators, padding — no
 class about *which* references were found explains it. Say so rather than
 letting a coincidentally-applicable class absorb it.
 
+**Some assertions cannot survive, and that is different from failing.** A
+retained suite may assert things about the OLD implementation's *source text*,
+not its behaviour — that a function builds a string with a particular heredoc
+idiom, say. Those greps cannot pass once the file they read is gone, and making
+them pass would mean asserting something about a file the port deletes.
+
+The instinct to delete them is right and the execution is where it goes wrong:
+an assertion protects a property, and removing one without naming what now
+protects that property is how a suite quietly stops proving what it claims.
+
+Retire such an assertion only when all three hold, and say so **in the suite**,
+not only in a commit message:
+
+1. **The property it protected is stated.** For the watchdog's `#7508` scans it
+   was: an unescaped backtick in a heredoc is command-substituted into the body
+   of an issue filed automatically, unattended, during an outage.
+2. **The reason it cannot occur in the port is structural, not incidental.**
+   There is no shell and no heredoc — the body is a string literal. "We were
+   careful" is not structural; "the construct does not exist" is.
+3. **The successor proof is named and is at least as strong.** A static scan
+   checks the body was *built* safely. The differential test checks the body
+   *is the same body*, byte for byte. The second subsumes the first.
+
+**Do not confuse this with an assertion that fails because the port is
+incomplete.** Those are bugs and the suite is right. The distinction is the
+whole point of the exercise: one says "this can never be true again", the other
+says "this is not true yet", and only the first is a retirement. If you cannot
+articulate which one you are looking at, it is the second.
+
 **Every surviving divergence gets written down where the code is**, with the
 direction of its risk. "Kept, because missing a genuine declared reference is
 worse than one extra" is a decision; the same behaviour undocumented is a bug
 waiting to be re-litigated.
+
+### A port can make one env var mean two things — split it, don't edit the suite
+
+**When**: the script being ported *itself invokes* `loom-daemon`. Every port up
+to #8134 was pure computation behind a stub, so the only daemon binary in play
+was the one implementing the stub. `loom-daemon-watchdog.sh` is the first that
+is both, and `loom-daemon-start.sh` (#8087) / `loom-daemon-update.sh` (#8088)
+have the same shape.
+
+The collision: `$LOOM_DAEMON_BIN` had one meaning — "the `loom-daemon`
+binary" — because the shell script *was* the implementation, so the variable
+only ever reached its probe. Turn that script into a stub and the same variable
+is asked two incompatible questions at once:
+
+| Question | Who asks | Answer |
+|---|---|---|
+| Which binary **implements** me? | the stub's `exec` | `$LOOM_DAEMON_SELF_BIN` |
+| Which binary do I **manage or probe**? | the watchdog's IPC probe, an update's version compare | `$LOOM_DAEMON_BIN` |
+
+The retained watchdog suite pins `LOOM_DAEMON_BIN` to a `while true; do sleep
+1; done` mock to exercise the probe. Before the split, the stub `exec`ed that
+mock *as the watchdog* — so the suite **hung** instead of failing, and a hang
+reports as neither pass nor fail:
+
+```
+77365  bash defaults/scripts/tests/test-loom-daemon-watchdog.sh
+78306  bash /var/…/tmp.otzFtf16A7/loom-daemon-mock daemon-watchdog     <- the stub exec'd the MOCK
+78443  sleep 1
+```
+
+**The rule (#8134): give the new meaning the new name.** `lib/script-helper.sh`
+resolves `$LOOM_DAEMON_SELF_BIN` first and otherwise falls back to
+`loom_locate_daemon_bin` completely unchanged, so `$LOOM_DAEMON_BIN` keeps
+meaning exactly what every existing caller, suite, and operator already assumes
+— including pinning the implementation of a stub when no separate
+`$LOOM_DAEMON_SELF_BIN` is set. `tests/lib/require-daemon-bin.sh` exports the
+new variable for every suite, and `--self-only` additionally leaves
+`LOOM_DAEMON_BIN` alone for a suite that uses it as a mock-injection point.
+
+Two alternatives were rejected, and *why* is the transferable part:
+
+- **Rename the probe's knob instead** (`LOOM_WATCHDOG_IPC_PROBE_BIN`) — better
+  naming, bought by editing the retained assertions. Running those assertions
+  *unchanged* is the entire evidentiary value of the method; changing them so
+  the port passes inverts the test. **Editing the oracle to fit the answer is
+  never the cheap option, however small the edit looks.**
+- **Let the stub skip tier 1 of the resolver** — no new knob, but it silently
+  removes the documented ability to pin the binary with `$LOOM_DAEMON_BIN`,
+  which `loom update` and operators rely on. That trades a loud failure for a
+  quiet one, which is the opposite of every recipe here.
+
+**Generalise it before the next port, not after.** The question to ask of any
+knob a port inherits is *"does this name still pick out exactly one thing once
+the implementation moves?"* When it does not, the new meaning is the one that
+gets the new name — the old name belongs to whoever already depends on it.
 
 ## The shape all six share
 
