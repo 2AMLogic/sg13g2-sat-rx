@@ -1,0 +1,107 @@
+name: signoff
+
+# Machine-graded T1 state (issue #10): re-run `klt signoff --manifest` against
+# the committed block manifest and fail if the graded verdict no longer
+# matches the committed report. The manifest is the claim, the committed
+# tier report is the verdict of record, and this gate is what makes a stale
+# citation fail loudly instead of rotting.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  tier-report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned klt
+        run: pip install klayout-tools==0.5.0
+      - name: Re-grade the committed block manifest
+        run: |
+          set +e
+          klt signoff --manifest signoff/block-manifest.json \
+                      --tiers-doc signoff/design-evidence-tiers.md \
+                      --format json > regenerated-tier-report.json
+          rc=$?
+          set -e
+          # Exit 0 = every rendered T1 item met; 3 = report rendered with
+          # unmet items (this is a rendered, usable report, not an error).
+          # Anything else means the manifest, the pinned tiers doc, or a
+          # cited evidence file could not be read/graded.
+          if [ "$rc" -ne 0 ] && [ "$rc" -ne 3 ]; then
+            echo "klt signoff failed to render a report (exit $rc)" >&2
+            cat regenerated-tier-report.json >&2 || true
+            exit 1
+          fi
+          echo "klt signoff re-graded the manifest (exit $rc; 0 = every T1 item met, 3 = report rendered with unmet items)"
+      - name: Committed tier report must match the re-graded verdict
+        run: |
+          python3 - <<'EOF'
+          import json
+          import sys
+
+          with open('regenerated-tier-report.json') as f:
+              fresh = json.load(f)
+          with open('signoff/tier-report.json') as f:
+              committed = json.load(f)
+
+          if fresh == committed:
+              print(
+                  'OK: committed tier report matches the re-graded verdict '
+                  '(tier={}, T1 {}/{} items met).'.format(
+                      committed['tier'], committed['t1_met_count'],
+                      committed['t1_item_count']))
+              sys.exit(0)
+
+          print(
+              'FAIL: signoff/tier-report.json no longer matches what the '
+              'committed manifest + pinned tiers doc grade to today.',
+              file=sys.stderr)
+          print(
+              '  committed: tier={} T1 {}/{} met'.format(
+                  committed['tier'], committed['t1_met_count'],
+                  committed['t1_item_count']), file=sys.stderr)
+          print(
+              '  re-graded: tier={} T1 {}/{} met'.format(
+                  fresh['tier'], fresh['t1_met_count'],
+                  fresh['t1_item_count']), file=sys.stderr)
+
+          key = lambda i: (i['tier'], i.get('id') if i.get('id') is not None else -1,
+                           i.get('partition') or '')
+          fresh_items = {key(i): i for i in fresh.get('items', [])}
+          committed_items = {key(i): i for i in committed.get('items', [])}
+          for k in sorted(set(fresh_items) | set(committed_items)):
+              f = fresh_items.get(k)
+              c = committed_items.get(k)
+              if f is None:
+                  print('  {} #{}: only in the committed report'.format(
+                      k[0], k[1]), file=sys.stderr)
+                  continue
+              if c is None:
+                  print('  {} #{}: missing from the committed report'.format(
+                      k[0], k[1]), file=sys.stderr)
+                  continue
+              f_sig = (f['status'], f.get('reason'),
+                       json.dumps(f.get('citation'), sort_keys=True))
+              c_sig = (c['status'], c.get('reason'),
+                       json.dumps(c.get('citation'), sort_keys=True))
+              if f_sig != c_sig:
+                  print('  {} #{} {}: committed {}/{} -> re-graded {}/{}'.format(
+                      k[0], k[1], f.get('title'), c['status'], c.get('reason'),
+                      f['status'], f.get('reason')), file=sys.stderr)
+          print(
+              '  A cited artifact, the manifest, or the pinned tiers doc '
+              'changed without the verdict of record being regenerated. '
+              'Re-run the grade command from signoff/README.md and commit '
+              'the updated signoff/tier-report.json in the same change.',
+              file=sys.stderr)
+          sys.exit(1)
+          EOF
