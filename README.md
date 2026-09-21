@@ -39,9 +39,13 @@ Deliberately not being built yet:
   [`spec/decision-records/0001-band-selection-ka-vs-ku.md`](spec/decision-records/0001-band-selection-ka-vs-ku.md)
   (status: *proposed*, not ratified).
 
-Until the spec is ratified, the only work is testbench methodology: what
-ngspice can and cannot measure for S-parameters, noise figure, and
-conversion gain on this PDK, stated with every assumption.
+The spec's [first ratification pass](spec/decision-records/0003-target-spec-first-ratification.md)
+(merged via the ratification-via-PR two-key path) binds **eleven rows as
+targets**; nine — including the band row itself, still gated on DR-0001 and
+allocation-edge verification — stay explicitly open. Until benches exist
+nothing can be claimed *met*, so the near-term work is still testbench
+methodology: what ngspice can and cannot measure for S-parameters, noise
+figure, and conversion gain on this PDK, stated with every assumption.
 
 ## Built agent-native
 
@@ -57,9 +61,13 @@ using IHP SG13G2, not just this repo.
 ## Target specification
 
 **The target spec lives in [`spec/target-spec.md`](spec/target-spec.md).** It
-is **DRAFT** — not one row is ratified, and ratification is a separate event
-that flows through the two-key mechanism (EE key + market key), recorded as a
-decision record under [`spec/decision-records/`](spec/decision-records/).
+is **partially ratified — targets, not compliance**: eleven of its twenty
+rows are [RATIFIED (target)](spec/decision-records/0003-target-spec-first-ratification.md)
+by the first ratification pass, nine are explicitly OPEN each with its gate
+recorded, and **no row is ratified as met** — no measurement of this block
+exists. Ratification flowed through the two-key mechanism (Judge review +
+Champion/operator merge, per the ratification-via-PR standing path), and any
+row change now requires a superseding decision record argued on evidence.
 
 That document carries the full table (LNA gain / NF / S11 / S22 / stability /
 IIP3 / P1dB, mixer conversion gain / SSB NF / IIP3, the cascade rows, LO
@@ -78,8 +86,9 @@ Alongside it:
   structure), the exact IHP-Open-PDK model files this block depends on, and
   what is genuinely new: the mixer bench and the 20 GHz passive question.
 - [`spec/decision-records/`](spec/decision-records/) — the band record
-  (proposed, with the Ku fallback trigger) and the beamsteering-partition
-  record (deferred, with its criteria).
+  (proposed, with the Ku fallback trigger), the beamsteering-partition
+  record (deferred, with its criteria), and the first-ratification-pass
+  record (eleven rows RATIFIED as targets, nine OPEN, each with its gate).
 
 ## Repo layout
 
@@ -88,7 +97,8 @@ design/        schematics (xschem)
 layout/        GDS + DRC/LVS reports (klayout-tools driven)
 measurements/  silicon characterization (empty until tape-out)
 sim/           analog testbenches + PVT corner results
-spec/          target spec (DRAFT) + porting plan + decision records
+spec/          target spec (partially ratified, DR-0003) + porting plan
+               + decision records
 ```
 
 ## License

@@ -1,8 +1,14 @@
 # Target specification — Ka-band receive front end (LNA + mixer)
 
-- **Status: DRAFT.** Nothing in this file is ratified. No design, layout, or
-  simulation work may treat a row here as final.
-- **Date**: 2026-09-12 (drafted, issue #1)
+- **Status: PARTIALLY RATIFIED (targets) — per [DR-0003](decision-records/0003-target-spec-first-ratification.md).**
+  Eleven rows (2, 3, 4, 6, 7, 8, 9, 10, 11, 17, 18) are ratified as
+  **binding targets**; nine rows (1, 5, 12, 13, 14, 15, 16, 19, 20) are
+  **explicitly OPEN**, each with its gate recorded in that record. **No row
+  is ratified as met** — no measurement of this block exists. Design work
+  may proceed against the ratified rows and cite them as targets; it may
+  not claim *compliance* with any row without a `sim/` evidence record.
+- **Date**: 2026-09-12 (drafted, issue #1); first ratification pass
+  2026-09-21 (issue #11, DR-0003)
 - **Written by**: Builder agent, issue #1
 - **Block kind** (per [`klayout-tools/docs/design-evidence-tiers.md`](https://github.com/2AMLogic/klayout-tools/blob/main/docs/design-evidence-tiers.md)
   § "Block kind"): **analog**. The block satisfies the Analog column of the
@@ -13,12 +19,17 @@
   [`decision-records/0002-beamsteering-partition.md`](decision-records/0002-beamsteering-partition.md)
   for what that boundary does and does not decide.
 
-**Ratification is a separate, later event.** It flows through the standard
-two-key mechanism (EE key + market key, both installed by the standard
-tooling), recorded as a decision record under
+**Ratification is a separate event from drafting.** It flows through the
+two-key mechanism (EE key + market key) — here via the ratification-via-PR
+standing path (see
+[DR-0003](decision-records/0003-target-spec-first-ratification.md) for the
+route and its precedent) — recorded as a decision record under
 [`decision-records/`](decision-records/). This document does not ratify
-itself, and the agent that wrote it has no authority to. Until a decision
-record says otherwise, every row below is a DRAFT engineering target.
+itself, and the agent that wrote it has no authority to. **DR-0003 is the
+first ratification pass**: its per-row dispositions set the Status column
+below, and any later value change, rescope, or open-row closure requires a
+DR that argues it on evidence. Per `CLAUDE.md`, no later result may relax
+a ratified row to make itself pass.
 
 **The band is drafted, not ratified.** See
 [`decision-records/0001-band-selection-ka-vs-ku.md`](decision-records/0001-band-selection-ka-vs-ku.md)
@@ -267,41 +278,48 @@ as open item 1 below.
 
 ---
 
-## DRAFT target table
+## Target table
 
-Every row is **DRAFT**. "Binding corner (expected)" is an *expectation to be
-tested by the bench*, not a measured result — a bench that finds a different
-binding corner supersedes the expectation, and the expectation being wrong is
-not a spec failure.
+Per-row status is set by the first ratification pass,
+[DR-0003](decision-records/0003-target-spec-first-ratification.md):
+**RATIFIED (target)** rows bind as what the design must be measured against —
+**no row is ratified as met**; **OPEN** rows keep their DRAFT value and are
+gated on the condition the record names. "Binding corner (expected)" is an
+*expectation to be tested by the bench*, not a measured result — a bench
+that finds a different binding corner supersedes the expectation, and the
+expectation being wrong is not a spec failure.
 
-| # | Parameter | DRAFT target | DRAFT stretch | Src | Binding corner (expected, unverified) | Notes / flags |
-|---|---|---|---|---|---|---|
-| 1 | **Receive band** | Ka-band satellite downlink, **17.7–21.2 GHz**; every row below holds across the full band | — | (E) + DR-0001 | — | **NEEDS-VERIFICATION**: the 17.7–21.2 GHz downlink allocation is stated from general knowledge of the ITU/FSS space-to-Earth plan and was **not** checked against the ITU Radio Regulations in this environment. Verify the exact allocation edges before ratification. Ku fallback (10.7–12.75 GHz, same caveat) and its trigger: DR-0001. |
-| 2 | **LNA gain, S21** | **≥ 20 dB** across band (two-stage cascode assumed) | ≥ 25 dB | (E), device headroom from (P) §3.1 + (S-LNA) | `hbt_wcs`, 125 °C, min supply (lowest `J_C`, lowest fT) | **NEEDS-VERIFICATION** against published results. Device sanity check: `npn13g2` FMAX min 400 GHz ⇒ at 20 GHz, `fmax/f = 20`, so per-stage MAG headroom is real. But (S-LNA) measured only **8.5 dB** *50 Ω-terminated transducer gain* on a bare device at 2.4 GHz — an unmatched device is not a matched stage, and the gap between the two is exactly what the matching network must supply. |
-| 3 | **LNA noise figure (NF₅₀)** | **≤ 2.5 dB** across band, all corners | ≤ 2.0 dB | (E) + (L)Voinigescu + (S-LNA) | `hbt_wcs`, 125 °C (device noise rises with T; worst self-heating) | **NEEDS-VERIFICATION, and the highest-risk row in this table.** (S-LNA) recorded **6.32 dB (typ/27 °C)** / **8.51 dB (wcs/125 °C)** for a *bare, unmatched* `npn13G2` at 2.4 GHz. Getting to 2.5 dB at 20 GHz requires a real noise match (Voinigescu-style sizing + degeneration), and the matching network's own loss lands directly on NF. A Ka-band `NF_min` derivation against `sg13g2_hbt_mod.lib`'s VBIC noise parameters does not exist in the fleet. Treat 2.5 dB as an aspiration to be tested, not a number already shown reachable on this PDK. |
-| 4 | **LNA input match, S11** | **≤ −10 dB** across band | ≤ −15 dB | (E) + (L)Shaeffer–Lee | `cap_bcs`/`cap_wcs` × `res_*` extremes (L/C spread), temperature extremes | 50 Ω port convention above. Gated on a simulatable passive: no PDK inductor or t-line model exists (P), so S11 is **not simulatable at all** until EM extraction lands — see open item 3. |
-| 5 | **LNA output / interstage match, S22** | **≤ −10 dB** across band (50 Ω) **or** a stated conjugate match to the mixer RF port | ≤ −15 dB | (E) | as row 4 | Row deliberately admits two forms because the LNA→mixer interface convention is undecided (see "Port convention" above). Whichever is chosen must be recorded in a DR before this row is ratified. |
-| 6 | **Stability, k-factor** | **k > 1** (unconditional) across band **and out-of-band to at least 3× the upper band edge (≥ 63.6 GHz)**, all corners | k > 1.5 | (E), house rule | worst process × temp × supply combination; out-of-band as well as in-band | Not optional and not an afterthought. An HBT with 400 GHz fmax has gain far above the band; out-of-band oscillation is the realistic failure. `μ`-factor may be reported alongside k/Δ. |
-| 7 | **LNA IIP3** | **≥ −15 dBm** (input-referred) | ≥ −10 dBm | (E) | `hbt_typ`, nominal supply/temperature (to be confirmed — linearity's corner dependence is a bench finding, not an assumption) | Must be measured by **two-tone transient + FFT**, with tone spacing, tone powers, transient length, window, and FFT bin resolution recorded beside the number, and the extrapolation range stated. No IIP3 claim without that bench. |
-| 8 | **LNA P1dB (input-referred)** | **≥ −25 dBm** | ≥ −20 dBm | (E) | as row 7 | Added because IIP3 alone does not bound compression, and a receive front end behind a real antenna sees blockers. Single-tone power sweep; the sweep range and the 1 dB fit method are recorded with the number. |
-| 9 | **Mixer conversion gain (voltage or power — state which)** | **≥ 8 dB** across band, active (Gilbert-cell class assumed) | ≥ 12 dB | (E) | `hbt_wcs`, 125 °C, min supply | **NEEDS-VERIFICATION.** The row is meaningless without stating *which* conversion gain: this document requires **power conversion gain into a 50 Ω IF load** as the primary, with voltage conversion gain into a stated capacitive load permitted as a secondary, explicitly labelled figure. |
-| 10 | **Mixer noise figure, SSB** | **≤ 12 dB** | ≤ 9 dB | (E) | `hbt_wcs`, 125 °C | **NEEDS-VERIFICATION.** SSB vs. DSB must be stated with every number (they differ by ~3 dB for an image-unfiltered downconverter, and confusing them is the classic way a mixer NF claim becomes wrong). The image-rejection assumption behind "SSB" is an open item — no image-reject architecture is chosen. ngspice has no `.pnoise`; the measurement method is a bench-design problem, see `porting-plan.md`. |
-| 11 | **Mixer IIP3** | **≥ −5 dBm** | ≥ 0 dBm | (E) | `hbt_typ`, nominal | Same two-tone requirements as row 7; tones placed in-band, IM3 read at IF. |
-| 12 | **Cascade (LNA + mixer) NF, SSB** | **≤ 4.0 dB** | ≤ 3.0 dB | (E) | `hbt_wcs`, 125 °C | The row the system actually cares about. **Measured on the cascade**, not computed by Friis from rows 3 and 10, unless the two are genuinely 50 Ω-interfaced (see "Port convention"). Friis-computed values may be reported as a cross-check, labelled as such. |
-| 13 | **Cascade conversion gain** | **≥ 28 dB** | ≥ 35 dB | (E) | `hbt_wcs`, 125 °C, min supply | Same measurement rule as row 12. |
-| 14 | **LO frequency range** | **16.7–20.2 GHz** (low-side LO, 1 GHz IF) | high-side LO 18.7–22.2 GHz as an alternative, not a commitment | derived from rows 1 + 16 | — | Arithmetic check: `f_LO = f_RF − f_IF` over 17.7–21.2 GHz at `f_IF = 1 GHz` ⇒ 16.7–20.2 GHz. The IF plan is itself DRAFT (row 16), so this row moves with it. LO source class (external ideal source for bench work vs. an on-PDK LC VCO of the `sg13g2-vco` class) is an open item, not settled here. |
-| 15 | **LO drive level and LO-to-RF leakage** | LO drive **TBD** (to be set by the mixer bench, not guessed); **LO-to-RF leakage ≤ −30 dBm** referred to the RF port, and **LO-to-IF leakage ≤ −30 dBm** | leakage ≤ −40 dBm | (E) | `hbt_typ` and mismatch corners (leakage is a matching/symmetry effect, so `hbt_typ_mismatch` is in scope) | LO drive level is deliberately blank: the required drive is an output of the mixer design, and a guessed dBm here would silently constrain the topology. Leakage is a **power at a port**, so it is only meaningful with the LO drive level stated beside it. |
-| 16 | **IF centre and bandwidth** | IF centre **1 GHz** (DRAFT); **IF BW ≥ 500 MHz** (−1 dB), one LEO broadband channel | IF BW ≥ 1 GHz | (E) | `cap_*` corners (IF load RC), 125 °C | **NEEDS-VERIFICATION**: "one LEO broadband channel ≈ 500 MHz" is stated from general knowledge and not checked against any published channel plan. The IF centre interacts with image rejection and with the beamsteering partition (DR-0002) — a digital-beamforming partition would want a different IF plan than an LO-phase-shift partition. |
-| 17 | **Supply rail** | **≤ 2.5 V** total rail, with **no single `npn13G2` seeing `V_CE` above 1.4 V** (BVCEO min) **and no device operated outside the model card's own `vce` 0.4–2.0 V validity window** | a single 1.8 V rail if the topology allows it | (P) §3.1 + `sg13g2_hbt_mod.lib` header | — | This is the row most tightly bound by (P), and the binding constraint is **two-sided**: BVCEO min is 1.4 V, and the VBIC card is only *characterized* to `vce ≤ 2.0 V`. A cascode must distribute stress so each device sits inside both. **`npn13g2v` (BVCEO 2.2 V) is not a usable escape at Ka band**: its FT is min 90 / target 120 GHz (P §3.3), i.e. `fT/f ≈ 4.5–6` at 20 GHz — see DR-0001. |
-| 18 | **DC power, LNA + mixer, per element** | **≤ 40 mW** | ≤ 25 mW | (E) | `hbt_bcs`, −40 °C (bias current typically peaks there for a fixed bias network) | Per-element power is the number the array multiplies. It is the single row most directly coupled to the beamsteering partition (DR-0002): an RF-path phase shifter per element adds loss the LNA must make up, i.e. power. |
-| 19 | **AREA** (absolute) | **TBD — set at ratification**, method fixed here: the bound is the drawn bbox area in mm² of the LNA + mixer cell, measured by `klt economy` | — | (KLT) | — | Deliberately not guessed. The **element pitch does not set it**: half-wave spacing at the 21.2 GHz upper band edge is **7.07 mm** (DR-0001), enormous relative to any plausible die area, so the pitch constrains the *board*, not this die. The bound should therefore be set from **cost/reticle economics plus a first floorplan**, not from array geometry. |
-| 20 | **AREA-EFF** (efficiency composite) | Per [klayout-tools#1086](https://github.com/2AMLogic/klayout-tools/issues/1086) / [`design-evidence-tiers.md` § "Area-efficiency spec convention"](https://github.com/2AMLogic/klayout-tools/blob/main/docs/design-evidence-tiers.md): **hard bounds** — `bbox_tightness` = 1.0, `dead_margins_um` ≤ a per-edge cap set at ratification, `largest_empty_regions` ≤ a set bbox fraction; **calibrated bound** — `utilization` ≥ a floor **not set here**; **judgment layer** — an `economy-review` skill verdict of `pass` | — | (KLT) | — | Checked in one command via `klt economy`'s `--area-eff-*` flags. The utilization floor is **deliberately left unset**: the klt doc's own guidance is that analog block kinds carry *no named floor* (typical ranges 0.30–0.55) precisely because a wrong floor drives cramming, which trades against matching and DRC margin. Set it from this block's own `economy-review` evidence, not by default. |
+| # | Parameter | Status (DR-0003) | Target | Stretch | Src | Binding corner (expected, unverified) | Notes / flags |
+|---|---|---|---|---|---|---|---|
+| 1 | **Receive band** | **OPEN** — allocation edges unverified; DR-0001 still proposed | Ka-band satellite downlink, **17.7–21.2 GHz**; every row below holds across the full band | — | (E) + DR-0001 | — | **NEEDS-VERIFICATION**: the 17.7–21.2 GHz downlink allocation is stated from general knowledge of the ITU/FSS space-to-Earth plan and was **not** checked against the ITU Radio Regulations in this environment. Verify the exact allocation edges before ratification. Ku fallback (10.7–12.75 GHz, same caveat) and its trigger: DR-0001. |
+| 2 | **LNA gain, S21** | **RATIFIED (target)** | **≥ 20 dB** across band (two-stage cascode assumed) | ≥ 25 dB | (E), device headroom from (P) §3.1 + (S-LNA) | `hbt_wcs`, 125 °C, min supply (lowest `J_C`, lowest fT) | **NEEDS-VERIFICATION** against published results. Device sanity check: `npn13g2` FMAX min 400 GHz ⇒ at 20 GHz, `fmax/f = 20`, so per-stage MAG headroom is real. But (S-LNA) measured only **8.5 dB** *50 Ω-terminated transducer gain* on a bare device at 2.4 GHz — an unmatched device is not a matched stage, and the gap between the two is exactly what the matching network must supply. |
+| 3 | **LNA noise figure (NF₅₀)** | **RATIFIED (target)** — highest-risk row; see its own note | **≤ 2.5 dB** across band, all corners | ≤ 2.0 dB | (E) + (L)Voinigescu + (S-LNA) | `hbt_wcs`, 125 °C (device noise rises with T; worst self-heating) | **NEEDS-VERIFICATION, and the highest-risk row in this table.** (S-LNA) recorded **6.32 dB (typ/27 °C)** / **8.51 dB (wcs/125 °C)** for a *bare, unmatched* `npn13G2` at 2.4 GHz. Getting to 2.5 dB at 20 GHz requires a real noise match (Voinigescu-style sizing + degeneration), and the matching network's own loss lands directly on NF. A Ka-band `NF_min` derivation against `sg13g2_hbt_mod.lib`'s VBIC noise parameters does not exist in the fleet. Treat 2.5 dB as an aspiration to be tested, not a number already shown reachable on this PDK. |
+| 4 | **LNA input match, S11** | **RATIFIED (target)** | **≤ −10 dB** across band | ≤ −15 dB | (E) + (L)Shaeffer–Lee | `cap_bcs`/`cap_wcs` × `res_*` extremes (L/C spread), temperature extremes | 50 Ω port convention above. Gated on a simulatable passive: no PDK inductor or t-line model exists (P), so S11 is **not simulatable at all** until EM extraction lands — see open item 3. |
+| 5 | **LNA output / interstage match, S22** | **OPEN** — form choice (50 Ω vs conjugate match) needs its own DR | **≤ −10 dB** across band (50 Ω) **or** a stated conjugate match to the mixer RF port | ≤ −15 dB | (E) | as row 4 | Row deliberately admits two forms because the LNA→mixer interface convention is undecided (see "Port convention" above). Whichever is chosen must be recorded in a DR before this row is ratified. |
+| 6 | **Stability, k-factor** | **RATIFIED (target)** | **k > 1** (unconditional) across band **and out-of-band to at least 3× the upper band edge (≥ 63.6 GHz)**, all corners | k > 1.5 | (E), house rule | worst process × temp × supply combination; out-of-band as well as in-band | Not optional and not an afterthought. An HBT with 400 GHz fmax has gain far above the band; out-of-band oscillation is the realistic failure. `μ`-factor may be reported alongside k/Δ. |
+| 7 | **LNA IIP3** | **RATIFIED (target)** | **≥ −15 dBm** (input-referred) | ≥ −10 dBm | (E) | `hbt_typ`, nominal supply/temperature (to be confirmed — linearity's corner dependence is a bench finding, not an assumption) | Must be measured by **two-tone transient + FFT**, with tone spacing, tone powers, transient length, window, and FFT bin resolution recorded beside the number, and the extrapolation range stated. No IIP3 claim without that bench. |
+| 8 | **LNA P1dB (input-referred)** | **RATIFIED (target)** | **≥ −25 dBm** | ≥ −20 dBm | (E) | as row 7 | Added because IIP3 alone does not bound compression, and a receive front end behind a real antenna sees blockers. Single-tone power sweep; the sweep range and the 1 dB fit method are recorded with the number. |
+| 9 | **Mixer conversion gain (voltage or power — state which)** | **RATIFIED (target)** | **≥ 8 dB** across band, active (Gilbert-cell class assumed) | ≥ 12 dB | (E) | `hbt_wcs`, 125 °C, min supply | **NEEDS-VERIFICATION.** The row is meaningless without stating *which* conversion gain: this document requires **power conversion gain into a 50 Ω IF load** as the primary, with voltage conversion gain into a stated capacitive load permitted as a secondary, explicitly labelled figure. |
+| 10 | **Mixer noise figure, SSB** | **RATIFIED (target)** — measurement method open (issue #2) | **≤ 12 dB** | ≤ 9 dB | (E) | `hbt_wcs`, 125 °C | **NEEDS-VERIFICATION.** SSB vs. DSB must be stated with every number (they differ by ~3 dB for an image-unfiltered downconverter, and confusing them is the classic way a mixer NF claim becomes wrong). The image-rejection assumption behind "SSB" is an open item — no image-reject architecture is chosen. ngspice has no `.pnoise`; the measurement method is a bench-design problem, see `porting-plan.md`. |
+| 11 | **Mixer IIP3** | **RATIFIED (target)** | **≥ −5 dBm** | ≥ 0 dBm | (E) | `hbt_typ`, nominal | Same two-tone requirements as row 7; tones placed in-band, IM3 read at IF. |
+| 12 | **Cascade (LNA + mixer) NF, SSB** | **OPEN** — gated on the interface-convention DR (open item 4) | **≤ 4.0 dB** | ≤ 3.0 dB | (E) | `hbt_wcs`, 125 °C | The row the system actually cares about. **Measured on the cascade**, not computed by Friis from rows 3 and 10, unless the two are genuinely 50 Ω-interfaced (see "Port convention"). Friis-computed values may be reported as a cross-check, labelled as such. |
+| 13 | **Cascade conversion gain** | **OPEN** — gated on the interface-convention DR (open item 4) | **≥ 28 dB** | ≥ 35 dB | (E) | `hbt_wcs`, 125 °C, min supply | Same measurement rule as row 12. |
+| 14 | **LO frequency range** | **OPEN** — moves with rows 1 + 16 | **16.7–20.2 GHz** (low-side LO, 1 GHz IF) | high-side LO 18.7–22.2 GHz as an alternative, not a commitment | derived from rows 1 + 16 | — | Arithmetic check: `f_LO = f_RF − f_IF` over 17.7–21.2 GHz at `f_IF = 1 GHz` ⇒ 16.7–20.2 GHz. The IF plan is itself DRAFT (row 16), so this row moves with it. LO source class (external ideal source for bench work vs. an on-PDK LC VCO of the `sg13g2-vco` class) is an open item, not settled here. |
+| 15 | **LO drive level and LO-to-RF leakage** | **OPEN** — LO drive to be set by the mixer bench; provisional vs DR-0002 | LO drive **TBD** (to be set by the mixer bench, not guessed); **LO-to-RF leakage ≤ −30 dBm** referred to the RF port, and **LO-to-IF leakage ≤ −30 dBm** | leakage ≤ −40 dBm | (E) | `hbt_typ` and mismatch corners (leakage is a matching/symmetry effect, so `hbt_typ_mismatch` is in scope) | LO drive level is deliberately blank: the required drive is an output of the mixer design, and a guessed dBm here would silently constrain the topology. Leakage is a **power at a port**, so it is only meaningful with the LO drive level stated beside it. |
+| 16 | **IF centre and bandwidth** | **OPEN** — LEO channel-bandwidth assumption unverified; interacts with DR-0002 | IF centre **1 GHz** (DRAFT); **IF BW ≥ 500 MHz** (−1 dB), one LEO broadband channel | IF BW ≥ 1 GHz | (E) | `cap_*` corners (IF load RC), 125 °C | **NEEDS-VERIFICATION**: "one LEO broadband channel ≈ 500 MHz" is stated from general knowledge and not checked against any published channel plan. The IF centre interacts with image rejection and with the beamsteering partition (DR-0002) — a digital-beamforming partition would want a different IF plan than an LO-phase-shift partition. |
+| 17 | **Supply rail** | **RATIFIED (target)** | **≤ 2.5 V** total rail, with **no single `npn13G2` seeing `V_CE` above 1.4 V** (BVCEO min) **and no device operated outside the model card's own `vce` 0.4–2.0 V validity window** | a single 1.8 V rail if the topology allows it | (P) §3.1 + `sg13g2_hbt_mod.lib` header | — | This is the row most tightly bound by (P), and the binding constraint is **two-sided**: BVCEO min is 1.4 V, and the VBIC card is only *characterized* to `vce ≤ 2.0 V`. A cascode must distribute stress so each device sits inside both. **`npn13g2v` (BVCEO 2.2 V) is not a usable escape at Ka band**: its FT is min 90 / target 120 GHz (P §3.3), i.e. `fT/f ≈ 4.5–6` at 20 GHz — see DR-0001. |
+| 18 | **DC power, LNA + mixer, per element** | **RATIFIED (target)** — provisional vs DR-0002 | **≤ 40 mW** | ≤ 25 mW | (E) | `hbt_bcs`, −40 °C (bias current typically peaks there for a fixed bias network) | Per-element power is the number the array multiplies. It is the single row most directly coupled to the beamsteering partition (DR-0002): an RF-path phase shifter per element adds loss the LNA must make up, i.e. power. |
+| 19 | **AREA** (absolute) | **OPEN** — value needs a first floorplan + cost/reticle economics (open item 8) | **TBD — set at ratification**, method fixed here: the bound is the drawn bbox area in mm² of the LNA + mixer cell, measured by `klt economy` | — | (KLT) | — | Deliberately not guessed. The **element pitch does not set it**: half-wave spacing at the 21.2 GHz upper band edge is **7.07 mm** (DR-0001), enormous relative to any plausible die area, so the pitch constrains the *board*, not this die. The bound should therefore be set from **cost/reticle economics plus a first floorplan**, not from array geometry. |
+| 20 | **AREA-EFF** (efficiency composite) | **OPEN** — utilization floor + dead-margin caps need `klt economy` evidence (open item 8) | Per [klayout-tools#1086](https://github.com/2AMLogic/klayout-tools/issues/1086) / [`design-evidence-tiers.md` § "Area-efficiency spec convention"](https://github.com/2AMLogic/klayout-tools/blob/main/docs/design-evidence-tiers.md): **hard bounds** — `bbox_tightness` = 1.0, `dead_margins_um` ≤ a per-edge cap set at ratification, `largest_empty_regions` ≤ a set bbox fraction; **calibrated bound** — `utilization` ≥ a floor **not set here**; **judgment layer** — an `economy-review` skill verdict of `pass` | — | (KLT) | — | Checked in one command via `klt economy`'s `--area-eff-*` flags. The utilization floor is **deliberately left unset**: the klt doc's own guidance is that analog block kinds carry *no named floor* (typical ranges 0.30–0.55) precisely because a wrong floor drives cramming, which trades against matching and DRC margin. Set it from this block's own `economy-review` evidence, not by default. |
 
 ---
 
-## Verification corners (DRAFT)
+## Verification corners
 
-Derived from the PDK's actual corner files (P), **not** copied from a sibling:
+**Ratified as the binding corner frame for the RATIFIED (target) rows by
+[DR-0003](decision-records/0003-target-spec-first-ratification.md)**, with
+the passive/EM axis explicitly **OPEN** (last row below). Derived from the
+PDK's actual corner files (P), **not** copied from a sibling:
 
 | Axis | Set | Source |
 |---|---|---|
@@ -323,13 +341,22 @@ table does not pretend to answer; see open item 3.
 
 ---
 
-## Open items that must close before ratification
+## Open items
+
+Status after the first ratification pass
+([DR-0003](decision-records/0003-target-spec-first-ratification.md)):
+items 1's *second route* was taken for rows 2, 3, 9 and 10 (re-stated
+self-derived targets, defended there) — the citation gap itself remains
+open follow-up; item 5's *row* (17) is ratified as a target and the
+**topology** question stays open; items 2, 3, 4, 8 and 9 are the recorded
+**gates** on the OPEN rows and stay open unchanged.
 
 1. **Replace every (E) flag with a real citation.** Published SiGe Ka-band
    LNA and active-mixer results, each cited with author, venue, year, and the
    specific number taken — or the row is re-stated as an explicitly
-   self-derived engineering target and defended as such. This is the single
-   largest gap in this document.
+   self-derived engineering target and defended as such (the route DR-0003
+   took for rows 2, 3, 9, 10; the literature check remains open). This is
+   the single largest gap in this document.
 2. **Verify the band allocation edges** (row 1) and the LEO channel-bandwidth
    assumption (row 16) against a checkable primary source.
 3. **The 20 GHz passive question.** No PDK inductor or transmission-line
