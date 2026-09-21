@@ -3,9 +3,10 @@
 ```
 spec/
   README.md                 this file
-  target-spec.md            the DRAFT target-spec table: per-corner rows, a
-                              source citation per row, the 50 Ω port
-                              convention, AREA + AREA-EFF
+  target-spec.md            the target-spec table (PARTIALLY RATIFIED, per
+                              DR-0003: per-corner rows, a source citation
+                              per row, the 50 Ω port convention, AREA +
+                              AREA-EFF)
   porting-plan.md           what transfers from sg13g2-lna / sg13g2-vco /
                               sg13g2-comparator, the exact IHP-Open-PDK model
                               files this block depends on, and what is
@@ -14,19 +15,30 @@ spec/
     TEMPLATE.md             copy this to start a new record
     0001-band-selection-ka-vs-ku.md    band (proposed, with the Ku trigger)
     0002-beamsteering-partition.md     beamsteering (deferred, on purpose)
+    0003-target-spec-first-ratification.md   first ratification pass
+                              (eleven rows RATIFIED as targets, nine OPEN)
 ```
 
-## Status: nothing here is ratified
+## Status: partially ratified — targets, not compliance
 
-[`target-spec.md`](target-spec.md) is **DRAFT**. So is the band
-([DR-0001](decision-records/0001-band-selection-ka-vs-ku.md), status
-*proposed*). The beamsteering partition
-([DR-0002](decision-records/0002-beamsteering-partition.md)) is *deferred* —
-a recorded decision not to decide yet, not a default.
+Since [DR-0003](decision-records/0003-target-spec-first-ratification.md)
+(the first ratification pass, merged via the ratification-via-PR two-key
+path), [`target-spec.md`](target-spec.md) carries **eleven RATIFIED (target)
+rows** — 2, 3, 4, 6, 7, 8, 9, 10, 11, 17, 18 — and **nine explicitly OPEN
+rows** — 1, 5, 12, 13, 14, 15, 16, 19, 20 — each with its gate recorded in
+that record. **No row is ratified as met**: no measurement of this block
+exists.
 
-No design, layout, or simulation work may cite a row in `target-spec.md` as
-settled. Work may proceed *against* the draft; it may not claim *compliance*
-with it.
+The band ([DR-0001](decision-records/0001-band-selection-ka-vs-ku.md))
+stays *proposed* — row 1 is one of the OPEN rows, gated on allocation-edge
+verification — so every ratified frequency-dependent row is provisional
+against its trigger. The beamsteering partition
+([DR-0002](decision-records/0002-beamsteering-partition.md)) stays
+*deferred*; row 18 is ratified provisionally against it.
+
+Design work may proceed against the ratified rows and cite them as binding
+targets. It may still not claim *compliance* with any row — open or
+ratified — without a `sim/` evidence record substantiating it.
 
 ## Decision-record process
 
@@ -54,13 +66,18 @@ The numbering convention (`NNNN-<slug>.md`) is adopted from
 
 ## Ratification
 
-Ratification flows through the standard **two-key mechanism (EE key + market
-key, both installed by the standard tooling)**; a scope-only spec DR ratified
-with both keys needs no per-PR operator statement. Wording adopted from
-[`sg13g2-comparator/spec/README.md`](https://github.com/2AMLogic/sg13g2-comparator/blob/main/spec/README.md).
+Ratification flows through the **two-key mechanism (EE key + market key)**.
+This repo has no `ratification/` tree (fleet-wide gap:
+[2AMLogic/product#135](https://github.com/2AMLogic/product/issues/135)), so
+the keys are turned by the **ratification-via-PR standing path**
+([2AMLogic/2am#357](https://github.com/2AMLogic/2am/issues/357), 2026-08-19):
+the record travels as a PR, **Judge review is the first key,
+Champion/operator merge is the second**, and the merge commit is the durable
+evidence both keys were turned. That is the path DR-0003 took.
 
 **An agent does not turn either key.** An agent writes the record, argues it,
-and leaves it `proposed`.
+and leaves it `proposed` (the record's own text states what its dispositions
+mean on merge — the known `Status:`-line wart).
 
 ## The largest open gap, named here so it is not lost
 
@@ -68,13 +85,17 @@ and leaves it `proposed`.
 engineering target rather than a traceable citation. The environment those
 documents were written in had **no literature access**, so no published SiGe
 Ka-band LNA or active-mixer result could be checked — and inventing one would
-have been worse than flagging it. **Replacing every (E) flag with a real,
-checkable citation is a precondition of ratification**, and it is open item 1
-in `target-spec.md`.
+have been worse than flagging it. DR-0003 therefore ratified rows 2, 3, 9 and
+10 via open item 1's *second route* (re-stated self-derived engineering
+targets, defended in the record); **replacing every (E) flag with a real,
+checkable citation remains open follow-up** and may sharpen or supersede
+those rows' bounds on evidence. It is still open item 1 in `target-spec.md`.
 
 The same applies to the band edges themselves (17.7–21.2 GHz) and the LEO
 channel-bandwidth assumption behind the IF row: both are flagged
-`NEEDS-VERIFICATION` in place rather than presented as sourced.
+`NEEDS-VERIFICATION` in place rather than presented as sourced, and both
+**stay unratified** — rows 1 and 16 are among DR-0003's OPEN rows, gated
+exactly on that verification.
 
 ## Where the downstream consequences are tracked
 
@@ -82,5 +103,6 @@ channel-bandwidth assumption behind the IF row: both are flagged
 gap-to-T1 tracker — holds the honest, artifact-presence survey of everything
 that sits downstream of ratification. T1 items 5 (full corner verification),
 7 (post-layout) and 8 (characterization report) all grade against a
-**ratified** spec, so none of them can close until this directory's table
-stops being DRAFT.
+**ratified** spec. Since DR-0003 they grade against **eleven binding target
+rows**; verdicts against the nine OPEN rows remain provisional by
+construction until each row's gate closes.
