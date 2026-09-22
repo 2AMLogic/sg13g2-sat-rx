@@ -1,6 +1,6 @@
 // Renovate configuration for 2AMLogic/sg13g2-sat-rx
 // Docs: https://docs.renovatebot.com/configuration-options/
-// Pipeline docs: docs/ops/dependency-security-pipeline.md
+// Pipeline docs: docs/ops/dependency-security-pipeline.md (in noc0dev-template, not this repo)
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
 
@@ -31,7 +31,7 @@
   // Never auto-merge. Agents review, humans merge.
   "automerge": false,
 
-  // Create PRs as drafts — consistent with AGENTS.md PR policy
+  // Create PRs as drafts so humans gate the merge
   "draftPR": true,
 
   // --- Schedule ---
@@ -44,10 +44,6 @@
   "timezone": "UTC",
 
   // --- Python (uv) ---
-
-  // Update lockfile without widening pyproject.toml version ranges.
-  // Renovate detects uv.lock natively.
-  "rangeStrategy": "update-lockfile",
 
   // Refresh uv.lock even when no direct dependency range changes.
   // This is how Renovate keeps transitive dependencies current.
@@ -69,6 +65,13 @@
   // --- Package grouping ---
 
   "packageRules": [
+    // Update uv/pep621 lockfiles without widening pyproject.toml ranges.
+    // Scoped to Python managers so npm keeps the default "auto" strategy.
+    {
+      "matchManagers": ["pep621", "uv"],
+      "rangeStrategy": "update-lockfile"
+    },
+
     // Group all non-major Python dependency updates into one PR
     {
       "groupName": "python minor/patch dependencies",
@@ -82,9 +85,10 @@
       "matchUpdateTypes": ["major"]
     },
 
-    // Group all GitHub Actions SHA updates into one PR
-    // AGENTS.md mandates SHA pinning with inline version comments (# vX.Y.Z)
-    // Renovate preserves these comments natively when updating digests
+    // Group all GitHub Actions updates into one PR.
+    // digest updates only apply to SHA-pinned refs; this repo's workflows
+    // currently use tag refs (e.g. actions/checkout@v4), so digest entries
+    // stay inert until/unless refs are pinned.
     {
       "groupName": "github-actions",
       "matchManagers": ["github-actions"],
