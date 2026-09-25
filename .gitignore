@@ -50,6 +50,7 @@ sim/*/_selftest/
 .loom/exit-codes/
 .loom/sweep-checkpoint/
 .loom/sweep-run/
+.loom/state/ci-telemetry/
 .loom/concierge/
 .loom/stats/
 .loom/diagnostics/
