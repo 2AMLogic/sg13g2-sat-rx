@@ -75,6 +75,18 @@ case "${MODE}" in
     ;;
 esac
 
+# Integrity gate: the installed IHP models must be the pinned artifact
+# (sim/pdk-artifact.json) BEFORE any simulator process is launched. A missing
+# PDK/model or a hash mismatch aborts here (exit 2), never a skip. Set
+# SG13G2_REQUIRE_NGSPICE=1 (hosted CI does) to also fail on a missing or
+# non-tested-major ngspice.
+VERIFY_ARGS=()
+[ "${SG13G2_REQUIRE_NGSPICE:-0}" = "1" ] && VERIFY_ARGS+=(--require-ngspice)
+if ! python3 -m harness.cli verify-pdk "${VERIFY_ARGS[@]}"; then
+  echo "sim/characterize.sh ${MODE}: refusing to simulate -- IHP model artifact not verified" >&2
+  exit 2
+fi
+
 FAILURES=0
 
 for exp in "${HARNESS_EXPERIMENTS[@]}"; do

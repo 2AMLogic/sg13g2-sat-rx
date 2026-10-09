@@ -46,6 +46,7 @@ import kaband  # noqa: E402
 from harness.corners import (  # noqa: E402
     CORNERS, PvtPoint, build_grid, resolve_corners, sabotage, supply_points,
 )
+from harness import pdkartifact  # noqa: E402
 from harness.pdk import PdkConfigError, PdkNotFound, find_pdk  # noqa: E402
 from harness.report import RecordExists, allocate_record_id, git_provenance  # noqa: E402
 from harness.runner import NgspiceMissing, ngspice_version, run_point  # noqa: E402
@@ -79,9 +80,11 @@ def _load():
 
 def _pdk():
     try:
-        return find_pdk(SIM_DIR)
+        pdk = find_pdk(SIM_DIR)
     except (PdkNotFound, PdkConfigError) as exc:
         raise SystemExit(f"error: {exc}")
+    pdkartifact.require(pdk, SIM_DIR)  # integrity gate before any simulator runs
+    return pdk
 
 
 def _run_local(tb, pdk, point: PvtPoint, sweep, workdir: Path, *, sabotage_measurement=False,
