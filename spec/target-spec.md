@@ -377,6 +377,8 @@ open follow-up; item 5's *row* (17) is ratified as a target and the
    method — and its stated limits — is a bench-design deliverable of issue #2.
 7. **The LO source class** (row 14) and whether the LO port is single-ended
    or differential, and at what reference impedance.
+   Proposed (not ratified) in
+   [DR-0006](decision-records/0006-lo-source-class-and-port-convention.md).
 8. **AREA absolute bound** (row 19) and the `utilization` floor (row 20),
    both to be set from a first floorplan plus `klt economy` evidence.
 9. **The beamsteering partition** (DR-0002) — deliberately deferred, but it
