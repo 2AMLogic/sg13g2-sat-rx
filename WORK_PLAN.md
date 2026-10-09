@@ -47,7 +47,6 @@ _None._
 
 ## Proposed (Architect / Hermit)
 
-- **#27**: sim: mixer SSB noise-figure measurement method without pnoise (row 10) *(architect)*
 - **#28**: design: first xschem LNA first-stage schematic from the Ka-band HBT characterization (T1 item 1) *(architect)*
 - **#35**: sim: mixer-core topology feasibility under the row-17 supply limits (before any mixer schematic) *(architect)*
 
@@ -66,6 +65,6 @@ _None._
 | PRs awaiting review | 0 |
 | Approved PRs awaiting merge | 0 |
 | Curated | 0 |
-| Architect / Hermit proposals | 3 |
+| Architect / Hermit proposals | 2 |
 | Active epics | 0 |
 <!-- guide:plan-body:end -->

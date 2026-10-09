@@ -4,6 +4,10 @@ Chronological record of merged pull requests and closed issues, maintained by th
 
 ### 2026-10-09
 
+- **PR #42**: ci: validate passive and mixer-method records and protect frozen probe logs (#39)
+- **PR #37**: sim: mixer SSB-NF method feasibility — MODEL_ABSENT (no intrinsic noise in ngspice .tran) (#27)
+- **Issue #39** (closed): ci: validate passive and mixer-method records and protect frozen probe logs
+- **Issue #27** (closed): sim: mixer SSB noise-figure measurement method without pnoise (row 10)
 - **Issue #17** (closed): sim: Ka-band npn13G2 device characterization (noise-optimum current density, NFmin, fT, available gain at 17.7 / 19.45 / 21.2 GHz), the prerequisite for T1 item 1
 - **Issue #18** (closed): ci: run the harness smoke test, the negative control and an evidence-format check on every push (T1 item 10)
 - **Issue #20** (closed): Install ratification/ee-key and ratification/market-key reviewer trees (product#151)
