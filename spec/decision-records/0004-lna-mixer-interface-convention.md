@@ -139,8 +139,8 @@ gain path between the LNA transistor and the mixer transistor**.
 | Axis | (A) 50 Ω back-to-back | (B) co-designed conjugate interstage |
 |---|---|---|
 | Matching networks in the interstage path | Two: LNA output → 50 Ω and 50 Ω → mixer RF port, in series (estimate: up to ~2× the passive loss of B, plus a 50 Ω midpoint that nobody needs) | One: LNA output → mixer RF port directly |
-| Gain budget (rows 2/9/13; zero slack) | Each network's loss is paid in gain; the 50 Ω port is also what rows 2 and 9 were stated against, so A *inherits* the 28 = 20 + 8 identity but with the larger loss. Cascade gain ≈ sum of the two blocks' 50 Ω gains **only if** both S11/S22 at the interface are good | Loss is one network's. Conjugate match maximizes transferred power at the interface. Cascade gain is not a sum of 50 Ω-measured gains; must be measured as a cascade |
-| NF budget (rows 3/10/12; ≈ 1.15 dB slack) | Friis holds only where the interface is genuinely 50 Ω. At the row-4/5 bound (−10 dB), |Γ|² = 0.1, i.e. **0.46 dB mismatch loss per side** (derived: 10·log₁₀(1 − 0.1)); a single such mismatch is ≈ 40 % of the 1.15 dB slack, and the mixer's NF is source-impedance dependent, so 50 Ω-measured mixer NF is not the NF the mixer shows behind the LNA | Insensitive to interstage loss (≈ 0.1 dB NF per dB loss, derived above). The mixer's NF must be taken with the LNA's actual output impedance as source, which is exactly the cascade bench |
+| Gain budget (rows 2/9/13; zero slack) | Each network's loss is paid in gain; the 50 Ω port is also what rows 2 and 9 were stated against, so A *inherits* the 28 = 20 + 8 identity but with the larger loss. Cascade gain ≈ sum of the two blocks' 50 Ω gains **only if** both S11/S22 at the interface are good. At the row-4/5 bound (−10 dB), \|Γ\|² = 0.1, i.e. **0.46 dB mismatch loss per side** (derived: −10·log₁₀(1 − 0.1) = 0.458 dB; ≈ 0.92 dB if both sides sit at the bound, ignoring re-reflection). Against zero gain slack, a single bound-limited mismatch alone fails row 13 unless rows 2/9 carry that margin | Loss is one network's. Conjugate match maximizes transferred power at the interface. Cascade gain is not a sum of 50 Ω-measured gains; must be measured as a cascade |
+| NF budget (rows 3/10/12; ≈ 1.15 dB slack) | Friis holds only where the interface is genuinely 50 Ω. Treated as an interposed loss, the 0.458 dB bound-limited mismatch (see gain row) costs little NF: F = 1.778 + (1.111 − 1)/100 + 1.111·(15.85 − 1)/100 = 1.944 ⇒ 2.888 dB, i.e. **+0.040 dB** over 2.848 dB, ≈ 3.4 % of the 1.15 dB slack (derived; consistent with Fact 2's ≈ 0.1:1; both sides at the bound: ≈ +0.08 dB). A's real NF risk is not quantified here: the mixer's NF is source-impedance dependent, so 50 Ω-measured mixer NF is not the NF the mixer shows behind a mismatched LNA output (**unquantified**; no mixer exists) | Insensitive to interstage loss (≈ 0.1 dB NF per dB loss, derived above). The mixer's NF must be taken with the LNA's actual output impedance as source, which is exactly the cascade bench |
 | Matching-network loss | Two lossy networks; each depends on the passive study (open item 3, Q ≈ 12.3 single-turn at 20 GHz) | One lossy network; same dependency |
 | DC power (row 18, ≤ 40 mW) | A 50 Ω-capable output stage (lower impedance level ⇒ more current for the same swing) is likely, i.e. power goes *up* (estimate, qualitative; no topology exists). Device bias at the NF optimum is ~10⁻² of the budget, so this is a stage/buffer question, not a device one | No 50 Ω driver is required by the interface; higher impedance level lets the LNA output stage run at lower current (estimate, qualitative). But does not remove mixer-core or LO power |
 | Stability (row 6, k > 1 to ≥ 63.6 GHz) | Blocks are isolated by a nominal 50 Ω; each block's k is checkable on its own at 50 Ω, but a 50 Ω-measured k does not bound out-of-band behaviour behind a non-50 Ω real load | LNA load is the mixer's out-of-band impedance, so k is a **cascade** property and must be evaluated there (harder, not impossible) |
@@ -150,9 +150,12 @@ gain path between the LNA transistor and the mixer transistor**.
 **Why B, and the honest weakness of the argument.** The simplicity assumption
 (prefer A) was tested, not assumed. The test found the gain budget has zero
 slack and A puts two lossy transformations in the one place loss cannot be
-afforded, while B puts one. The NF argument does **not** favour either option
-by itself (interstage loss is cheap in NF); A's NF risk is mismatch and the
-source-dependent mixer NF, not loss. What B costs is modularity and the
+afforded, while B puts one; A's 50 Ω ports also each allow up to 0.46 dB of
+mismatch loss at their −10 dB bound, which is a gain cost against that same
+zero slack. The NF argument does **not** favour either option by itself:
+interstage loss, mismatch loss included, is cheap in NF (0.46 dB of it moves
+cascade NF by ≈ 0.04 dB). A's remaining NF risk is the source-dependent mixer
+NF behind a non-50 Ω LNA output, which is unquantified, not loss. What B costs is modularity and the
 simplicity of Friis. That is a real cost, accepted because the gain row is the
 binding one. **This is a reasoned budget argument, not a measurement**: it
 rests on an estimate that two networks lose more than one, and on no number
