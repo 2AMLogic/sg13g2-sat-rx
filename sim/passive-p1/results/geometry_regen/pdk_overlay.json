@@ -1,0 +1,5 @@
+{
+  "pycell4klayout-api": {"repo": "https://github.com/IHP-GmbH/pycell4klayout-api.git", "rev": "2ffdf79fe51a7c35b361cc854369b5d434c8d478"},
+  "pypreprocessor": {"repo": "https://github.com/IHP-GmbH/pypreprocessor.git", "rev": "cf1ff9bad0fb5338cf1c5b990b2b816b1ea01a64"},
+  "overlay": "/tmp/sg13g2-pycell-overlay"
+}

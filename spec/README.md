@@ -21,6 +21,8 @@ spec/
     0003-target-spec-first-ratification.md   first ratification pass
                               (eleven rows RATIFIED as targets, nine OPEN)
     0004-lna-mixer-interface-convention.md   LNA-mixer interface (proposed)
+    0005-passive-p1-feasibility.md   p1 spiral feasibility; passive-family
+                              choice deferred (no EM result yet)
 ```
 
 ## Status: partially ratified — targets, not compliance

@@ -149,6 +149,23 @@ matching/LO-port inductors (once a topology is ratified) will need
 here without re-deriving it per CLAUDE.md's "never copy a number across
 repos without its derivation."
 
+### `passive-p1` — bounded EM campaign for one inductor (issue #25)
+
+[`passive-p1/`](passive-p1/README.md) is a reproducible, **p1-only** (single-turn
+`inductor2`, w=8.22 µm, s=3.29 µm, d=47.65 µm) openEMS → de-embed → Touchstone →
+lumped fit → ngspice campaign, adapted from the pinned `sg13g2-vco` flow, with
+declared mesh/margin/fit limits and an append-only record whose status is one of
+`QUALIFIED` / `UNCONVERGED` / `FIT_FAILED` / `CAPABILITY_UNAVAILABLE`.
+**State at merge: the openEMS stages are `CAPABILITY_UNAVAILABLE` on the build host,
+so there is no p1 L/Q/SRF, convergence or fit result, and no qualified model.** The
+analysis chain (strict Touchstone parsing, impedance, L/Q/SRF, ngspice comparison)
+is validated only on generated data (synthetic lossless-L known answer plus
+wrong-value and malformed-data rejections). The passive question
+(`spec/target-spec.md` open item 3) is **not** resolved by this; feasibility is
+deferred in [DR-0005](../spec/decision-records/0005-passive-p1-feasibility.md).
+No process/temperature spread is supported; nothing here is a design stand-in yet,
+and the benches above still contain no inductor.
+
 ## HBT process corners
 
 `sim/harness/corners.py`'s built-in five-corner MOS sweep (`tt`/`ff`/`ss`/
