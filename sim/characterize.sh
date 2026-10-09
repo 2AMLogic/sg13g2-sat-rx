@@ -1,46 +1,71 @@
 #!/usr/bin/env bash
 #
-# sim/characterize.sh -- the one-command entry point for this repo's two
-# benches (sim/lna-sparam-nf, sim/mixer-conversion-iip3), built on the
-# sim/harness/ generic core (see harness/README.md). It is a thin wrapper
-# over `python3 -m harness.cli`, not new harness machinery -- each mode below
-# maps directly to an existing `harness.cli` subcommand, run once per
-# experiment, with the HBT corner set (sim/harness/corners.py's SG13G2
-# extension) named explicitly since it is not this core's global default.
+# sim/characterize.sh -- the one-command entry point for this repo's benches,
+# built on the sim/harness/ generic core (see harness/README.md):
+#
+#   sim/lna-sparam-nf, sim/mixer-conversion-iip3
+#       harness-native benches: each mode maps directly to an existing
+#       `python3 -m harness.cli` subcommand, run once per experiment, with the
+#       HBT corner set (sim/harness/corners.py's SG13G2 extension) named
+#       explicitly since it is not this core's global default.
+#   sim/hbt-kaband-characterization
+#       a bench-local driver (hbt-kaband-characterization/run.py) on top of
+#       the same harness pieces: it sweeps Nx x VCE x VBE INSIDE every PVT
+#       point, which harness.cli's scalar-measure interface cannot express
+#       (see that bench's README.md).
 #
 #   sim/characterize.sh smoke
-#       One nominal PVT point (hbt_typ / 27 C / nominal supply) per bench,
-#       writing NO evidence (`--no-write`). Seconds, not minutes -- proof
-#       that the whole command surface runs from a clean checkout.
+#       The hbt_typ process corner only, writing NO evidence: for the two
+#       harness-native benches that is hbt_typ x 3 temperatures x 3 supplies
+#       (9 small points each -- harness.cli has no temperature/supply subset
+#       flag); for the Ka-band bench one PVT point (hbt_typ / 27 C / nominal
+#       supply) on its reduced bias sweep. Seconds, not minutes -- proof that
+#       the whole command surface runs from a clean checkout AND produces its
+#       measurements (see "smoke failure semantics" below).
 #
 #   sim/characterize.sh characterize
 #       The full PVT campaign behind every measurement: hbt_typ/hbt_bcs/
 #       hbt_wcs x (-40, 27, 125) C x (2.25, 2.50, 2.75) V = 27 points per
 #       bench. Mints a new, dated, append-only record per bench under
-#       sim/<experiment>/records/ (report.py's format) -- a genuinely new
-#       record, never an overwrite of one already committed.
+#       sim/<experiment>/records/ -- a genuinely new record, never an
+#       overwrite of one already committed. The Ka-band bench submits its
+#       grid as `klt sim` requests (backend from $KABAND_BACKEND, default
+#       "batch"; see its README.md "Running the full grid").
 #
 #   sim/characterize.sh selftest
-#       Runs `harness.cli selftest` (the negative control -- see
-#       sim/harness/corners.py's sabotage() docstring) for both benches,
-#       explicitly against their own declared "hbt" corner set.
+#       The negative controls: `harness.cli selftest` for the two
+#       harness-native benches (see sim/harness/corners.py's sabotage()
+#       docstring), and run.py selftest for the Ka-band bench (source-noise
+#       normalization probe, process sensitivity, sabotage collapse, and a
+#       deliberately invalid deck that must be rejected) on its REDUCED bias
+#       sweep.
 #
-# Both benches are PLACEHOLDER circuits (see each tb.json's "claim" field) --
-# this script characterizes the harness/methodology, not spec compliance;
-# neither "characterize" mode's PASS status should be read as "the DRAFT
-# target spec (README.md) is met".
+# The two harness-native benches are PLACEHOLDER circuits (see each tb.json's
+# "claim" field); the Ka-band bench is DEVICE-LEVEL evidence (a bare
+# transistor, not a matched amplifier). No mode's PASS status should be read
+# as "the target spec (spec/target-spec.md) is met".
 #
-# Exit status: 0 if every campaign that ran exited 0; otherwise the number of
-# failing campaigns (harness.cli run/selftest exit non-zero on a spec-check
-# failure or an incomplete grid -- see cli.py's cmd_run/cmd_selftest).
+# Smoke failure semantics: a harness-native smoke run is a single corner, so
+# every tb.json min_spread_pct_by_axis check is structurally unverifiable and
+# `harness.cli run` exits non-zero BY CONSTRUCTION. That structural exit is
+# reported but not counted. What IS counted: any smoke whose simulation did
+# not complete ("<n>/<m> points ok" with n != m, or no such line at all), and
+# any non-zero exit of the Ka-band bench's smoke (which has no structural
+# exemption: it exits non-zero only when a measurement is missing or a check
+# fails).
+#
+# Exit status: 0 if every campaign that ran passed; otherwise the number of
+# failing campaigns.
 
 set -uo pipefail
 
 SIM_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "${SIM_DIR}"
+cd "${SIM_DIR}" || exit 1
 
 MODE="${1:-}"
-EXPERIMENTS=(lna-sparam-nf mixer-conversion-iip3)
+HARNESS_EXPERIMENTS=(lna-sparam-nf mixer-conversion-iip3)
+KABAND=hbt-kaband-characterization
+TOTAL=$(( ${#HARNESS_EXPERIMENTS[@]} + 1 ))
 
 case "${MODE}" in
   smoke|characterize|selftest) ;;
@@ -52,24 +77,22 @@ esac
 
 FAILURES=0
 
-for exp in "${EXPERIMENTS[@]}"; do
+for exp in "${HARNESS_EXPERIMENTS[@]}"; do
   echo "=== ${exp}: ${MODE} ==="
   case "${MODE}" in
     smoke)
-      # Single corner (hbt_typ only) by design, for speed -- but every
-      # tb.json check in this repo is a min_spread_pct_by_axis PVT-sensitivity
-      # floor (report.py's evaluate_checks: fewer than 2 process levels makes
-      # that axis "unverifiable", a hard FAIL, not a skip -- cli.py exposes no
-      # --allow-unswept-axes flag to relax this). A one-corner smoke run is
-      # therefore GUARANTEED to fail those checks by construction; smoke's own
-      # job is only "does the command surface run at all", so its exit status
-      # is reported but never counted against this script's overall result --
-      # only "characterize" (the real hbt x T x V grid, checks meaningful) and
-      # "selftest" gate FAILURES.
-      python3 -m harness.cli run "${exp}" --corners hbt_typ --no-write
+      out="$(python3 -m harness.cli run "${exp}" --corners hbt_typ --no-write 2>&1)"
       status=$?
-      if [ "${status}" -ne 0 ]; then
-        echo "--- ${exp}: smoke exited ${status} (expected -- single-corner checks are structurally unverifiable; see comment above). Not counted as a failure. ---"
+      printf '%s\n' "${out}"
+      counts="$(printf '%s\n' "${out}" | sed -n 's/^\([0-9]*\)\/\([0-9]*\) points ok$/\1 \2/p' | tail -1)"
+      if [ -z "${counts}" ]; then
+        echo "--- ${exp}: smoke FAILED (exit ${status}): the run never reported a point count -- the harness or simulator did not run ---" >&2
+        FAILURES=$((FAILURES + 1))
+      elif [ "${counts% *}" != "${counts#* }" ]; then
+        echo "--- ${exp}: smoke FAILED: only ${counts% *}/${counts#* } points simulated (simulator/measurement failure, not a structural check) ---" >&2
+        FAILURES=$((FAILURES + 1))
+      elif [ "${status}" -ne 0 ]; then
+        echo "--- ${exp}: smoke exited ${status} with every point simulated (expected -- single-corner sensitivity checks are structurally unverifiable). Not counted as a failure. ---"
       fi
       continue
       ;;
@@ -88,10 +111,22 @@ for exp in "${EXPERIMENTS[@]}"; do
   fi
 done
 
+echo "=== ${KABAND}: ${MODE} ==="
+case "${MODE}" in
+  smoke)        python3 "${KABAND}/run.py" smoke ;;
+  characterize) python3 "${KABAND}/run.py" characterize --backend "${KABAND_BACKEND:-batch}" ;;
+  selftest)     python3 "${KABAND}/run.py" selftest ;;
+esac
+status=$?
+if [ "${status}" -ne 0 ]; then
+  echo "--- ${KABAND}: ${MODE} FAILED (exit ${status}) ---" >&2
+  FAILURES=$((FAILURES + 1))
+fi
+
 echo
 if [ "${FAILURES}" -eq 0 ]; then
-  echo "sim/characterize.sh ${MODE}: all ${#EXPERIMENTS[@]} bench(es) OK"
+  echo "sim/characterize.sh ${MODE}: all ${TOTAL} bench(es) OK"
 else
-  echo "sim/characterize.sh ${MODE}: ${FAILURES}/${#EXPERIMENTS[@]} bench(es) FAILED" >&2
+  echo "sim/characterize.sh ${MODE}: ${FAILURES}/${TOTAL} bench(es) FAILED" >&2
 fi
 exit "${FAILURES}"

@@ -1,0 +1,53 @@
+* Source-noise reference-temperature probe (issue #17 regression check).
+*
+* Harness fragment (no .lib/.temp/.control): ../run.py composes it with the
+* HBT model library and runs it once, sweeping the analysis temperature with
+* `option temp=` over -40 / 16.85 / 27 / 125 C (16.85 C = 290.00 K exactly,
+* 27 C = 300.15 K exactly). See ../README.md "Source-noise reference
+* temperature" for what each part proves.
+*
+* Part A -- resistor only. Three 50 ohm resistors, each the only noisy
+* element seen by its own .noise input reference (open-circuit, noiseless
+* 1 Tohm sense load), so T_eff = inoise^2 / (4 k 50):
+*   rpa  plain resistor             -> expected T_eff = analysis temperature
+*   rpb  per-instance temp=27       -> the convention this bench does NOT use;
+*                                      its T_eff is recorded, not relied on
+*   rpc  noisy=0                    -> expected inoise = 0 exactly (the
+*                                      property the bench's method relies on)
+vpa pa 0 DC 0 AC 1
+rpa pa oa 50
+rla oa 0 1e12 noisy=0
+vpb pb 0 DC 0 AC 1
+rpb pb ob 50 temp=27
+rlb ob 0 1e12 noisy=0
+vpc pc 0 DC 0 AC 1
+rpc pc oc 50 noisy=0
+rlc oc 0 1e12 noisy=0
+
+* Part B -- DUT normalization cross-check. Two identical npn13G2 (Nx=4,
+* VCE=1.0 V, VBE=0.88 V) copies with the fixture's bias-tee values, one
+* driven through a NOISY 50 ohm source (textbook method: F = inoise^2 /
+* (4 k T 50), valid only when the source sits at T = T0), one through a
+* NOISELESS 50 ohm source (this bench's method: F = 1 + inoise^2 /
+* (4 k T0 50)). At an analysis temperature equal to T0 the two must agree
+* exactly; at any other temperature the textbook figure is referenced to the
+* ambient source temperature, not T0 (the defect class the curator's
+* guidance and sg13g2-lna's issue-25 erratum describe).
+vbq vqb 0 DC 0.88
+vcq vqc 0 DC 1.0
+vsa sa 0 DC 0 AC 1
+rsa sa sa2 50
+csa sa2 ba 1n
+lba vqb ba 1m
+xqa ca ba 0 0 npn13G2 Nx=4
+lca vqc ca 1m
+coa ca oqa 1n
+rlqa oqa 0 50 noisy=0
+vsb sb 0 DC 0 AC 1
+rsb sb sb2 50 noisy=0
+csb sb2 bb 1n
+lbb vqb bb 1m
+xqb cb bb 0 0 npn13G2 Nx=4
+lcb vqc cb 1m
+cob cb oqb 1n
+rlqb oqb 0 50 noisy=0
