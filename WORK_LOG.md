@@ -4,6 +4,17 @@ Chronological record of merged pull requests and closed issues, maintained by th
 
 ### 2026-10-09
 
+- **PR #56**: spec: machine-checked spec-row to bench/record coverage manifest (#50)
+- **PR #55**: docs(sim): refresh stale spec-status paragraph in sim/README.md
+- **PR #54**: spec: DR-0006 LO source class and port convention (proposed)
+- **PR #53**: ci: verify immutable IHP model artifact; simulator smoke/selftest job (#47)
+- **PR #49**: ci: run mixer noise-method analytic tests
+- **PR #44**: feat(sim): add mixer-topology feasibility bench fixtures and validated extraction
+- **Issue #50** (closed): spec: machine-checked spec-row to bench/record coverage manifest (T1 item 5 bookkeeping)
+- **Issue #52** (closed): docs: sim/README.md still says the target spec is DRAFT and issue #1 is open
+- **Issue #51** (closed): spec: DR-0006 LO source class and port convention (open item 7, gates rows 14/15)
+- **Issue #47** (closed): ci: verify an immutable IHP model artifact and run simulator smoke controls
+- **Issue #48** (closed): ci: run the existing mixer noise-method analytic tests
 - **PR #42**: ci: validate passive and mixer-method records and protect frozen probe logs (#39)
 - **PR #37**: sim: mixer SSB-NF method feasibility — MODEL_ABSENT (no intrinsic noise in ngspice .tran) (#27)
 - **Issue #39** (closed): ci: validate passive and mixer-method records and protect frozen probe logs
