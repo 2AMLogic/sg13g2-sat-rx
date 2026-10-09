@@ -32,6 +32,7 @@ runs against real device data).
 | `lna-sparam-nf` | S11/S21/S22/S12, k-factor (stability), noise figure | placeholder circuit — see below |
 | `mixer-conversion-iip3` | Conversion gain, LO-to-RF leakage, two-tone IIP3 | placeholder circuit — see below |
 | `hbt-kaband-characterization` | Bare `npn13G2` at 17.7/19.45/21.2 GHz: two-port noise parameters (NFmin, Zopt, Rn), NF₅₀, fT, K/\|Δ\| and MAG-or-MSG, DC power, over Nx × VCE × J_C inside every PVT point | **device-level evidence, not a matched-amplifier result** — see below |
+| `mixer-nf-method` | Feasibility of a mixer SSB-NF method without pnoise (issue #27): ngspice noise-capability inventory, SSB/image estimator and status gates | **`MODEL_ABSENT`** — no intrinsic device noise in `.tran`; no mixer NF number — see below |
 
 **The first two benches instantiate a PLACEHOLDER circuit, not a design candidate.**
 `design/` has no ratified schematic yet (issue #1, the spec-ratification
@@ -103,6 +104,24 @@ gap, not a klayout-tools one (klayout-tools does no simulation and is not
 invoked by either bench in this repo). Full derivation:
 `mixer-conversion-iip3/testbench/mixer_ce_placeholder.spice`'s header
 comment.
+
+### `mixer-nf-method`: SSB NF without pnoise (issue #27)
+
+[`mixer-nf-method/`](mixer-nf-method/README.md) tests whether a transient-noise method
+could fill the gap above. **The outcome is `MODEL_ABSENT`.**
+
+- The test is one local `ngspice -b` capability probe of the placeholder at
+  `hbt_typ`/27 °C/2.50 V. Its findings are backed by the ngspice-46 manual and source.
+- ngspice-46 generates no intrinsic HBT noise (shot, terminal-resistance thermal or
+  flicker) and no resistor thermal noise during `.tran`. Only explicit `TRNOISE`
+  sources are stochastic there.
+- PSS/pnoise does not exist.
+- The active-mixer path therefore stops at the issue's coverage gate. No NF number for
+  the placeholder is reported, and nothing there bears on row 10 or row 12.
+- The SSB/image, T0 = 300.15 K, PSD/ENBW and uncertainty conventions, and the status
+  gates, are defined and tested on analytic fixtures. They are ready for a simulator
+  that has the capability.
+- The `klt sim` disclosure gap is filed as 2AMLogic/klayout-tools#2985.
 
 ### `hbt-kaband-characterization`
 
@@ -217,4 +236,7 @@ exception for it out of the general `*.log` rule. `sim/*/_build/` and
 Neither bench in this repo invokes `klayout-tools` (`klt`) — both are
 pre-layout ngspice testbenches; layout/DRC/LVS work has not started (`design/`
 has no schematic yet). No klayout-tools friction was hit building this
-harness bootstrap.
+harness bootstrap. Later, `mixer-nf-method` (issue #27) filed
+2AMLogic/klayout-tools#2985. The `klt sim` contract does not disclose that ngspice
+transients carry no device or resistor noise. The missing noise itself is an ngspice
+capability gap, not a klt one.
