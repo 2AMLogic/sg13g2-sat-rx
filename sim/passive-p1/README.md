@@ -128,6 +128,7 @@ fixtures/          synthetic lossless-L Touchstone (known answer; NOT an EM resu
 results/           solver outputs and derived metrics (see below)
 fit/               fit parameters and the candidate .spice
 records/           append-only: one new file pair per run, never edited
+solver-artifacts/  append-only: one frozen, hashed package per new record (see below)
 run_log/           stage logs
 ```
 
@@ -147,6 +148,67 @@ earlier one if nothing changed; it never modifies the earlier record. The
 `git_commit` inside a record is the repository HEAD when it ran (the PR's base
 commit if run before committing); the input hashes identify the exact scripts.
 
+## Frozen solver-artifact packages (issue #58)
+
+`results/`, `fit/` and `run_log/` are reused scratch: the next run overwrites them.
+A record that only named those paths could therefore be orphaned from the bytes it
+was derived from. Every **new** record (`"record_schema": 2`) is instead preceded by
+a frozen copy of the artifacts the outcome consumed:
+
+```
+solver-artifacts/<YYYYMMDD>-<HHMMSS>-<git-sha>/     (same id as the record, without the status)
+    manifest.json   schema, run_id, status, stages, files[] = {path, sha256, bytes}
+    settings.json   stages, commands, failed command, EM_* solver settings
+    results/ fit/ run_log/   byte copies, same relative layout as the working tree
+```
+
+The record names the package path and the sha256 of `manifest.json`
+(`artifact_package`), and derives its numbers from the **frozen** bytes.
+Publication (`scripts/freeze_package.py`, called by `make_record.py`):
+
+- the run directory is created with `mkdir`; an existing id (complete or interrupted) is
+  refused, never merged or reused;
+- required files depend on the outcome (`required_paths()`): `QUALIFIED` needs the three
+  `.s2p` + `port_information.json` + `run_meta.json`, the post-processing outputs, the fit
+  files, `p1_compare.json` and the logs of the requested stages; `UNCONVERGED` stops after the
+  post-processing outputs; `FIT_FAILED` adds the fit log (and fit/compare files when they
+  exist for it); `CAPABILITY_UNAVAILABLE` keeps whatever diagnostics (logs) exist and invents
+  no solver data. Files from an earlier run that the outcome did not consume (for example a
+  stale `p1_compare.json` beside an `UNCONVERGED` record) are not frozen. Raw FDTD field dumps
+  are not stored;
+- a missing required file refuses publication **before** anything is created (exit 2, no
+  record); `.INCOMPLETE` marks the directory until `manifest.json` is written last; any
+  failure removes the directory this call created; a failed record write removes the package;
+- legacy records (the two committed before #58) are neither edited nor given invented
+  artifacts; they remain valid under their stated existence-only limitation.
+
+CI (`check_evidence_formats.py`) fails a package with a missing or unlisted file, a
+sha256/size mismatch, an absolute, `..`, symlinked or dot-file path, a missing required output,
+a leftover `.INCOMPLETE`, an orphan package, a manifest hash that differs from the record's, or
+record `metrics`/`compare` that differ from the packaged JSON; and the append-only check fails
+any modification, deletion, rename or **addition** under a committed run id.
+
+**Hash integrity is not numerical qualification.** A passing check means the bytes in the
+package are the bytes the record names. It does not say the solver result is converged, the fit
+is good, or the model qualified: that is the record's status, produced by the analysis against
+the declared limits, and CI never re-derives it.
+
+### Re-analysing a frozen package
+
+```
+python3 sim/passive-p1/scripts/reanalyze_frozen.py \
+    sim/passive-p1/solver-artifacts/<id> --out /tmp/p1-reanalysis-<id> \
+    --python /path/to/python-with-numpy-scipy          # [--dry-run] [--stages "post fit compare"]
+```
+
+It verifies the manifest first, copies only the solver numerical artifacts into a fresh
+`--out/work`, re-runs `postprocess_p1.py`, `fit_p1.py` and `compare_p1.py` there, and writes
+`--out/reanalysis.json` (exit codes, sha256 of every output, and whether the re-derived
+metrics/compare JSON equal the frozen ones). It writes no record, refuses `--out` inside the
+package, `records/` or `solver-artifacts/` or into a non-empty directory, and never edits the
+original record or package. A reanalysis that changes the picture is a reason to publish a
+**new** record that says why, not to edit the old one.
+
 ## klayout-tools friction
 
 No klayout-tools gap was hit by this campaign: it uses `klayout` headless directly
@@ -157,9 +219,11 @@ reason this route exists and is already filed; it is not re-filed.
 
 ## CI coverage
 
-The permanent evidence package is `records/<id>-<STATUS>.md` + `.json` and the
-input files named by the record's `input_hashes` (existence checked) --
+The permanent evidence package is `records/<id>-<STATUS>.md` + `.json`, the
+input files named by the record's `input_hashes` (existence checked) and, for
+`record_schema` 2 records, the frozen `solver-artifacts/<id>/` package (hash-checked
+and history-protected; see above) --
 `.github/scripts/check_evidence_formats.py` validates and history-protects the
-records. `results/`, `run_log/` and `fit/` are mutable working output and are
+records and packages. `results/`, `run_log/` and `fit/` are mutable working output and are
 not protected. `SYNTHETIC-*` pipeline-smoke records must stay out of `records/`
 (the checker rejects them there). See the top-level README.

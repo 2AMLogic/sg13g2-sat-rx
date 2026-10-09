@@ -83,7 +83,7 @@
     {
       "path": "run_extraction.sh",
       "role": "adapted",
-      "sha256": "b6d4fb6a5ae95b3bce9a39b44226613da3cace9f28bcf02834be4cf7e817f4f0",
+      "sha256": "8d1b7fcfc46d211643ab4059a07845e7bcddd54ddd44d5e512083fa15d7764ed",
       "source_path": "sim/inductor-model/em-extraction/run_extraction.sh",
       "source_sha256": "145ecee4554f21320f28d1a3b3f93955a6c396ec3f541fc669419c905fa3dd1c"
     },
@@ -125,7 +125,21 @@
     {
       "path": "scripts/make_record.py",
       "role": "new",
-      "sha256": "9cbbdde6b280e76acfe56729353f94e06753198a5a268dd0413450196310fd4d",
+      "sha256": "24905e933e6bb10391243510ca7441c0b0b1e4c8962318ebbc11b2d73cfe54e7",
+      "source_path": null,
+      "source_sha256": null
+    },
+    {
+      "path": "scripts/freeze_package.py",
+      "role": "new",
+      "sha256": "9d8e85952595eddfa2321f570f1070e50b7a816fd9591e24fb41f36dc43604c9",
+      "source_path": null,
+      "source_sha256": null
+    },
+    {
+      "path": "scripts/reanalyze_frozen.py",
+      "role": "new",
+      "sha256": "96d1bb9161ed7dcbc78be75e0998873cadbe375a97f1405b658185b7aaa169f3",
       "source_path": null,
       "source_sha256": null
     },
@@ -146,7 +160,7 @@
     {
       "path": "scripts/hash_inputs.py",
       "role": "new",
-      "sha256": "5f385aebdd59bd30bc6b4c77a3d797c8cc64ca481186e2f866664c4fc7c70589",
+      "sha256": "1b203ce552c0a64fc8b3d34cd3a817750a2cbc12ca466ef954cfc1277ca14b64",
       "source_path": null,
       "source_sha256": null
     },

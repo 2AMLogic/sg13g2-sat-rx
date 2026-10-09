@@ -32,6 +32,11 @@
 #                    or ~/share/pdk/ihp-sg13g2
 # Host provisioning is out of scope: nothing is installed by this script.
 #
+# Publication (issue #58): each record is preceded by an exclusively created, hashed
+# copy of the solver artifacts it was derived from, sim/passive-p1/solver-artifacts/<id>/
+# (see scripts/freeze_package.py).  results/ fit/ run_log/ stay mutable scratch for the
+# next run.  Publication is refused (exit 2, no record) if a needed stage output is missing.
+#
 # Exit status: 0 completed (the record's STATUS is the scientific verdict);
 # 2 malformed data; 3 capability unavailable (record written); 4 fit failed.
 set -uo pipefail
@@ -48,12 +53,15 @@ OPENEMS_PYTHON="${OPENEMS_PYTHON:-$HOME/opt/openEMS/venv/bin/python}"
 FIT_PYTHON="${FIT_PYTHON:-python3}"
 CMDS="EM_STAGES=\"${EM_STAGES}\" FIT_PYTHON=${FIT_PYTHON} OPENEMS_PYTHON=${OPENEMS_PYTHON} sim/passive-p1/run_extraction.sh"
 NOTE=""
+# Recorded in the frozen package's settings.json (issue #58); the declared cells/margins are fixed above.
+SETTINGS_JSON="{\"EM_FSTOP\": \"${FSTOP}\", \"EM_NUMFREQ\": \"${NUMFREQ}\", \"EM_ENERGY\": \"${ENERGY}\", \"EM_CPW\": \"${CPW}\", \"EM_THREADS\": \"${THREADS}\", \"base_cell_um\": ${BASE_CELL}, \"fine_cell_um\": ${FINE_CELL}, \"base_margin_um\": ${BASE_MARGIN}, \"big_margin_um\": ${BIG_MARGIN}}"
 mkdir -p "${HERE}"/{results,fit,run_log,records}
 
 unavailable() {  # unavailable <failed command> <detail>
   echo "CAPABILITY_UNAVAILABLE: $1 -- $2" >&2
   python3 -I "${HERE}/scripts/make_record.py" --dir "${HERE}" --unavailable \
-    --failed-command "$1" --detail "$2" --stages "${EM_STAGES}" --commands "${CMDS}" --note "${NOTE:-}"
+    --failed-command "$1" --detail "$2" --stages "${EM_STAGES}" --commands "${CMDS}" --note "${NOTE:-}" \
+    --solver-settings "${SETTINGS_JSON}"
   exit 3
 }
 check() {  # check <description/command shown> <command...>; unavailable on failure
@@ -147,7 +155,8 @@ fi
 
 # ----------------------------------------------- post / fit / compare / record
 rec() {  # rec [extra make_record args]
-  "${FIT_PYTHON}" "${HERE}/scripts/make_record.py" --dir "${HERE}" --stages "${EM_STAGES}" --commands "${CMDS}" "$@"
+  "${FIT_PYTHON}" "${HERE}/scripts/make_record.py" --dir "${HERE}" --stages "${EM_STAGES}" --commands "${CMDS}" \
+    --solver-settings "${SETTINGS_JSON}" "$@"
 }
 if stage post || stage fit || stage compare; then
   if stage post; then
@@ -156,20 +165,20 @@ if stage post || stage fit || stage compare; then
     [[ ${rc} -eq 3 ]] && unavailable "scripts/postprocess_p1.py (saved solver output)" "$(head -1 "${HERE}/run_log/postprocess.txt")"
     [[ ${rc} -eq 0 ]] || { echo "post failed (exit ${rc}); no record, no metrics" >&2; exit "${rc}"; }
     if ! grep -q '"converged": true' "${HERE}/results/p1_metrics.json"; then
-      echo "UNCONVERGED: stopping the bounded campaign (no fit, no model)"; rec; exit 0
+      echo "UNCONVERGED: stopping the bounded campaign (no fit, no model)"; rec || exit $?; exit 0
     fi
   fi
   if stage fit; then
     "${FIT_PYTHON}" "${HERE}/scripts/fit_p1.py" --dir "${HERE}" 2>&1 | tee "${HERE}/run_log/fit.txt"
     rc=${PIPESTATUS[0]}
-    if [[ ${rc} -eq 4 ]]; then rec --fit-problem "$(tail -1 "${HERE}/run_log/fit.txt")"; exit 4; fi
+    if [[ ${rc} -eq 4 ]]; then rec --fit-problem "$(tail -1 "${HERE}/run_log/fit.txt")" || exit $?; exit 4; fi
     [[ ${rc} -eq 0 ]] || exit "${rc}"
   fi
   if stage compare; then
     "${FIT_PYTHON}" "${HERE}/scripts/compare_p1.py" --dir "${HERE}" 2>&1 | tee "${HERE}/run_log/compare.txt"
     rc=${PIPESTATUS[0]}
     [[ ${rc} -eq 0 ]] || exit "${rc}"
-    rec
+    rec || exit $?
   fi
 fi
 echo "done."

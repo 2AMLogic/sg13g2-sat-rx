@@ -21,6 +21,15 @@ pipeline on generated data and is not campaign evidence.
 Usage:
   make_record.py --dir D [--records-dir R] [--synthetic]
   make_record.py --dir D --unavailable --failed-command CMD --detail TEXT
+
+New (record_schema 2) campaign records first publish a frozen, exclusively
+created solver-artifact package <records-dir>/../solver-artifacts/<id>/ with a
+SHA-256 manifest (freeze_package.py), derive the record's numbers from the
+FROZEN bytes, and name the package + manifest hash in the record.  Publication
+is refused (nothing is written) when a stage output the outcome needs is
+missing or the package already exists; a record-write failure removes the
+package this run created.  --synthetic output is not campaign evidence and is
+not packaged.  Hash integrity of the package is not numerical qualification.
 """
 
 import argparse
@@ -29,11 +38,13 @@ import hashlib
 import json
 import os
 import platform
+import shutil
 import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import limits as C  # noqa: E402  (numpy-free: records must be writable without numpy)
+import freeze_package as FZ  # noqa: E402  (stdlib only)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CAMPAIGN = os.path.dirname(HERE)
@@ -167,6 +178,7 @@ def main():
     ap.add_argument("--commands", default="")
     ap.add_argument("--fit-problem", default="")
     ap.add_argument("--note", default="")
+    ap.add_argument("--solver-settings", default="", help="JSON object of EM_* settings for settings.json")
     args = ap.parse_args()
     recdir = args.records_dir or os.path.join(args.dir, "records")
     os.makedirs(recdir, exist_ok=True)
@@ -178,6 +190,8 @@ def main():
         metrics = compare = None
     else:
         status, reasons = decide(metrics, compare, args.fit_problem)
+        if status in ("UNCONVERGED",) or args.fit_problem:
+            compare = None  # a comparison file left by an earlier run is not this outcome's evidence
     if args.synthetic:
         status = "SYNTHETIC-" + status
 
@@ -191,6 +205,29 @@ def main():
                   "zse": compare and compare["zse"], "s": compare and compare["s"]}
     digest = hashlib.sha256(json.dumps(digest_src, sort_keys=True, default=str).encode()).hexdigest()
 
+    pkg_info = None
+    if not args.synthetic:
+        try:
+            settings = json.loads(args.solver_settings) if args.solver_settings else {}
+        except ValueError:
+            settings = {"unparsed": args.solver_settings}
+        pkg_id = rid.rsplit("-", 1)[0]
+        pkg_root = os.path.join(os.path.dirname(os.path.abspath(recdir)), FZ.PACKAGES_DIRNAME)
+        try:
+            pkg_info = FZ.publish(args.dir, pkg_root, pkg_id, status, args.stages, settings=settings,
+                                  has_compare=compare is not None, commands=args.commands,
+                                  failed_command=args.failed_command)
+        except FZ.PublishError as exc:
+            print("REFUSED to publish record %s: %s" % (rid, exc), file=sys.stderr)
+            return 2
+        if not args.unavailable:  # the record is derived from the frozen bytes, not the mutable copy
+            fm = load(os.path.join(pkg_info["dir"], "results", "p1_metrics.json"))
+            fc = load(os.path.join(pkg_info["dir"], "results", "p1_compare.json"))
+            if fm != metrics or fc != compare:
+                shutil.rmtree(pkg_info["dir"], ignore_errors=True)
+                print("REFUSED: working results changed during publication", file=sys.stderr)
+                return 2
+
     rec = {"record_id": rid, "status": status, "reasons": reasons, "utc": now.isoformat(),
            "numerical_digest": digest, "environment": env, "input_hashes": input_hashes(),
            "stages": args.stages, "commands": args.commands, "failed_command": args.failed_command,
@@ -198,6 +235,11 @@ def main():
            "limits": {"L_mesh_margin_pct": C.L_BUDGET_PCT, "Q_mesh_margin_pct": C.Q_BUDGET_PCT,
                       "fit_Zse_pct": C.FIT_BUDGET_PCT, "srf_search_ceiling_hz": C.SRF_CEILING_HZ,
                       "band_hz": list(C.BAND_HZ)}}
+    if pkg_info:
+        rec["record_schema"] = 2
+        rec["artifact_package"] = {
+            "schema": FZ.SCHEMA, "path": "sim/passive-p1/%s/%s/" % (FZ.PACKAGES_DIRNAME, pkg_id),
+            "manifest": "manifest.json", "manifest_sha256": pkg_info["manifest_sha256"], "files": pkg_info["files"]}
 
     L = []
     if args.synthetic:
@@ -288,6 +330,17 @@ def main():
         for k, v in compare["s"].items():
             L.append("| %s | %s | %s |" % (k, fmt(v["rms_abs"]), fmt(v["max_abs"])))
         L.append("")
+    if pkg_info:
+        ap_ = rec["artifact_package"]
+        L += ["## Frozen solver artifacts", "",
+              "- Package: `%s` (record_schema 2; created exclusively at publication, never overwritten)" % ap_["path"],
+              "- Manifest: `%smanifest.json`, sha256 `%s`, %d file(s)" % (ap_["path"], ap_["manifest_sha256"], ap_["files"]),
+              "- The numbers above were derived from the byte-copies in this package, not from the mutable "
+              "`results/`, `fit/` or `run_log/` working directories.",
+              "- A matching manifest proves hash INTEGRITY of those files only. It is not numerical "
+              "qualification: the status above is the verdict of the analysis against its declared limits. "
+              "A re-analysis of the package (`scripts/reanalyze_frozen.py`) is a separate artifact and never "
+              "edits this record.", ""]
     L += ["## Limitations (stated beside the claims)", "",
           "- p1 geometry only; fit/EM agreement holds only inside the tested band and for this exact geometry.",
           "- Nominal stackup point only: metal thickness, dielectric and conductivity come from "
@@ -301,10 +354,24 @@ def main():
     L.append("")
 
     base = os.path.join(recdir, rid)
-    for path, text in ((base + ".md", "\n".join(L)), (base + ".json", json.dumps(rec, indent=2, sort_keys=True, default=str) + "\n")):
-        with open(path, "x") as fh:  # exclusive: never overwrite a record
-            fh.write(text)
+    written = []
+    try:
+        for path, text in ((base + ".md", "\n".join(L)), (base + ".json", json.dumps(rec, indent=2, sort_keys=True, default=str) + "\n")):
+            with open(path, "x") as fh:  # exclusive: never overwrite a record
+                written.append(path)
+                fh.write(text)
+    except BaseException:
+        for path in written:  # only files this run created
+            try:
+                os.remove(path)
+            except OSError:
+                pass
+        if pkg_info:
+            shutil.rmtree(pkg_info["dir"], ignore_errors=True)
+        raise
     print("record: %s" % (base + ".md"))
+    if pkg_info:
+        print("package: %s" % pkg_info["dir"])
     print("STATUS: %s" % status)
     print("DIGEST: %s" % digest)
     return 0

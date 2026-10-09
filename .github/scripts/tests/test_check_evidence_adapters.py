@@ -21,8 +21,10 @@ from pathlib import Path
 SCRIPTS = Path(__file__).resolve().parents[1]
 REPO = SCRIPTS.parents[1]
 sys.path.insert(0, str(SCRIPTS))
+sys.path.insert(0, str(REPO / "sim" / "passive-p1" / "scripts"))
 
 import check_evidence_formats as chk  # noqa: E402
+import freeze_package as fz  # noqa: E402
 
 PASSIVE = "passive-p1"
 MIXER = "mixer-nf-method"
@@ -57,6 +59,22 @@ def edit_json(path: Path, fn) -> None:
     path.write_text(json.dumps(data, indent=2) + "\n")
 
 
+def upgrade_to_v2(root: Path, rid: str, status: str) -> None:
+    """Give a cloned legacy-shaped passive record the record_schema 2 package it now needs
+    (settings-only package: valid for CAPABILITY_UNAVAILABLE, no solver data invented)."""
+    exp = root / "sim" / PASSIVE
+    with tempfile.TemporaryDirectory() as work:
+        r = fz.publish(work, str(exp / "solver-artifacts"), rid, status, "geometry em convergence post fit compare")
+    stem = f"{rid}-{status}"
+    edit_json(exp / "records" / f"{stem}.json", lambda d: d.update(
+        record_schema=2, stages="geometry em convergence post fit compare",
+        artifact_package={"schema": fz.SCHEMA, "path": f"sim/{PASSIVE}/solver-artifacts/{rid}/",
+                          "manifest": "manifest.json", "manifest_sha256": r["manifest_sha256"], "files": r["files"]}))
+    md = exp / "records" / f"{stem}.md"
+    md.write_text(md.read_text() + f"\n## Frozen solver artifacts\n\n- Package: `sim/{PASSIVE}/solver-artifacts/{rid}/`\n"
+                  f"- Manifest sha256 `{r['manifest_sha256']}`\n")
+
+
 def clone_passive_unavailable(root: Path, new_ts: str = "20261010-000000") -> str:
     """Append a complete, self-consistent copy of the passive record pair under a new id."""
     rec = root / "sim" / PASSIVE / "records"
@@ -66,6 +84,7 @@ def clone_passive_unavailable(root: Path, new_ts: str = "20261010-000000") -> st
         text = (rec / f"{P_UNAVAIL}.{ext}").read_text().replace("20261009-141515", new_ts)
         text = text.replace("2026-10-09T14:15:15", iso)
         (rec / f"{new}.{ext}").write_text(text)
+    upgrade_to_v2(root, new.rsplit("-", 1)[0], "CAPABILITY_UNAVAILABLE")
     return new
 
 
@@ -199,8 +218,8 @@ class Passive(FormatBase):
         self.assertFails("declared input 'scripts/does_not_exist.py' does not exist")
 
     def test_missing_declared_run_log(self):
-        new = clone_passive_unavailable(self.root)
-        md = self.rec / f"{new}.md"
+        # legacy (pre-#58) records keep the existence-only run_log rule
+        md = self.rec / f"{P_UNAVAIL}.md"
         md.write_text(md.read_text() + "\nSee `run_log/vanished.txt`.\n")
         self.assertFails("declared companion run_log/vanished.txt does not exist")
 
