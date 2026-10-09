@@ -1,6 +1,6 @@
 # 0003: Target-spec first ratification pass — eleven rows ratified as *targets*, nine left explicitly open
 
-- **Status**: **proposed**, travelling as this PR. Per the ratification-via-PR
+- **Status**: **ratified (targets)** — corrected post-merge (PR #13 merged 2026-09-21; the "proposed" wording below is the original pre-merge text, kept as written). Per the ratification-via-PR
   standing policy ([2AMLogic/2am#357](https://github.com/2AMLogic/2am/issues/357),
   2026-08-19 — the path issue #11 selected over installing a `ratification/`
   tree here, fleet-wide gap
