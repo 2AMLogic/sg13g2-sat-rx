@@ -76,9 +76,12 @@ What is checked, and when (`harness/pdkartifact.py`):
    (A full IHP-Open-PDK install at that commit, e.g. `~/share/pdk/ihp-sg13g2`,
    works equally; its `.fetched-version` should read `0.3.0`.)
 2. Install ngspice **46**: CI builds the SourceForge release tarball
-   `ngspice-46.tar.gz` (sha256 in `sim/pdk-artifact.json`) with
-   `./configure --disable-debug --without-x`. No distribution package is
-   assumed to carry 46.
+   `ngspice-46.tar.gz` (sha256 in `sim/pdk-artifact.json`) on `ubuntu-24.04`
+   with build dependencies `build-essential bison flex libreadline-dev`
+   (configure stops with "Couldn't find GNU readline headers" without
+   `libreadline-dev`) and `./configure --disable-debug --without-x`. No
+   distribution package is assumed to carry 46. The dependency set and the
+   configure flags are part of the CI cache key, so changing either rebuilds.
 3. From `sim/`: `python3 -m harness.cli verify-pdk --require-ngspice`, then
    `SG13G2_REQUIRE_NGSPICE=1 ./characterize.sh smoke` and
    `SG13G2_REQUIRE_NGSPICE=1 ./characterize.sh selftest`.
@@ -107,7 +110,7 @@ deliberate pin change (next section).
    `.github/workflows/ci.yml` (`harness/tests/test_ci_pins.py` fails if the
    two disagree). The same procedure applies to ngspice
    (`ngspice.*` in the manifest and `NGSPICE_*` in the workflow, and bump the
-   cache key's `-v1`).
+   cache key's `-v2` suffix).
 3. Existing records under `sim/*/records/` are append-only evidence taken
    against the old pin and are not edited. New records state the new
    `environment.pdk` provenance; if a number changes, add a later record that

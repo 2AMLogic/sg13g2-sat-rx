@@ -87,7 +87,9 @@ jobs:
 
   sim-smoke:
     name: simulator smoke + negative controls (pinned IHP models, ngspice 46)
-    runs-on: ubuntu-latest
+    # Fixed image (not -latest) so the apt dependency set resolves the same way
+    # on every run; the image name is part of the ngspice cache key.
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
       # Pins live in sim/pdk-artifact.json; keep these two in step with it
@@ -95,6 +97,11 @@ jobs:
       IHP_PDK_COMMIT: 5cccb161f7492697cfa52eb14dc03beb00bdca9e
       NGSPICE_VERSION: '46'
       NGSPICE_SHA256: a0d1699af1940b06649276dcd6ff5a566c8c0cad01b2f7b5e99dedbb4d64c19b
+      # The ngspice build recipe. Both strings feed the cache key below, so a
+      # change to the dependency set or the configure flags forces a rebuild.
+      # libreadline-dev: configure refuses to run without GNU readline headers.
+      NGSPICE_BUILD_DEPS: build-essential bison flex libreadline-dev
+      NGSPICE_CONFIGURE_FLAGS: --disable-debug --without-x
       SG13G2_REQUIRE_NGSPICE: '1'
     steps:
       - uses: actions/checkout@v4
@@ -107,21 +114,21 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/ngspice-prefix
-          key: ngspice-${{ env.NGSPICE_VERSION }}-${{ env.NGSPICE_SHA256 }}-${{ runner.os }}-v1
+          key: ngspice-${{ env.NGSPICE_VERSION }}-${{ env.NGSPICE_SHA256 }}-ubuntu-24.04-[${{ env.NGSPICE_BUILD_DEPS }}]-[${{ env.NGSPICE_CONFIGURE_FLAGS }}]-v2
 
       - name: Build pinned ngspice from the checksummed release tarball
         if: steps.ngcache.outputs.cache-hit != 'true'
         run: |
           set -euo pipefail
           sudo apt-get update
-          sudo apt-get install -y build-essential
+          sudo apt-get install -y --no-install-recommends $NGSPICE_BUILD_DEPS
           mkdir -p "$RUNNER_TEMP/ng" && cd "$RUNNER_TEMP/ng"
           curl -fsSL --retry 3 -o ngspice.tar.gz \
             "https://downloads.sourceforge.net/project/ngspice/ng-spice-rework/old-releases/${NGSPICE_VERSION}/ngspice-${NGSPICE_VERSION}.tar.gz"
           echo "${NGSPICE_SHA256}  ngspice.tar.gz" | sha256sum -c -
           tar xzf ngspice.tar.gz
           mkdir build && cd build
-          "../ngspice-${NGSPICE_VERSION}/configure" --prefix="$HOME/ngspice-prefix" --disable-debug --without-x
+          "../ngspice-${NGSPICE_VERSION}/configure" --prefix="$HOME/ngspice-prefix" $NGSPICE_CONFIGURE_FLAGS
           make -j2
           make install
       - name: Put ngspice on PATH
@@ -154,8 +161,11 @@ jobs:
           set -uo pipefail
           cp -r "$SG13G2_PDK_PATH" "$RUNNER_TEMP/tampered"
           echo "* tamper" >> "$RUNNER_TEMP/tampered/libs.tech/ngspice/models/sg13g2_hbt_mod.lib"
-          SG13G2_PDK_PATH="$RUNNER_TEMP/tampered" sim/characterize.sh smoke
-          status=$?
+          # GitHub runs this step under bash -e, which `set -uo pipefail` does
+          # not undo: capture the expected non-zero exit instead of letting it
+          # end the step, then require exactly 2 (refused before simulating).
+          status=0
+          SG13G2_PDK_PATH="$RUNNER_TEMP/tampered" sim/characterize.sh smoke || status=$?
           if [ "$status" -ne 2 ]; then
             echo "expected exit 2 (refused before simulating) for a tampered model, got $status" >&2
             exit 1
