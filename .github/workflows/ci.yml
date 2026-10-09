@@ -1,9 +1,10 @@
 name: ci
 
 # Keeps the simulation harness and the committed evidence formats valid
-# (T1 item 10, "Repo hygiene"; issue #18). Every job here needs NO PDK and NO
-# simulator -- see the "Not in this workflow" note at the bottom for why the
-# simulator smoke/selftest job is deliberately absent. signoff.yml (the
+# (T1 item 10, "Repo hygiene"; issue #18). harness-tests and evidence-formats
+# need NO PDK and NO simulator and stay that way. The separate sim-smoke job
+# (issue #47) installs the pinned IHP models + ngspice and runs the smoke and
+# negative-control modes; it commits/uploads no evidence. signoff.yml (the
 # manifest re-grade) is a separate workflow and is not touched by this one.
 #
 # Runs on every push and every pull request. No job cancels another run: a
@@ -84,9 +85,102 @@ jobs:
           echo "event=$EVENT base=$base"
           python .github/scripts/check_evidence_formats.py --base "$base" $require
 
-# Not in this workflow: a job that installs ngspice and the PDK and runs
-# `sim/characterize.sh smoke` / `selftest`. sim/pdk.json pins no upstream
-# release (its 0.3.0 is install provenance, not a pin), so such a job would
-# need an explicit immutable PDK revision plus an integrity check chosen and
-# measured on a hosted runner; that was not done here. Run both modes locally
-# (README "Reproduce") until it is.
+  sim-smoke:
+    name: simulator smoke + negative controls (pinned IHP models, ngspice 46)
+    # Fixed image (not -latest) so the apt dependency set resolves the same way
+    # on every run; the image name is part of the ngspice cache key.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      # Pins live in sim/pdk-artifact.json; keep these two in step with it
+      # (sim/harness/tests/test_ci_pins.py fails if they drift apart).
+      IHP_PDK_COMMIT: 5cccb161f7492697cfa52eb14dc03beb00bdca9e
+      NGSPICE_VERSION: '46'
+      NGSPICE_SHA256: a0d1699af1940b06649276dcd6ff5a566c8c0cad01b2f7b5e99dedbb4d64c19b
+      # The ngspice build recipe. Both strings feed the cache key below, so a
+      # change to the dependency set or the configure flags forces a rebuild.
+      # libreadline-dev: configure refuses to run without GNU readline headers.
+      NGSPICE_BUILD_DEPS: build-essential bison flex libreadline-dev
+      NGSPICE_CONFIGURE_FLAGS: --disable-debug --without-x
+      SG13G2_REQUIRE_NGSPICE: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Restore ngspice build
+        id: ngcache
+        uses: actions/cache@v4
+        with:
+          path: ~/ngspice-prefix
+          key: ngspice-${{ env.NGSPICE_VERSION }}-${{ env.NGSPICE_SHA256 }}-ubuntu-24.04-[${{ env.NGSPICE_BUILD_DEPS }}]-[${{ env.NGSPICE_CONFIGURE_FLAGS }}]-v2
+
+      - name: Build pinned ngspice from the checksummed release tarball
+        if: steps.ngcache.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends $NGSPICE_BUILD_DEPS
+          mkdir -p "$RUNNER_TEMP/ng" && cd "$RUNNER_TEMP/ng"
+          curl -fsSL --retry 3 -o ngspice.tar.gz \
+            "https://downloads.sourceforge.net/project/ngspice/ng-spice-rework/old-releases/${NGSPICE_VERSION}/ngspice-${NGSPICE_VERSION}.tar.gz"
+          echo "${NGSPICE_SHA256}  ngspice.tar.gz" | sha256sum -c -
+          tar xzf ngspice.tar.gz
+          mkdir build && cd build
+          "../ngspice-${NGSPICE_VERSION}/configure" --prefix="$HOME/ngspice-prefix" $NGSPICE_CONFIGURE_FLAGS
+          make -j2
+          make install
+      - name: Put ngspice on PATH
+        run: echo "$HOME/ngspice-prefix/bin" >> "$GITHUB_PATH"
+
+      - name: Fetch the pinned IHP-Open-PDK model files (immutable commit id)
+        run: |
+          set -euo pipefail
+          git init -q "$RUNNER_TEMP/ihp"
+          cd "$RUNNER_TEMP/ihp"
+          git remote add origin https://github.com/IHP-GmbH/IHP-Open-PDK.git
+          git sparse-checkout init --cone
+          git sparse-checkout set ihp-sg13g2/libs.tech/ngspice/models
+          git fetch -q --depth 1 --filter=blob:none origin "$IHP_PDK_COMMIT"
+          git checkout -q FETCH_HEAD
+          test "$(git rev-parse HEAD)" = "$IHP_PDK_COMMIT"
+          echo "SG13G2_PDK_PATH=$RUNNER_TEMP/ihp/ihp-sg13g2" >> "$GITHUB_ENV"
+
+      - name: Verify IHP models + ngspice against sim/pdk-artifact.json (before any simulation)
+        working-directory: sim
+        run: python3 -m harness.cli verify-pdk --require-ngspice
+
+      - name: Integrity-gate unit tests (tamper / missing / unknown-marker fixtures)
+        run: |
+          pip install pytest
+          python -m pytest sim/harness/tests/test_pdkartifact.py sim/harness/tests/test_ci_pins.py -q
+
+      - name: Negative control - a tampered model file must stop characterize.sh before any simulator runs
+        run: |
+          set -uo pipefail
+          cp -r "$SG13G2_PDK_PATH" "$RUNNER_TEMP/tampered"
+          echo "* tamper" >> "$RUNNER_TEMP/tampered/libs.tech/ngspice/models/sg13g2_hbt_mod.lib"
+          # GitHub runs this step under bash -e, which `set -uo pipefail` does
+          # not undo: capture the expected non-zero exit instead of letting it
+          # end the step, then require exactly 2 (refused before simulating).
+          status=0
+          SG13G2_PDK_PATH="$RUNNER_TEMP/tampered" sim/characterize.sh smoke || status=$?
+          if [ "$status" -ne 2 ]; then
+            echo "expected exit 2 (refused before simulating) for a tampered model, got $status" >&2
+            exit 1
+          fi
+
+      - name: Smoke (hbt_typ only, writes no evidence)
+        run: sim/characterize.sh smoke
+
+      - name: Selftest (sabotaged-corner and bad-deck negative controls)
+        run: sim/characterize.sh selftest
+
+      - name: No evidence record or tracked file was created or changed
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git status --porcelain >&2
+            echo "sim-smoke must leave the tree untouched (no committed evidence)" >&2
+            exit 1
+          fi

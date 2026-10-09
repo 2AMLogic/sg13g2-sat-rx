@@ -25,6 +25,99 @@ version-detection convention for this specific PDK, not a broken install
 (confirmed working: `sim/pdk.json`'s model_lib resolves and every bench below
 runs against real device data).
 
+## IHP model artifact (immutable pin, verified before every simulation)
+
+`sim/pdk-artifact.json` is the committed pin of the IHP model files the
+benches load. It names the upstream revision (IHP-Open-PDK **v0.3.0**, git
+commit `5cccb161f7492697cfa52eb14dc03beb00bdca9e` -- a commit id is
+content-addressed, unlike a tag or a generated archive), the SHA-256 of every
+file in the include closure of `cornerHBT.lib` (4 files: `cornerHBT.lib`,
+`sg13g2_hbt_mod.lib`, `sg13g2_hbt_mod_mismatch.lib`, `sg13g2_hbt_stat.lib`),
+and the tested ngspice major (46). The closure was measured, not assumed: the
+local install's four files were byte-compared against the pinned commit's
+tree, and `harness/pdkartifact.py` re-derives the `.include`/`.lib` closure
+from the installed `cornerHBT.lib` on every check.
+
+What is checked, and when (`harness/pdkartifact.py`):
+
+- `python3 -m harness.cli verify-pdk [--require-ngspice]` (from `sim/`) is the
+  explicit check. `harness.cli run`/`selftest`, the Ka-band bench
+  (`run.py`), and `sim/characterize.sh` all run it BEFORE any simulator
+  process starts; a failure prints the file and hashes and exits non-zero
+  with nothing simulated (`characterize.sh` exits 2).
+- Only the file hashes establish a match. The install's `.fetched-version`
+  marker is provenance: a missing marker is reported as `unknown` and the
+  hashes alone decide; a marker equal to the pin never rescues wrong hashes;
+  a marker that disagrees with the pin fails. (This is also why
+  `Pdk.version` stays `"unknown"` for IHP -- see above -- and is not used as
+  an integrity signal.)
+- A model file that is missing, differs, is reachable but not listed, or is
+  listed but no longer reachable fails. A missing PDK, a missing manifest or
+  (with `--require-ngspice`, which hosted CI sets via
+  `SG13G2_REQUIRE_NGSPICE=1`) a missing / different-major ngspice is a failed
+  check, never a skip. Without `--require-ngspice` an ngspice major other
+  than 46 is only reported, so a local newer ngspice is not blocked.
+- There is no override flag for model drift: to use different models, change
+  the pin (below) so the change is reviewed, or point
+  `SG13G2_PDK_PATH`/`PDK_ROOT` at a verified install.
+
+### Reproducing the hosted `sim-smoke` job locally
+
+1. Fetch exactly the pinned models (about 2 MB, no credentials):
+   ```
+   git init ihp && cd ihp
+   git remote add origin https://github.com/IHP-GmbH/IHP-Open-PDK.git
+   git sparse-checkout init --cone
+   git sparse-checkout set ihp-sg13g2/libs.tech/ngspice/models
+   git fetch --depth 1 --filter=blob:none origin 5cccb161f7492697cfa52eb14dc03beb00bdca9e
+   git checkout FETCH_HEAD
+   export SG13G2_PDK_PATH=$PWD/ihp-sg13g2
+   ```
+   (A full IHP-Open-PDK install at that commit, e.g. `~/share/pdk/ihp-sg13g2`,
+   works equally; its `.fetched-version` should read `0.3.0`.)
+2. Install ngspice **46**: CI builds the SourceForge release tarball
+   `ngspice-46.tar.gz` (sha256 in `sim/pdk-artifact.json`) on `ubuntu-24.04`
+   with build dependencies `build-essential bison flex libreadline-dev`
+   (configure stops with "Couldn't find GNU readline headers" without
+   `libreadline-dev`) and `./configure --disable-debug --without-x`. No
+   distribution package is assumed to carry 46. The dependency set and the
+   configure flags are part of the CI cache key, so changing either rebuilds.
+3. From `sim/`: `python3 -m harness.cli verify-pdk --require-ngspice`, then
+   `SG13G2_REQUIRE_NGSPICE=1 ./characterize.sh smoke` and
+   `SG13G2_REQUIRE_NGSPICE=1 ./characterize.sh selftest`.
+   The job also checks that a tampered copy of a model file makes
+   `characterize.sh` exit 2 before simulating, and that the working tree is
+   unchanged afterwards. Smoke and selftest write no evidence (`--no-write`,
+   `run.py smoke`'s "nothing recorded"); the job uploads and commits nothing.
+   The full PVT campaign (`characterize`) is deliberately not run in CI; it
+   stays on the Spot batch fleet.
+
+### Drift behaviour
+
+Any hash mismatch, missing/extra closure file, or conflicting marker stops the
+run (see above) and CI goes red. Do not edit the manifest to make a red run
+green: the cause is either a wrong install (reinstall the pinned commit) or a
+deliberate pin change (next section).
+
+### Deliberately updating the pin
+
+1. Pick the new upstream commit (full 40-hex id), fetch it as in step 1, and
+   run the benches against it with `SG13G2_PDK_PATH` set; a failing verify is
+   expected at this point.
+2. Update in ONE change: `upstream.*`, `install_marker.value`, and each
+   `files` hash in `sim/pdk-artifact.json` (`sha256sum` the closure; add or
+   drop files if the closure changed), plus `IHP_PDK_COMMIT` in
+   `.github/workflows/ci.yml` (`harness/tests/test_ci_pins.py` fails if the
+   two disagree). The same procedure applies to ngspice
+   (`ngspice.*` in the manifest and `NGSPICE_*` in the workflow, and bump the
+   cache key's `-v2` suffix).
+3. Existing records under `sim/*/records/` are append-only evidence taken
+   against the old pin and are not edited. New records state the new
+   `environment.pdk` provenance; if a number changes, add a later record that
+   says why rather than superseding by deletion.
+4. A pin change that alters measured values is a spec-adjacent event: it must
+   not be used to relax the ratified spec (`spec/` decision records govern).
+
 ## Benches
 
 | Experiment | What it measures | Status |

@@ -1,0 +1,32 @@
+{
+  "_comment": "Immutable pin of the IHP model files the benches load. Verified by sim/harness/pdkartifact.py BEFORE any simulator runs (harness.cli run/selftest/verify-pdk, hbt-kaband run.py, sim/characterize.sh, and the 'sim-smoke' CI job). Only the file hashes establish a match; install_marker is provenance. Update procedure: sim/README.md 'IHP model artifact'.",
+  "upstream": {
+    "repo": "https://github.com/IHP-GmbH/IHP-Open-PDK",
+    "tag": "v0.3.0",
+    "commit": "5cccb161f7492697cfa52eb14dc03beb00bdca9e",
+    "tag_resolved": "2026-10-09 via GitHub API git/ref/tags/v0.3.0 (lightweight tag -> commit)",
+    "github_archive_sha256_observed": "1b0866832ad577f19ab71b7a813bb77279212f6b9795c47268926ef15ad5863b",
+    "github_archive_note": "Observed digest of https://github.com/IHP-GmbH/IHP-Open-PDK/archive/<commit>.tar.gz on 2026-10-09. GitHub does not promise byte-stable generated archives, so it is informational and NOT used for verification; the git commit id plus the per-file hashes below are."
+  },
+  "install_subtree": "ihp-sg13g2",
+  "install_marker": {
+    "file": ".fetched-version",
+    "value": "0.3.0",
+    "note": "Provenance only: a marker never establishes a match, and a missing marker is reported as unknown (hashes decide)."
+  },
+  "model_lib": "libs.tech/ngspice/models/cornerHBT.lib",
+  "closure_note": "Dependency closure of cornerHBT.lib (.include/.lib targets, followed transitively) -- all that sim/characterize.sh smoke and selftest load (npn13G2 only; no MOS/OSDI, no passives). harness/pdkartifact.py re-derives the closure from the installed cornerHBT.lib and fails if it differs from this list. Files measured identical between the local install and the pinned commit's tree on 2026-10-09.",
+  "files": {
+    "libs.tech/ngspice/models/cornerHBT.lib": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+    "libs.tech/ngspice/models/sg13g2_hbt_mod.lib": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79",
+    "libs.tech/ngspice/models/sg13g2_hbt_mod_mismatch.lib": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2",
+    "libs.tech/ngspice/models/sg13g2_hbt_stat.lib": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+  },
+  "ngspice": {
+    "major": 46,
+    "version": "46",
+    "source_url": "https://downloads.sourceforge.net/project/ngspice/ng-spice-rework/old-releases/46/ngspice-46.tar.gz",
+    "source_sha256": "a0d1699af1940b06649276dcd6ff5a566c8c0cad01b2f7b5e99dedbb4d64c19b",
+    "note": "Version the smoke/selftest modes were run against locally (ngspice-46 banner). CI builds exactly this tarball."
+  }
+}

@@ -31,6 +31,7 @@ from pathlib import Path
 from . import HARNESS_VERSION
 from . import toolchain as toolchain_mod
 from .corners import build_grid, resolve_corners, sabotage, supply_points
+from . import pdkartifact
 from .pdk import Pdk, PdkConfigError, PdkNotFound, find_pdk
 from .report import (
     RecordExists,
@@ -62,10 +63,36 @@ def cmd_list(args: argparse.Namespace) -> int:
 
 def _resolve_pdk() -> Pdk | None:
     try:
-        return find_pdk(SIM_DIR)
+        pdk = find_pdk(SIM_DIR)
     except (PdkNotFound, PdkConfigError) as exc:
         print(str(exc), file=sys.stderr)
         return None
+    # Integrity gate: BEFORE any simulator process is launched.
+    rep = pdkartifact.verify(pdk, SIM_DIR)
+    if not rep.ok:
+        print(rep.format() + pdkartifact.REFUSAL, file=sys.stderr)
+        return None
+    return pdk
+
+
+def cmd_verify_pdk(args: argparse.Namespace) -> int:
+    """Verify the installed IHP models (and optionally ngspice) against the pin."""
+    try:
+        pdk = find_pdk(SIM_DIR)
+    except (PdkNotFound, PdkConfigError) as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+    banner = None
+    try:
+        banner = ngspice_version()
+    except NgspiceMissing:
+        pass
+    rep = pdkartifact.verify(pdk, SIM_DIR, banner, require_ngspice=args.require_ngspice)
+    print(f"pdk: {pdk.path} (via {pdk.source})")
+    print(f"ngspice: {banner or 'not found'}")
+    print(rep.format())
+    print("verify-pdk: OK" if rep.ok else "verify-pdk: FAILED", file=sys.stderr if not rep.ok else sys.stdout)
+    return 0 if rep.ok else 1
 
 
 def cmd_run(args: argparse.Namespace) -> int:
@@ -239,6 +266,11 @@ def build_parser() -> argparse.ArgumentParser:
                         help="force every corner to typical (implies --no-write)")
     p_run.add_argument("--allow-toolchain-drift", action="store_true")
     p_run.set_defaults(func=cmd_run)
+
+    p_verify = sub.add_parser("verify-pdk", help="check installed IHP models against sim/pdk-artifact.json")
+    p_verify.add_argument("--require-ngspice", action="store_true",
+                          help="also fail if ngspice is missing or not the tested major version")
+    p_verify.set_defaults(func=cmd_verify_pdk)
 
     p_selftest = sub.add_parser("selftest", help="negative-control corner-switching self-test")
     p_selftest.add_argument("experiment")
