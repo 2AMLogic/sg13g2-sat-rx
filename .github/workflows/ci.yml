@@ -1,0 +1,86 @@
+name: ci
+
+# Keeps the simulation harness and the committed evidence formats valid
+# (T1 item 10, "Repo hygiene"; issue #18). Every job here needs NO PDK and NO
+# simulator -- see the "Not in this workflow" note at the bottom for why the
+# simulator smoke/selftest job is deliberately absent. signoff.yml (the
+# manifest re-grade) is a separate workflow and is not touched by this one.
+#
+# Runs on every push and every pull request. No job cancels another run: a
+# slow correct job beats a clever fast one, and a distinct commit's verdict
+# must exist.
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  harness-tests:
+    name: harness + Ka-band unit tests (no PDK, no simulator)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install test dependency
+        run: pip install pytest
+      - name: Byte-compile every Python file
+        run: python -m compileall -q sim .github/scripts
+      - name: Harness unit tests (corners, evidence, report, testbench manifests)
+        run: python -m pytest sim/harness/tests -q
+      - name: Ka-band postprocessor unit tests
+        run: python -m pytest sim/hbt-kaband-characterization/tests -q
+
+  evidence-formats:
+    name: evidence formats + append-only history
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history: the append-only check compares against the MERGE
+          # BASE with the base branch, which a shallow clone cannot provide.
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install test dependency
+        run: pip install pytest
+      - name: Checker self-test (negative controls on broken fixtures and temporary git histories)
+        run: python -m pytest .github/scripts/tests -q
+      - name: Validate committed evidence and enforce append-only history
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          REF: ${{ github.ref }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          # Comparison base for the append-only check (the script always
+          # diffs against the merge base of this ref and HEAD):
+          #   pull_request      origin/<base branch>; a base is mandatory
+          #   push to main      the pre-push commit (event.before) when the
+          #                     push has one; an all-zero/unknown sha makes
+          #                     the script skip the history half loudly and
+          #                     still run the format half
+          #   push to a branch  origin/main; a base is mandatory
+          require=--require-base
+          if [ "$EVENT" = pull_request ]; then
+            base="origin/${BASE_REF}"
+          elif [ "$REF" = refs/heads/main ]; then
+            base="$BEFORE"
+            require=
+          else
+            base=origin/main
+          fi
+          echo "event=$EVENT base=$base"
+          python .github/scripts/check_evidence_formats.py --base "$base" $require
+
+# Not in this workflow: a job that installs ngspice and the PDK and runs
+# `sim/characterize.sh smoke` / `selftest`. sim/pdk.json pins no upstream
+# release (its 0.3.0 is install provenance, not a pin), so such a job would
+# need an explicit immutable PDK revision plus an integrity check chosen and
+# measured on a hosted runner; that was not done here. Run both modes locally
+# (README "Reproduce") until it is.
