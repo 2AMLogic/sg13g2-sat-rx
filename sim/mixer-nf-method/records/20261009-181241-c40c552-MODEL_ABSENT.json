@@ -1,0 +1,146 @@
+{
+  "record_id": "20261009-181241-c40c552",
+  "status": "MODEL_ABSENT",
+  "reasons": [
+    "hbt_shot_collector: transient generation unsupported",
+    "hbt_shot_base: transient generation unsupported",
+    "hbt_terminal_resistor_thermal: transient generation unsupported",
+    "hbt_flicker: transient generation unsupported",
+    "resistor_thermal: transient generation unsupported"
+  ],
+  "scope": "methodology evidence only; no row-10/row-12 claim; no active-mixer NF number",
+  "nominal_point": {
+    "corner": "hbt_typ",
+    "temp_c": 27,
+    "vdd_v": 2.5
+  },
+  "sideband_convention": "IEEE SSB, wanted-sideband available gain, image at T0",
+  "t0_k": 300.15,
+  "inventory": {
+    "mechanisms": {
+      "hbt_shot_collector": {
+        "tran": "unsupported",
+        "noise_analysis": "supported",
+        "noise_analysis_v_rms_at_coll": 0.001037782,
+        "evidence": "LO-driven .tran, two runs, max abs diff of v(coll) = 0 V over 24008/24008 points; LO-off settled p-p = 2.65798e-08 V vs this mechanism's .noise output 0.001038 V rms in 4.998e+11 Hz"
+      },
+      "hbt_shot_base": {
+        "tran": "unsupported",
+        "noise_analysis": "supported",
+        "noise_analysis_v_rms_at_coll": 0.00015406651065456433,
+        "evidence": "LO-driven .tran, two runs, max abs diff of v(coll) = 0 V over 24008/24008 points; LO-off settled p-p = 2.65798e-08 V vs this mechanism's .noise output 0.0001541 V rms in 4.998e+11 Hz"
+      },
+      "hbt_terminal_resistor_thermal": {
+        "tran": "unsupported",
+        "noise_analysis": "supported",
+        "noise_analysis_v_rms_at_coll": 0.0017110930651186333,
+        "evidence": "LO-driven .tran, two runs, max abs diff of v(coll) = 0 V over 24008/24008 points; LO-off settled p-p = 2.65798e-08 V vs this mechanism's .noise output 0.001711 V rms in 4.998e+11 Hz"
+      },
+      "hbt_flicker": {
+        "tran": "unsupported",
+        "noise_analysis": "supported",
+        "noise_analysis_v_rms_at_coll": 2.5039110000006242e-06,
+        "evidence": "LO-driven .tran, two runs, max abs diff of v(coll) = 0 V over 24008/24008 points; LO-off settled p-p = 2.65798e-08 V vs this mechanism's .noise output 2.504e-06 V rms in 4.998e+11 Hz; below this probe's amplitude resolution on its own -- absence rests on run-to-run determinism and the source reference"
+      },
+      "resistor_thermal": {
+        "tran": "unsupported",
+        "noise_analysis": "supported",
+        "evidence": "1k/1k divider .tran settled p-p = 0 V vs expected thermal 0.002035 V rms (500 ohm, 4.998e+11 Hz, T0)"
+      },
+      "hbt_noise_correlation": {
+        "tran": "unsupported",
+        "noise_analysis": "unsupported",
+        "evidence": "VBICnoise() evaluates every generator independently (source reference); no correlated ib/ic pair exists in any analysis."
+      },
+      "external_trnoise_injection": {
+        "tran": "supported",
+        "noise_analysis": "n/a",
+        "evidence": "TRNOISE(1m 1p) into 50/50 ohm: window rms 0.000412707 / 0.00040838 V in two runs; v(21 ns) = 0.000262212 / -0.000403431 V; re-issued setseed 1 gave 0.000201256 V (NOT reproduced by setseed)",
+        "setseed_reproduces_draw": false
+      },
+      "pss_pnoise": {
+        "tran": "n/a",
+        "noise_analysis": "unsupported",
+        "evidence": "binary replies 'pss: no such command available in ngspice'"
+      }
+    },
+    "sizing": {
+      "hbt_all_generators_v_rms_at_coll": 0.002007130717291888,
+      "noise_total_v_rms_at_coll": 0.002529467,
+      "lo_off_tran_pp_v": 2.65798e-08,
+      "pp_over_expected_rms": 1.324268507826071e-05,
+      "pp_over_expected_rms_db": -97.56047897399316,
+      "comparison_band_hz": [
+        250000000.0,
+        500000000000.0
+      ],
+      "resistor_expected_v_rms": 0.0020351771334488926,
+      "lo_on_settled_pp_v": 0.462594,
+      "lo_off_dc_v": 1.58286,
+      "trnoise_expected_rms_v": 0.0005,
+      "trnoise_linear_interp_rms_v": 0.00040824829046386303
+    }
+  },
+  "controls": {
+    "analytic_error_db": 1.7763568394002505e-15,
+    "lo_off_hbt_error_db": 103.58107888727278,
+    "omission_detected": false,
+    "periodic_coverage": false
+  },
+  "convergence": "not run (gated behind coverage)",
+  "references": {
+    "manual": {
+      "title": "ngspice User's Manual, version 46",
+      "url": "https://ngspice.sourceforge.io/docs/ngspice-46-manual.pdf",
+      "sha256": "b5bc7c4f3aac00e670b01b1d1ab64ec87055a491014af1de828764bf98faf766",
+      "sections": {
+        "4.1.7": "Transient noise source (TRNOISE): 'The noise generators are implemented into the independent voltage (vsrc) and current (isrc) sources.'",
+        "11.3.11": "Transient noise analysis: noise 'added to your circuits' via vsrc/isrc; open questions listed by the manual include 'how to generate noise from a transistor model' and 'calibration of noise spectral density'.",
+        "11.3.12": ".PSS: 'Experimental code, not yet made publicly available.'",
+        "1.2.8": "PSS is the basis of 'periodical large-signal analyses like PAC or PNoise' (neither exists)."
+      }
+    },
+    "source": {
+      "repo": "https://git.code.sf.net/p/ngspice/ngspice",
+      "tag": "ngspice-46",
+      "commit": "ebdaf58ec76a06ffaac7e0f138360dd1cf5ee4b6",
+      "findings": [
+        "src/spicelib/devices/vbic/vbicnoise.c: VBICnoise() defines 13 generators (_rc _rci _rb _rbi _re _rbp _rs thermal; _ic _ib _ibep _iccp shot; _1overfbe _1overfbep flicker), each evaluated independently (no ib/ic correlation).",
+        "VBICnoise is reached only through DEVnoise, called only from src/spicelib/analysis/cktnoise.c (via noisean.c, .noise) and span.c/noisesp.c (.sp noise) -- never from the transient load path.",
+        "src/spicelib/devices/vbic/vbicload.c and src/spicelib/devices/res/resload.c (the .tran/.dc load routines) contain no noise or random term.",
+        "TRNOISE is implemented only in src/spicelib/devices/vsrc/ and isrc/.",
+        "src/spicelib/analysis/dcpss.c is compiled only with configure --enable-pss (WITH_PSS, 'experimental'); there is no pnoise implementation in the tree.",
+        "Same structure at tag ngspice-47 (a80f6e3e95d51534905b1f23410a951802666656), checked by source only; the ngspice-47 binary was NOT run."
+      ]
+    }
+  },
+  "probe_logs": "sim/mixer-nf-method/probe-logs/20261009-181241-c40c552/",
+  "environment": {
+    "host": "loom-worker-1",
+    "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+    "python": "3.12.3",
+    "git": {
+      "commit": "c40c552cb069b40b5feb995e24a1f5f9bb9f5257",
+      "dirty": false
+    },
+    "placeholder_sha256": "e2cd2af3fd9aa34b9c36dde453c7919abbec69fe9f675f1848657a5a85c7a74d",
+    "template_sha256": "984942e12a130e31fa90af50bd46a3cbbcd64a27f3888b2c85451c38e7ea0918",
+    "ngspice": {
+      "path": "/home/ubuntu/.local/bin/ngspice",
+      "version": "ngspice-46 : Circuit level simulation program",
+      "sha256": "555e04b8ddf17a382fe28d409251ce8968ba983b8c82396fb78e1ff542aa5dd5"
+    },
+    "pdk": {
+      "path": "/home/ubuntu/share/pdk/ihp-sg13g2",
+      "fetched_version": "0.3.0",
+      "model_lib": "/home/ubuntu/share/pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerHBT.lib",
+      "section": "hbt_typ",
+      "sha256": {
+        "cornerHBT.lib": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+        "sg13g2_hbt_mod.lib": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+      },
+      "device": "npn13G2 (subckt) -> npn13G2_NX_vbic, VBIC level=9, Nx=4 in the placeholder"
+    },
+    "ngspice_exit": 0
+  }
+}
