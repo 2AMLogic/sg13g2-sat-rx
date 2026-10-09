@@ -2,6 +2,24 @@
 
 Chronological record of merged pull requests and closed issues, maintained by the Loom Guide role.
 
+### 2026-10-09
+
+- **Issue #17** (closed): sim: Ka-band npn13G2 device characterization (noise-optimum current density, NFmin, fT, available gain at 17.7 / 19.45 / 21.2 GHz), the prerequisite for T1 item 1
+- **Issue #18** (closed): ci: run the harness smoke test, the negative control and an evidence-format check on every push (T1 item 10)
+- **Issue #20** (closed): Install ratification/ee-key and ratification/market-key reviewer trees (product#151)
+- **Issue #21** (closed): Install ratification/ee-key and ratification/market-key reviewer trees (product#151)
+- **Issue #22** (closed): sim/lna-sparam-nf: NF reference source is at 327.15 K, not 300.15 K (ngspice-46 resistor temp= behaviour); needs a correction record
+- **Issue #25** (closed): sim: 20 GHz passive characterization (EM-extracted spiral / t-line / MIM) to unblock matching-network rows
+- **Issue #26** (closed): spec: decision record 0004 — LNA→mixer interface convention (50 Ω back-to-back vs co-designed match)
+- **Issue #29** (closed): spec: replace (E)/NEEDS-VERIFICATION flags with checkable literature citations
+- **PR #23**: sim: Ka-band npn13G2 device characterization (NFmin, fT, MAG/MSG at 17.7/19.45/21.2 GHz)
+- **PR #24**: ci: harness tests, evidence-format checker and append-only check (T1 item 10)
+- **PR #30**: ratification: install ee-key and market-key reviewer trees; correct DR-0003 Status
+- **PR #31**: lna-sparam-nf: correct NF reference source; superseding 27-point record (#22)
+- **PR #32**: spec: DR-0004 proposed — LNA→mixer interface convention (#26)
+- **PR #33**: spec: literature citation table for (E)/NEEDS-VERIFICATION rows (#29)
+- **PR #34**: sim: bounded p1-only passive campaign (CAPABILITY_UNAVAILABLE) + DR-0005 deferred (#25)
+
 ### 2026-09-21
 
 - **PR #13**: spec: DR-0003 target-spec first ratification pass — 11 rows ratified as targets, 9 explicitly open
