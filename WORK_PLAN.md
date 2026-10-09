@@ -25,7 +25,8 @@ _None._
 
 Issues currently being built (`loom:building`).
 
-_None._
+- **#28**: design: first xschem LNA first-stage schematic from the Ka-band HBT characterization (T1 item 1)
+- **#35**: sim: mixer-core topology feasibility under the row-17 supply limits (before any mixer schematic)
 
 ## PRs Awaiting Review
 
@@ -43,12 +44,14 @@ _None._
 
 Issues carrying `loom:curated`.
 
-_None._
+- **#35**: sim: mixer-core topology feasibility under the row-17 supply limits (before any mixer schematic) *(curated)*
+- **#38**: Auditor Capability Request: Python runtime for local harness smoke validation *(curated)*
 
 ## Proposed (Architect / Hermit)
 
-- **#28**: design: first xschem LNA first-stage schematic from the Ka-band HBT characterization (T1 item 1) *(architect)*
-- **#35**: sim: mixer-core topology feasibility under the row-17 supply limits (before any mixer schematic) *(architect)*
+- **#46**: sim: execute the p1 EM campaign on a reproducible openEMS runner *(architect)*
+- **#57**: sim: qualify LNA two-tone IIP3 and single-tone input P1dB power sweeps *(architect)*
+- **#58**: sim: freeze per-record passive solver artifacts before publishing evidence *(architect)*
 
 ## Epics
 
@@ -61,10 +64,10 @@ _None._
 | Operator merge-risk holds | 0 |
 | Operator priority | 0 |
 | Ready (`loom:issue`) | 0 |
-| In Progress (`loom:building`) | 0 |
+| In Progress (`loom:building`) | 2 |
 | PRs awaiting review | 0 |
 | Approved PRs awaiting merge | 0 |
-| Curated | 0 |
-| Architect / Hermit proposals | 2 |
+| Curated | 2 |
+| Architect / Hermit proposals | 3 |
 | Active epics | 0 |
 <!-- guide:plan-body:end -->
