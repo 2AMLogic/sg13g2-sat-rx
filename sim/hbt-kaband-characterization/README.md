@@ -206,8 +206,15 @@ Append-only: a re-run mints a new record id and never touches an old one.
 
 ## Records
 
-None yet in this directory unless listed here. See the PR that introduced
-this bench for the state of the full-grid run.
+- `records/20261009-095220-7f35db5.md`: the first full-grid record (27 PVT
+  points, Nx 1/4/8, VCE 0.6/1.0/1.4 V, 45 VBE points, 3 frequencies). Kept
+  as committed; superseded (not deleted) by the next entry.
+- `records/20261009-095725-dbf8179.md`: **current**. Same simulations,
+  re-ingested from the same klt reports and per-corner logs; numeric
+  sidecars are identical. It supersedes the first record only because the
+  report generator now states how far the reported optima sit from the run's
+  worst self-heating / simulator-message / excluded-row conditions and
+  carries a model-fidelity caveat in the row-3 verdict. Read this one.
 
 ## Known limits
 

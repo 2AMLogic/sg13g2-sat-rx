@@ -1,0 +1,422 @@
+{
+  "schema_version": 3,
+  "netlist": {
+    "path": "sim/hbt-kaband-characterization/_build/klt-20261009-094721/body_2.75v.spice",
+    "scope": "repo"
+  },
+  "status": "pass",
+  "corner_count": 9,
+  "passed": 9,
+  "failed": 0,
+  "errored": 0,
+  "inconclusive": 0,
+  "diagnostic_counts": {
+    "by_code": {
+      "singular_matrix": 4,
+      "nonconvergence": 2
+    },
+    "by_severity": {
+      "warning": 6
+    },
+    "corners_with_diagnostics": 4
+  },
+  "metrics": {
+    "sim__corner__count": 9,
+    "sim__corner__passed_count": 9,
+    "sim__corner__failed_count": 0,
+    "sim__corner__errored_count": 0,
+    "sim__corner__inconclusive_count": 0
+  },
+  "environment": {
+    "engine": "ngspice",
+    "engine_version": "46",
+    "ngspice_binary": "/home/ubuntu/.local/bin/ngspice",
+    "models_lib": {
+      "path": null,
+      "scope": "external"
+    },
+    "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+    "netlist_sha256": "a031fc1d6c2f7b68a7e62442f7fd46649fa7eaa81ab4390f4ee89a9f6acb557b",
+    "netlist_closure": [
+      {
+        "path": "sim/hbt-kaband-characterization/_build/klt-20261009-094721/body_2.75v.spice",
+        "scope": "repo",
+        "sha256": "a031fc1d6c2f7b68a7e62442f7fd46649fa7eaa81ab4390f4ee89a9f6acb557b"
+      }
+    ],
+    "remote": {
+      "provider": "aws-batch-fleet",
+      "job_id": "klt-sim-09d45a5180f9",
+      "bucket": "2am-batch-jobs-221082181346",
+      "region": "us-east-1",
+      "instance_id": "i-030a2be705c2b8499",
+      "instance_type": "m7i.4xlarge",
+      "availability_zone": "us-east-1b",
+      "ami_id": "ami-0e40e3245f1923ac8",
+      "lifecycle": "spot",
+      "spot": true,
+      "state": "done",
+      "exit_code": "0",
+      "concurrency": "1",
+      "physical_cores": "8",
+      "elapsed_seconds": 38,
+      "runner_klt_version": "0.5.0",
+      "client_klt_version": "0.7.0+g5c94de0ebbfe",
+      "runner_compatibility": "mismatch",
+      "runner_compatibility_warning": "the fleet runner ran klt 0.5.0 but the submitting client is 0.7.0+g5c94de0ebbfe; request options the runner does not know may have been ignored -- update the runner image or use a compatible client"
+    }
+  },
+  "coverage": {
+    "corners_simulated": 9,
+    "measurements_declared": 1,
+    "measurements_with_limits": 0,
+    "unrecognized_limit_keys": [],
+    "schema_version": 1,
+    "known": true,
+    "checked": [
+      "measurement:[0,\"hbt_typ/novdd/-40C\",\"ka_rail_v\"]/observation",
+      "measurement:[1,\"hbt_typ/novdd/27C\",\"ka_rail_v\"]/observation",
+      "measurement:[2,\"hbt_typ/novdd/125C\",\"ka_rail_v\"]/observation",
+      "measurement:[3,\"hbt_bcs/novdd/-40C\",\"ka_rail_v\"]/observation",
+      "measurement:[4,\"hbt_bcs/novdd/27C\",\"ka_rail_v\"]/observation",
+      "measurement:[5,\"hbt_bcs/novdd/125C\",\"ka_rail_v\"]/observation",
+      "measurement:[6,\"hbt_wcs/novdd/-40C\",\"ka_rail_v\"]/observation",
+      "measurement:[7,\"hbt_wcs/novdd/27C\",\"ka_rail_v\"]/observation",
+      "measurement:[8,\"hbt_wcs/novdd/125C\",\"ka_rail_v\"]/observation"
+    ],
+    "skipped": [],
+    "inapplicable": [
+      {
+        "id": "measurement:[0,\"hbt_typ/novdd/-40C\",\"ka_rail_v\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[1,\"hbt_typ/novdd/27C\",\"ka_rail_v\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[2,\"hbt_typ/novdd/125C\",\"ka_rail_v\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[3,\"hbt_bcs/novdd/-40C\",\"ka_rail_v\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[4,\"hbt_bcs/novdd/27C\",\"ka_rail_v\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[5,\"hbt_bcs/novdd/125C\",\"ka_rail_v\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[6,\"hbt_wcs/novdd/-40C\",\"ka_rail_v\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[7,\"hbt_wcs/novdd/27C\",\"ka_rail_v\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[8,\"hbt_wcs/novdd/125C\",\"ka_rail_v\"]/limits",
+        "reason": "characterization_without_limits"
+      }
+    ],
+    "unknown": [],
+    "nothing_checked": false,
+    "nothing_checked_reasons": []
+  },
+  "provenance": {
+    "klt_version": "0.7.0+g5c94de0ebbfe",
+    "klayout_version": "0.30.12",
+    "pdk": {
+      "name": "ihp-sg13g2",
+      "source": "search root: ~/share/pdk",
+      "version": null
+    },
+    "deck": {
+      "name": "cornerHBT.lib",
+      "content_hash": "sha256:bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+      "released": false
+    },
+    "input": {
+      "content_hash": "sha256:a031fc1d6c2f7b68a7e62442f7fd46649fa7eaa81ab4390f4ee89a9f6acb557b",
+      "role": "netlist"
+    }
+  },
+  "measurements": [
+    {
+      "name": "ka_rail_v",
+      "unit": "V",
+      "limits": null,
+      "status": "pass",
+      "worst_case": {
+        "corner_id": "hbt_typ/novdd/-40C",
+        "value": 2.75,
+        "margin": null
+      }
+    }
+  ],
+  "corners": [
+    {
+      "corner_id": "hbt_typ/novdd/-40C",
+      "process": "hbt_typ",
+      "supply_v": {},
+      "temperature_c": -40.0,
+      "status": "pass",
+      "runtime_s": 5.223,
+      "measurements": [
+        {
+          "name": "ka_rail_v",
+          "value": 2.75,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        }
+      ],
+      "diagnostics": [],
+      "artifacts": {
+        "log": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-17/sim/hbt-kaband-characterization/_build/klt-20261009-094721/out_2.75v/hbt_typ_novdd_n40C/ngspice.log",
+        "raw": null,
+        "waveform": null,
+        "deck": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-17/sim/hbt-kaband-characterization/_build/klt-20261009-094721/out_2.75v/hbt_typ_novdd_n40C/corner.cir"
+      },
+      "monte_carlo": null
+    },
+    {
+      "corner_id": "hbt_typ/novdd/27C",
+      "process": "hbt_typ",
+      "supply_v": {},
+      "temperature_c": 27.0,
+      "status": "pass",
+      "runtime_s": 5.575,
+      "measurements": [
+        {
+          "name": "ka_rail_v",
+          "value": 2.75,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        }
+      ],
+      "diagnostics": [],
+      "artifacts": {
+        "log": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-17/sim/hbt-kaband-characterization/_build/klt-20261009-094721/out_2.75v/hbt_typ_novdd_27C/ngspice.log",
+        "raw": null,
+        "waveform": null,
+        "deck": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-17/sim/hbt-kaband-characterization/_build/klt-20261009-094721/out_2.75v/hbt_typ_novdd_27C/corner.cir"
+      },
+      "monte_carlo": null
+    },
+    {
+      "corner_id": "hbt_typ/novdd/125C",
+      "process": "hbt_typ",
+      "supply_v": {},
+      "temperature_c": 125.0,
+      "status": "pass",
+      "runtime_s": 24.936,
+      "measurements": [
+        {
+          "name": "ka_rail_v",
+          "value": 2.75,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        }
+      ],
+      "diagnostics": [
+        {
+          "severity": "warning",
+          "code": "singular_matrix",
+          "message": "Warning: singular matrix:  check nodes xqy.s1 and q.xqy.qnpn13g2#emitter"
+        },
+        {
+          "severity": "warning",
+          "code": "nonconvergence",
+          "message": "Warning: Dynamic gmin stepping failed"
+        }
+      ],
+      "artifacts": {
+        "log": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-17/sim/hbt-kaband-characterization/_build/klt-20261009-094721/out_2.75v/hbt_typ_novdd_125C/ngspice.log",
+        "raw": null,
+        "waveform": null,
+        "deck": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-17/sim/hbt-kaband-characterization/_build/klt-20261009-094721/out_2.75v/hbt_typ_novdd_125C/corner.cir"
+      },
+      "monte_carlo": null
+    },
+    {
+      "corner_id": "hbt_bcs/novdd/-40C",
+      "process": "hbt_bcs",
+      "supply_v": {},
+      "temperature_c": -40.0,
+      "status": "pass",
+      "runtime_s": 5.48,
+      "measurements": [
+        {
+          "name": "ka_rail_v",
+          "value": 2.75,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        }
+      ],
+      "diagnostics": [],
+      "artifacts": {
+        "log": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-17/sim/hbt-kaband-characterization/_build/klt-20261009-094721/out_2.75v/hbt_bcs_novdd_n40C/ngspice.log",
+        "raw": null,
+        "waveform": null,
+        "deck": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-17/sim/hbt-kaband-characterization/_build/klt-20261009-094721/out_2.75v/hbt_bcs_novdd_n40C/corner.cir"
+      },
+      "monte_carlo": null
+    },
+    {
+      "corner_id": "hbt_bcs/novdd/27C",
+      "process": "hbt_bcs",
+      "supply_v": {},
+      "temperature_c": 27.0,
+      "status": "pass",
+      "runtime_s": 5.499,
+      "measurements": [
+        {
+          "name": "ka_rail_v",
+          "value": 2.75,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        }
+      ],
+      "diagnostics": [
+        {
+          "severity": "warning",
+          "code": "singular_matrix",
+          "message": "Warning: singular matrix:  check nodes q.xqn.qnpn13g2#collCI and q.xqn.qnpn13g2#base"
+        }
+      ],
+      "artifacts": {
+        "log": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-17/sim/hbt-kaband-characterization/_build/klt-20261009-094721/out_2.75v/hbt_bcs_novdd_27C/ngspice.log",
+        "raw": null,
+        "waveform": null,
+        "deck": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-17/sim/hbt-kaband-characterization/_build/klt-20261009-094721/out_2.75v/hbt_bcs_novdd_27C/corner.cir"
+      },
+      "monte_carlo": null
+    },
+    {
+      "corner_id": "hbt_bcs/novdd/125C",
+      "process": "hbt_bcs",
+      "supply_v": {},
+      "temperature_c": 125.0,
+      "status": "pass",
+      "runtime_s": 25.361,
+      "measurements": [
+        {
+          "name": "ka_rail_v",
+          "value": 2.75,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        }
+      ],
+      "diagnostics": [
+        {
+          "severity": "warning",
+          "code": "singular_matrix",
+          "message": "Warning: singular matrix:  check node q.xqy.qnpn13g2#emitter"
+        }
+      ],
+      "artifacts": {
+        "log": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-17/sim/hbt-kaband-characterization/_build/klt-20261009-094721/out_2.75v/hbt_bcs_novdd_125C/ngspice.log",
+        "raw": null,
+        "waveform": null,
+        "deck": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-17/sim/hbt-kaband-characterization/_build/klt-20261009-094721/out_2.75v/hbt_bcs_novdd_125C/corner.cir"
+      },
+      "monte_carlo": null
+    },
+    {
+      "corner_id": "hbt_wcs/novdd/-40C",
+      "process": "hbt_wcs",
+      "supply_v": {},
+      "temperature_c": -40.0,
+      "status": "pass",
+      "runtime_s": 5.188,
+      "measurements": [
+        {
+          "name": "ka_rail_v",
+          "value": 2.75,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        }
+      ],
+      "diagnostics": [],
+      "artifacts": {
+        "log": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-17/sim/hbt-kaband-characterization/_build/klt-20261009-094721/out_2.75v/hbt_wcs_novdd_n40C/ngspice.log",
+        "raw": null,
+        "waveform": null,
+        "deck": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-17/sim/hbt-kaband-characterization/_build/klt-20261009-094721/out_2.75v/hbt_wcs_novdd_n40C/corner.cir"
+      },
+      "monte_carlo": null
+    },
+    {
+      "corner_id": "hbt_wcs/novdd/27C",
+      "process": "hbt_wcs",
+      "supply_v": {},
+      "temperature_c": 27.0,
+      "status": "pass",
+      "runtime_s": 5.477,
+      "measurements": [
+        {
+          "name": "ka_rail_v",
+          "value": 2.75,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        }
+      ],
+      "diagnostics": [],
+      "artifacts": {
+        "log": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-17/sim/hbt-kaband-characterization/_build/klt-20261009-094721/out_2.75v/hbt_wcs_novdd_27C/ngspice.log",
+        "raw": null,
+        "waveform": null,
+        "deck": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-17/sim/hbt-kaband-characterization/_build/klt-20261009-094721/out_2.75v/hbt_wcs_novdd_27C/corner.cir"
+      },
+      "monte_carlo": null
+    },
+    {
+      "corner_id": "hbt_wcs/novdd/125C",
+      "process": "hbt_wcs",
+      "supply_v": {},
+      "temperature_c": 125.0,
+      "status": "pass",
+      "runtime_s": 24.05,
+      "measurements": [
+        {
+          "name": "ka_rail_v",
+          "value": 2.75,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        }
+      ],
+      "diagnostics": [
+        {
+          "severity": "warning",
+          "code": "singular_matrix",
+          "message": "Warning: singular matrix:  check nodes xqy.t and xqn.s1"
+        },
+        {
+          "severity": "warning",
+          "code": "nonconvergence",
+          "message": "Warning: Dynamic gmin stepping failed"
+        }
+      ],
+      "artifacts": {
+        "log": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-17/sim/hbt-kaband-characterization/_build/klt-20261009-094721/out_2.75v/hbt_wcs_novdd_125C/ngspice.log",
+        "raw": null,
+        "waveform": null,
+        "deck": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-17/sim/hbt-kaband-characterization/_build/klt-20261009-094721/out_2.75v/hbt_wcs_novdd_125C/corner.cir"
+      },
+      "monte_carlo": null
+    }
+  ]
+}
