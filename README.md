@@ -101,6 +101,37 @@ spec/          target spec (partially ratified, DR-0003) + porting plan
                + decision records
 ```
 
+## Reproduce
+
+Everything is driven from `sim/`; benches, harness and record conventions are
+described in [`sim/README.md`](sim/README.md), [`sim/harness/README.md`](sim/harness/README.md)
+and [`sim/hbt-kaband-characterization/README.md`](sim/hbt-kaband-characterization/README.md).
+These need ngspice and the IHP SG13G2 PDK:
+
+```
+sim/characterize.sh smoke         # hbt_typ only, no evidence written; seconds
+sim/characterize.sh selftest      # negative controls (sabotaged corners must fail, bad deck must be rejected)
+sim/characterize.sh characterize  # full 27-point PVT campaign; mints a NEW append-only record per bench
+```
+
+Checks that need neither a PDK nor a simulator (Python 3 and `pytest`) are
+what CI runs on every push and pull request (`.github/workflows/ci.yml`):
+
+```
+python -m compileall -q sim .github/scripts
+python -m pytest sim/harness/tests sim/hbt-kaband-characterization/tests -q      # job: harness-tests
+python -m pytest .github/scripts/tests -q                                         # job: evidence-formats (checker negative controls)
+python .github/scripts/check_evidence_formats.py --base origin/main               # job: evidence-formats
+```
+
+The evidence checker validates the format of every `sim/*/records/*.md` and
+its `corners/` and `netlist-snapshots/` artifacts (both the harness-native and
+the Ka-band layout) and fails if a pull request modifies, deletes or renames
+committed evidence; adding a new record is always allowed. CI does not run the
+simulator: `smoke` and `selftest` above are run by hand until a pinned PDK
+revision is chosen for a runner. `signoff.yml` separately re-grades the
+committed tier report.
+
 ## License
 
 Apache License 2.0 — see [LICENSE](LICENSE).
