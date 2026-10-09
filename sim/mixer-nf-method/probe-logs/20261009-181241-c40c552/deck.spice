@@ -1,0 +1,144 @@
+* mixer-nf-method capability probe (issue #27) -- ONE nominal point:
+* hbt_typ / 27 C / VDD = 2.50 V. Template: run_probe.py substitutes
+* /home/ubuntu/share/pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerHBT.lib and /home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-27/sim/mixer-conversion-iip3/testbench/mixer_ce_placeholder.spice and runs this deck ONCE with `ngspice -b`
+* (a single local capability smoke probe; no grid, no sweep).
+*
+* What this measures: the SIMULATOR (which noise mechanisms exist in .tran),
+* not the mixer. No number printed here is a noise figure.
+*
+* DUT: the existing placeholder mixer fragment, included VERBATIM from
+* sim/mixer-conversion-iip3/testbench/mixer_ce_placeholder.spice (one
+* npn13G2, Nx=4, VBIC level=9 model card; RF two-tone + LO summed at the base,
+* output node `coll`). It is not edited; its RF tones are zeroed for the
+* noise probes with `alterparam vrf=0`, its LO with `alterparam vlo=0`.
+*
+* Disjoint helper circuits (share only ground with the mixer):
+*   P-R  resistor divider 1k/1k from 1 V, default (noisy) resistors, no
+*        source noise: does resistor thermal noise appear in .tran?
+*   P-T  TRNOISE positive control: white Gaussian source, NA = 1 mV rms,
+*        NT = 1 ps, into a 50/50 ohm divider (expected rms at tnl: 0.5 mV).
+*        Its NT is set to 0 (manual 4.1.7: "If you set NT and RTSAM to 0, the
+*        noise option TRNOISE ... is ignored") for the runs that test the DUT,
+*        so no source noise and no noise breakpoints exist in those runs.
+*
+* Steps (control block). Every result line starts with "MARK " so
+* run_probe.py can parse it; everything else in the log is kept verbatim.
+*   A  LO on (RF off), TRNOISE off: two consecutive .tran runs in the SAME
+*      process (setseed 1, then setseed 2). If any stochastic intrinsic
+*      generator existed in .tran it would draw from ngspice's RNG, whose
+*      stream either restarts at a different seed or simply continues -- the
+*      two collector waveforms would differ either way. Reported: point
+*      counts, max |diff| over all points, and the settled-window p-p.
+*   B  LO off, RF off, TRNOISE off: collector peak-to-peak over the settled
+*      window 20-24 ns; resistor-divider peak-to-peak over the same window.
+*   C  TRNOISE on (LO off): window rms at tnl and point samples at 21/23 ns
+*      for two consecutive runs, then a third run re-issuing setseed 1 --
+*      positive control that the same probe statistics DO see injected noise
+*      at this level, and a record of whether setseed reproduces the draw.
+*   D  .noise about the LO-off DC operating point at v(coll), 250 MHz (one
+*      bin of the 4 ns window) to 500 GHz (Nyquist of the 1 ps output step):
+*      total and per-mechanism integrated output noise of the HBT -- the
+*      noise the model card DOES carry in small-signal analysis. This is the
+*      size the B peak-to-peak would have to show if .tran carried it.
+*   E  `pss` (periodic steady state) availability on this binary.
+
+.lib "/home/ubuntu/share/pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerHBT.lib" hbt_typ
+.temp 27
+.param vdd_val=2.5
+.include "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-27/sim/mixer-conversion-iip3/testbench/mixer_ce_placeholder.spice"
+
+* ---- P-R: resistor divider, default noisy resistors ----
+Vrdiv rtop 0 DC 1
+Rdiv1 rtop rmid 1k
+Rdiv2 rmid 0 1k
+
+* ---- P-T: TRNOISE positive control ----
+Vtn tn 0 DC 0 TRNOISE(1m 1p 0 0)
+Rtn1 tn tnl 50
+Rtn2 tnl 0 50
+
+.options savecurrents=0
+.control
+set noaskquit
+set filetype=ascii
+echo "MARK ngspice_banner_follows"
+version -s
+
+* ---------- A: LO on, RF off, TRNOISE off, two seeds ----------
+alterparam vrf=0
+reset
+alter @vtn[trnoise] = [ 0 0 0 0 ]
+setseed 1
+tran 1p 24n 0 1p
+let a1_coll = v(coll)
+let a1_n = length(time)
+setseed 2
+tran 1p 24n 0 1p
+let a2_n = length(time)
+echo "MARK A_points_seed1=$&tran1.a1_n A_points_seed2=$&a2_n"
+meas tran a_pp_win PP v(coll) from=20n to=24n
+echo "MARK A_coll_pp_lo_on_window=$&a_pp_win"
+let a_diff = vecmax(abs(v(coll) - tran1.a1_coll))
+echo "MARK A_coll_seed_diff_max=$&a_diff"
+
+* ---------- B: LO off, RF off, TRNOISE off ----------
+alterparam vrf=0
+alterparam vlo=0
+reset
+alter @vtn[trnoise] = [ 0 0 0 0 ]
+setseed 1
+tran 1p 24n 0 1p
+meas tran b_coll_pp PP v(coll) from=20n to=24n
+meas tran b_coll_avg AVG v(coll) from=20n to=24n
+meas tran b_rmid_pp PP v(rmid) from=20n to=24n
+meas tran b_tnl_pp PP v(tnl) from=20n to=24n
+echo "MARK B_coll_pp_lo_off=$&b_coll_pp B_coll_dc=$&b_coll_avg"
+echo "MARK B_rdiv_pp=$&b_rmid_pp B_tnl_pp_trnoise_off=$&b_tnl_pp"
+
+* ---------- C: TRNOISE on, two seeds (LO off) ----------
+* Seed dependence is checked on scalars (window rms and two point samples),
+* which survive the plot changes between runs as shell variables.
+alter @vtn[trnoise] = [ 1m 1p 0 0 ]
+setseed 1
+tran 1p 24n 0 1p
+meas tran c1_rms RMS v(tnl) from=20n to=24n
+meas tran c1_at21 FIND v(tnl) AT=21n
+meas tran c1_at23 FIND v(tnl) AT=23n
+meas tran c_coll_pp PP v(coll) from=20n to=24n
+echo "MARK C_tnl_rms_seed1=$&c1_rms C_tnl_at21n_seed1=$&c1_at21 C_tnl_at23n_seed1=$&c1_at23"
+echo "MARK C_coll_pp_with_trnoise_elsewhere=$&c_coll_pp"
+alter @vtn[trnoise] = [ 1m 1p 0 0 ]
+setseed 2
+tran 1p 24n 0 1p
+meas tran c2_rms RMS v(tnl) from=20n to=24n
+meas tran c2_at21 FIND v(tnl) AT=21n
+meas tran c2_at23 FIND v(tnl) AT=23n
+echo "MARK C_tnl_rms_seed2=$&c2_rms C_tnl_at21n_seed2=$&c2_at21 C_tnl_at23n_seed2=$&c2_at23"
+* C3: seed 1 again in the same process -- does `setseed` reproduce the draw?
+* (Recorded, not relied on: klt sim's seed contract and trnoise seeding are a
+* separate, known upstream question.)
+alter @vtn[trnoise] = [ 1m 1p 0 0 ]
+setseed 1
+tran 1p 24n 0 1p
+meas tran c3_at21 FIND v(tnl) AT=21n
+meas tran c3_at23 FIND v(tnl) AT=23n
+echo "MARK C_tnl_at21n_seed1_repeat=$&c3_at21 C_tnl_at23n_seed1_repeat=$&c3_at23"
+
+* ---------- D: .noise about the LO-off DC operating point ----------
+* The placeholder's RF source has no AC spec; give it ac=1 for this analysis
+* only (input-referred values are not used by this probe; only output noise).
+alter @vtn[trnoise] = [ 0 0 0 0 ]
+alter @vrf[acmag] = 1
+noise v(coll) vrf dec 50 250e6 500e9 1
+print all
+let d_tot = onoise_total
+echo "MARK D_onoise_total_250M_500G=$&d_tot"
+
+* ---------- E: periodic steady state ----------
+echo "MARK E_pss_attempt_begin"
+pss 18.45e9 1n coll 1024 10 50 5e-3
+echo "MARK E_pss_attempt_end"
+echo "MARK done"
+quit
+.endc
+.end

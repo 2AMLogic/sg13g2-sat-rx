@@ -1,0 +1,426 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: * mixer-nf-method capability probe (issue #27) -- one nominal point:
+
+MARK ngspice_banner_follows
+******
+** ngspice-46
+** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html
+** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html
+** Creation Date: Sat Aug  1 17:32:09 UTC 2026
+******
+Reset re-loads circuit * mixer-nf-method capability probe (issue #27) -- one nominal point:
+
+Circuit: * mixer-nf-method capability probe (issue #27) -- one nominal point:
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vdd                                        2.5
+coll                                   1.58286
+base                                  0.887822
+emit                                 0.0306121
+xq1.s1                             1.10977e-09
+xq1.t                                  15.4817
+bb                                         0.9
+rfsrc                                        0
+prf                                          0
+rfsrc2                                       0
+prf2                                         0
+losrc                                        0
+plo                                          0
+rtop                                         1
+rmid                                       0.5
+tn                                           0
+tnl                                          0
+vtn#branch                                   0
+vrdiv#branch                           -0.0005
+vlo#branch                                   0
+vrf2#branch                                  0
+vrf#branch                                   0
+vbb#branch                        -4.05923e-06
+vdd#branch                         -0.00305715
+
+ Reference value :  1.08873e-08
+ Reference value :  2.21963e-08
+No. of Data Rows : 24008
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vdd                                        2.5
+coll                                   1.58286
+base                                  0.887822
+emit                                 0.0306121
+xq1.s1                             1.10977e-09
+xq1.t                                  15.4817
+bb                                         0.9
+rfsrc                                        0
+prf                                          0
+rfsrc2                                       0
+prf2                                         0
+losrc                                        0
+plo                                          0
+rtop                                         1
+rmid                                       0.5
+tn                                           0
+tnl                                          0
+vtn#branch                                   0
+vrdiv#branch                           -0.0005
+vlo#branch                                   0
+vrf2#branch                                  0
+vrf#branch                                   0
+vbb#branch                        -4.05923e-06
+vdd#branch                         -0.00305715
+
+ Reference value :  9.38728e-09
+ Reference value :  2.06903e-08
+No. of Data Rows : 24008
+MARK A_points_seed1=24008 A_points_seed2=24008
+a_pp_win            =  4.62594e-01 from=  2.00000e-08 to=  2.40000e-08
+MARK A_coll_pp_lo_on_window=0.462594
+MARK A_coll_seed_diff_max=0
+Reset re-loads circuit * mixer-nf-method capability probe (issue #27) -- one nominal point:
+
+Circuit: * mixer-nf-method capability probe (issue #27) -- one nominal point:
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vdd                                        2.5
+coll                                   1.58286
+base                                  0.887822
+emit                                 0.0306121
+xq1.s1                             1.10977e-09
+xq1.t                                  15.4817
+bb                                         0.9
+rfsrc                                        0
+prf                                          0
+rfsrc2                                       0
+prf2                                         0
+losrc                                        0
+plo                                          0
+rtop                                         1
+rmid                                       0.5
+tn                                           0
+tnl                                          0
+vtn#branch                                   0
+vrdiv#branch                           -0.0005
+vlo#branch                                   0
+vrf2#branch                                  0
+vrf#branch                                   0
+vbb#branch                        -4.05923e-06
+vdd#branch                         -0.00305715
+
+ Reference value :  7.71028e-09
+ Reference value :  1.89763e-08
+No. of Data Rows : 24008
+b_coll_pp           =  2.65798e-08 from=  2.00000e-08 to=  2.40000e-08
+b_coll_avg          =  1.58286e+00 from=  2.00000e-08 to=  2.40000e-08
+b_rmid_pp           =  0.00000e+00 from=  2.00000e-08 to=  2.40000e-08
+b_tnl_pp            =  0.00000e+00 from=  2.00000e-08 to=  2.40000e-08
+MARK B_coll_pp_lo_off=2.65798E-08 B_coll_dc=1.58286
+MARK B_rdiv_pp=0 B_tnl_pp_trnoise_off=0
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vdd                                        2.5
+coll                                   1.58286
+base                                  0.887822
+emit                                 0.0306121
+xq1.s1                             1.10977e-09
+xq1.t                                  15.4817
+bb                                         0.9
+rfsrc                                        0
+prf                                          0
+rfsrc2                                       0
+prf2                                         0
+losrc                                        0
+plo                                          0
+rtop                                         1
+rmid                                       0.5
+tn                                           0
+tnl                                          0
+vtn#branch                                   0
+vrdiv#branch                           -0.0005
+vlo#branch                                   0
+vrf2#branch                                  0
+vrf#branch                                   0
+vbb#branch                        -4.05923e-06
+vdd#branch                         -0.00305715
+
+ Reference value :  1.22241e-09
+ Reference value :  3.46618e-09
+ Reference value :  5.73018e-09
+ Reference value :  7.96906e-09
+ Reference value :  1.02220e-08
+ Reference value :  1.24862e-08
+ Reference value :  1.47412e-08
+ Reference value :  1.69912e-08
+ Reference value :  1.92394e-08
+ Reference value :  2.15032e-08
+ Reference value :  2.37592e-08
+No. of Data Rows : 120008
+c1_rms              =  4.12707e-04 from=  2.00000e-08 to=  2.40000e-08
+c1_at21             =  2.62212e-04
+c1_at23             =  4.85740e-04
+c_coll_pp           =  3.05227e-08 from=  2.00000e-08 to=  2.40000e-08
+MARK C_tnl_rms_seed1=0.000412707 C_tnl_at21n_seed1=0.000262212 C_tnl_at23n_seed1=0.00048574
+MARK C_coll_pp_with_trnoise_elsewhere=3.05227E-08
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vdd                                        2.5
+coll                                   1.58286
+base                                  0.887822
+emit                                 0.0306121
+xq1.s1                             1.10977e-09
+xq1.t                                  15.4817
+bb                                         0.9
+rfsrc                                        0
+prf                                          0
+rfsrc2                                       0
+prf2                                         0
+losrc                                        0
+plo                                          0
+rtop                                         1
+rmid                                       0.5
+tn                                           0
+tnl                                          0
+vtn#branch                                   0
+vrdiv#branch                           -0.0005
+vlo#branch                                   0
+vrf2#branch                                  0
+vrf#branch                                   0
+vbb#branch                        -4.05923e-06
+vdd#branch                         -0.00305715
+
+ Reference value :  1.94271e-09
+ Reference value :  4.20518e-09
+ Reference value :  6.39400e-09
+ Reference value :  8.63400e-09
+ Reference value :  1.08690e-08
+ Reference value :  1.30644e-08
+ Reference value :  1.52994e-08
+ Reference value :  1.75424e-08
+ Reference value :  2.00097e-08
+ Reference value :  2.23424e-08
+No. of Data Rows : 120008
+c2_rms              =  4.08380e-04 from=  2.00000e-08 to=  2.40000e-08
+c2_at21             =  -4.03431e-04
+c2_at23             =  -1.34799e-04
+MARK C_tnl_rms_seed2=0.00040838 C_tnl_at21n_seed2=-0.000403431 C_tnl_at23n_seed2=-0.000134799
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vdd                                        2.5
+coll                                   1.58286
+base                                  0.887822
+emit                                 0.0306121
+xq1.s1                             1.10977e-09
+xq1.t                                  15.4817
+bb                                         0.9
+rfsrc                                        0
+prf                                          0
+rfsrc2                                       0
+prf2                                         0
+losrc                                        0
+plo                                          0
+rtop                                         1
+rmid                                       0.5
+tn                                           0
+tnl                                          0
+vtn#branch                                   0
+vrdiv#branch                           -0.0005
+vlo#branch                                   0
+vrf2#branch                                  0
+vrf#branch                                   0
+vbb#branch                        -4.05923e-06
+vdd#branch                         -0.00305715
+
+ Reference value :  4.99706e-10
+ Reference value :  2.75406e-09
+ Reference value :  4.94618e-09
+ Reference value :  7.18271e-09
+ Reference value :  9.39400e-09
+ Reference value :  1.16312e-08
+ Reference value :  1.39231e-08
+ Reference value :  1.61642e-08
+ Reference value :  1.83081e-08
+ Reference value :  2.04570e-08
+ Reference value :  2.26181e-08
+No. of Data Rows : 120008
+c3_at21             =  2.01256e-04
+c3_at23             =  -2.11763e-04
+MARK C_tnl_at21n_seed1_repeat=0.000201256 C_tnl_at23n_seed1_repeat=-0.000211763
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+No. of Data Rows : 166
+
+No. of Data Rows : 1
+@c.xq1.csub[i] = 0.000000e+00
+@cin_lo[i] = 0.000000e+00
+@cin_rf2[i] = 0.000000e+00
+@cin_rf[i] = 0.000000e+00
+@q.xq1.qnpn13g2[ib] = 4.059228e-06
+@q.xq1.qnpn13g2[ic] = 3.057149e-03
+@q.xq1.qnpn13g2[ie] = -3.06121e-03
+@q.xq1.qnpn13g2[is] = 1.585381e-12
+@r.xq1.rsub[i] = 5.748269e-05
+@r.xq1.rt[i] = 1.016343e-12
+@rbias[i] = -7.62095e-05
+@rc[i] = -8.04720e-04
+@rdiv1[i] = 0.000000e+00
+@rdiv2[i] = 0.000000e+00
+@re[i] = 5.895847e-03
+@rlo[i] = -4.57544e-03
+@rrf2[i] = -4.57544e-03
+@rrf[i] = 1.542374e-02
+@rtn1[i] = 0.000000e+00
+@rtn2[i] = 0.000000e+00
+inoise_total = 2.688487e-03
+inoise_total_q.xq1.qnpn13g2 = 2.267002e-03
+inoise_total_q.xq1.qnpn13g2_1overfbe = 8.065568e-07
+inoise_total_q.xq1.qnpn13g2_1overfbep = 5.718016e-13
+inoise_total_q.xq1.qnpn13g2_ib = 1.207522e-04
+inoise_total_q.xq1.qnpn13g2_ibep = 5.018838e-08
+inoise_total_q.xq1.qnpn13g2_ic = 1.744615e-03
+inoise_total_q.xq1.qnpn13g2_iccp = 1.683603e-16
+inoise_total_q.xq1.qnpn13g2_rb = 6.495912e-04
+inoise_total_q.xq1.qnpn13g2_rbi = 8.039042e-04
+inoise_total_q.xq1.qnpn13g2_rbp = 6.107004e-04
+inoise_total_q.xq1.qnpn13g2_rc = 5.706902e-04
+inoise_total_q.xq1.qnpn13g2_rci = 1.324170e-04
+inoise_total_q.xq1.qnpn13g2_re = 5.420654e-04
+inoise_total_q.xq1.qnpn13g2_rs = 5.287096e-05
+inoise_total_r.xq1.rsub = 5.753079e-05
+inoise_total_r.xq1.rsub_1overf = 0.000000e+00
+inoise_total_r.xq1.rsub_thermal = 5.753079e-05
+inoise_total_r.xq1.rt = 6.277446e-11
+inoise_total_r.xq1.rt_1overf = 0.000000e+00
+inoise_total_r.xq1.rt_thermal = 6.277446e-11
+inoise_total_rbias = 8.776987e-05
+inoise_total_rbias_1overf = 0.000000e+00
+inoise_total_rbias_thermal = 8.776987e-05
+inoise_total_rc = 6.180067e-04
+inoise_total_rc_1overf = 0.000000e+00
+inoise_total_rc_thermal = 6.180067e-04
+inoise_total_rdiv1 = 0.000000e+00
+inoise_total_rdiv1_1overf = 0.000000e+00
+inoise_total_rdiv1_thermal = 0.000000e+00
+inoise_total_rdiv2 = 0.000000e+00
+inoise_total_rdiv2_1overf = 0.000000e+00
+inoise_total_rdiv2_thermal = 0.000000e+00
+inoise_total_re = 6.401926e-04
+inoise_total_re_1overf = 0.000000e+00
+inoise_total_re_thermal = 6.401926e-04
+inoise_total_rlo = 6.546933e-04
+inoise_total_rlo_1overf = 0.000000e+00
+inoise_total_rlo_thermal = 6.546933e-04
+inoise_total_rrf = 6.546933e-04
+inoise_total_rrf2 = 6.546933e-04
+inoise_total_rrf2_1overf = 0.000000e+00
+inoise_total_rrf2_thermal = 6.546933e-04
+inoise_total_rrf_1overf = 0.000000e+00
+inoise_total_rrf_thermal = 6.546933e-04
+inoise_total_rtn1 = 0.000000e+00
+inoise_total_rtn1_1overf = 0.000000e+00
+inoise_total_rtn1_thermal = 0.000000e+00
+inoise_total_rtn2 = 0.000000e+00
+inoise_total_rtn2_1overf = 0.000000e+00
+inoise_total_rtn2_thermal = 0.000000e+00
+onoise_total = 2.529467e-03
+onoise_total_q.xq1.qnpn13g2 = 2.007131e-03
+onoise_total_q.xq1.qnpn13g2_1overfbe = 2.503911e-06
+onoise_total_q.xq1.qnpn13g2_1overfbep = 1.768269e-12
+onoise_total_q.xq1.qnpn13g2_ib = 1.540665e-04
+onoise_total_q.xq1.qnpn13g2_ibep = 5.729767e-08
+onoise_total_q.xq1.qnpn13g2_ic = 1.037782e-03
+onoise_total_q.xq1.qnpn13g2_iccp = 2.081809e-16
+onoise_total_q.xq1.qnpn13g2_rb = 7.543603e-04
+onoise_total_q.xq1.qnpn13g2_rbi = 1.053015e-03
+onoise_total_q.xq1.qnpn13g2_rbp = 8.190603e-04
+onoise_total_q.xq1.qnpn13g2_rc = 2.176263e-04
+onoise_total_q.xq1.qnpn13g2_rci = 5.320599e-05
+onoise_total_q.xq1.qnpn13g2_re = 7.270082e-04
+onoise_total_q.xq1.qnpn13g2_rs = 1.861836e-05
+onoise_total_r.xq1.rsub = 4.463542e-05
+onoise_total_r.xq1.rsub_1overf = 0.000000e+00
+onoise_total_r.xq1.rsub_thermal = 4.463542e-05
+onoise_total_r.xq1.rt = 2.111913e-10
+onoise_total_r.xq1.rt_1overf = 0.000000e+00
+onoise_total_r.xq1.rt_thermal = 2.111913e-10
+onoise_total_rbias = 1.175847e-04
+onoise_total_rbias_1overf = 0.000000e+00
+onoise_total_rbias_thermal = 1.175847e-04
+onoise_total_rc = 5.014304e-04
+onoise_total_rc_1overf = 0.000000e+00
+onoise_total_rc_thermal = 5.014304e-04
+onoise_total_rdiv1 = 0.000000e+00
+onoise_total_rdiv1_1overf = 0.000000e+00
+onoise_total_rdiv1_thermal = 0.000000e+00
+onoise_total_rdiv2 = 0.000000e+00
+onoise_total_rdiv2_1overf = 0.000000e+00
+onoise_total_rdiv2_thermal = 0.000000e+00
+onoise_total_re = 8.687139e-04
+onoise_total_re_1overf = 0.000000e+00
+onoise_total_re_thermal = 8.687139e-04
+onoise_total_rlo = 6.702519e-04
+onoise_total_rlo_1overf = 0.000000e+00
+onoise_total_rlo_thermal = 6.702519e-04
+onoise_total_rrf = 6.702519e-04
+onoise_total_rrf2 = 6.702519e-04
+onoise_total_rrf2_1overf = 0.000000e+00
+onoise_total_rrf2_thermal = 6.702519e-04
+onoise_total_rrf_1overf = 0.000000e+00
+onoise_total_rrf_thermal = 6.702519e-04
+onoise_total_rtn1 = 0.000000e+00
+onoise_total_rtn1_1overf = 0.000000e+00
+onoise_total_rtn1_thermal = 0.000000e+00
+onoise_total_rtn2 = 0.000000e+00
+onoise_total_rtn2_1overf = 0.000000e+00
+onoise_total_rtn2_thermal = 0.000000e+00
+MARK D_onoise_total_250M_500G=0.00252947
+MARK E_pss_attempt_begin
+MARK E_pss_attempt_end
+MARK done
+ngspice-46 done

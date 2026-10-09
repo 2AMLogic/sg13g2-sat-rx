@@ -1,0 +1,144 @@
+{
+  "parsed": {
+    "marks": {
+      "A_points_seed1": 24008.0,
+      "A_points_seed2": 24008.0,
+      "A_coll_pp_lo_on_window": 0.462594,
+      "A_coll_seed_diff_max": 0.0,
+      "B_coll_pp_lo_off": 2.65798e-08,
+      "B_coll_dc": 1.58286,
+      "B_rdiv_pp": 0.0,
+      "B_tnl_pp_trnoise_off": 0.0,
+      "C_tnl_rms_seed1": 0.000412707,
+      "C_tnl_at21n_seed1": 0.000262212,
+      "C_tnl_at23n_seed1": 0.00048574,
+      "C_coll_pp_with_trnoise_elsewhere": 3.05227e-08,
+      "C_tnl_rms_seed2": 0.00040838,
+      "C_tnl_at21n_seed2": -0.000403431,
+      "C_tnl_at23n_seed2": -0.000134799,
+      "C_tnl_at21n_seed1_repeat": 0.000201256,
+      "C_tnl_at23n_seed1_repeat": -0.000211763,
+      "D_onoise_total_250M_500G": 0.00252947
+    },
+    "noise_totals_v_rms": {
+      "onoise_total": 0.002529467,
+      "onoise_total_q.xq1.qnpn13g2": 0.002007131,
+      "onoise_total_q.xq1.qnpn13g2_1overfbe": 2.503911e-06,
+      "onoise_total_q.xq1.qnpn13g2_1overfbep": 1.768269e-12,
+      "onoise_total_q.xq1.qnpn13g2_ib": 0.0001540665,
+      "onoise_total_q.xq1.qnpn13g2_ibep": 5.729767e-08,
+      "onoise_total_q.xq1.qnpn13g2_ic": 0.001037782,
+      "onoise_total_q.xq1.qnpn13g2_iccp": 2.081809e-16,
+      "onoise_total_q.xq1.qnpn13g2_rb": 0.0007543603,
+      "onoise_total_q.xq1.qnpn13g2_rbi": 0.001053015,
+      "onoise_total_q.xq1.qnpn13g2_rbp": 0.0008190603,
+      "onoise_total_q.xq1.qnpn13g2_rc": 0.0002176263,
+      "onoise_total_q.xq1.qnpn13g2_rci": 5.320599e-05,
+      "onoise_total_q.xq1.qnpn13g2_re": 0.0007270082,
+      "onoise_total_q.xq1.qnpn13g2_rs": 1.861836e-05,
+      "onoise_total_r.xq1.rsub": 4.463542e-05,
+      "onoise_total_r.xq1.rsub_1overf": 0.0,
+      "onoise_total_r.xq1.rsub_thermal": 4.463542e-05,
+      "onoise_total_r.xq1.rt": 2.111913e-10,
+      "onoise_total_r.xq1.rt_1overf": 0.0,
+      "onoise_total_r.xq1.rt_thermal": 2.111913e-10,
+      "onoise_total_rbias": 0.0001175847,
+      "onoise_total_rbias_1overf": 0.0,
+      "onoise_total_rbias_thermal": 0.0001175847,
+      "onoise_total_rc": 0.0005014304,
+      "onoise_total_rc_1overf": 0.0,
+      "onoise_total_rc_thermal": 0.0005014304,
+      "onoise_total_rdiv1": 0.0,
+      "onoise_total_rdiv1_1overf": 0.0,
+      "onoise_total_rdiv1_thermal": 0.0,
+      "onoise_total_rdiv2": 0.0,
+      "onoise_total_rdiv2_1overf": 0.0,
+      "onoise_total_rdiv2_thermal": 0.0,
+      "onoise_total_re": 0.0008687139,
+      "onoise_total_re_1overf": 0.0,
+      "onoise_total_re_thermal": 0.0008687139,
+      "onoise_total_rlo": 0.0006702519,
+      "onoise_total_rlo_1overf": 0.0,
+      "onoise_total_rlo_thermal": 0.0006702519,
+      "onoise_total_rrf": 0.0006702519,
+      "onoise_total_rrf2": 0.0006702519,
+      "onoise_total_rrf2_1overf": 0.0,
+      "onoise_total_rrf2_thermal": 0.0006702519,
+      "onoise_total_rrf_1overf": 0.0,
+      "onoise_total_rrf_thermal": 0.0006702519,
+      "onoise_total_rtn1": 0.0,
+      "onoise_total_rtn1_1overf": 0.0,
+      "onoise_total_rtn1_thermal": 0.0,
+      "onoise_total_rtn2": 0.0,
+      "onoise_total_rtn2_1overf": 0.0,
+      "onoise_total_rtn2_thermal": 0.0
+    },
+    "pss_command_missing": true,
+    "completed": true
+  },
+  "inventory": {
+    "mechanisms": {
+      "hbt_shot_collector": {
+        "tran": "unsupported",
+        "noise_analysis": "supported",
+        "noise_analysis_v_rms_at_coll": 0.001037782,
+        "evidence": "LO-driven .tran, two runs, max abs diff of v(coll) = 0 V over 24008/24008 points; LO-off settled p-p = 2.65798e-08 V vs this mechanism's .noise output 0.001038 V rms in 4.998e+11 Hz"
+      },
+      "hbt_shot_base": {
+        "tran": "unsupported",
+        "noise_analysis": "supported",
+        "noise_analysis_v_rms_at_coll": 0.00015406651065456433,
+        "evidence": "LO-driven .tran, two runs, max abs diff of v(coll) = 0 V over 24008/24008 points; LO-off settled p-p = 2.65798e-08 V vs this mechanism's .noise output 0.0001541 V rms in 4.998e+11 Hz"
+      },
+      "hbt_terminal_resistor_thermal": {
+        "tran": "unsupported",
+        "noise_analysis": "supported",
+        "noise_analysis_v_rms_at_coll": 0.0017110930651186333,
+        "evidence": "LO-driven .tran, two runs, max abs diff of v(coll) = 0 V over 24008/24008 points; LO-off settled p-p = 2.65798e-08 V vs this mechanism's .noise output 0.001711 V rms in 4.998e+11 Hz"
+      },
+      "hbt_flicker": {
+        "tran": "unsupported",
+        "noise_analysis": "supported",
+        "noise_analysis_v_rms_at_coll": 2.5039110000006242e-06,
+        "evidence": "LO-driven .tran, two runs, max abs diff of v(coll) = 0 V over 24008/24008 points; LO-off settled p-p = 2.65798e-08 V vs this mechanism's .noise output 2.504e-06 V rms in 4.998e+11 Hz; below this probe's amplitude resolution on its own -- absence rests on run-to-run determinism and the source reference"
+      },
+      "resistor_thermal": {
+        "tran": "unsupported",
+        "noise_analysis": "supported",
+        "evidence": "1k/1k divider .tran settled p-p = 0 V vs expected thermal 0.002035 V rms (500 ohm, 4.998e+11 Hz, T0)"
+      },
+      "hbt_noise_correlation": {
+        "tran": "unsupported",
+        "noise_analysis": "unsupported",
+        "evidence": "VBICnoise() evaluates every generator independently (source reference); no correlated ib/ic pair exists in any analysis."
+      },
+      "external_trnoise_injection": {
+        "tran": "supported",
+        "noise_analysis": "n/a",
+        "evidence": "TRNOISE(1m 1p) into 50/50 ohm: window rms 0.000412707 / 0.00040838 V in two runs; v(21 ns) = 0.000262212 / -0.000403431 V; re-issued setseed 1 gave 0.000201256 V (NOT reproduced by setseed)",
+        "setseed_reproduces_draw": false
+      },
+      "pss_pnoise": {
+        "tran": "n/a",
+        "noise_analysis": "unsupported",
+        "evidence": "binary replies 'pss: no such command available in ngspice'"
+      }
+    },
+    "sizing": {
+      "hbt_all_generators_v_rms_at_coll": 0.002007130717291888,
+      "noise_total_v_rms_at_coll": 0.002529467,
+      "lo_off_tran_pp_v": 2.65798e-08,
+      "pp_over_expected_rms": 1.324268507826071e-05,
+      "pp_over_expected_rms_db": -97.56047897399316,
+      "comparison_band_hz": [
+        250000000.0,
+        500000000000.0
+      ],
+      "resistor_expected_v_rms": 0.0020351771334488926,
+      "lo_on_settled_pp_v": 0.462594,
+      "lo_off_dc_v": 1.58286,
+      "trnoise_expected_rms_v": 0.0005,
+      "trnoise_linear_interp_rms_v": 0.00040824829046386303
+    }
+  }
+}
