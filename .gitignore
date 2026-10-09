@@ -16,6 +16,12 @@ sim/build/
 # (scratch, disposable)") -- never evidence, unlike sim/*/corners/**/*.log.
 sim/*/_build/
 sim/*/_selftest/
+# corners/_scratch is cmd_run's log dir for --no-write/--sabotage runs
+# (smoke, selftest): those runs record nothing, so their logs are not
+# evidence. Ignoring the directory overrides the corners/**/*.log exception
+# above for _scratch only; real runs log to corners/<record-id>/, which stays
+# visible to git.
+sim/*/corners/_scratch/
 # local klt install, created by the setup script
 .venv/
 # >>> loom-managed (do not edit) >>>
