@@ -283,6 +283,7 @@ def render(*, record_id, tb, sweep, rows, started, git, ngspice, pdk_prov, klt_m
         f"- Max self-heating rise dTj over computed rows: {_fmt(q['max_dtj_k'])} K (selft=1; the "
         "validity box is an ambient limit and does not cover this).",
         *bracketing_lines(cell_rows, best),
+        *reliance_lines(rows, best),
         *(message_lines(messages, rows) if messages is not None
           else ["- Simulator messages: not tallied by the ingesting code."]),
         "",
@@ -397,6 +398,28 @@ def message_lines(messages: dict[str, dict[str, int]], rows: list[dict]) -> list
     return lines
 
 
+def reliance_lines(rows: list[dict], best: list[dict]) -> list[str]:
+    """How much the REPORTED optima (the numbers the row-3 screen rests on)
+    depend on the data-quality problems tallied above, stated rather than
+    left for the reader to infer from run-wide maxima."""
+    ok = [r for r in rows if r.get("status") == "ok"]
+    opt_keys = {(b["corner_id"], b["freq_hz"], b["best_nx"], b["best_vce_set_v"], b["opt_vbe_v"])
+                for b in best if b.get("opt_vbe_v") is not None}
+    at_opt = [r for r in ok if (r["corner_id"], r["freq_hz"], r["nx"], r["vce_set_v"], r["vbe_v"]) in opt_keys]
+    dtj = [b["opt_dtj_k"] for b in best if b.get("opt_dtj_k") is not None]
+    with_msg = sum(1 for r in at_opt if r.get("sim_messages"))
+    bad_cells = {(r["corner_id"], r["nx"], r["vce_set_v"]) for r in rows if r.get("status") != "ok"}
+    touched = sum(1 for b in best if (b["corner_id"], b["best_nx"], b["best_vce_set_v"]) in bad_cells)
+    return [
+        f"- Reliance of the reported optima on the above: max self-heating rise AT the reported optima "
+        f"{_fmt(max(dtj) if dtj else None)} K (the run-wide maximum above occurs at much higher "
+        f"current density, far from the optima); {with_msg} of the {len(best)} reported optimum bias "
+        f"points carry a simulator message; {touched} of {len(best)} reported (PVT, f) optima sit in an "
+        "(PVT, Nx, VCE) cell that also contains an excluded row (excluded rows are never candidate "
+        "optima; they are listed with reasons in the points sidecar).",
+    ]
+
+
 def bracketing_lines(cell_rows: list[dict], best: list[dict]) -> list[str]:
     """How well the optima are bracketed in J_C, stated rather than assumed."""
     with_opt = [c for c in cell_rows if c.get("opt_nfmin_db_t290") is not None]
@@ -452,7 +475,12 @@ def screen_lines(screen: dict, screen_repo: dict) -> list[str]:
             "of headroom at the worst case. That headroom is what a future circuit has to spend on "
             "matching-network loss, bias/degeneration noise and the second stage. **It is not evidence "
             "that row 3 is achievable**, and nothing here ratifies, relaxes or tests a circuit against "
-            "it.",
+            "it. The margin is also only as good as the device model: it rests on one VBIC card whose "
+            "20 GHz noise behaviour was not validated against measurement, with ideal noiseless bias and "
+            "terminations, so the NFmin values above are optimistic by construction. Zopt is >1 kohm at "
+            "Nx = 1 and ~170 ohm at Nx = 8, so the matching loss a real circuit must pay is large. "
+            "Run quality (excluded rows, simulator singular-matrix warnings, self-heating) is stated "
+            "under Data quality, including how far the reported optima are from the worst of it.",
         ]
     elif screen["verdict"] == "exceeds_limit_somewhere":
         lines += [
