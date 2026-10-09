@@ -141,9 +141,14 @@ record names, which must agree with the record's inventory). Any other `sim/<dir
 with `records/`, `corners/`, `netlist-snapshots/` or `probe-logs/` fails as an
 unrecognised layout. Append-only history additionally protects `sim/*/probe-logs/`
 (no modify/delete/rename, nothing added to a committed run id; a complete new run
-is fine). The passive solver working outputs (`results/`, `run_log/`, `fit/`) stay
-mutable on purpose; the permanent evidence there is the record pair and the
-hashed inputs it names. The checks validate structure and provenance only, never
+is fine). New passive records (`record_schema` 2, issue #58) also name a frozen
+`sim/passive-p1/solver-artifacts/<id>/` package with a SHA-256 `manifest.json`;
+the checker verifies completeness for the recorded outcome, safe relative paths,
+actual hash agreement and record/package agreement, and the append-only check
+protects it like `probe-logs/`. This is hash integrity, not numerical
+qualification. The passive solver working outputs (`results/`, `run_log/`, `fit/`)
+stay mutable on purpose; the permanent evidence there is the record pair, the
+hashed inputs it names and (for new records) the frozen package. The checks validate structure and provenance only, never
 a historical numerical claim, and need no simulator or PDK. Adapter tests:
 `python -m pytest .github/scripts/tests/test_check_evidence_adapters.py -q`
 (also runs under `python -m unittest`). CI does not run the

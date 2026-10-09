@@ -48,6 +48,8 @@ FILES = [
     ("scripts/p1chain.py", "new", None),
     ("scripts/limits.py", "new", None),
     ("scripts/make_record.py", "new", None),
+    ("scripts/freeze_package.py", "new", None),
+    ("scripts/reanalyze_frozen.py", "new", None),
     ("scripts/make_synthetic.py", "new", None),
     ("scripts/controls.py", "new", None),
     ("scripts/hash_inputs.py", "new", None),
