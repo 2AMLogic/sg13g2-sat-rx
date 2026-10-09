@@ -1,0 +1,50 @@
+* Candidate "placeholder_floor": the existing single-HBT placeholder core,
+* LABELLED FLOOR. NOT a design candidate and NOT a Gilbert cell.
+*
+* DEVICE-LEVEL TOPOLOGY STUDY (issue #35). The core element values below are
+* copied verbatim from ../../mixer-conversion-iip3/testbench/
+* mixer_ce_placeholder.spice (same repository, same commit lineage): one
+* npn13G2 Nx=4, Rc = 300 ohm, Re = 10 ohm, base bias Vbb = 0.90 V through
+* Rbias = 3 kohm, RF and LO each AC-coupled onto the SAME base through 1 pF.
+* That file and its records are left untouched; this fragment only re-wraps
+* the same core in this bench's common port conventions so the floor is
+* compared on identical terms:
+*   RF: rf_port -> 1 pF -> base (as in the original; rf_dc = 0).
+*   LO: the bench's differential 100 ohm LO port -> ideal balun mf_balun
+*       n=sqrt(2) (100 ohm diff <-> 50 ohm SE, centre tap grounded) -> lo_se
+*       -> 1 pF -> base. The original drove a 50 ohm single-ended LO source;
+*       the ideal balun preserves available power and presents the same
+*       50 ohm source impedance to the core. lo_dc = 0.
+*   IF: the original left the collector UNTERMINATED and quoted power into
+*       an assumed 50 ohm (its own tb.json disclaims this). Here the
+*       collector gets the common IF network: Cout = 0.5 pF to ground, a
+*       5 pF DC block (needed because the output is single-ended; 32 ohm at
+*       1 GHz against the 200 ohm reflected load, ~0.1 dB, kept small so its
+*       ~2.5 ns settling constant fits the settle interval) and an ideal
+*       transformer mf_xfmr (200 ohm SE <-> 50 ohm SE, n = 1/2 from the
+*       collector side to the load) into if_out
+*       (Rif = 50 ohm), i.e. power actually delivered into a physical load.
+* Single-ended: there is no differential pair, so the mismatch cards change
+* only the one device's area draw; leakage is not a symmetry effect here.
+*
+* Device list declared in tb.json "study.candidates" (checked by mixfeas).
+
+.param pf_rc=300 pf_re=10 pf_rbias=3k pf_vbb=0.90 pf_cin=1p
+.param pf_cout=0.5p pf_cblk=5p
+
+Vpf_bb pf_bb 0 DC {pf_vbb}
+Rpf_bias pf_bb b_q1 {pf_rbias}
+Rpf_c vdd c1r {pf_rc}
+vic_q1 c1r c_q1 0
+Xq1 c_q1 b_q1 e_q1 0 npn13G2 Nx=4
+Rpf_e e_q1 0 {pf_re}
+
+* ---- RF and LO summed at the base (as in the original placeholder) ---------
+Cpf_rf rf_port b_q1 {pf_cin}
+Xpf_lobal lo_se lo_p lo_n 0 mf_balun n=1.41421356237
+Cpf_lo lo_se b_q1 {pf_cin}
+
+* ---- IF network ----------------------------------------------------------------
+Cpf_o c1r 0 {pf_cout}
+Cpf_b c1r ifd {pf_cblk}
+Xpf_ifx ifd if_out mf_xfmr n=0.5

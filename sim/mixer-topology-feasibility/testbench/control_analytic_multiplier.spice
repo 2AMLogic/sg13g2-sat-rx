@@ -1,0 +1,29 @@
+* ANALYTIC CONTROL for the extraction chain (issue #35) -- NOT a candidate.
+*
+* An ideal behavioural "mixer" whose every extracted quantity has a closed
+* form, run through exactly the same ports (ports_common.spice), deck
+* generator, in-deck DFT and parser as the real candidates. mixfeas.py's
+* analytic_expectations() holds the closed forms; selftest fails if the
+* extraction disagrees. No device model is used.
+*
+* Ports are sensed, not loaded: the B source senses the RF source's
+* open-circuit node rfs (ahead of Rrf, so the LO current injected into
+* rf_port below cannot leak into the product) and the unloaded LO legs, so
+* the sensed RF voltage is exactly Vrf_open and V(lo_p) - V(lo_n) = vlo.
+*   v_rf(t) = vrf1 sin(w1 t) + vrf2 sin(w2 t)      (open circuit, rf_dc = 0)
+*   v_lo(t) = vlo sin(wlo t)
+* B source e_if, in series with 50 ohm into Rif (= 50 ohm), so
+*   V(if_out) = 0.5 * [ ac_k * v_rf * v_lo + ac_k3 * v_rf^3 * v_lo + ac_c * v_lo ]
+* LO-to-RF coupling: an ideal VCCS injects ac_g * v_lo into rf_port, whose
+* only path to ground is Rrf (50 ohm through the zero RF source), so
+*   V(rf_port) at flo = 50 * ac_g * vlo  (when the RF source is off).
+* No supply current flows (rail power is exactly 0), and the "devices"
+* list for this control is empty.
+
+* ac_k, ac_k3, ac_c, ac_g are .param lines generated from tb.json
+* "study.analytic_control.params" (the one place their values live, so the
+* closed forms in mixfeas.analytic_expectations use the same numbers).
+
+Bac_if ac_e 0 V = 'ac_k*v(rfs)*(v(lo_p)-v(lo_n)) + ac_k3*v(rfs)*v(rfs)*v(rfs)*(v(lo_p)-v(lo_n)) + ac_c*(v(lo_p)-v(lo_n))'
+Rac_s ac_e if_out {z0}
+Gac_lo 0 rf_port lo_p lo_n {ac_g}

@@ -33,6 +33,7 @@ runs against real device data).
 | `mixer-conversion-iip3` | Conversion gain, LO-to-RF leakage, two-tone IIP3 | placeholder circuit — see below |
 | `hbt-kaband-characterization` | Bare `npn13G2` at 17.7/19.45/21.2 GHz: two-port noise parameters (NFmin, Zopt, Rn), NF₅₀, fT, K/\|Δ\| and MAG-or-MSG, DC power, over Nx × VCE × J_C inside every PVT point | **device-level evidence, not a matched-amplifier result** — see below |
 | `mixer-nf-method` | Feasibility of a mixer SSB-NF method without pnoise (issue #27): ngspice noise-capability inventory, SSB/image estimator and status gates | **`MODEL_ABSENT`** — no intrinsic device noise in `.tran`; no mixer NF number — see below |
+| `mixer-topology-feasibility` | Mixer-core topology comparison under row 17 (issue #35): stacked Gilbert vs folded single-balanced vs the placeholder floor; per-device V_CE/V_BE/Ic stress, gain into a physical 50 Ω IF load, LO-drive selection rule, DC power, mismatch-card leakage, swept-region IIP3 | **part 1 only: fixtures + validated extraction, no record yet** — see below |
 
 **The first two benches instantiate a PLACEHOLDER circuit, not a design candidate.**
 `design/` has no ratified schematic yet (issue #1, the spec-ratification
@@ -104,6 +105,27 @@ gap, not a klayout-tools one (klayout-tools does no simulation and is not
 invoked by either bench in this repo). Full derivation:
 `mixer-conversion-iip3/testbench/mixer_ce_placeholder.spice`'s header
 comment.
+
+### `mixer-topology-feasibility`: which mixer core to draw first (issue #35)
+
+[`mixer-topology-feasibility/`](mixer-topology-feasibility/README.md) compares
+a classic stacked Gilbert cell, a folded single-balanced alternative and the
+placeholder (a labelled floor). All three use bit-identical port conventions:
+a 50 Ω RF port, a 100 Ω differential LO port quoted as total available power,
+and a physical 50 Ω IF load. Ideal baluns and passives keep it a
+**device-level topology study, not a design**; it claims no spec row.
+
+- **Status: part 1 of 2.** Part 1 has the fixtures, the study declaration,
+  the extraction/selection/IIP3/stress/acceptance-gate logic with unit tests,
+  and local single-corner `smoke`, `selftest` and `converge` modes. **No
+  record exists yet.** The 837-cell comparison is a multi-corner campaign
+  for `klt sim` batch submission (part 2).
+- **Limitations.** The supply axis is an exploratory 2.25 V ± 10 %, wholly
+  below the 2.5 V ceiling; it ratifies no rail. The LO-selection and IIP3
+  sweeps are reduced to `hbt_typ`/27 °C/2.25 V. Leakage uses the
+  `*_mismatch` cards at one fixed seed, which is deterministic card coverage,
+  not yield evidence. There is no MOS/capacitor/resistor or passive/EM
+  corner axis, and SSB NF is out of scope.
 
 ### `mixer-nf-method`: SSB NF without pnoise (issue #27)
 
