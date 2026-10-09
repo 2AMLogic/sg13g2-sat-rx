@@ -58,6 +58,10 @@ jobs:
         run: pip install pytest
       - name: Checker self-test (negative controls on broken fixtures and temporary git histories)
         run: python -m pytest .github/scripts/tests -q
+      # The spec-row coverage check (spec/row-coverage.json vs the table in
+      # spec/target-spec.md; issue #50) runs inside the next step as the
+      # "row-coverage:" line, and its negative controls are in the self-test
+      # above (test_check_row_coverage.py). No PDK, no simulator.
       - name: Validate committed evidence and enforce append-only history
         env:
           EVENT: ${{ github.event_name }}

@@ -5,6 +5,13 @@ Testbenches and PVT corner results (ngspice), built on the generic
 "Verification is the product": every claim in this repo traces to one of the
 append-only records under `sim/<experiment>/records/`.
 
+Which spec row each bench is meant to close, and the honest verdict of its
+latest record today (`no_bench`, `placeholder_circuit`, `device_level_only`,
+`method_absent`, ...), is the machine-checked manifest
+[`spec/row-coverage.json`](../spec/row-coverage.json), validated in CI by
+`.github/scripts/check_evidence_formats.py` against the table in
+`spec/target-spec.md`. When a bench gains a record, add a verdict change there.
+
 ## PDK pin
 
 `sim/pdk.json` names the PDK and the model-library file this harness's
