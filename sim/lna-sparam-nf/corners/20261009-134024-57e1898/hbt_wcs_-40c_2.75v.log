@@ -1,0 +1,94 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: * klt sim -- generated corner deck, do not edit
+
+Doing analysis at TEMP = -40.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+No. of Data Rows : 3
+
+  Measurements for Transient Analysis
+
+
+Reset re-loads circuit * klt sim -- generated corner deck, do not edit
+
+Circuit: * klt sim -- generated corner deck, do not edit
+
+Doing analysis at TEMP = -40.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+No. of Data Rows : 3
+
+  Measurements for Transient Analysis
+
+
+Reset re-loads circuit * klt sim -- generated corner deck, do not edit
+
+Circuit: * klt sim -- generated corner deck, do not edit
+
+Doing analysis at TEMP = -40.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+No. of Data Rows : 3
+
+No. of Data Rows : 1
+
+  Measurements for Transient Analysis
+
+
+m_s11_db_lo = -6.990534294e-01
+m_s11_db_mid = -7.463033525e-01
+m_s11_db_hi = -7.972449812e-01
+m_s21_db_lo = 7.8977897294e+00
+m_s21_db_mid = 7.8456853005e+00
+m_s21_db_hi = 7.7892770387e+00
+m_s22_db_lo = -4.797589924e+00
+m_s22_db_mid = -4.845059541e+00
+m_s22_db_hi = -4.895277526e+00
+m_s12_db_lo = -2.458212435e+01
+m_s12_db_mid = -2.381867955e+01
+m_s12_db_hi = -2.312964716e+01
+m_k_lo = 3.5597231042e-01
+m_k_mid = 3.5674486003e-01
+m_k_hi = 3.6017260501e-01
+m_nf_db_lo = 3.9924972391e+00
+m_nf_db_mid = 3.9995507412e+00
+m_nf_db_hi = 4.0073515371e+00
+Doing analysis at TEMP = -40.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vdd                                       2.75
+coll                                   2.17641
+base                                  0.942758
+emit                                 0.0286034
+xq1.s1                             1.49321e-09
+xq1.t                                  20.0611
+bb                                        0.92
+s1n                                          0
+p1                                           0
+s2n                                          0
+p2                                           0
+vs2#branch                                   0
+vs1#branch                                   0
+vbb#branch                         7.58607e-06
+vdd#branch                         -0.00286793
+
+
+No. of Data Rows : 59
+
+  Measurements for Transient Analysis
+
+lna_rail_v          =  2.75000e+00
+
+ngspice-46 done

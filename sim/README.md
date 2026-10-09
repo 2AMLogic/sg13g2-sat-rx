@@ -57,6 +57,39 @@ every record's evidence notes). Swept at three points across the Ka-band
 downlink DRAFT band (17.7 / 19.45 / 21.2 GHz). Full derivation:
 `lna-sparam-nf/testbench/lna_ce_placeholder.spice`'s header comment.
 
+**Noise-figure reference (corrected, issue #22).** The reference source Rs1
+is **noiseless** (`noisy=0`, no instance `TEMP=`) and its thermal noise is
+added analytically at an explicit T0 = 300.15 K:
+`F = 1 + inoise_spectrum^2 / (4 k T0 Z0)`, `NF = 10 log10 F`. The output load
+Rs2 and bias resistor stay noisy at each corner's temperature (unchanged).
+The first record, `lna-sparam-nf/records/20260912-034726-9204518.md`, used
+`Rs1 ... TEMP=27` and believed it pinned the source at 300.15 K; in
+ngspice-46 it generates noise at 327.15 K (see `hbt-kaband-characterization`'s
+probe), so **every `nf_db_*` in that record is high by 27/300.15 = 0.0900 in
+linear F** (not a constant dB offset). It is left untouched; do not quote its
+NF numbers. The current record is
+`lna-sparam-nf/records/20261009-134024-57e1898.md` (supersedes it; a fresh
+27-point simulation whose NF equals `10^(NF_old/10) - 27/300.15` to 4e-7 in F,
+S-parameters and k bit-identical). The instance-`temp=` behaviour is an
+observation on ngspice-46: on ngspice-42 a one-corner local check shows the old
+and new fixtures agreeing, so the correction cannot be reproduced on that
+version. Normalization and its negative controls:
+`lna-sparam-nf/lna_nf.py`, tests `python3 -m pytest sim/lna-sparam-nf/tests -q`.
+
+To reproduce the campaign on a shared dispatch host (the 27 points go to the
+`klt sim` batch fleet, not a local `ngspice -b` loop):
+
+```
+python3 sim/lna-sparam-nf/run.py characterize --no-stage-models --runner-version-check warn \
+    --supersedes <previous-record-id> --claim '...'
+```
+
+(`--no-stage-models --runner-version-check warn` are the same fleet/client
+version-skew workarounds as `hbt-kaband-characterization/README.md` documents;
+drop them once the runner image is updated.) The driver ingests the returned
+logs into the usual native layout and refuses to write unless all 27 points
+carry finite values and, with `--supersedes`, agree with that record's logs.
+
 ### `mixer-conversion-iip3`
 
 Conversion gain, LO-to-RF leakage, and two-tone IIP3 via one transient run's
@@ -150,7 +183,7 @@ corner set explicitly:
 
 ```
 python3 -m harness.cli list
-python3 -m harness.cli run lna-sparam-nf --corners hbt
+python3 -m harness.cli run lna-sparam-nf --corners hbt   # local ngspice loop: workstation only; on a shared host use lna-sparam-nf/run.py
 python3 -m harness.cli run mixer-conversion-iip3 --corners hbt
 python3 -m harness.cli selftest lna-sparam-nf --corners hbt
 python3 -m harness.cli selftest mixer-conversion-iip3 --corners hbt
