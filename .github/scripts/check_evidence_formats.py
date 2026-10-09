@@ -65,6 +65,13 @@ reinterprets a historical scientific claim; corrections go in a later record):
    notice and the format half still runs; ``--require-base`` turns the skip
    into a failure (the pull_request job uses it).
 
+3. Spec-row coverage (``spec/row-coverage.json``, issue #50): the hand-kept
+   manifest must list exactly the rows of the table in ``spec/target-spec.md``
+   with the same status and binding corner, every cited bench dir / record
+   must exist, a ``measured_*`` verdict may not cite a record whose Claim line
+   says placeholder / device-level, and a row without a bench must say what
+   blocks it. It records bookkeeping only and never changes a spec value.
+
 Exit status: 0 clean, 1 problems found, 2 usage/environment error.
 """
 
@@ -913,6 +920,113 @@ def check_append_only(root: Path, base: str | None, require_base: bool) -> tuple
 
 
 # ---------------------------------------------------------------------------
+# Spec-row coverage manifest (issue #50)
+
+COVERAGE_PATH = "spec/row-coverage.json"
+SPEC_PATH = "spec/target-spec.md"
+VERDICTS = {"no_bench", "placeholder_circuit", "device_level_only", "method_absent",
+            "measured_pass", "measured_fail"}
+NEEDS_RECORD = VERDICTS - {"no_bench"}
+OVERCLAIM_RE = re.compile(r"placeholder|device-level|device level|not a matched|not spec", re.I)
+SPEC_ROW_RE = re.compile(r"^\|\s*(\d+)\s*\|")
+
+
+def spec_table_rows(text: str) -> dict[int, tuple[str, str]]:
+    """{row: (status, binding-corner cell)} parsed from the target-spec table."""
+    rows: dict[int, tuple[str, str]] = {}
+    for line in text.splitlines():
+        m = SPEC_ROW_RE.match(line)
+        if not m:
+            continue
+        cells = [c.strip() for c in line.strip().strip("|").split(" | ")]
+        if len(cells) < 7:
+            continue
+        st = re.search(r"\*\*(RATIFIED|OPEN)", cells[2])
+        if st:
+            rows[int(m.group(1))] = ("ratified-target" if st.group(1) == "RATIFIED" else "open", cells[6])
+    return rows
+
+
+def check_row_coverage(root: Path) -> Problems:
+    problems = Problems()
+    spec = root / SPEC_PATH
+    man = root / COVERAGE_PATH
+    if not spec.is_file():
+        problems.add(SPEC_PATH, "missing; cannot check spec-row coverage")
+        return problems
+    if not man.is_file():
+        problems.add(COVERAGE_PATH, "missing row-coverage manifest")
+        return problems
+    try:
+        doc = json.loads(man.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        problems.add(COVERAGE_PATH, f"unreadable JSON: {exc}")
+        return problems
+    entries = doc.get("rows") if isinstance(doc, dict) else None
+    if not isinstance(entries, list):
+        problems.add(COVERAGE_PATH, "top level must be an object with a 'rows' list")
+        return problems
+    table = spec_table_rows(spec.read_text(encoding="utf-8"))
+    if not table:
+        problems.add(SPEC_PATH, "no spec table rows parsed")
+        return problems
+
+    by_row: dict[int, dict] = {}
+    for i, e in enumerate(entries):
+        if not isinstance(e, dict) or not isinstance(e.get("row"), int):
+            problems.add(COVERAGE_PATH, f"rows[{i}] is not an object with an integer 'row'")
+            continue
+        if e["row"] in by_row:
+            problems.add(COVERAGE_PATH, f"row {e['row']} listed more than once")
+        by_row[e["row"]] = e
+    for n in sorted(set(table) - set(by_row)):
+        what = "RATIFIED row silently absent" if table[n][0] == "ratified-target" else "row missing"
+        problems.add(COVERAGE_PATH, f"row {n}: {what} from the manifest")
+    for n in sorted(set(by_row) - set(table)):
+        problems.add(COVERAGE_PATH, f"row {n}: not in the {SPEC_PATH} table")
+
+    for n in sorted(set(by_row) & set(table)):
+        e = by_row[n]
+        where = f"{COVERAGE_PATH} row {n}"
+        status, corner = table[n]
+        if e.get("status") != status:
+            problems.add(where, f"status {e.get('status')!r} disagrees with the spec table ({status!r})")
+        if e.get("bound_corner") != corner:
+            problems.add(where, f"bound_corner {e.get('bound_corner')!r} disagrees with the spec table ({corner!r})")
+        verdict = e.get("verdict")
+        if verdict not in VERDICTS:
+            problems.add(where, f"verdict {verdict!r} not one of {sorted(VERDICTS)}")
+            continue
+        bench, rec = e.get("bench"), e.get("latest_record")
+        if bench is not None:
+            if not isinstance(bench, str) or not bench.startswith("sim/") or not (root / bench).is_dir():
+                problems.add(where, f"bench {bench!r} is not an existing sim/<experiment> directory")
+        if rec is not None:
+            rp = root / rec if isinstance(rec, str) else None
+            if rp is None or not rp.is_file():
+                problems.add(where, f"latest_record {rec!r} does not exist")
+        if verdict == "no_bench":
+            if bench is not None or rec is not None:
+                problems.add(where, "verdict no_bench but a bench or record is cited")
+            if not (isinstance(e.get("blocked_by"), str) and e["blocked_by"].strip()):
+                problems.add(where, "no bench: 'blocked_by' (issue or DR id) is required")
+            continue
+        if bench is None or rec is None:
+            problems.add(where, f"verdict {verdict} needs both a bench and a latest_record")
+            continue
+        if isinstance(rec, str) and not rec.startswith(str(bench) + "/records/"):
+            problems.add(where, f"latest_record {rec!r} is not under {bench}/records/")
+        if verdict.startswith("measured_") and isinstance(rec, str) and (root / rec).is_file():
+            text = (root / rec).read_text(encoding="utf-8", errors="replace")
+            for line in text.splitlines():
+                if line.startswith("**Claim**") and OVERCLAIM_RE.search(line):
+                    problems.add(where, f"overclaimed: {verdict} cites {rec}, whose Claim line says "
+                                 "placeholder/device-level")
+                    break
+    return problems
+
+
+# ---------------------------------------------------------------------------
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -930,6 +1044,9 @@ def main(argv: list[str] | None = None) -> int:
 
     problems = check_format(root)
     print(f"format: {'FAILED' if problems else 'ok'} ({len(problems.items)} problem(s))")
+    cov = check_row_coverage(root)
+    print(f"row-coverage: {'FAILED' if cov else 'ok'} ({len(cov.items)} problem(s))")
+    problems.items += cov.items
     if not args.skip_history:
         hist, note = check_append_only(root, args.base, args.require_base)
         print(f"append-only: {note}")

@@ -1,0 +1,176 @@
+{
+  "_comment": "Hand-maintained spec-row to bench/record coverage map (issue #50). Evidence-neutral: it never changes a spec value. Checked by .github/scripts/check_evidence_formats.py against the table in spec/target-spec.md. Verdicts: no_bench, placeholder_circuit, device_level_only, method_absent, measured_pass, measured_fail. A measured_* verdict may not cite a record whose Claim line says placeholder or device-level. A row moves off its current verdict only via a later record that says why.",
+  "rows": [
+    {
+      "row": 1,
+      "status": "open",
+      "bound_corner": "—",
+      "bench": null,
+      "latest_record": null,
+      "verdict": "no_bench",
+      "blocked_by": "DR-0001 (still proposed); allocation edges unverified"
+    },
+    {
+      "row": 2,
+      "status": "ratified-target",
+      "bound_corner": "`hbt_wcs`, 125 °C, min supply (lowest `J_C`, lowest fT)",
+      "bench": "sim/lna-sparam-nf",
+      "latest_record": "sim/lna-sparam-nf/records/20261009-134024-57e1898.md",
+      "verdict": "placeholder_circuit"
+    },
+    {
+      "row": 3,
+      "status": "ratified-target",
+      "bound_corner": "`hbt_wcs`, 125 °C (device noise rises with T; worst self-heating)",
+      "bench": "sim/lna-sparam-nf",
+      "latest_record": "sim/lna-sparam-nf/records/20261009-134024-57e1898.md",
+      "verdict": "placeholder_circuit"
+    },
+    {
+      "row": 4,
+      "status": "ratified-target",
+      "bound_corner": "`cap_bcs`/`cap_wcs` × `res_*` extremes (L/C spread), temperature extremes",
+      "bench": "sim/lna-sparam-nf",
+      "latest_record": "sim/lna-sparam-nf/records/20261009-134024-57e1898.md",
+      "verdict": "placeholder_circuit"
+    },
+    {
+      "row": 5,
+      "status": "open",
+      "bound_corner": "as row 4",
+      "bench": "sim/lna-sparam-nf",
+      "latest_record": "sim/lna-sparam-nf/records/20261009-134024-57e1898.md",
+      "verdict": "placeholder_circuit"
+    },
+    {
+      "row": 6,
+      "status": "ratified-target",
+      "bound_corner": "worst process × temp × supply combination; out-of-band as well as in-band",
+      "bench": "sim/lna-sparam-nf",
+      "latest_record": "sim/lna-sparam-nf/records/20261009-134024-57e1898.md",
+      "verdict": "placeholder_circuit"
+    },
+    {
+      "row": 7,
+      "status": "ratified-target",
+      "bound_corner": "`hbt_typ`, nominal supply/temperature (to be confirmed — linearity's corner dependence is a bench finding, not an assumption)",
+      "bench": null,
+      "latest_record": null,
+      "verdict": "no_bench",
+      "blocked_by": "no LNA two-tone transient+FFT bench exists"
+    },
+    {
+      "row": 8,
+      "status": "ratified-target",
+      "bound_corner": "as row 7",
+      "bench": null,
+      "latest_record": null,
+      "verdict": "no_bench",
+      "blocked_by": "no LNA single-tone power-sweep bench exists"
+    },
+    {
+      "row": 9,
+      "status": "ratified-target",
+      "bound_corner": "`hbt_wcs`, 125 °C, min supply",
+      "bench": "sim/mixer-conversion-iip3",
+      "latest_record": "sim/mixer-conversion-iip3/records/20260912-034727-9204518.md",
+      "verdict": "placeholder_circuit"
+    },
+    {
+      "row": 10,
+      "status": "ratified-target",
+      "bound_corner": "`hbt_wcs`, 125 °C",
+      "bench": "sim/mixer-nf-method",
+      "latest_record": "sim/mixer-nf-method/records/20261009-181241-c40c552-MODEL_ABSENT.md",
+      "verdict": "method_absent"
+    },
+    {
+      "row": 11,
+      "status": "ratified-target",
+      "bound_corner": "`hbt_typ`, nominal",
+      "bench": "sim/mixer-conversion-iip3",
+      "latest_record": "sim/mixer-conversion-iip3/records/20260912-034727-9204518.md",
+      "verdict": "placeholder_circuit"
+    },
+    {
+      "row": 12,
+      "status": "open",
+      "bound_corner": "`hbt_wcs`, 125 °C",
+      "bench": null,
+      "latest_record": null,
+      "verdict": "no_bench",
+      "blocked_by": "DR-0004 (interface convention); no cascade bench exists"
+    },
+    {
+      "row": 13,
+      "status": "open",
+      "bound_corner": "`hbt_wcs`, 125 °C, min supply",
+      "bench": null,
+      "latest_record": null,
+      "verdict": "no_bench",
+      "blocked_by": "DR-0004 (interface convention); no cascade bench exists"
+    },
+    {
+      "row": 14,
+      "status": "open",
+      "bound_corner": "—",
+      "bench": null,
+      "latest_record": null,
+      "verdict": "no_bench",
+      "blocked_by": "rows 1 and 16 (LO range is arithmetic on band and IF plan); no LO bench exists"
+    },
+    {
+      "row": 15,
+      "status": "open",
+      "bound_corner": "`hbt_typ` and mismatch corners (leakage is a matching/symmetry effect, so `hbt_typ_mismatch` is in scope)",
+      "bench": "sim/mixer-conversion-iip3",
+      "latest_record": "sim/mixer-conversion-iip3/records/20260912-034727-9204518.md",
+      "verdict": "placeholder_circuit"
+    },
+    {
+      "row": 16,
+      "status": "open",
+      "bound_corner": "`cap_*` corners (IF load RC), 125 °C",
+      "bench": null,
+      "latest_record": null,
+      "verdict": "no_bench",
+      "blocked_by": "no IF-bandwidth bench exists; IF plan is DRAFT (DR-0002)"
+    },
+    {
+      "row": 17,
+      "status": "ratified-target",
+      "bound_corner": "—",
+      "bench": null,
+      "latest_record": null,
+      "verdict": "no_bench",
+      "blocked_by": "no bench checks per-device V_CE stress yet; sim/mixer-topology-feasibility is a part-1 fixture study with no record"
+    },
+    {
+      "row": 18,
+      "status": "ratified-target",
+      "bound_corner": "`hbt_bcs`, −40 °C (bias current typically peaks there for a fixed bias network)",
+      "bench": null,
+      "latest_record": null,
+      "verdict": "no_bench",
+      "blocked_by": "no bench records DC power yet"
+    },
+    {
+      "row": 19,
+      "status": "open",
+      "bound_corner": "—",
+      "bench": null,
+      "latest_record": null,
+      "verdict": "no_bench",
+      "blocked_by": "open item 8: needs a first floorplan and klt economy; no layout exists"
+    },
+    {
+      "row": 20,
+      "status": "open",
+      "bound_corner": "—",
+      "bench": null,
+      "latest_record": null,
+      "verdict": "no_bench",
+      "blocked_by": "open item 8: needs klt economy evidence; no layout exists"
+    }
+  ]
+}

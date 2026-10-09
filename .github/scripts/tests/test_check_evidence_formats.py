@@ -46,6 +46,10 @@ def tree(tmp_path):
     dst = tmp_path / "repo"
     shutil.copytree(REPO / "sim", dst / "sim", copy_function=_link, symlinks=True,
                     ignore=shutil.ignore_patterns("harness", "_build", "_selftest", "__pycache__"))
+    # The spec-row coverage check (issue #50) reads the spec table + manifest.
+    (dst / "spec").mkdir()
+    for name in ("target-spec.md", "row-coverage.json"):
+        shutil.copyfile(REPO / "spec" / name, dst / "spec" / name)
     return dst
 
 
