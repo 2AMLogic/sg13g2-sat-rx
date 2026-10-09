@@ -11,6 +11,9 @@ spec/
                               sg13g2-comparator, the exact IHP-Open-PDK model
                               files this block depends on, and what is
                               genuinely new (the mixer bench, 20 GHz passives)
+  literature-citations-2026-10-09.md   append-only citation table for the
+                              (E)/NEEDS-VERIFICATION rows (issue #29); changes
+                              no ratified value, closes no flag
   decision-records/
     TEMPLATE.md             copy this to start a new record
     0001-band-selection-ka-vs-ku.md    band (proposed, with the Ku trigger)
