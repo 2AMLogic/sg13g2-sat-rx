@@ -154,3 +154,12 @@ for geometry and `ngspice -b` for the model comparison, not `klt`. The standing
 gap (`klt mom` cannot extract spirals / export Touchstone,
 [klayout-tools#1517](https://github.com/2AMLogic/klayout-tools/issues/1517)) is the
 reason this route exists and is already filed; it is not re-filed.
+
+## CI coverage
+
+The permanent evidence package is `records/<id>-<STATUS>.md` + `.json` and the
+input files named by the record's `input_hashes` (existence checked) --
+`.github/scripts/check_evidence_formats.py` validates and history-protects the
+records. `results/`, `run_log/` and `fit/` are mutable working output and are
+not protected. `SYNTHETIC-*` pipeline-smoke records must stay out of `records/`
+(the checker rejects them there). See the top-level README.

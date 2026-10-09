@@ -201,3 +201,11 @@ python3 sim/mixer-nf-method/run_probe.py --reparse probe-logs/<id>   # re-derive
 Records are append-only. Files are created exclusively, and a re-run writes a new id.
 `sim/mixer-conversion-iip3`'s gain/IIP3 bench and records are untouched; its fragment is
 `.include`d read-only.
+
+## CI coverage
+
+`.github/scripts/check_evidence_formats.py` validates the record pair and the
+`probe-logs/<id>/` package (all four files present, `inventory.json` equal to
+the record's inventory) and protects `probe-logs/` append-only; see the
+top-level README. A run that crashes between writing logs and records leaves an
+orphan `probe-logs/<id>/` that fails format CI until its record exists.

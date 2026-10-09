@@ -45,8 +45,7 @@ def tree(tmp_path):
     """A symlink-farm copy of sim/ (read-only unless a test calls own())."""
     dst = tmp_path / "repo"
     shutil.copytree(REPO / "sim", dst / "sim", copy_function=_link, symlinks=True,
-                    ignore=shutil.ignore_patterns("harness", "_build", "_selftest", "__pycache__", "tests",
-                                                  "*.py", "*.sh"))
+                    ignore=shutil.ignore_patterns("harness", "_build", "_selftest", "__pycache__"))
     return dst
 
 
@@ -222,8 +221,7 @@ def upstream(tmp_path_factory):
     """A real-content repo with branch 'trunk' holding all committed evidence."""
     root = tmp_path_factory.mktemp("upstream")
     shutil.copytree(REPO / "sim", root / "sim", symlinks=False,
-                    ignore=shutil.ignore_patterns("harness", "_build", "_selftest", "__pycache__", "tests",
-                                                  "*.py", "*.sh"))
+                    ignore=shutil.ignore_patterns("harness", "_build", "_selftest", "__pycache__"))
     run(root, "git", "init", "-q", "-b", "trunk")
     commit(root, "base")
     return root

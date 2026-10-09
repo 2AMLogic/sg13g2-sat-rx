@@ -127,7 +127,24 @@ python .github/scripts/check_evidence_formats.py --base origin/main             
 The evidence checker validates the format of every `sim/*/records/*.md` and
 its `corners/` and `netlist-snapshots/` artifacts (both the harness-native and
 the Ka-band layout) and fails if a pull request modifies, deletes or renames
-committed evidence; adding a new record is always allowed. CI does not run the
+committed evidence; adding a new record is always allowed. Two campaigns
+without a PVT testbench manifest are registered explicitly (`ADAPTERS` in the
+checker) rather than skipped: `sim/passive-p1` (paired `records/<id>-<STATUS>.md/.json`:
+record identity, allowed status incl. `CAPABILITY_UNAVAILABLE` and
+`CONTROLS-PASS/FAIL`, Markdown/JSON agreement, provenance, declared input and
+`run_log/` files exist; `SYNTHETIC-*` smoke output is rejected inside `records/`) and
+`sim/mixer-nf-method` (same pairing for `MODEL_ABSENT` etc., plus the frozen
+`probe-logs/<id>/{deck.spice,stdout.txt,stderr.txt,inventory.json}` package the
+record names, which must agree with the record's inventory). Any other `sim/<dir>`
+with `records/`, `corners/`, `netlist-snapshots/` or `probe-logs/` fails as an
+unrecognised layout. Append-only history additionally protects `sim/*/probe-logs/`
+(no modify/delete/rename, nothing added to a committed run id; a complete new run
+is fine). The passive solver working outputs (`results/`, `run_log/`, `fit/`) stay
+mutable on purpose; the permanent evidence there is the record pair and the
+hashed inputs it names. The checks validate structure and provenance only, never
+a historical numerical claim, and need no simulator or PDK. Adapter tests:
+`python -m pytest .github/scripts/tests/test_check_evidence_adapters.py -q`
+(also runs under `python -m unittest`). CI does not run the
 simulator: `smoke` and `selftest` above are run by hand until a pinned PDK
 revision is chosen for a runner. `signoff.yml` separately re-grades the
 committed tier report.

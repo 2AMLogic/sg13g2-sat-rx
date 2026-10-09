@@ -28,10 +28,34 @@ reinterprets a historical scientific claim; corrections go in a later record):
    unreadable compressed logs, missing snapshots and companion files, sidecar
    rows naming identities outside the matrix). Nothing is hardcoded to 27.
 
+   Two further campaigns have no PVT testbench manifest and are NOT PVT
+   benches; each is registered explicitly in :data:`ADAPTERS` (never
+   inferred) and validated for identity, status, paired Markdown/JSON
+   consistency, provenance and declared companions only:
+
+   passive-p1 (sim/passive-p1/scripts/make_record.py, controls.py)
+       records/<id>-<STATUS>.{md,json} pairs, where <STATUS> is a campaign
+       outcome (QUALIFIED, UNCONVERGED, FIT_FAILED, CAPABILITY_UNAVAILABLE)
+       or CONTROLS-PASS / CONTROLS-FAIL. The permanent evidence package is
+       the record pair plus the INPUTS.json-hashed input files it names;
+       results/, run_log/ and fit/ are mutable solver working output and
+       are deliberately NOT protected. SYNTHETIC-* smoke records are not
+       campaign evidence and are rejected inside records/.
+
+   mixer-nf-method (sim/mixer-nf-method/run_probe.py)
+       records/<id>-<STATUS>.{md,json} (METHOD_VALIDATION, MODEL_ABSENT,
+       UNCONVERGED, CAPABILITY_UNAVAILABLE) plus, for every run that reached
+       the simulator, the frozen probe-logs/<id>/{deck.spice,stdout.txt,
+       stderr.txt,inventory.json} package named by the JSON ``probe_logs``.
+
+   Any other ``sim/<dir>/`` that has records/, corners/, netlist-snapshots/
+   or probe-logs/ but is neither a testbench bench nor a registered adapter
+   fails visibly instead of being skipped.
+
 2. Append-only history (``--base`` / environment fallback, see
    :func:`resolve_base`): against the MERGE BASE of the base ref and HEAD
    (never only the last commit of a multi-commit branch) no committed file
-   under ``sim/*/{records,corners,netlist-snapshots}/`` may be modified,
+   under ``sim/*/{records,corners,netlist-snapshots,probe-logs}/`` may be modified,
    deleted, renamed or type-changed, and no file may be ADDED to a record id
    that already existed at the base. New record ids are fine, as are
    independent testbench/harness changes.
@@ -59,7 +83,7 @@ from pathlib import Path
 
 RECORD_ID_RE = re.compile(r"^\d{8}-\d{6}-[0-9a-f]{7,40}$")
 RECORD_ID_PREFIX_RE = re.compile(r"^(\d{8}-\d{6}-[0-9a-f]{7,40})")
-PROTECTED_RE = re.compile(r"^sim/[^/]+/(records|corners|netlist-snapshots)/")
+PROTECTED_RE = re.compile(r"^sim/[^/]+/(records|corners|netlist-snapshots|probe-logs)/")
 NATIVE_STATUSES = ("pass", "fail", "error")
 NATIVE_SECTIONS = ("Evidence", "Result", "Summary", "Environment")
 KABAND_SECTIONS = ("Grid", "Provenance", "Data quality", "Limitations", "Sidecars")
@@ -403,6 +427,344 @@ def check_kaband_record(problems: Problems, root: Path, exp_dir: Path, md: Path)
 
 
 # ---------------------------------------------------------------------------
+# explicit adapters for non-PVT campaign layouts
+# ---------------------------------------------------------------------------
+
+SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+PASSIVE_STATUSES = ("QUALIFIED", "UNCONVERGED", "FIT_FAILED", "CAPABILITY_UNAVAILABLE")
+PASSIVE_CONTROLS_STATUSES = ("CONTROLS-PASS", "CONTROLS-FAIL")
+MIXER_STATUSES = ("METHOD_VALIDATION", "MODEL_ABSENT", "UNCONVERGED", "CAPABILITY_UNAVAILABLE")
+MIXER_PROBE_FILES = ("deck.spice", "stdout.txt", "stderr.txt", "inventory.json")
+PAIR_RE = re.compile(r"^(\d{8}-\d{6}-[0-9a-f]{7,40})-([A-Za-z_-]+)\.(md|json)$")
+
+
+def load_json_object(problems: Problems, root: Path, path: Path) -> dict | None:
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        problems.add(rel(root, path), f"not valid JSON ({exc})")
+        return None
+    if not isinstance(data, dict):
+        problems.add(rel(root, path), "JSON top level is not an object")
+        return None
+    return data
+
+
+def record_pairs(problems: Problems, root: Path, records: Path) -> dict[str, dict[str, Path]]:
+    """Group ``records/<id>-<STATUS>.{md,json}`` by stem; flag everything else."""
+    pairs: dict[str, dict[str, Path]] = {}
+    for p in sorted(records.iterdir()):
+        m = PAIR_RE.match(p.name) if p.is_file() else None
+        if not m:
+            problems.add(rel(root, p), "not a <YYYYMMDD>-<HHMMSS>-<git-sha>-<STATUS>.md/.json record file")
+            continue
+        pairs.setdefault(p.stem, {})[m.group(3)] = p
+    for stem, files in sorted(pairs.items()):
+        for ext in ("md", "json"):
+            if ext not in files:
+                other = next(iter(files.values()))
+                problems.add(rel(root, other), f"record has no paired .{ext} file ({stem}.{ext})")
+    return pairs
+
+
+def need_str(problems: Problems, where: str, obj: dict, key: str, label: str | None = None) -> str | None:
+    val = obj.get(key)
+    if not isinstance(val, str) or not val.strip():
+        problems.add(where, f"JSON field {label or key!r} is missing or not a non-empty string")
+        return None
+    return val
+
+
+def need_sha256(problems: Problems, where: str, value: object, label: str) -> None:
+    if not isinstance(value, str) or not SHA256_RE.match(value):
+        problems.add(where, f"{label} is missing or not a 64-hex sha256")
+
+
+def check_passive_input_hashes(problems: Problems, root: Path, exp_dir: Path, where: str, rec: dict) -> None:
+    ih = rec.get("input_hashes")
+    files = ih.get("files") if isinstance(ih, dict) else None
+    if not isinstance(files, dict) or not files:
+        problems.add(where, "JSON 'input_hashes.files' is missing or empty (no input provenance)")
+        return
+    if not (exp_dir / "INPUTS.json").is_file():
+        problems.add(where, f"declared input manifest {rel(root, exp_dir / 'INPUTS.json')} does not exist")
+    for name, entry in sorted(files.items()):
+        need_sha256(problems, where, entry.get("sha256") if isinstance(entry, dict) else None,
+                    f"input_hashes.files[{name!r}].sha256")
+        if not (exp_dir / name).is_file():
+            problems.add(where, f"declared input {name!r} does not exist under {rel(root, exp_dir)}/")
+
+
+def check_passive_record(problems: Problems, root: Path, exp_dir: Path, stem: str, files: dict[str, Path]) -> None:
+    md_path, js_path = files.get("md"), files.get("json")
+    if md_path is None or js_path is None:
+        return  # the missing half is already reported by record_pairs
+    where_md, where_js = rel(root, md_path), rel(root, js_path)
+    m = PAIR_RE.match(md_path.name)
+    assert m is not None
+    rid, status = m.group(1), m.group(2)
+    md = md_path.read_text(encoding="utf-8", errors="replace")
+    rec = load_json_object(problems, root, js_path)
+
+    if status.startswith("SYNTHETIC-") or md.lstrip().startswith("> **SYNTHETIC") or (
+            rec is not None and rec.get("synthetic") is True):
+        problems.add(where_md, "synthetic smoke record inside records/ (SYNTHETIC-* pipeline output is not "
+                     "campaign evidence and must be kept out of records/)")
+        return
+    controls = status in PASSIVE_CONTROLS_STATUSES
+    if not controls and status not in PASSIVE_STATUSES:
+        problems.add(where_md, f"status {status!r} is not one of "
+                     f"{', '.join(PASSIVE_STATUSES + PASSIVE_CONTROLS_STATUSES)}")
+        return
+
+    kind = "controls record" if controls else "record"
+    first = md.splitlines()[0] if md.strip() else ""
+    if first != f"# passive-p1 {kind} {stem}":
+        problems.add(where_md, f"first line must be '# passive-p1 {kind} {stem}', found {first[:80]!r}")
+    if rec is None:
+        return
+    if rec.get("record_id") != stem:
+        problems.add(where_js, f"JSON record_id {rec.get('record_id')!r} does not match its file name {stem!r}")
+
+    if controls:
+        want_pass = status == "CONTROLS-PASS"
+        if not isinstance(rec.get("all_pass"), bool):
+            problems.add(where_js, "JSON 'all_pass' is missing or not a boolean")
+        groups = rec.get("groups")
+        if not isinstance(groups, dict) or not groups:
+            problems.add(where_js, "JSON 'groups' is missing or empty")
+            groups = {}
+        results = {}
+        for name, grp in groups.items():
+            if not isinstance(grp, dict) or not isinstance(grp.get("pass"), bool):
+                problems.add(where_js, f"control group {name!r} has no boolean 'pass'")
+            else:
+                results[name] = grp["pass"]
+        if isinstance(rec.get("all_pass"), bool):
+            if rec["all_pass"] != want_pass:
+                problems.add(where_js, f"all_pass={rec['all_pass']} contradicts status suffix {status}")
+            if results and rec["all_pass"] != all(results.values()):
+                problems.add(where_js, "all_pass is not the conjunction of the control group results")
+        need_str(problems, where_js, rec, "kind")
+        need_sha256(problems, where_js, rec.get("fixture_sha256"), "fixture_sha256")
+        fixture = rec.get("fixture")
+        if not isinstance(fixture, str) or not (exp_dir / fixture).is_file():
+            problems.add(where_js, f"declared fixture {fixture!r} does not exist under {rel(root, exp_dir)}/")
+        for field in ("ngspice", "numpy"):
+            need_str(problems, where_js, rec, field)
+        if isinstance(rec.get("limits"), dict) is False:
+            problems.add(where_js, "JSON 'limits' is missing")
+        overall = "ALL CONTROLS BEHAVED AS REQUIRED" if want_pass else "FAILURE"
+        if f"- Overall: **{overall}**" not in md:
+            problems.add(where_md, f"Markdown does not state '- Overall: **{overall}**' for status {status}")
+        md_groups = dict(re.findall(r"^## (.+?) -- (PASS|FAIL)\s*$", md, re.MULTILINE))
+        if set(md_groups) != set(results) or any(md_groups[g] != ("PASS" if results[g] else "FAIL")
+                                                   for g in md_groups if g in results):
+            problems.add(where_md, "Markdown control sections disagree with the JSON groups/results")
+        sha = rec.get("fixture_sha256")
+        if isinstance(sha, str) and f"`{sha}`" not in md:
+            problems.add(where_md, "Markdown does not carry the JSON fixture_sha256")
+        if "**Scope**:" not in md:
+            problems.add(where_md, "missing '**Scope**:' statement (controls make no EM claim)")
+        return
+
+    # campaign record
+    if rec.get("status") != status:
+        problems.add(where_js, f"JSON status {rec.get('status')!r} does not match file name status {status!r}")
+    if rec.get("synthetic") is not False:
+        problems.add(where_js, "JSON 'synthetic' must be false for a campaign record")
+    if f"- **Status: {status}**" not in md:
+        problems.add(where_md, f"Markdown does not state '- **Status: {status}**'")
+    reasons = rec.get("reasons")
+    if not isinstance(reasons, list) or not reasons or not all(isinstance(r, str) and r for r in reasons):
+        problems.add(where_js, "JSON 'reasons' must be a non-empty list of strings")
+    utc = need_str(problems, where_js, rec, "utc")
+    if utc is not None:
+        mt = re.match(r"^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})", utc)
+        if not mt or "".join(mt.groups()[:3]) + "-" + "".join(mt.groups()[3:]) != rid[:15]:
+            problems.add(where_js, f"JSON utc {utc!r} does not match the record id timestamp {rid[:15]!r}")
+    digest = rec.get("numerical_digest")
+    need_sha256(problems, where_js, digest, "numerical_digest")
+    if isinstance(digest, str) and f"`{digest}`" not in md:
+        problems.add(where_md, "Markdown does not carry the JSON numerical_digest")
+    env = rec.get("environment")
+    if not isinstance(env, dict):
+        problems.add(where_js, "JSON 'environment' is missing")
+    else:
+        commit = env.get("git_commit")
+        if not isinstance(commit, str) or not commit.startswith(rid.split("-")[2]):
+            problems.add(where_js, f"environment.git_commit {commit!r} does not match the sha in the record id")
+        for field in ("host", "platform", "python"):
+            need_str(problems, where_js, env, field, f"environment.{field}")
+        if isinstance(commit, str) and f"`{commit}`" not in md:
+            problems.add(where_md, "Markdown '## Provenance' does not carry the JSON environment.git_commit")
+    for title in ("Provenance", "Limitations (stated beside the claims)"):
+        if not has_section(md, title):
+            problems.add(where_md, f"missing required section '## {title}'")
+    if "Claim scope:" not in md:
+        problems.add(where_md, "missing the 'Claim scope:' statement")
+    check_passive_input_hashes(problems, root, exp_dir, where_js, rec)
+    if status == "CAPABILITY_UNAVAILABLE":
+        need_str(problems, where_js, rec, "failed_command")
+        if rec.get("metrics") is not None or rec.get("compare") is not None:
+            problems.add(where_js, "CAPABILITY_UNAVAILABLE record carries metrics/compare numbers "
+                         "(an unavailable capability establishes no number)")
+        if not has_section(md, "Failed capability check"):
+            problems.add(where_md, "missing required section '## Failed capability check'")
+    else:
+        if not isinstance(rec.get("metrics"), dict):
+            problems.add(where_js, f"{status} record has no 'metrics' object")
+        if status in ("QUALIFIED", "FIT_FAILED") and rec.get("compare") is not None and not isinstance(
+                rec.get("compare"), dict):
+            problems.add(where_js, "JSON 'compare' is neither null nor an object")
+        if status == "QUALIFIED" and not isinstance(rec.get("compare"), dict):
+            problems.add(where_js, "QUALIFIED record has no 'compare' (fit validation) object")
+    # run_log/ files named by the record must exist (existence only: they are working output)
+    for ref in sorted(set(re.findall(r"\(?`?(run_log/[A-Za-z0-9_.\-]+)", md))):
+        if not (exp_dir / ref).is_file():
+            problems.add(where_md, f"declared companion {ref} does not exist under {rel(root, exp_dir)}/")
+
+
+def check_passive_p1(problems: Problems, root: Path, exp_dir: Path) -> None:
+    records = exp_dir / "records"
+    if not records.is_dir():
+        return
+    for stem, files in record_pairs(problems, root, records).items():
+        check_passive_record(problems, root, exp_dir, stem, files)
+    for sub in ("corners", "netlist-snapshots", "probe-logs"):
+        if (exp_dir / sub).exists():
+            problems.add(rel(root, exp_dir / sub), f"{sub}/ is not part of the passive-p1 evidence layout")
+
+
+def check_mixer_record(problems: Problems, root: Path, exp_dir: Path, stem: str, files: dict[str, Path],
+                       claimed_logs: set[str]) -> None:
+    md_path, js_path = files.get("md"), files.get("json")
+    if md_path is None or js_path is None:
+        return
+    where_md, where_js = rel(root, md_path), rel(root, js_path)
+    m = PAIR_RE.match(md_path.name)
+    assert m is not None
+    rid, status = m.group(1), m.group(2)
+    if status not in MIXER_STATUSES:
+        problems.add(where_md, f"status {status!r} is not one of {', '.join(MIXER_STATUSES)}")
+        return
+    md = md_path.read_text(encoding="utf-8", errors="replace")
+    first = md.splitlines()[0] if md.strip() else ""
+    if first != f"# mixer-nf-method record {stem}":
+        problems.add(where_md, f"first line must be '# mixer-nf-method record {stem}', found {first[:80]!r}")
+    if f"- **Status: {status}**" not in md:
+        problems.add(where_md, f"Markdown does not state '- **Status: {status}**'")
+    rec = load_json_object(problems, root, js_path)
+    if rec is None:
+        return
+    if rec.get("record_id") != rid:
+        problems.add(where_js, f"JSON record_id {rec.get('record_id')!r} does not match the record id {rid!r}")
+    if rec.get("status") != status:
+        problems.add(where_js, f"JSON status {rec.get('status')!r} does not match file name status {status!r}")
+    reasons = rec.get("reasons")
+    if status != "METHOD_VALIDATION" and (
+            not isinstance(reasons, list) or not reasons or not all(isinstance(r, str) and r for r in reasons)):
+        problems.add(where_js, "JSON 'reasons' must be a non-empty list of strings")
+    env = rec.get("environment")
+    if not isinstance(env, dict):
+        problems.add(where_js, "JSON 'environment' is missing")
+        env = {}
+    git = env.get("git")
+    commit = git.get("commit") if isinstance(git, dict) else None
+    if not isinstance(commit, str) or not commit.startswith(rid.split("-")[2]):
+        problems.add(where_js, f"environment.git.commit {commit!r} does not match the sha in the record id")
+    for field in ("host", "platform", "python"):
+        need_str(problems, where_js, env, field, f"environment.{field}")
+
+    if status == "CAPABILITY_UNAVAILABLE":
+        need_str(problems, where_js, rec, "failed_check")
+        if "inventory" in rec or "probe_logs" in rec:
+            problems.add(where_js, "CAPABILITY_UNAVAILABLE record carries probe results/logs "
+                         "(no simulator ran; it cannot establish model absence)")
+        if "Failed check:" not in md:
+            problems.add(where_md, "missing the 'Failed check:' statement")
+        return
+
+    # a probe record: scope statement, provenance and the frozen log package
+    if "Scope:" not in md:
+        problems.add(where_md, "missing the '**Scope: ...**' statement (methodology evidence only)")
+    scope = need_str(problems, where_js, rec, "scope")
+    if scope is not None and "no active-mixer NF number" not in scope:
+        problems.add(where_js, "JSON 'scope' does not disclaim an active-mixer NF number")
+    if not has_section(md, "Provenance"):
+        problems.add(where_md, "missing required section '## Provenance'")
+    for field in ("placeholder_sha256", "template_sha256"):
+        need_sha256(problems, where_js, env.get(field), f"environment.{field}")
+    ng, pdk = env.get("ngspice"), env.get("pdk")
+    need_sha256(problems, where_js, ng.get("sha256") if isinstance(ng, dict) else None, "environment.ngspice.sha256")
+    if not isinstance(pdk, dict) or not pdk.get("fetched_version"):
+        problems.add(where_js, "environment.pdk.fetched_version is missing")
+    if isinstance(commit, str) and f"`{commit}`" not in md:
+        problems.add(where_md, "Markdown '## Provenance' does not carry the JSON environment.git.commit")
+    if not isinstance(rec.get("inventory"), dict):
+        problems.add(where_js, "JSON 'inventory' is missing")
+
+    declared = rec.get("probe_logs")
+    expected = f"sim/{exp_dir.name}/probe-logs/{rid}/"
+    if declared != expected:
+        problems.add(where_js, f"JSON probe_logs {declared!r} must be {expected!r}")
+    logs = exp_dir / "probe-logs" / rid
+    claimed_logs.add(rid)
+    if f"probe-logs/{rid}/" not in md:
+        problems.add(where_md, f"Markdown does not reference its probe-logs/{rid}/ package")
+    if not logs.is_dir():
+        problems.add(where_js, f"declared probe-log package {rel(root, logs)}/ does not exist")
+        return
+    present = {p.name for p in logs.iterdir() if p.is_file()}
+    for name in MIXER_PROBE_FILES:
+        if name not in present:
+            problems.add(rel(root, logs), f"probe-log package is missing {name}")
+        elif name != "stderr.txt" and (logs / name).stat().st_size == 0:
+            problems.add(rel(root, logs / name), "probe-log file is empty")  # stderr may legitimately be empty
+    for name in sorted(present - set(MIXER_PROBE_FILES)):
+        problems.add(rel(root, logs / name), "unexpected file in a probe-log package")
+    for p in logs.iterdir():
+        if p.is_dir():
+            problems.add(rel(root, p), "unexpected directory in a probe-log package")
+    inv_path = logs / "inventory.json"
+    if inv_path.is_file():
+        inv = load_json_object(problems, root, inv_path)
+        if inv is not None:
+            if not isinstance(inv.get("parsed"), dict) or not isinstance(inv.get("inventory"), dict):
+                problems.add(rel(root, inv_path), "inventory.json needs 'parsed' and 'inventory' objects")
+            elif inv["inventory"] != rec.get("inventory"):
+                problems.add(rel(root, inv_path), "inventory.json 'inventory' differs from the record's "
+                             "JSON 'inventory' (record and frozen log disagree)")
+
+
+def check_mixer_nf_method(problems: Problems, root: Path, exp_dir: Path) -> None:
+    records = exp_dir / "records"
+    claimed: set[str] = set()
+    if records.is_dir():
+        for stem, files in record_pairs(problems, root, records).items():
+            check_mixer_record(problems, root, exp_dir, stem, files, claimed)
+    logs_root = exp_dir / "probe-logs"
+    if logs_root.is_dir():
+        for p in sorted(logs_root.iterdir()):
+            if not (p.is_dir() and RECORD_ID_RE.match(p.name)):
+                problems.add(rel(root, p), "probe-logs entry is not a <YYYYMMDD>-<HHMMSS>-<git-sha>/ run directory")
+            elif p.name not in claimed:
+                problems.add(rel(root, p), "probe-log package belongs to no record (orphan or incomplete run)")
+    for sub in ("corners", "netlist-snapshots"):
+        if (exp_dir / sub).exists():
+            problems.add(rel(root, exp_dir / sub), f"{sub}/ is not part of the mixer-nf-method evidence layout")
+
+
+# Explicit registry of the non-PVT campaign layouts. A sim/<dir> with evidence
+# directories that is neither a testbench bench nor listed here is an error.
+ADAPTERS = {
+    "passive-p1": check_passive_p1,
+    "mixer-nf-method": check_mixer_nf_method,
+}
+EVIDENCE_DIRS = ("records", "corners", "netlist-snapshots", "probe-logs")
+
+
+# ---------------------------------------------------------------------------
 # tree walk
 # ---------------------------------------------------------------------------
 
@@ -426,6 +788,18 @@ def check_format(root: Path) -> Problems:
     exps = sorted(p.parent.parent for p in sim.glob("*/testbench/tb.json"))
     if not exps:
         problems.add("sim/", "no sim/*/testbench/tb.json benches found")
+    bench_names = {e.name for e in exps}
+    for d in sorted(p for p in sim.iterdir() if p.is_dir()):
+        if d.name in bench_names:
+            continue
+        if d.name in ADAPTERS:
+            ADAPTERS[d.name](problems, root, d)
+        else:
+            present = [n for n in EVIDENCE_DIRS if (d / n).exists()]
+            if present:
+                problems.add(rel(root, d), f"unrecognised evidence layout (has {', '.join(n + '/' for n in present)} "
+                             "but no testbench/tb.json bench and no registered adapter in ADAPTERS); "
+                             "refusing to skip it")
     for exp in exps:
         kaband = is_kaband(exp, problems, root)
         records = exp / "records"
