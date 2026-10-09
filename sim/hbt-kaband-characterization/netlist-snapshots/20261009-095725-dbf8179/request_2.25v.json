@@ -1,0 +1,38 @@
+{
+  "netlist": "body_2.25v.spice",
+  "backend": "batch",
+  "models": {
+    "pdk": "ihp-sg13g2",
+    "lib": "libs.tech/ngspice/models/cornerHBT.lib"
+  },
+  "corners": {
+    "process": [
+      "hbt_typ",
+      "hbt_bcs",
+      "hbt_wcs"
+    ],
+    "temperature_c": [
+      -40.0,
+      27.0,
+      125.0
+    ]
+  },
+  "analysis": {
+    "kind": "tran",
+    "args": "1p 2p"
+  },
+  "measurements": [
+    {
+      "name": "ka_rail_v",
+      "spice": ".meas tran ka_rail_v FIND v(vsupply) AT=2p",
+      "unit": "V"
+    }
+  ],
+  "options": {
+    "timeout_s": 1800,
+    "keep_artifacts": true
+  },
+  "batch": {
+    "runner_version_check": "warn"
+  }
+}

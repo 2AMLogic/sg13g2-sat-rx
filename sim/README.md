@@ -31,8 +31,9 @@ runs against real device data).
 |---|---|---|
 | `lna-sparam-nf` | S11/S21/S22/S12, k-factor (stability), noise figure | placeholder circuit — see below |
 | `mixer-conversion-iip3` | Conversion gain, LO-to-RF leakage, two-tone IIP3 | placeholder circuit — see below |
+| `hbt-kaband-characterization` | Bare `npn13G2` at 17.7/19.45/21.2 GHz: two-port noise parameters (NFmin, Zopt, Rn), NF₅₀, fT, K/\|Δ\| and MAG-or-MSG, DC power, over Nx × VCE × J_C inside every PVT point | **device-level evidence, not a matched-amplifier result** — see below |
 
-**Both benches instantiate a PLACEHOLDER circuit, not a design candidate.**
+**The first two benches instantiate a PLACEHOLDER circuit, not a design candidate.**
 `design/` has no ratified schematic yet (issue #1, the spec-ratification
 issue, is still open) — each bench's `testbench/*.spice` fragment is a
 single, minimally-sized `npn13G2` HBT stage sized only well enough to bias
@@ -70,6 +71,33 @@ invoked by either bench in this repo). Full derivation:
 `mixer-conversion-iip3/testbench/mixer_ce_placeholder.spice`'s header
 comment.
 
+### `hbt-kaband-characterization`
+
+Issue #17, `spec/porting-plan.md` §5 step 3. **Device-level evidence, not a
+matched-amplifier result**: one bare `npn13G2` behind ideal bias tees with
+ideal noiseless terminations. NFmin is a lower bound for a circuit built
+around the device *before* matching loss and second-stage noise; MAG/MSG is
+device gain. Its records' row-3 comparison is a feasibility screen, never a
+compliance claim.
+
+The generic `harness.cli` interface (scalar `measure` per PVT point) cannot
+express its Nx × VCE × VBE sweep inside each PVT point, so it has a
+bench-local driver, `hbt-kaband-characterization/run.py`, built on the
+harness's deck composition, corner, sabotage and record-id helpers. Its
+noise figures use a **noiseless** source with the source noise added
+analytically at an explicit T0 (290 K and 300.15 K); the bench's
+resistor-noise probe shows that the per-instance resistor `temp=` convention
+used by `lna-sparam-nf`'s fixture does not do what that fixture says in
+ngspice-46 (a `temp=27` resistor generates noise at 327.15 K at every
+analysis temperature) — existing `lna-sparam-nf` records are left as they
+are; see the bench README. Full method, sweep, checks and reproduction:
+`hbt-kaband-characterization/README.md`.
+
+The full 27-point grid is submitted as `klt sim` requests (off-host batch by
+default) and ingested into one append-only record with full per-point
+sidecars; smoke and selftest run one local PVT point at a time on a reduced
+bias sweep.
+
 ### Passive/EM model provenance
 
 **No PDK inductor model exists for SG13G2** — confirmed absent from
@@ -105,13 +133,17 @@ testbench's own `corners` field automatically.
 
 ## Running it
 
-One command runs both benches (from the repo root):
+One command runs every bench (from the repo root):
 
 ```
-sim/characterize.sh smoke          # one nominal point per bench, no evidence written
+sim/characterize.sh smoke          # hbt_typ only, no evidence written; fails on any simulator/measurement failure
 sim/characterize.sh characterize   # full HBT x T x V grid, writes a record per bench
 sim/characterize.sh selftest       # negative-control self-test per bench
 ```
+
+For the Ka-band bench, `characterize` submits `klt sim` requests (backend
+from `$KABAND_BACKEND`, default `batch`); see
+`hbt-kaband-characterization/README.md` "Running the full grid".
 
 Or drive `harness.cli` directly (from `sim/`), always naming the `hbt`
 corner set explicitly:
