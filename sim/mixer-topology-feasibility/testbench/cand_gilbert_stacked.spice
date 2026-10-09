@@ -1,0 +1,73 @@
+* Candidate "gilbert_stacked": classic double-balanced Gilbert cell, stacked.
+*
+* DEVICE-LEVEL TOPOLOGY STUDY, NOT A DESIGN (issue #35). One fixed,
+* documented sizing/bias choice; no optimizer. Ideal baluns, ideal R/C and
+* ideal bias sources only; no inductor. Prepended by ports_common.spice.
+*
+* Stack (ground up): ideal tail current sink -> RF differential pair Q1/Q2
+* -> LO switching quad Q3..Q6 -> collector load resistors to vdd. Three
+* levels (sink, RF pair, quad) plus the load share the rail: this is the
+* headroom question row 17 asks.
+*
+* Sizing (all devices npn13G2 Nx=1, card limit Ic < 3 mA):
+*   I_tail = 2 mA ideal sink         1 mA per RF device, 0.5-1 mA per quad device
+*   RF pair bases: ideal balun CT = 1.10 V  -> tail node ~0.18-0.30 V over T
+*   LO quad bases: lo_dc = 1.85 V (ideal bias tee in the LO legs)
+*                                    -> quad emitters (x1/x2) ~0.95-1.07 V
+*   RL = 400 ohm per output node, 1 mA average each -> collectors vdd-0.4 V
+*   Cout = 0.5 pF per output node to ground (IF filter; 16 ohm at 20 GHz,
+*          318 ohm at 1 GHz) -- the same IF network every candidate uses.
+* Hand estimate of V_CE at the DC point (Vbe ~0.78/0.86/0.90 V at
+* 125/27/-40 C for ~0.5-1 mA): RF pair ~0.77 V, quad ~0.55-1.08 V across
+* 2.025-2.475 V. These are design intents, NOT results; the bench measures
+* every device's V_CE/V_BE/Ic.
+*
+* Ports (see ports_common.spice):
+*   RF: rf_port -> ideal balun mf_balun n=1 (50 ohm SE <-> 50 ohm diff),
+*       centre tap = ideal 1.10 V bias source; RF pair bases DC-coupled.
+*       rf_dc = 0 (the candidate biases via the centre tap).
+*   LO: lo_p/lo_n drive the quad bases directly; lo_dc = 1.85 V.
+*   IF: ideal balun n=2 directly across out_p/out_n (200 ohm diff <->
+*       50 ohm SE) -> if_out (Rif = 50 ohm). Its centre tap gs_ifct is left
+*       FLOATING, so the output common mode is unconstrained and no DC block
+*       (and no DC-block settling) is needed. A DC DIFFERENTIAL collector
+*       voltage (mismatch only) does drive DC into Rif through the ideal
+*       balun; a real transformer winding would instead short it. Either way
+*       it lands in the DC bin, not in any measured bin.
+*
+* Every HBT collector is fed through a 0 V sense source vic_<dev> so the
+* driver can read Ic; c/b/e nodes are explicit (c_<dev>, ...). The device
+* list (name, nodes, Nx) is declared in tb.json "study.candidates" and must
+* match this file (mixfeas.check_fragment_devices enforces it).
+
+.param gs_itail=2m gs_vbrf=1.10 gs_rl=400 gs_cout=0.5p
+
+* ---- RF input balun, centre tap at the RF-pair bias -------------------------
+Vgs_brf gs_brf 0 DC {gs_vbrf}
+Xgs_rfbal rf_port b_q1 b_q2 gs_brf mf_balun n=1
+
+* ---- RF transconductor pair --------------------------------------------------
+vic_q1 x1 c_q1 0
+Xq1 c_q1 b_q1 e_q1 0 npn13G2 Nx=1
+vic_q2 x2 c_q2 0
+Xq2 c_q2 b_q2 e_q2 0 npn13G2 Nx=1
+Vgs_e1 e_q1 tail 0
+Vgs_e2 e_q2 tail 0
+Igs_tail tail 0 DC {gs_itail}
+
+* ---- LO switching quad ---------------------------------------------------------
+vic_q3 out_p c_q3 0
+Xq3 c_q3 lo_p x1 0 npn13G2 Nx=1
+vic_q4 out_n c_q4 0
+Xq4 c_q4 lo_n x1 0 npn13G2 Nx=1
+vic_q5 out_n c_q5 0
+Xq5 c_q5 lo_p x2 0 npn13G2 Nx=1
+vic_q6 out_p c_q6 0
+Xq6 c_q6 lo_n x2 0 npn13G2 Nx=1
+
+* ---- loads, IF filter, output balun -----------------------------------------
+Rgs_lp vdd out_p {gs_rl}
+Rgs_ln vdd out_n {gs_rl}
+Cgs_op out_p 0 {gs_cout}
+Cgs_on out_n 0 {gs_cout}
+Xgs_ifbal if_out out_p out_n gs_ifct mf_balun n=2
