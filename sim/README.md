@@ -129,16 +129,20 @@ deliberate pin change (next section).
 | `mixer-topology-feasibility` | Mixer-core topology comparison under row 17 (issue #35): stacked Gilbert vs folded single-balanced vs the placeholder floor; per-device V_CE/V_BE/Ic stress, gain into a physical 50 Ω IF load, LO-drive selection rule, DC power, mismatch-card leakage, swept-region IIP3 | **part 1 only: fixtures + validated extraction, no record yet** — see below |
 
 **The first two benches instantiate a PLACEHOLDER circuit, not a design candidate.**
-`design/` has no ratified schematic yet (issue #1, the spec-ratification
-issue, is still open) — each bench's `testbench/*.spice` fragment is a
+`design/` has no schematic yet — each bench's `testbench/*.spice` fragment is a
 single, minimally-sized `npn13G2` HBT stage sized only well enough to bias
 sanely, built solely to prove each bench's ngspice methodology end to end
 against the real device model. Every record these benches write states this
 in its `claim` line and `## Evidence` notes; **no number in either bench's
-records should be compared against the DRAFT target spec
-(`spec/target-spec.md`, still `Status: DRAFT` as of this writing — not yet
-ratified)** until a real design exists in `design/` and these `tb.json` files
-are re-pointed at it (issue #1 → a follow-up design issue).
+records should be compared against any row of the target spec
+(`spec/target-spec.md`)**, because they come from placeholder circuits, not
+a design candidate. The spec itself is partially ratified per
+[DR-0003](../spec/decision-records/0003-target-spec-first-ratification.md):
+eleven rows are binding targets and nine stay explicitly open (the band,
+row 1, among them — hence the "DRAFT band" wording below). Comparison against
+the binding rows becomes meaningful only once these `tb.json` files are
+re-pointed at a real schematic, which is the follow-up tracked in
+[#28](https://github.com/2AMLogic/sg13g2-sat-rx/issues/28).
 
 ### `lna-sparam-nf`
 
