@@ -114,12 +114,14 @@ sim/characterize.sh selftest      # negative controls (sabotaged corners must fa
 sim/characterize.sh characterize  # full 27-point PVT campaign; mints a NEW append-only record per bench
 ```
 
-Checks that need neither a PDK nor a simulator (Python 3 and `pytest`) are
+Checks that need neither a PDK nor a simulator (Python 3, plus `pytest` and `numpy` from `requirements-test.txt`) are
 what CI runs on every push and pull request (`.github/workflows/ci.yml`):
 
 ```
+pip install -r requirements-test.txt
 python -m compileall -q sim .github/scripts
 python -m pytest sim/harness/tests sim/hbt-kaband-characterization/tests -q      # job: harness-tests
+python -m pytest sim/mixer-nf-method/tests/test_nfmethod.py -v                    # job: harness-tests (mixer noise-method analytic fixtures; methodology only)
 python -m pytest .github/scripts/tests -q                                         # job: evidence-formats (checker negative controls)
 python .github/scripts/check_evidence_formats.py --base origin/main               # job: evidence-formats
 ```

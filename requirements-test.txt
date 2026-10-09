@@ -1,0 +1,4 @@
+# Test dependencies for the simulator-free CI job and local reproduction.
+# No PDK, no simulator. Install into a venv: pip install -r requirements-test.txt
+pytest>=8,<10
+numpy>=1.26,<3
