@@ -192,6 +192,7 @@ reproducer, as
 ## Reproduce
 
 ```
+pip install -r requirements-test.txt                          # numpy + pytest (use a venv)
 python3 -m pytest sim/mixer-nf-method/tests -q                # no simulator
 python3 sim/mixer-nf-method/run_probe.py --no-write           # one local ngspice -b, prints the record
 python3 sim/mixer-nf-method/run_probe.py                      # appends a new record + probe-logs/<id>/
@@ -203,6 +204,11 @@ Records are append-only. Files are created exclusively, and a re-run writes a ne
 `.include`d read-only.
 
 ## CI coverage
+
+CI's `harness-tests` job runs `sim/mixer-nf-method/tests/test_nfmethod.py` as its own
+named step after `pip install -r requirements-test.txt`. These are analytic fixtures for
+the estimator's methodology (PSD/Parseval, SSB/image accounting, status gates). Passing
+them says nothing about active-device noise, and does not qualify spec rows 10/12.
 
 `.github/scripts/check_evidence_formats.py` validates the record pair and the
 `probe-logs/<id>/` package (all four files present, `inventory.json` equal to
