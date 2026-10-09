@@ -17,6 +17,7 @@ spec/
     0002-beamsteering-partition.md     beamsteering (deferred, on purpose)
     0003-target-spec-first-ratification.md   first ratification pass
                               (eleven rows RATIFIED as targets, nine OPEN)
+    0004-lna-mixer-interface-convention.md   LNA-mixer interface (proposed)
 ```
 
 ## Status: partially ratified — targets, not compliance
