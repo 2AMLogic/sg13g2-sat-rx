@@ -1,0 +1,59 @@
+{
+  "coil_bbox_um": [
+    -62.065000000000005,
+    -1.0,
+    62.065000000000005,
+    124.13000000000001
+  ],
+  "d_um": 47.65,
+  "geometry": "p1",
+  "nr_r": 1,
+  "pcell": {
+    "cell": "inductor2",
+    "library": "SG13_dev"
+  },
+  "polygon_counts": {
+    "TopMetal1": 0,
+    "TopMetal2": 5,
+    "TopVia2": 0
+  },
+  "port_metal_layer": "TopMetal2",
+  "ports": [
+    {
+      "box_um": [
+        -9.865,
+        -1.0,
+        -1.645,
+        1.0
+      ],
+      "gds_layer": [
+        201,
+        0
+      ],
+      "portnumber": 1,
+      "terminal": "LA"
+    },
+    {
+      "box_um": [
+        1.645,
+        -1.0,
+        9.865,
+        1.0
+      ],
+      "gds_layer": [
+        202,
+        0
+      ],
+      "portnumber": 2,
+      "terminal": "LB"
+    }
+  ],
+  "s_um": 3.29,
+  "subgnd_box_um": [
+    -24.865000000000002,
+    -16.0,
+    24.865000000000002,
+    16.0
+  ],
+  "w_um": 8.22
+}

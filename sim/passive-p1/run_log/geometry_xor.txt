@@ -1,0 +1,5 @@
+layer 134/0 xor_area_um2 0
+layer 201/0 xor_area_um2 0
+layer 202/0 xor_area_um2 0
+layer 210/0 xor_area_um2 0
+GEOMETRY_IDENTICAL

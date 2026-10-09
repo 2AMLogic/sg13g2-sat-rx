@@ -311,6 +311,15 @@ transmission-line extraction path, or no way to corner an EM-extracted model —
 that is a new, separately-filed, generically-worded issue against
 `klayout-tools`, with this repo's spec values kept out of it.
 
+**Progress link (issue #25; does not resolve the question above).** A bounded,
+p1-only openEMS campaign is tooled in
+[`sim/passive-p1/`](../sim/passive-p1/README.md) with the sibling's method pinned
+and hashed (`sg13g2-vco` @ `ee69f8529df3`). At the time of writing its EM stages
+ended in a `CAPABILITY_UNAVAILABLE` record (no openEMS on the build host), so item 3
+above is still the sibling's historical figure and items 4 and 6 are untouched;
+the family choice is deferred in
+[DR-0005](decision-records/0005-passive-p1-feasibility.md).
+
 ### 4.3 Ka-band, at all
 
 No block in this fleet has been designed above ~10 GHz. Consequences that have

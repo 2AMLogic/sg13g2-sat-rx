@@ -1,0 +1,152 @@
+{
+  "all_pass": true,
+  "fixture": "fixtures/lossless_L_100pH.s2p",
+  "fixture_sha256": "985c585b8df74bf6c5b4f79f74edde91c22140686799b9246fa94c5ef09e346d",
+  "groups": {
+    "known-answer": {
+      "details": {
+        "bands": [
+          {
+            "L_err_pct": 2.586871656440347e-08,
+            "f_hz": 17700000000.0,
+            "q_se": Infinity,
+            "z_err_pct": 2.8834142143019946e-08
+          },
+          {
+            "L_err_pct": 1.4189805194555558e-08,
+            "f_hz": 19450000000.0,
+            "q_se": Infinity,
+            "z_err_pct": 2.7082795380012186e-08
+          },
+          {
+            "L_err_pct": 2.2234601940728313e-08,
+            "f_hz": 21200000000.0,
+            "q_se": Infinity,
+            "z_err_pct": 2.2536025035666813e-08
+          }
+        ],
+        "ngspice_s": {
+          "S11": {
+            "max_abs": 1.0058492854773749e-10,
+            "rms_abs": 5.2141535356576625e-11
+          },
+          "S12": {
+            "max_abs": 1.0260471491426047e-10,
+            "rms_abs": 5.925178533964552e-11
+          },
+          "S21": {
+            "max_abs": 1.0260477703652581e-10,
+            "rms_abs": 5.925175346513674e-11
+          },
+          "S22": {
+            "max_abs": 1.005855272152642e-10,
+            "rms_abs": 5.214156470862279e-11
+          }
+        },
+        "ngspice_zse": {
+          "at_band": [
+            {
+              "f_hz": 17700000000.0,
+              "rel_err_pct": 2.690790137365366e-08,
+              "z_em": "(-1.4164543891955717e-09+11.121237996584789j)",
+              "z_model": "11.12123799922082j"
+            },
+            {
+              "f_hz": 19450000000.0,
+              "rel_err_pct": 6.42734861142613e-08,
+              "z_em": "(2.819078254520338e-09+12.22079542073019j)",
+              "z_model": "12.220795428061601j"
+            },
+            {
+              "f_hz": 21200000000.0,
+              "rel_err_pct": 2.584575853894247e-08,
+              "z_em": "(4.893212745644098e-10+13.320352848258995j)",
+              "z_model": "13.3203528448512j"
+            }
+          ],
+          "band_hz": [
+            17700000000.0,
+            21200000000.0
+          ],
+          "max_pct": 8.695783097339366e-08,
+          "n_points_in_band": 71,
+          "rms_pct": 4.4850404714101646e-08
+        },
+        "route": "Y",
+        "srf_se": {
+          "found": false,
+          "hz": null,
+          "lower_bound_hz": 30000000000.0,
+          "search_ceiling_hz": 30000000000.0
+        },
+        "truth_L_h": 1e-10
+      },
+      "pass": true
+    },
+    "malformed": {
+      "details": {
+        "S_magnitude_nonphysical": "rejected: <file>: |S| = 7.5 exceeds passivity sanity bound 1.05",
+        "duplicate_frequency": "rejected: <file>: frequency grid not strictly increasing / negative",
+        "empty_file": "rejected: <file>: no option line",
+        "frequency_not_monotonic": "rejected: <file>: frequency grid not strictly increasing / negative",
+        "inf_value": "rejected: <file>: non-finite value (NaN/Inf) in data",
+        "missing_option_line": "rejected: <file>:3: data before option line",
+        "nan_value": "rejected: <file>: non-finite value (NaN/Inf) in data",
+        "no_metrics_written": true,
+        "no_record_written": true,
+        "non_numeric_token": "rejected: <file>:304: non-numeric token in '1.5e+10 0.008804437279 0.09341798094 0.9911955627 0.1x 0",
+        "post_stage_on_malformed_baseline_exit": 2,
+        "second_option_line": "rejected: <file>:9: second option line",
+        "single_data_row": "rejected: <file>: fewer than 2 data rows",
+        "truncated_row": "rejected: <file>:304: 5 columns, expected 9 (truncated/corrupt row)",
+        "unsupported_format_token": "rejected: <file>:3: unsupported format 'XX'",
+        "unsupported_unit": "rejected: <file>:3: unsupported option line '# THz S RI R 50'",
+        "zero_reference_impedance": "rejected: <file>:3: reference impedance 0.0 not positive finite"
+      },
+      "pass": true
+    },
+    "pipeline": {
+      "details": {
+        "exceeded_mesh_status": "SYNTHETIC-UNCONVERGED",
+        "fit_rel_err_pct_at_band": [
+          3.400074982257469e-07,
+          3.7000092937161595e-07,
+          2.0580230937940415e-07
+        ],
+        "missing_output_post_exit": 3,
+        "rerun_added_new_record_prior_unchanged": true,
+        "rerun_digest_equal": true,
+        "rerun_exit_codes": {
+          "compare": 0,
+          "fit": 0,
+          "post": 0
+        },
+        "success_stage_exit_codes": {
+          "compare": 0,
+          "fit": 0,
+          "post": 0
+        },
+        "success_status": "SYNTHETIC-QUALIFIED",
+        "unavailable_record_has_no_numbers": true,
+        "unavailable_status": "SYNTHETIC-CAPABILITY_UNAVAILABLE",
+        "wrong_fit_status": "SYNTHETIC-FIT_FAILED"
+      },
+      "pass": true
+    },
+    "wrong-value": {
+      "details": {
+        "wrong_claimed_truth_L_minus3pct_checker_passed": false,
+        "wrong_fixture_L_plus3pct_checker_passed": false,
+        "wrong_model_L_plus3pct_checker_passed": false
+      },
+      "pass": true
+    }
+  },
+  "kind": "analysis-chain controls (no EM solver involved)",
+  "limits": {
+    "L_Z_tol_pct": 1.0
+  },
+  "ngspice": "** ngspice-42 : Circuit level simulation program",
+  "numpy": "2.5.3",
+  "record_id": "20261009-141527-0e10117-CONTROLS-PASS"
+}
