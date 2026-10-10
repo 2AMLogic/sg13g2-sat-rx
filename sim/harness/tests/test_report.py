@@ -188,6 +188,13 @@ class FakePdk(Pdk):
         return "fake-rev-0"
 
 
+ART = {
+    "status": "verified", "upstream_repo": "https://example.invalid/pdk", "upstream_tag": "v0",
+    "upstream_commit": "a" * 40, "manifest": "sim/pdk-artifact.json", "manifest_sha256": "b" * 64,
+    "files_verified": 4, "method": "test",
+}
+
+
 def build_synthetic_record(tmp_path, record_id="20260101-000000-abc1234", status_points=None):
     exp = tmp_path / "sim" / "synthetic-bench"
     tbdir = exp / "testbench"
@@ -207,7 +214,7 @@ def build_synthetic_record(tmp_path, record_id="20260101-000000-abc1234", status
     pdk = FakePdk(name="fake", path=tmp_path, variant="v", source="test", model_lib_rel="m.lib")
     rec = R.build_record(tb, pdk, pts, res, "ngspice-0", tmp_path, record_id,
                          "2026-01-01T00:00:00+00:00", 1.234,
-                         git={"short": "abc1234", "branch": "b", "dirty": False})
+                         git={"short": "abc1234", "branch": "b", "dirty": False}, pdk_artifact=ART)
     return exp, tb, pts, rec
 
 
@@ -227,7 +234,7 @@ def test_record_is_error_when_a_point_failed(tmp_path):
     res = results_for(pts, gain)
     res[3] = PointResult(point=pts[3], status="failed")
     rec2 = R.build_record(tb, FakePdk("f", tmp_path, "v", "t", "m"), pts, res, "n", tmp_path, "id", "t", 1.0,
-                          git={"short": "x", "branch": "b", "dirty": False})
+                          git={"short": "x", "branch": "b", "dirty": False}, pdk_artifact=ART)
     assert rec2["status"] == "error" and rec2["grid"]["points_ok"] == 26
 
 
@@ -235,7 +242,7 @@ def test_subset_run_states_gaps_and_justification(tmp_path):
     exp, tb, _, _ = build_synthetic_record(tmp_path)
     pts = grid(corners=("hbt_typ",), temps=(27,), supplies=(2.5,))
     rec = R.build_record(tb, FakePdk("f", tmp_path, "v", "t", "m"), pts, results_for(pts, gain), "n", tmp_path,
-                         "id", "t", 1.0, subset_reason="because", git={"short": "x", "branch": "b", "dirty": False})
+                         "id", "t", 1.0, subset_reason="because", git={"short": "x", "branch": "b", "dirty": False}, pdk_artifact=ART)
     md = R.render_markdown(rec)
     assert "Subset of the mandated PVT matrix" in md and "Justification: because" in md
     assert "full-factorial" not in md and "Full PVT matrix." not in md
@@ -248,7 +255,7 @@ def test_diagonal_record_renders_as_subset_and_failed_points_stay_error(tmp_path
     res = results_for(pts, gain)
     res[0] = PointResult(point=pts[0], status="failed")
     rec = R.build_record(tb, FakePdk("f", tmp_path, "v", "t", "m"), pts, res, "n", tmp_path,
-                         "id", "t", 1.0, git={"short": "x", "branch": "b", "dirty": False})
+                         "id", "t", 1.0, git={"short": "x", "branch": "b", "dirty": False}, pdk_artifact=ART)
     assert rec["status"] == "error" and rec["grid"]["points_ok"] == 2
     assert not rec["matrix"]["full"]
     md = R.render_markdown(rec)
@@ -300,7 +307,7 @@ def test_rendered_subset_record_satisfies_the_evidence_format_checker(tmp_path):
     pts = grid(corners=("hbt_typ",), temps=(27,), supplies=(2.5,))
     rec = R.build_record(tb, FakePdk("f", tmp_path, "v", "t", "m"), pts, results_for(pts, gain), "n", tmp_path,
                          "20260101-000000-abc1234", "2026-01-01T00:00:00+00:00", 1.0, subset_reason="because",
-                         git={"short": "abc1234", "branch": "b", "dirty": False})
+                         git={"short": "abc1234", "branch": "b", "dirty": False}, pdk_artifact=ART)
     assert not rec["matrix"]["full"]
     assert chk.declared_native_matrix(R.render_markdown(rec)) == (["hbt_typ"], [27.0], [2.5], 1, 1)
     R.write_record(rec, exp)
@@ -309,3 +316,63 @@ def test_rendered_subset_record_satisfies_the_evidence_format_checker(tmp_path):
     logs.mkdir(parents=True)
     (logs / f"{pts[0].corner_id}.log").write_text("log\n")
     assert chk.check_format(tmp_path).items == []
+
+
+def test_record_carries_verified_identity_separate_from_install_marker(tmp_path):
+    exp, tb, pts, rec = build_synthetic_record(tmp_path)
+    env = rec["environment"]
+    assert env["pdk_artifact"]["upstream_commit"] == "a" * 40 and env["pdk"]["version"] == "fake-rev-0"
+    md = R.render_markdown(rec)
+    assert "(install marker: fake-rev-0, via test)" in md
+    assert "- PDK artifact: **verified**" in md and "a" * 40 in md and "b" * 64 in md
+    assert json.loads(json.dumps(rec))["environment"]["pdk_artifact"] == ART  # JSON form round-trips
+
+
+@pytest.mark.parametrize("bad", [
+    None, {}, {**ART, "status": "unverified"}, {**ART, "upstream_commit": "a" * 7},
+    {**ART, "manifest_sha256": "zz"}, "verified",
+])
+def test_record_refused_without_verified_identity(tmp_path, bad):
+    from harness.pdkartifact import ArtifactNotVerified
+    exp, tb, pts, rec = build_synthetic_record(tmp_path)
+    with pytest.raises(ArtifactNotVerified):
+        R.build_record(tb, FakePdk("f", tmp_path, "v", "t", "m"), pts, results_for(pts, gain), "n", tmp_path,
+                       "id", "t", 1.0, git={"short": "x", "branch": "b", "dirty": False}, pdk_artifact=bad)
+
+
+def test_markerless_unknown_install_still_passes_checker_with_verified_identity(tmp_path):
+    """Markerless install -> 'install marker: unknown', yet the record passes
+    because it carries the hash-verified commit (the case #85 left open)."""
+    spec = importlib.util.spec_from_file_location("check_evidence_formats", CHECKER)
+    chk = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(chk)
+    exp, tb, pts, rec = build_synthetic_record(tmp_path)
+    rec["environment"]["pdk"]["version"] = "unknown"
+    R.write_record(rec, exp)
+    R.write_netlist_snapshot(tb, exp, rec["record_id"])
+    logs = exp / "corners" / rec["record_id"]
+    logs.mkdir(parents=True)
+    for p in pts:
+        (logs / f"{p.corner_id}.log").write_text("log\n")
+    assert "install marker: unknown" in (exp / "records" / f"{rec['record_id']}.md").read_text()
+    assert chk.check_format(tmp_path).items == []
+
+
+def test_offhost_identity_renders_what_was_verified_and_passes_checker(tmp_path):
+    """Off-host identity (issue #103 P1): the artifact line names the jobs whose
+    staged model inputs were hash-verified and does NOT claim the runner's
+    install was checked "before the run"; the evidence checker still accepts it."""
+    spec = importlib.util.spec_from_file_location("check_evidence_formats", CHECKER)
+    chk = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(chk)
+    exp, tb, pts, rec = build_synthetic_record(tmp_path)
+    off = {**ART, "verified_scope": "offhost-job-model-inputs", "files_verified": 4,
+           "jobs": [{"report": "report_2.50v.json", "job_id": "klt-sim-j1", "runner_klt_version": "0.7.0"}]}
+    rec["environment"]["pdk_artifact"] = off
+    md = R.render_markdown(rec)
+    line = next(l for l in md.splitlines() if l.startswith("- PDK artifact:"))
+    assert "staged to off-host klt job(s) `klt-sim-j1`" in line
+    assert "the runner's own install was not hashed" in line and "before the run" not in line
+    assert chk.PDK_ARTIFACT_RE.search(md)
+    local = R.render_markdown(build_synthetic_record(tmp_path / "b")[3])
+    assert "hash-verified in the simulating install before the run" in local

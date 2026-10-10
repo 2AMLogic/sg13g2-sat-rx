@@ -17,6 +17,11 @@ Ingest refuses to write unless all 27 points are present with finite values
 for every declared measurement, and (when --supersedes is given) unless the
 corrected values agree with the superseded record's logs under the linear-F
 relation of lna_nf.py.
+
+It also refuses (exit 3, before a record id or any log is written) unless the
+klt reports themselves bind the simulation models to sim/pdk-artifact.json:
+see harness.pdkartifact.verify_job_models. The ingesting host's own install
+check is separate provenance and is never the record's artifact identity.
 """
 
 from __future__ import annotations
@@ -41,6 +46,7 @@ import stage1_tables  # noqa: E402
 from harness import evidence as evidence_mod  # noqa: E402
 from harness.corners import CORNERS, PvtPoint, build_grid, resolve_corners, supply_points  # noqa: E402
 from harness import klt_driver  # noqa: E402
+from harness import pdkartifact  # noqa: E402
 from harness.report import (  # noqa: E402
     RecordExists, allocate_record_id, build_record, git_provenance, write_netlist_snapshot,
     write_record,
@@ -83,8 +89,38 @@ def _pdk():
     return klt_driver.find_pdk_or_exit(SIM_DIR)
 
 
+def _verified_pdk():
+    """(pdk, verified artifact identity), or (pdk, None) after printing the refusal.
+
+    Called BEFORE anything is submitted or written, the same refusal
+    `harness.cli run` makes (exit 3): a record needs the hash-verified
+    artifact identity (issue #103), and failing only inside `build_record`
+    would leave an orphan corners/<record-id>/ log directory in the
+    append-only evidence tree.
+    """
+    pdk = _pdk()
+    try:
+        return pdk, pdkartifact.verified_identity(pdk, SIM_DIR)
+    except pdkartifact.ArtifactNotVerified as exc:
+        print(str(exc), file=sys.stderr)
+        return pdk, None
+
+
 def cmd_characterize(args) -> int:
     tb = load(BENCH_DIR)
+    verified = None
+    if args.no_stage_models and not args.dry_run:
+        # Without staging the runner simulates with its image-baked models and
+        # the report carries no hash of them: ingest would refuse anyway.
+        print("characterize: --no-stage-models leaves the runner's models unhashed, so no record "
+              "could be written; nothing submitted", file=sys.stderr)
+        return 3
+    if not args.dry_run:  # a dry run submits and records nothing
+        verified = _verified_pdk()
+        if verified[1] is None:
+            print("characterize: PDK artifact not verified; nothing submitted, no record written",
+                  file=sys.stderr)
+            return 3
     corners = resolve_corners(list(tb.corners))
     supplies = supply_points(tb.nominal_supply_v, tb.supply_tolerance)
     temps = list(tb.temperatures_c)
@@ -120,7 +156,7 @@ def cmd_characterize(args) -> int:
     if args.dry_run:
         print(f"--dry-run: requests and bodies written under {work}; nothing submitted")
         return 0
-    return ingest(tb, reports, args)
+    return ingest(tb, reports, args, verified)
 
 
 _body_supply = klt_driver.body_supply
@@ -136,8 +172,34 @@ def cmd_ingest(args) -> int:
     return ingest(tb, reports, args)
 
 
-def ingest(tb, reports, args) -> int:
-    pdk = _pdk()
+def _offhost_artifact(loaded):
+    """Verified identity of the models the off-host jobs actually used, or None
+    after printing the refusal. Evaluated from the klt reports alone (see
+    pdkartifact.verify_job_models); the ingesting host's install plays no part."""
+    try:
+        return pdkartifact.offhost_identity(
+            [(path.name, report.get("environment") if isinstance(report, dict) else None)
+             for _vdd, path, report in loaded], SIM_DIR)
+    except pdkartifact.ArtifactNotVerified as exc:
+        print(str(exc), file=sys.stderr)
+        return None
+
+
+def ingest(tb, reports, args, verified=None) -> int:
+    # Ingest-host install: must itself be on the pin, but it is provenance of
+    # THIS host only and never becomes the record's artifact identity.
+    pdk, host_artifact = verified if verified is not None else _verified_pdk()
+    if host_artifact is None:
+        print("ingest: PDK artifact not verified; NO record written", file=sys.stderr)
+        return 3
+    loaded = [(vdd, path, json.loads(path.read_text())) for vdd, path in reports]
+    # Simulation models: bound to the pin from the returned reports, BEFORE a
+    # record id is allocated or any log is copied (issue #103).
+    pdk_artifact = _offhost_artifact(loaded)
+    if pdk_artifact is None:
+        print("ingest: the off-host jobs' model closure is not verified against the pin; "
+              "NO record written", file=sys.stderr)
+        return 3
     started = _dt.datetime.now(_dt.timezone.utc)
     git = git_provenance(REPO_ROOT)
     expected = {p.corner_id: p for p in build_grid(
@@ -147,8 +209,7 @@ def ingest(tb, reports, args) -> int:
     results: dict[str, PointResult] = {}
     texts: dict[str, str] = {}
     klt_meta = []
-    for vdd, resp_path in reports:
-        report = json.loads(resp_path.read_text())
+    for vdd, resp_path, report in loaded:
         if "corners" not in report:
             problems.append(f"{resp_path.name}: no corners in klt report ({report.get('error')})")
             continue
@@ -235,8 +296,10 @@ def ingest(tb, reports, args) -> int:
         remote = dict(e.get("remote") or {})
         notes.append(
             f"klt sim at supply {m['supply_v']:.2f} V: status {m['status']}, client `{client_v}`, "
-            f"engine {e.get('engine')} {e.get('engine_version')}, models_lib_sha256 "
-            f"{e.get('models_lib_sha256')}, remote job {remote.get('job_id')} "
+            f"engine {e.get('engine')} {e.get('engine_version')}, client-side models_lib_sha256 "
+            f"{e.get('models_lib_sha256')} (submitting host's top-level library, not runner "
+            f"evidence), {len(e.get('staged_model_inputs') or [])} staged model inputs, "
+            f"remote job {remote.get('job_id')} "
             f"({remote.get('provider')}, {remote.get('instance_type')}, runner klt "
             f"{remote.get('runner_klt_version')} vs client {remote.get('client_klt_version')}, "
             f"compatibility {remote.get('runner_compatibility')}).")
@@ -246,6 +309,13 @@ def ingest(tb, reports, args) -> int:
         "only as the ingest environment. No local re-simulation cross-check is possible on that "
         "version (the instance resistor temp= behaviour that motivated this correction is "
         "specific to ngspice-46; on the ingesting host's version the old and new methods agree).")
+    notes.append(
+        "PDK artifact provenance (issue #103), two separate facts: (1) simulation models -- every "
+        f"file of {pdk_artifact['manifest']} matched by sha256 among each klt job's staged model "
+        "inputs, with the runner on the client's klt build (see the '- PDK artifact:' line); the "
+        "runner's own install was not hashed. (2) ingest host -- its own IHP install also matched "
+        f"the pin (commit {host_artifact['upstream_commit'][:12]}); that is provenance of the "
+        "ingesting host only and says nothing about the runner.")
     extensions = evidence_mod.BaseExtensions(
         record_kind=tb.evidence.record_kind, data_provenance=tb.evidence.data_provenance,
         extra=dict(tb.evidence.extra), notes=notes)
@@ -265,7 +335,7 @@ def ingest(tb, reports, args) -> int:
         tb, pdk, points, ordered, f"{', '.join('ngspice-' + e for e in engines)} via klt sim "
         f"(ingested on {ngspice_version()})", REPO_ROOT, record_id, started.isoformat(), wall,
         claim=args.claim or tb.claim, supersedes=args.supersedes or "", git=git,
-        extensions=extensions)
+        extensions=extensions, pdk_artifact=pdk_artifact)
     write_netlist_snapshot(tb, tb.experiment_dir, record_id)
     path = write_record(record, tb.experiment_dir)
     if all(f"{d}_vce" in next(iter(results.values())).measurements for d in ("q1", "q2", "qr")):

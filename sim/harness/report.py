@@ -45,6 +45,7 @@ from .corners import (
 )
 from .evidence import BaseExtensions
 from .pdk import Pdk
+from .pdkartifact import validate_identity
 from .runner import PointResult
 from .testbench import AXES, Testbench
 
@@ -264,13 +265,22 @@ def environment(
     repo_root: Path,
     git: dict | None = None,
     toolchain: dict | None = None,
+    pdk_artifact: dict | None = None,
 ) -> dict:
     """Reproducibility provenance for the record.
 
     ``git`` should be sampled *before* the run starts -- the harness writes
     its own per-corner logs into the tracked evidence tree, so sampling
     afterwards would report every record as taken against a dirty tree.
+
+    ``pdk_artifact`` is the identity returned by
+    ``pdkartifact.verified_identity`` (upstream commit, manifest digest,
+    verification result). It is required: a record without a verified
+    artifact identity is refused (``ArtifactNotVerified``). ``pdk`` keeps the
+    separate, best-effort installation version (``unknown`` on markerless
+    installs); the two are never merged.
     """
+    pdk_artifact = validate_identity(pdk_artifact)
     try:
         user = getpass.getuser()
     except Exception:  # pragma: no cover - unusual environments
@@ -284,6 +294,7 @@ def environment(
         "host": socket.gethostname(),
         "user": user,
         "pdk": pdk.provenance(),
+        "pdk_artifact": dict(pdk_artifact),
         "git": git if git is not None else git_provenance(repo_root),
         "toolchain": toolchain or {},
     }
@@ -386,6 +397,7 @@ def build_record(
     extensions: BaseExtensions | None = None,
     allow_unswept_axes: bool = False,
     toolchain: dict | None = None,
+    pdk_artifact: dict | None = None,
 ) -> dict:
     measure_names = list(tb.measure)
     summary = summarize(results, measure_names)
@@ -425,7 +437,7 @@ def build_record(
         "subset_reason": subset_reason,
         "matrix": matrix_conformance(tb, points),
         "testbench": tb.provenance(),
-        "environment": environment(pdk, ngspice, repo_root, git, toolchain),
+        "environment": environment(pdk, ngspice, repo_root, git, toolchain, pdk_artifact),
         "evidence": extensions.as_dict(),
         "grid": {
             "corners": corners,
@@ -553,13 +565,25 @@ def render_markdown(record: dict) -> str:
         )
 
     env = record["environment"]
+    art = validate_identity(env.get("pdk_artifact"))
     lines += [
         "",
         "## Environment",
         f"- Harness: v{env['harness_version']} (upstream pattern: {env['harness_upstream']})",
         f"- ngspice: {env['ngspice']}",
         (f"- PDK: {env['pdk'].get('name')} {env['pdk'].get('variant')} "
-         f"({env['pdk'].get('version')}, via {env['pdk'].get('discovered_via')})"),
+         f"(install marker: {env['pdk'].get('version')}, via {env['pdk'].get('discovered_via')})"),
+        (f"- PDK artifact: **{art['status']}** -- upstream "
+         f"{art.get('upstream_repo') or 'unknown repo'} "
+         f"{art.get('upstream_tag') or ''} commit `{art['upstream_commit']}`; "
+         f"{art['manifest']} sha256 `{art['manifest_sha256']}`; "
+         f"{art.get('files_verified')} model files hash-verified "
+         + (("as the model inputs staged to off-host klt job(s) "
+             + ", ".join(f"`{j.get('job_id')}`" for j in art.get("jobs") or [])
+             + " (klt staged_model_inputs; runner klt build == client build); the runner's own "
+             "install was not hashed")
+            if art.get("verified_scope") == "offhost-job-model-inputs"
+            else "in the simulating install before the run")),
         f"- Python: {env['python']} on {env['platform']}",
         f"- git: {env['git'].get('short')} on {env['git'].get('branch')}"
         + (" (dirty)" if env["git"].get("dirty") else ""),
