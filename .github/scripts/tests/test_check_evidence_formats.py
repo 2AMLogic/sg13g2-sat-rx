@@ -12,6 +12,7 @@ Run: python3 -m pytest .github/scripts/tests -q
 from __future__ import annotations
 
 import gzip
+import json
 import os
 import shutil
 import subprocess
@@ -338,3 +339,33 @@ def test_no_base_is_skipped_loudly_or_fails_when_required(tmp_path):
     problems, _ = chk.check_append_only(root, "0" * 40, True)
     assert any("--require-base" in p for p in problems.items)
     assert chk.check_format(root).items == []  # the format half does not depend on history
+
+
+# ---------------------------------------------------------------- row-coverage staleness
+
+
+def coverage_problems(root: Path) -> list[str]:
+    return chk.check_row_coverage(root).items
+
+
+def test_rows_mentioned_patterns():
+    assert chk.rows_mentioned("see Rows 2-5 and row 17; rows 8, 9 and 10") == {2, 3, 4, 5, 17, 8, 9, 10}
+    assert chk.rows_mentioned("no mention, 17 alone") == set()
+
+
+def test_coverage_current_tree_passes():
+    assert coverage_problems(REPO) == []
+
+
+def test_coverage_stale_latest_record_fails_and_fixed_passes(tree):
+    man = tree / "spec" / "row-coverage.json"
+    doc = json.loads(man.read_text())
+    entry = next(e for e in doc["rows"] if e["row"] == 5)
+    recs = sorted((REPO / "sim" / "lna-sparam-nf" / "records").glob("*.md"))
+    entry["latest_record"] = f"sim/lna-sparam-nf/records/{recs[0].name}"
+    man.write_text(json.dumps(doc))
+    found = coverage_problems(tree)
+    assert any("row 5" in p and "stale" in p and recs[-1].name in p for p in found), found
+    entry["latest_record"] = f"sim/lna-sparam-nf/records/{recs[-1].name}"
+    man.write_text(json.dumps(doc))
+    assert coverage_problems(tree) == []

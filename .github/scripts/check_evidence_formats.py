@@ -91,7 +91,11 @@ reinterprets a historical scientific claim; corrections go in a later record):
    with the same status and binding corner, every cited bench dir / record
    must exist, a ``measured_*`` verdict may not cite a record whose Claim line
    says placeholder / device-level, and a row without a bench must say what
-   blocks it. It records bookkeeping only and never changes a spec value.
+   blocks it. A row's ``latest_record`` must also not be stale: no
+   lexicographically newer ``*.md`` in the same bench's ``records/`` may mention
+   the row (``row N``, ``rows A-B``, ``rows A, B and C``). A mention is not a
+   claim; resolve a false positive by pointing ``latest_record`` at the newer
+   record. It records bookkeeping only and never changes a spec value.
 
 Exit status: 0 clean, 1 problems found, 2 usage/environment error.
 """
@@ -1270,6 +1274,20 @@ VERDICTS = {"no_bench", "placeholder_circuit", "device_level_only", "method_abse
 NEEDS_RECORD = VERDICTS - {"no_bench"}
 OVERCLAIM_RE = re.compile(r"placeholder|device-level|device level|not a matched|not spec", re.I)
 SPEC_ROW_RE = re.compile(r"^\|\s*(\d+)\s*\|")
+# Deliberately simple: "row 5", "rows 2-5", "rows 2, 3 and 6". Case-insensitive.
+ROW_MENTION_RE = re.compile(r"\brows?\s+(\d+)(?:\s*[-\u2013]\s*(\d+))?((?:\s*(?:,|and)\s*\d+)*)", re.I)
+
+
+def rows_mentioned(text: str) -> set[int]:
+    """Spec row numbers named in a record (a mention is not a claim)."""
+    found: set[int] = set()
+    for m in ROW_MENTION_RE.finditer(text):
+        lo = int(m.group(1))
+        hi = int(m.group(2)) if m.group(2) else lo
+        if lo <= hi <= lo + 30:
+            found.update(range(lo, hi + 1))
+        found.update(int(x) for x in re.findall(r"\d+", m.group(3) or ""))
+    return found
 
 
 def spec_table_rows(text: str) -> dict[int, tuple[str, str]]:
@@ -1357,6 +1375,13 @@ def check_row_coverage(root: Path) -> Problems:
             continue
         if isinstance(rec, str) and not rec.startswith(str(bench) + "/records/"):
             problems.add(where, f"latest_record {rec!r} is not under {bench}/records/")
+        if isinstance(rec, str) and isinstance(bench, str) and (root / bench / "records").is_dir():
+            latest_name = Path(rec).name
+            for newer in sorted((root / bench / "records").glob("*.md")):
+                if newer.name > latest_name and n in rows_mentioned(
+                        newer.read_text(encoding="utf-8", errors="replace")):
+                    problems.add(where, f"stale latest_record {rec!r}: newer record {bench}/records/{newer.name} "
+                                 f"mentions row {n} (point latest_record at it; a mention is not a claim)")
         if verdict.startswith("measured_") and isinstance(rec, str) and (root / rec).is_file():
             text = (root / rec).read_text(encoding="utf-8", errors="replace")
             for line in text.splitlines():
