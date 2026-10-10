@@ -341,6 +341,20 @@ sim/characterize.sh characterize   # full HBT x T x V grid, writes a record per 
 sim/characterize.sh selftest       # negative-control self-test per bench
 ```
 
+`sim/characterize.sh` covers `lna-sparam-nf`, `mixer-conversion-iip3` and
+`hbt-kaband-characterization` only. `mixer-topology-feasibility` is not
+enumerated by the wrapper; its local, non-recording controls are run
+separately (and by the `sim-smoke` CI job, after model-integrity
+verification), from the repo root:
+
+```
+python3 sim/mixer-topology-feasibility/run.py smoke      # real candidate decks + analytic extraction
+python3 sim/mixer-topology-feasibility/run.py selftest   # negative controls
+```
+
+Its full `collect` campaign is not run on hosted CI. A green control run is
+not a feasibility verdict or a sizing/spec-compliance claim.
+
 For the Ka-band bench, `characterize` submits `klt sim` requests (backend
 from `$KABAND_BACKEND`, default `batch`); see
 `hbt-kaband-characterization/README.md` "Running the full grid".

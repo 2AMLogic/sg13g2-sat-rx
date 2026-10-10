@@ -181,6 +181,19 @@ jobs:
       - name: Selftest (sabotaged-corner and bad-deck negative controls)
         run: sim/characterize.sh selftest
 
+      # mixer-topology-feasibility is NOT enumerated by sim/characterize.sh
+      # (issue #63); its local, non-recording controls run here as explicit
+      # steps, after the model-integrity verification above. The full `collect`
+      # campaign stays off hosted CI. Pure stdlib + the in-repo harness, so no
+      # extra pip install is needed. A nonzero exit fails the step; green means
+      # only that the decks netlist, simulate on the pinned models and extract
+      # correctly, not that any topology meets the spec or a drive was chosen.
+      - name: Mixer-topology smoke (real candidate decks, pinned models, analytic extraction; records nothing)
+        run: python3 sim/mixer-topology-feasibility/run.py smoke
+
+      - name: Mixer-topology selftest (analytic IIP3, process sensitivity, sabotage, mismatch seeds, invalid measurements; records nothing)
+        run: python3 sim/mixer-topology-feasibility/run.py selftest
+
       - name: No evidence record or tracked file was created or changed
         run: |
           if [ -n "$(git status --porcelain)" ]; then
