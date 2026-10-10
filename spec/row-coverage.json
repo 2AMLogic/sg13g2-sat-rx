@@ -15,7 +15,7 @@
       "status": "ratified-target",
       "bound_corner": "`hbt_wcs`, 125 °C, min supply (lowest `J_C`, lowest fT)",
       "bench": "sim/lna-sparam-nf",
-      "latest_record": "sim/lna-sparam-nf/records/20261009-134024-57e1898.md",
+      "latest_record": "sim/lna-sparam-nf/records/20261010-012923-6cad7fc.md",
       "verdict": "placeholder_circuit"
     },
     {
@@ -23,7 +23,7 @@
       "status": "ratified-target",
       "bound_corner": "`hbt_wcs`, 125 °C (device noise rises with T; worst self-heating)",
       "bench": "sim/lna-sparam-nf",
-      "latest_record": "sim/lna-sparam-nf/records/20261009-134024-57e1898.md",
+      "latest_record": "sim/lna-sparam-nf/records/20261010-012923-6cad7fc.md",
       "verdict": "placeholder_circuit"
     },
     {
@@ -31,7 +31,7 @@
       "status": "ratified-target",
       "bound_corner": "`cap_bcs`/`cap_wcs` × `res_*` extremes (L/C spread), temperature extremes",
       "bench": "sim/lna-sparam-nf",
-      "latest_record": "sim/lna-sparam-nf/records/20261009-134024-57e1898.md",
+      "latest_record": "sim/lna-sparam-nf/records/20261010-012923-6cad7fc.md",
       "verdict": "placeholder_circuit"
     },
     {
@@ -39,7 +39,7 @@
       "status": "open",
       "bound_corner": "as row 4",
       "bench": "sim/lna-sparam-nf",
-      "latest_record": "sim/lna-sparam-nf/records/20261009-134024-57e1898.md",
+      "latest_record": "sim/lna-sparam-nf/records/20261010-012923-6cad7fc.md",
       "verdict": "placeholder_circuit"
     },
     {
@@ -47,7 +47,7 @@
       "status": "ratified-target",
       "bound_corner": "worst process × temp × supply combination; out-of-band as well as in-band",
       "bench": "sim/lna-sparam-nf",
-      "latest_record": "sim/lna-sparam-nf/records/20261009-134024-57e1898.md",
+      "latest_record": "sim/lna-sparam-nf/records/20261010-012923-6cad7fc.md",
       "verdict": "placeholder_circuit"
     },
     {
@@ -140,19 +140,19 @@
       "row": 17,
       "status": "ratified-target",
       "bound_corner": "—",
-      "bench": null,
-      "latest_record": null,
-      "verdict": "no_bench",
-      "blocked_by": "no bench checks per-device V_CE stress yet; sim/mixer-topology-feasibility is a part-1 fixture study with no record"
+      "bench": "sim/lna-sparam-nf",
+      "latest_record": "sim/lna-sparam-nf/records/20261010-012923-6cad7fc.md",
+      "verdict": "placeholder_circuit",
+      "blocked_by": "LNA stage 1 only, ideal matching: per-device V_CE/V_BE/I_C reported, 2.75 V cells labelled excursion, not claimed; mixer stress at an acceptable LO drive is missing (sim/mixer-topology-feasibility records 20261010-010744-a10c193 and 20261010-025859-2113f00 are device-level only, no acceptable drive at any declared sizing)"
     },
     {
       "row": 18,
       "status": "ratified-target",
       "bound_corner": "`hbt_bcs`, −40 °C (bias current typically peaks there for a fixed bias network)",
-      "bench": null,
-      "latest_record": null,
-      "verdict": "no_bench",
-      "blocked_by": "no bench records DC power yet"
+      "bench": "sim/lna-sparam-nf",
+      "latest_record": "sim/lna-sparam-nf/records/20261010-012923-6cad7fc.md",
+      "verdict": "placeholder_circuit",
+      "blocked_by": "LNA stage 1 supply power only (max 7.52 mW at hbt_bcs_125c_2.75v, an excursion cell); whole-chain LNA + mixer DC power is missing (sim/mixer-topology-feasibility 20261010-025859-2113f00 reports mixer-only rail power, not a cascade budget)"
     },
     {
       "row": 19,
