@@ -74,6 +74,40 @@ def assert_fails(root: Path, *needles: str):
         assert any(needle in p for p in found), f"no problem mentioning {needle!r} in:\n" + "\n".join(found)
 
 
+# ---------------------------------------------------------------- bench READMEs (issue #85)
+
+
+@pytest.mark.parametrize("bench", sorted(p.parent.name for p in (REPO / "sim").glob("*/records")))
+def test_bench_with_records_has_cold_start_readme(bench):
+    assert chk.readme_invocation_problem(REPO / "sim" / bench / "README.md") is None
+
+
+@pytest.mark.parametrize("bench", ["lna-sparam-nf", "mixer-conversion-iip3", "passive-p1"])
+def test_removed_readme_fails(tree, bench):
+    (tree / "sim" / bench / "README.md").unlink(missing_ok=True)
+    assert_fails(tree, f"sim/{bench}/README.md", "no cold-start README")
+
+
+def test_readme_without_invocation_section_fails(tree):
+    rd = own(tree / "sim" / "lna-sparam-nf" / "README.md")
+    rd.write_text("# lna-sparam-nf\n\nJust prose, no way to run it.\n")
+    assert_fails(tree, "sim/lna-sparam-nf/README.md", "no invocation section")
+
+
+def test_readme_invocation_without_command_block_fails(tree):
+    rd = own(tree / "sim" / "lna-sparam-nf" / "README.md")
+    rd.write_text("# x\n\n## Cold start\n\nRun the thing somehow.\n")
+    assert_fails(tree, "sim/lna-sparam-nf/README.md", "no fenced command block")
+
+
+def test_new_record_naming_pdk_unknown_fails(tree):
+    rec = tree / "sim" / "mixer-conversion-iip3" / "records"
+    src = next(iter(rec.glob("*.md")))
+    new = rec / "20270101-000000-deadbee.md"
+    new.write_text(src.read_text())
+    assert any("20270101-000000-deadbee.md" in p and "'unknown'" in p for p in problems_of(tree))
+
+
 # ---------------------------------------------------------------- format
 
 
@@ -252,7 +286,8 @@ def clone_record(exp: Path, old: str, new: str):
             dest = exp / str(p.relative_to(exp)).replace(old, new)
             dest.parent.mkdir(parents=True, exist_ok=True)
             if p.suffix == ".md" or (p.suffix == ".spice" and p.parent.name == "netlist-snapshots"):
-                dest.write_text(p.read_text().replace(old, new))
+                # a fresh record must cite a pinned PDK, not the legacy 'unknown' (issue #85)
+                dest.write_text(p.read_text().replace(old, new).replace("(unknown, via", "(0.3.0, via"))
             else:
                 shutil.copyfile(p, dest)
 

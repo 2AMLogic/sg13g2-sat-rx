@@ -42,11 +42,24 @@ attestation that is `pass` only if `README.md`, `LICENSE` and
 `sim/characterize.sh smoke`. It binds the CI workflow by content hash;
 regenerate with `python3 signoff/make_item10_evidence.py` (exits non-zero if
 any check fails, e.g. LICENSE removed). These are presence/invocation checks,
-not a quality judgment. **Item 9 (Testbenches shipped) is deliberately not
-attested**: no honest checkable invariant exists yet (one bench has no
-documented invocation, and older records name the PDK as `unknown` rather than
-pinning it), so the gap was filed as klayout-tools#3018 instead of attested
-loosely. The remainder is the correct, honest result for a block
+not a quality judgment. **Item 9 (Testbenches shipped) is still deliberately not
+attested.** Issue #85 removed the first blocker: every `sim/<bench>/` holding
+`records/` now has a cold-start README (`.github/scripts/check_evidence_formats.py`
+fails CI if one is missing or has no invocation section with a fenced command
+block; negative controls in `.github/scripts/tests/test_check_evidence_formats.py`).
+The second blocker remains: the newest `sim/lna-sparam-nf` record
+(`20261010-012923-6cad7fc.md`) was written after the model artifact was pinned
+(`sim/pdk-artifact.json`) yet still names the PDK `unknown`, because the
+harness's `Pdk.version` reads a `SOURCES` file that IHP-Open-PDK does not ship
+(`.fetched-version` instead). Records are append-only, so it cannot be edited;
+the checker grandfathers exactly four legacy records by id
+(`LEGACY_UNKNOWN_PDK`) and rejects any other record naming the PDK `unknown`.
+Item 9 can honestly be attested once a later record of each harness-native
+bench carries a pinned PDK revision (fix `Pdk.version` to read `.fetched-version`
+or have `report.py` print the `pdk-artifact.json` commit, then re-run the bench),
+at which point a `make_item9_evidence.py` in the item-10 pattern can bind the
+README set and that record. Until then no envelope exists and the report stays
+`unmet`/`no_evidence`. The remainder is the correct, honest result for a block
 whose layout and verification evidence has not started. The per-item *human*
 context stays in the gap-to-T1 tracker
 ([#4](https://github.com/2AMLogic/sg13g2-sat-rx/issues/4)); this report carries
