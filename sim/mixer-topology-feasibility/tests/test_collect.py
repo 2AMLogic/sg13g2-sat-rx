@@ -353,3 +353,93 @@ def test_nothing_selectable_still_yields_a_complete_honest_record(study, tmp_pat
         claim=manifest["claim"], supersedes="")
     assert "no acceptable drive in declared sweep" in md and "draw first: **none**" in md
     assert "no selected drive" in md
+
+
+# ---------------------------------------------------------------------------
+# data provenance is derived from what ran, never asserted
+# ---------------------------------------------------------------------------
+
+
+def _render(study, col, crosscheck_summary="n/a"):
+    import datetime as dt
+    concl = mf.conclude(study, collect.per_candidate(study, col))
+    summary = collect.build_summary(study, col, concl)
+    manifest = json.loads((BENCH / "testbench" / "tb.json").read_text())
+    return collect.render_md(
+        record_id="20000101-000000-abcdef0", study=study, tb=manifest, col=col, summary=summary,
+        started=dt.datetime(2000, 1, 1, tzinfo=dt.timezone.utc),
+        git={"commit": "x", "branch": "b", "dirty": False}, ngspice="n", klt_version="k",
+        pdk_prov={"fetched_version_file": "v", "model_sha256": {"cornerHBT.lib": "0" * 64}},
+        crosscheck={"summary": crosscheck_summary},
+        converge={c.name: dict(CONV, drive_kind="trial") for c in study.candidates},
+        claim=manifest["claim"], supersedes="")
+
+
+def _line(md: str, prefix: str) -> str:
+    (line,) = [ln for ln in md.splitlines() if ln.startswith(prefix)]
+    return line
+
+
+def test_provenance_cannot_claim_off_host_or_multi_unit_when_none_ran(study, tmp_path, monkeypatch):
+    """Stage 1 only (no drive selected): three single-unit local requests.
+    The record must say so and must not claim an off-host / batch /
+    multi-unit run, even though the caller's backend is ``batch``."""
+    col, fake = collect_with(study, tmp_path, monkeypatch,
+                             gain_fn=lambda c, p, t, r: -12.0 + 0.75 * (r.vlo_dbm + 30.0)
+                             + PROCESS_OFFSET_DB[p])
+    assert {m["backend"] for m in col.klt_meta} == {"local"} and {m["units"] for m in col.klt_meta} == {1}
+    exe = collect.execution_provenance(col.klt_meta, col.cells)
+    assert exe["off_host_requests"] == [] and exe["multi_unit_requests"] == [] and not exe["fleet_exercised"]
+    assert exe["not_simulated_cells"] == {"main": 243, "leakage": 243, "iip3": 117}
+    md = _render(study, col)
+    prov = _line(md, "- **Data provenance**: ")
+    for forbidden in ("ran off-host", "off-host `klt sim`", "backend `batch`", "multi-unit requests"):
+        assert forbidden not in prov
+    assert "on this host only" in prov and "No multi-unit request was submitted" in prov
+    assert "batch path was NOT exercised against the real fleet" in prov
+    assert "main 243, leakage 243, iip3 117" in prov and "No stage-2 request was submitted" in prov
+    assert "cross-check is local-vs-local" in _line(md, "- **Simulator**: ")
+
+
+def test_provenance_states_off_host_only_when_a_batch_request_ran(study, tmp_path, monkeypatch):
+    col, _ = collect_with(study, tmp_path, monkeypatch)
+    exe = collect.execution_provenance(col.klt_meta, col.cells)
+    assert exe["fleet_exercised"] and exe["backends"] == ["batch", "local"]
+    # 3 candidates x (3 main + 3 leakage) multi-unit requests went to batch
+    assert len(exe["off_host_requests"]) == len(exe["multi_unit_requests"]) == 18
+    prov = _line(_render(study, col), "- **Data provenance**: ")
+    assert "18 ran off-host (backend(s) `batch`)" in prov and "NOT exercised" not in prov
+    assert "Not simulated" not in prov
+
+
+def test_provenance_refuses_requests_without_a_recorded_backend():
+    with pytest.raises(collect.CollectionError, match="provenance underivable"):
+        collect.execution_provenance([{"request": "r", "units": 1, "matrix": "lo_select", "stage": 1}], [])
+
+
+def test_crosscheck_summary_names_local_vs_local():
+    s = collect.crosscheck_summary(3, 0.0, 1e-3, ["local"])
+    assert "LOCAL-vs-LOCAL" in s and "NOT a fleet-vs-local check" in s
+    assert "LOCAL-vs-LOCAL" not in collect.crosscheck_summary(3, 0.0, 1e-3, ["batch"])
+
+
+@pytest.mark.parametrize("md", sorted((BENCH / "records").glob("*.md")), ids=lambda p: p.stem)
+def test_committed_records_provenance_matches_what_ran(md):
+    """Every committed record's data-provenance and cross-check lines are
+    exactly what its own request metadata and cells derive."""
+    import gzip
+    data = json.loads(md.with_suffix(".json").read_text())
+    cells = json.loads(gzip.open(md.parent / data["cells_file"]).read())
+    meta = data["provenance"]["klt_requests"]
+    snap = BENCH / "netlist-snapshots" / data["record_id"]
+    for m in meta:  # the recorded backend is the one in the frozen request
+        assert json.loads((snap / f"request_{m['request']}.json").read_text())["backend"] == m["backend"]
+    exe = collect.execution_provenance(meta, cells)
+    assert data["provenance"]["execution"] == exe
+    text = md.read_text()
+    assert _line(text, "- **Data provenance**: ") == f"- **Data provenance**: {exe['text']}"
+    if not exe["off_host_requests"]:
+        assert "off-host `klt sim`" not in text and "ran off-host" not in text
+        cc = data["provenance"]["crosscheck"]
+        assert cc["kind"] == "local-vs-local" and "LOCAL-vs-LOCAL" in cc["summary"]
+        assert cc["summary"] in _line(text, "- Cross-check (klt-body path vs local harness path): ")

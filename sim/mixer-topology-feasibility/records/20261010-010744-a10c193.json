@@ -197,9 +197,37 @@
     },
     "crosscheck": {
       "compared": 3,
-      "summary": "3 nominal value(s) from the collected cells re-simulated locally (one ngspice process at a time); max |delta| 0.00e+00 dB (tolerance 0.001 dB)",
+      "kind": "local-vs-local",
+      "reference_backends": [
+        "local"
+      ],
+      "summary": "LOCAL-vs-LOCAL: the reference cells came from local single-host `klt sim` requests (backend `local`) and were re-simulated through the local harness path; this validates the klt-body path against the harness path, both local. It is NOT a fleet-vs-local check; 3 nominal value(s) compared (one ngspice process at a time); max |delta| 0.00e+00 dB (tolerance 0.001 dB)",
       "tolerance_db": 0.001,
       "worst_delta_db": 0.0
+    },
+    "execution": {
+      "backends": [
+        "local"
+      ],
+      "fleet_exercised": false,
+      "multi_unit_requests": [],
+      "not_simulated_cells": {
+        "iip3": 117,
+        "leakage": 243,
+        "main": 243
+      },
+      "off_host_requests": [],
+      "requests": 3,
+      "stages": {
+        "1": {
+          "local": {
+            "max_units": 1,
+            "requests": 3,
+            "units": 3
+          }
+        }
+      },
+      "text": "simulated (ngspice, real npn13G2 VBIC card, cornerHBT.lib sections), on this host only: 3 `klt sim` request(s), all with a local backend. Stage 1 (LO-selection sweep): backend `local`: 3 request(s), 3 unit(s), largest request 1 unit(s). No multi-unit request was submitted. No batch/off-host request was submitted: the batch path was NOT exercised against the real fleet by this record. No stage-2 request was submitted (no candidate selected an LO drive). Not simulated (no LO drive selected; recorded as `not_applicable_no_drive` cells, no numbers): main 243, leakage 243, iip3 117 cell(s)."
     },
     "git": {
       "branch": "feature/issue-35",
@@ -210,6 +238,8 @@
     "klt": "klt 0.7.0+g5e5b55992a7f",
     "klt_requests": [
       {
+        "backend": "local",
+        "candidate": "gilbert_stacked",
         "environment": {
           "engine": "ngspice",
           "engine_version": "46",
@@ -228,11 +258,16 @@
           "netlist_sha256": "79b26f964b28c4491c23fe5be3060aca2b4f11046e7659c8f58e6ced0c3a78da",
           "ngspice_binary": "/home/ubuntu/.local/bin/ngspice"
         },
+        "matrix": "lo_select",
         "report": "report_lo_select__gilbert_stacked__2.250v.json",
         "request": "lo_select__gilbert_stacked__2.250v",
-        "status": "pass"
+        "stage": 1,
+        "status": "pass",
+        "units": 1
       },
       {
+        "backend": "local",
+        "candidate": "folded_single_balanced",
         "environment": {
           "engine": "ngspice",
           "engine_version": "46",
@@ -251,11 +286,16 @@
           "netlist_sha256": "8d8c7c94cd2731081de42607d8247709f5b4a6c767a00025c79689f4ffcdef49",
           "ngspice_binary": "/home/ubuntu/.local/bin/ngspice"
         },
+        "matrix": "lo_select",
         "report": "report_lo_select__folded_single_balanced__2.250v.json",
         "request": "lo_select__folded_single_balanced__2.250v",
-        "status": "pass"
+        "stage": 1,
+        "status": "pass",
+        "units": 1
       },
       {
+        "backend": "local",
+        "candidate": "placeholder_floor",
         "environment": {
           "engine": "ngspice",
           "engine_version": "46",
@@ -274,9 +314,12 @@
           "netlist_sha256": "6d69a137337398120afe472ca8060cd9d99374bc3da93eb489c1e7d62a945184",
           "ngspice_binary": "/home/ubuntu/.local/bin/ngspice"
         },
+        "matrix": "lo_select",
         "report": "report_lo_select__placeholder_floor__2.250v.json",
         "request": "lo_select__placeholder_floor__2.250v",
-        "status": "pass"
+        "stage": 1,
+        "status": "pass",
+        "units": 1
       }
     ],
     "mismatch_seed": 35001,

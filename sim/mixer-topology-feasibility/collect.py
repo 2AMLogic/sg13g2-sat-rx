@@ -20,7 +20,10 @@ Stages (each stage's drive depends on the previous stage's selection):
    a main/leakage/IIP3 result.
 
 Multi-unit requests (stage 3) are submitted with the caller's backend
-(default ``batch``). Nothing is ever simulated locally except what klt itself
+(default ``batch``). Each request's backend and unit count is recorded and
+the record's data-provenance text is derived from them
+(``execution_provenance``): a record never claims an off-host or multi-unit
+run that was not submitted. Nothing is ever simulated locally except what klt itself
 keeps local (single-unit requests) and the one-corner convergence /
 cross-check controls (``run.py``-style local runs, one process at a time).
 
@@ -59,10 +62,19 @@ CORNER_LOGS = BENCH_DIR / "corners"
 SNAPSHOTS = BENCH_DIR / "netlist-snapshots"
 MODEL_FILES = ("cornerHBT.lib", "sg13g2_hbt_mod.lib", "sg13g2_hbt_mod_mismatch.lib")
 
-#: Local-vs-off-host agreement required of the cross-check (nominal main cell
-#: at the selected drive). Same deck, same models, same simulator version
-#: should agree to rounding.
+#: Agreement required of the cross-check between the collected (klt body
+#: path) cells and the local harness path. Same deck, same models, same
+#: simulator version should agree to rounding.
 CROSSCHECK_TOL_DB = 1e-3
+
+#: Stage names as the record states them.
+STAGE_LABELS = {1: "Stage 1 (LO-selection sweep)", 2: "Stage 2 (IIP3 / main / leakage at the selected drive)"}
+
+
+def is_local_backend(backend: str) -> bool:
+    """klt backends that run on this host (``local``, ``local-parallel``).
+    Anything else (``batch``) is off-host."""
+    return str(backend).startswith("local")
 
 
 class CollectionError(RuntimeError):
@@ -417,7 +429,12 @@ def run_collection(study, tb_options, work: Path, args) -> Collected:
         report = submit(spec, req, work, args)
         reports.append(report)
         data = json.loads(report.read_text())
+        # what actually ran (backend and unit count per request) is recorded
+        # here so the record's data-provenance text is derived, never assumed
         klt_meta.append({"request": spec.key, "report": report.name, "status": data.get("status"),
+                         "matrix": spec.matrix, "candidate": spec.candidate,
+                         "stage": 1 if spec.matrix == "lo_select" else 2,
+                         "backend": backend_for(spec, args), "units": len(spec.corners) * len(spec.temps),
                          "environment": data.get("environment", {})})
         expected_units = {(c, t) for c in spec.corners for t in spec.temps}
         got = set()
@@ -582,6 +599,79 @@ REDUCTIONS = (
     "No all-corner linearity, yield or compliance claim. SSB noise figure is out of scope (#27).",
 )
 
+SIMULATED_WITH = "simulated (ngspice, real npn13G2 VBIC card, cornerHBT.lib sections)"
+
+
+def execution_provenance(klt_meta: list[dict], cells: list[dict]) -> dict:
+    """What actually ran, derived from the per-request metadata (backend and
+    unit count recorded at submit time) and the cells. The record's data
+    provenance text comes from here and nowhere else: it may only claim an
+    off-host or multi-unit run when such a request was submitted."""
+    for m in klt_meta:
+        missing = [k for k in ("backend", "units", "matrix", "stage") if k not in m]
+        if missing:
+            raise CollectionError(f"klt request {m.get('request')}: no {missing} recorded; provenance underivable")
+    stages: dict = {}
+    for m in klt_meta:
+        st = stages.setdefault(int(m["stage"]), {})
+        b = st.setdefault(m["backend"], {"requests": 0, "units": 0, "max_units": 0})
+        b["requests"] += 1
+        b["units"] += int(m["units"])
+        b["max_units"] = max(b["max_units"], int(m["units"]))
+    off_host = [m["request"] for m in klt_meta if not is_local_backend(m["backend"])]
+    multi = [m["request"] for m in klt_meta if int(m["units"]) > 1]
+    not_sim: dict = {}
+    for c in cells:
+        if c.get("status") == "not_applicable_no_drive":
+            not_sim[c["matrix"]] = not_sim.get(c["matrix"], 0) + 1
+    backends = sorted({m["backend"] for m in klt_meta})
+    parts = []
+    for s in sorted(stages):
+        per = "; ".join(f"backend `{b}`: {v['requests']} request(s), {v['units']} unit(s), largest request "
+                        f"{v['max_units']} unit(s)" for b, v in sorted(stages[s].items()))
+        parts.append(f"{STAGE_LABELS.get(s, f'stage {s}')}: {per}")
+    if not klt_meta:
+        where = "no `klt sim` request was submitted"
+    elif off_host:
+        where = (f"{len(klt_meta)} `klt sim` request(s); {len(off_host)} ran off-host "
+                 f"(backend(s) {', '.join(f'`{b}`' for b in backends if not is_local_backend(b))})")
+    else:
+        where = f"on this host only: {len(klt_meta)} `klt sim` request(s), all with a local backend"
+    text = f"{SIMULATED_WITH}, {where}. " + (". ".join(parts) + ". " if parts else "")
+    if not multi:
+        text += "No multi-unit request was submitted. "
+    if not off_host:
+        text += ("No batch/off-host request was submitted: the batch path was NOT exercised against the real "
+                 "fleet by this record. ")
+    if 2 not in stages:
+        text += "No stage-2 request was submitted (no candidate selected an LO drive). "
+    if not_sim:
+        text += ("Not simulated (no LO drive selected; recorded as `not_applicable_no_drive` cells, no numbers): "
+                 + ", ".join(f"{k} {v}" for k, v in sorted(not_sim.items(), key=lambda kv: (
+                     ["main", "leakage", "iip3"].index(kv[0]) if kv[0] in ("main", "leakage", "iip3") else 9,
+                     kv[0]))) + " cell(s).")
+    return {"requests": len(klt_meta), "stages": {str(k): v for k, v in sorted(stages.items())},
+            "backends": backends, "off_host_requests": off_host, "multi_unit_requests": multi,
+            "fleet_exercised": bool(off_host), "not_simulated_cells": not_sim, "text": text.strip()}
+
+
+def crosscheck_summary(compared: int, worst: float, tol: float, ref_backends: list[str]) -> str:
+    """The cross-check sentence, stating which paths were compared. The
+    reference cells' backend comes from the request that produced them."""
+    refs = sorted(set(ref_backends))
+    if refs and all(is_local_backend(b) for b in refs):
+        kind = ("LOCAL-vs-LOCAL: the reference cells came from local single-host `klt sim` requests (backend "
+                + ", ".join(f"`{b}`" for b in refs) + ") and were re-simulated through the local harness path; "
+                "this validates the klt-body path against the harness path, both local. It is NOT a fleet-vs-local "
+                "check")
+    elif refs:
+        kind = ("collected cells from backend(s) " + ", ".join(f"`{b}`" for b in refs)
+                + " re-simulated through the local harness path")
+    else:
+        kind = "no reference cell compared"
+    return (f"{kind}; {compared} nominal value(s) compared (one ngspice process at a time); max |delta| "
+            f"{worst:.2e} dB (tolerance {tol:g} dB)")
+
 
 def render_md(*, record_id, study, tb, col: Collected, summary: dict, started, git, ngspice, klt_version,
               pdk_prov, crosscheck, converge, claim, supersedes) -> str:
@@ -596,12 +686,15 @@ def render_md(*, record_id, study, tb, col: Collected, summary: dict, started, g
     w(f"- **Supersedes**: {supersedes or 'none'}")
     w(f"- **Started (UTC)**: {started.isoformat(timespec='seconds')}")
     w(f"- **Git**: {git['commit']} ({git['branch']}, {'dirty' if git['dirty'] else 'clean'})")
-    w(f"- **Simulator**: {ngspice}; cross-checked locally (see Provenance)")
+    exe = execution_provenance(col.klt_meta, col.cells)
+    w(f"- **Simulator**: {ngspice}; " + ("off-host runs cross-checked against the local harness path"
+                                         if exe["off_host_requests"] else
+                                         "every run on this host; the cross-check is local-vs-local")
+      + " (see Data provenance and the cross-check controls)")
     w(f"- **klt client**: {klt_version}")
     w(f"- **PDK**: {pdk_prov.get('fetched_version_file')}; model files "
       + ", ".join(f"{k} sha256 {v[:12]}" for k, v in pdk_prov["model_sha256"].items()))
-    w("- **Data provenance**: simulated (ngspice, real npn13G2 VBIC card, cornerHBT.lib sections), "
-      "off-host `klt sim` for multi-unit requests")
+    w(f"- **Data provenance**: {exe['text']}")
     w(f"- **Declared cells**: {len(mf.expected_cells(study))}; accepted cells: {len(col.cells)}; every declared "
       "cell is accounted for exactly once (acceptance gate `mixfeas.validate_collection` passed)")
     w("")
@@ -776,7 +869,7 @@ def render_md(*, record_id, study, tb, col: Collected, summary: dict, started, g
           f"{_f(base.get('lo_if_dbm'), '{:.1f}')} dBm, LO->RF {_f(base.get('lo_rf_dbm'), '{:.1f}')} dBm "
           f"({base.get('status_off')})")
     w("")
-    w(f"- Cross-check of the collected cells against the local harness path: {crosscheck['summary']}")
+    w(f"- Cross-check (klt-body path vs local harness path): {crosscheck['summary']}")
     w("")
     w("## Conclusion")
     w("")
@@ -842,7 +935,9 @@ def write_record(study, tb_manifest, col: Collected, summary: dict, *, pdk_prov,
         "gate": {"validate_collection": "passed", "problems": []},
         "summary": summary, "reductions": list(REDUCTIONS),
         "provenance": {"git": git, "ngspice": ngspice, "klt": klt_version, "pdk": pdk_prov,
-                       "klt_requests": col.klt_meta, "converge": converge, "crosscheck": crosscheck,
+                       "klt_requests": col.klt_meta,
+                       "execution": execution_provenance(col.klt_meta, col.cells),
+                       "converge": converge, "crosscheck": crosscheck,
                        "mismatch_seed": study.matrices["leakage"].seed,
                        "tb_json_sha256": _sha256(TB_DIR / "tb.json")},
         "cells_file": cells_path.name, "supersedes": supersedes or None,
@@ -867,7 +962,7 @@ def local_controls(study, col: Collected) -> tuple[dict, dict, list[str]]:
     converge, problems).
 
     With a selected drive the control runs AT that drive and the reference
-    cells are the off-host nominal main cell and the seeded nominal leakage
+    cells are the collected nominal main cell and the seeded nominal leakage
     cell. With no selected drive the control runs at the labelled smoke trial
     drive (a diagnostic, NOT a selected drive; the issue allows no more) and
     the reference is the lo_select cell at that same drive. Either way it
@@ -880,6 +975,13 @@ def local_controls(study, col: Collected) -> tuple[dict, dict, list[str]]:
     converge: dict = {}
     worst = 0.0
     compared = 0
+    ref_backends: list[str] = []
+    meta_by_key = {m["request"]: m for m in col.klt_meta}
+
+    def ref_backend(matrix: str, cand_name: str) -> str:
+        m = meta_by_key.get(f"{matrix}__{cand_name}__2.250v")
+        return m.get("backend", "unrecorded") if m else "unrecorded"
+
     band = study.band(study.smoke["band"])
     trial = float(study.smoke["trial_lo_dbm"])
     leak = study.matrices["leakage"]
@@ -907,6 +1009,7 @@ def local_controls(study, col: Collected) -> tuple[dict, dict, list[str]]:
             continue
         d = abs(ref["gain_db"] - loc_on["gain_db"])
         compared += 1
+        ref_backends.append(ref_backend(ref["matrix"], cand.name))
         worst = max(worst, d)
         if d > CROSSCHECK_TOL_DB:
             problems.append(f"cross-check {cand.name}: collected gain {ref['gain_db']:.5f} dB vs local "
@@ -922,18 +1025,21 @@ def local_controls(study, col: Collected) -> tuple[dict, dict, list[str]]:
             continue
         for key, rkey in (("lo_if_dbm", "loif"), ("lo_rf_dbm", "lorf")):
             if lcell["resolved"][rkey] != loc_off["resolved"][rkey]:
-                problems.append(f"cross-check {cand.name}: {key} resolved flag differs off-host vs local")
+                problems.append(f"cross-check {cand.name}: {key} resolved flag differs collected vs local")
             elif lcell["resolved"][rkey]:
                 d = abs(lcell[key] - loc_off[key])
                 compared += 1
+                ref_backends.append(ref_backend("leakage", cand.name))
                 worst = max(worst, d)
                 if d > CROSSCHECK_TOL_DB:
-                    problems.append(f"cross-check {cand.name}: off-host {key} {lcell[key]:.4f} vs local "
+                    problems.append(f"cross-check {cand.name}: collected {key} {lcell[key]:.4f} vs local "
                                     f"{loc_off[key]:.4f} dBm (|d| {d:.2e} > {CROSSCHECK_TOL_DB:g})")
+    refs = sorted(set(ref_backends))
     crosscheck = {"compared": compared, "worst_delta_db": worst, "tolerance_db": CROSSCHECK_TOL_DB,
-                  "summary": f"{compared} nominal value(s) from the collected cells re-simulated locally "
-                             f"(one ngspice process at a time); max |delta| {worst:.2e} dB "
-                             f"(tolerance {CROSSCHECK_TOL_DB:g} dB)"}
+                  "reference_backends": refs,
+                  "kind": "local-vs-local" if refs and all(is_local_backend(b) for b in refs)
+                  else ("off-host-vs-local" if refs else "none"),
+                  "summary": crosscheck_summary(compared, worst, CROSSCHECK_TOL_DB, refs)}
     return crosscheck, converge, problems
 
 

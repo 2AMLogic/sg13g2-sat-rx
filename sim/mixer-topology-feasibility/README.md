@@ -56,7 +56,14 @@ back to a local grid. The fleet/client skew described in
 require `--no-stage-models --runner-version-check warn`; if it does, the
 local cross-check (which reproduces the nominal main cell and the seeded
 nominal leakage cell on this host's model files) is what ties the fleet's
-numbers to the checksums the record states.
+numbers to the checksums the record states. The first record ran three
+single-unit `klt sim --backend local` requests and nothing else, so its
+cross-check is local-vs-local (klt-body path vs harness path, both on this
+host). Its data-provenance line is derived from the backend and unit count
+recorded per request (`collect.execution_provenance`), not written by hand, and
+a test fails if a record claims an off-host or multi-unit run that its requests
+do not show. The batch stage-2 path has still not run against the real fleet.
+That has to wait for a sizing that selects a drive (sizing follow-up #61).
 
 ## Candidates
 
