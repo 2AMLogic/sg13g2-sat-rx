@@ -5,6 +5,7 @@
     python3 sim/mixer-topology-feasibility/run.py smoke
     python3 sim/mixer-topology-feasibility/run.py selftest
     python3 sim/mixer-topology-feasibility/run.py converge [--candidate NAME]
+    python3 sim/mixer-topology-feasibility/run.py collect [--dry-run] [--backend batch] [--workdir DIR]
 
 All four modes are LOCAL and SINGLE-CORNER (hbt_typ / 27 C / 2.25 V, plus
 the one-corner process, sabotage and mismatch controls in selftest), one
@@ -25,11 +26,13 @@ ngspice process at a time, and NEVER write evidence:
             candidate (doubled retained window, halved maximum timestep;
             gain and leakage within 0.2 dB).
 
-The full comparison (LO-selection sweep, 243-cell main matrix, 243-cell
-mismatch leakage matrix, IIP3 sweeps) is a multi-corner campaign: it is NOT
-run here and must be submitted as `klt sim` requests (README "Status").
+The first four modes never write evidence. `collect` is the full comparison
+(LO-selection sweep, 243-cell main matrix, 243-cell mismatch leakage matrix,
+IIP3 sweeps): it is expressed as `klt sim` requests (collect.py), never as a
+local ngspice grid, and writes ONE append-only record only if the whole
+collection passes the acceptance gate.
 
-Exit status: 0 on success; 1 on any failure. Nothing is ever recorded.
+Exit status: 0 on success; 1 on any failure. A failed run is never recorded.
 """
 
 from __future__ import annotations
@@ -469,6 +472,62 @@ def cmd_selftest(args) -> int:
 # ---------------------------------------------------------------------------
 
 
+def converge_candidate(tb, study, pdk, cand, drive: float, *, quiet: bool = False) -> dict:
+    """Window / timestep convergence control for one candidate at one LO
+    drive (local, nominal band centre): gain on hbt_typ at the nominal
+    corner, leakage (RF off) on the leakage matrix's first mismatch card with
+    its declared seed; doubled retained window and halved maximum timestep
+    against the baseline. Returns {"checks", "failures", "results"}."""
+    band = study.band(study.smoke["band"])
+    point = nominal_point()
+    leak = study.matrices["leakage"]
+    leak_point = nominal_point(leak.corners[0])
+    say = (lambda *a, **k: None) if quiet else print
+    variants = {"base": (1.0, 1.0), "window2x": (2.0, 1.0), "step0.5x": (1.0, 0.5)}
+    on_runs, off_runs = [], []
+    for v, (ws, ss) in variants.items():
+        on_runs.append(make_run(study, f"{v}_on", "single", band, drive, study.rf_dbm, window_scale=ws,
+                                step_scale=ss))
+        off_runs.append(make_run(study, f"{v}_off", "rfoff", band, drive, None, window_scale=ws,
+                                 step_scale=ss))
+    results, problems, _ = run_deck(tb, study, pdk, cand, point, on_runs,
+                                    SCRATCH / "converge" / cand.name / "gain")
+    res_off, problems_off, _ = run_deck(tb, study, pdk, cand, leak_point, off_runs,
+                                        SCRATCH / "converge" / cand.name / "leakage", seed=leak.seed)
+    results.update(res_off)
+    problems += problems_off
+    say(f"  {cand.name} [{cand.role}]")
+    failures = [f"{cand.name}: {p}" for p in problems]
+    checks_out = []
+    bad = [r for r in results.values() if r["status"] == "invalid"]
+    if bad:
+        failures += [f"{cand.name}/{r['run_id']}: invalid {r['problems']}" for r in bad]
+        return {"checks": checks_out, "failures": failures, "results": results}
+    for v in ("window2x", "step0.5x"):
+        checks = []
+        on_b, on_v = results["base_on"], results[f"{v}_on"]
+        off_b, off_v = results["base_off"], results[f"{v}_off"]
+        floor = max(on_b["floor_dbm"]["if"], on_v["floor_dbm"]["if"])
+        checks.append(mf.compare_converged("gain_db", on_b["gain_db"], on_v["gain_db"],
+                                           floor - study.rf_dbm, tol_db=study.convergence_tol_db,
+                                           floor_margin_db=study.floor_margin_db))
+        for key, fkey in (("lo_if_dbm", "loif"), ("lo_rf_dbm", "lorf")):
+            fl = max(off_b["floor_dbm"][fkey], off_v["floor_dbm"][fkey])
+            checks.append(mf.compare_converged(f"{key} (RF off)", off_b[key], off_v[key], fl,
+                                               tol_db=study.convergence_tol_db,
+                                               floor_margin_db=study.floor_margin_db))
+        for c in checks:
+            d = "n/a" if c.get("delta_db") is None else f"{c['delta_db']:+.4f} dB"
+            say(f"    {v:9s} {c['quantity']:18s} delta {d:14s} {'ok' if c['ok'] else 'FAIL'} {c['reason']}")
+            checks_out.append(dict(c, variant=v))
+            if not c["ok"]:
+                failures.append(f"{cand.name} {v} {c['quantity']}: {c['reason']}")
+    if not quiet:
+        print_result(results["base_on"])
+        print_result(results["base_off"])
+    return {"checks": checks_out, "failures": failures, "results": results}
+
+
 def cmd_converge(args) -> int:
     tb, study = _load()
     pdk = _pdk()
@@ -486,45 +545,7 @@ def cmd_converge(args) -> int:
     for cand in study.candidates:
         if args.candidate and cand.name != args.candidate:
             continue
-        variants = {"base": (1.0, 1.0), "window2x": (2.0, 1.0), "step0.5x": (1.0, 0.5)}
-        on_runs, off_runs = [], []
-        for v, (ws, ss) in variants.items():
-            on_runs.append(make_run(study, f"{v}_on", "single", band, drive, study.rf_dbm, window_scale=ws,
-                                    step_scale=ss))
-            off_runs.append(make_run(study, f"{v}_off", "rfoff", band, drive, None, window_scale=ws,
-                                     step_scale=ss))
-        results, problems, _ = run_deck(tb, study, pdk, cand, point, on_runs,
-                                        SCRATCH / "converge" / cand.name / "gain")
-        res_off, problems_off, _ = run_deck(tb, study, pdk, cand, leak_point, off_runs,
-                                            SCRATCH / "converge" / cand.name / "leakage", seed=leak.seed)
-        results.update(res_off)
-        problems += problems_off
-        print(f"  {cand.name} [{cand.role}]")
-        failures += [f"{cand.name}: {p}" for p in problems]
-        bad = [r for r in results.values() if r["status"] == "invalid"]
-        if bad:
-            failures += [f"{cand.name}/{r['run_id']}: invalid {r['problems']}" for r in bad]
-            continue
-        for v in ("window2x", "step0.5x"):
-            checks = []
-            on_b, on_v = results["base_on"], results[f"{v}_on"]
-            off_b, off_v = results["base_off"], results[f"{v}_off"]
-            floor = max(on_b["floor_dbm"]["if"], on_v["floor_dbm"]["if"])
-            checks.append(mf.compare_converged("gain_db", on_b["gain_db"], on_v["gain_db"],
-                                               floor - study.rf_dbm, tol_db=study.convergence_tol_db,
-                                               floor_margin_db=study.floor_margin_db))
-            for key, fkey in (("lo_if_dbm", "loif"), ("lo_rf_dbm", "lorf")):
-                fl = max(off_b["floor_dbm"][fkey], off_v["floor_dbm"][fkey])
-                checks.append(mf.compare_converged(f"{key} (RF off)", off_b[key], off_v[key], fl,
-                                                   tol_db=study.convergence_tol_db,
-                                                   floor_margin_db=study.floor_margin_db))
-            for c in checks:
-                d = "n/a" if c.get("delta_db") is None else f"{c['delta_db']:+.4f} dB"
-                print(f"    {v:9s} {c['quantity']:18s} delta {d:14s} {'ok' if c['ok'] else 'FAIL'} {c['reason']}")
-                if not c["ok"]:
-                    failures.append(f"{cand.name} {v} {c['quantity']}: {c['reason']}")
-        print_result(results["base_on"])
-        print_result(results["base_off"])
+        failures += converge_candidate(tb, study, pdk, cand, drive)["failures"]
     if failures:
         for f in failures:
             print(f"FAIL: {f}", file=sys.stderr)
@@ -532,6 +553,11 @@ def cmd_converge(args) -> int:
         return 1
     print("converge: ok; nothing recorded")
     return 0
+
+
+def cmd_collect(args) -> int:
+    import collect
+    return collect.collect(args)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -546,6 +572,21 @@ def build_parser() -> argparse.ArgumentParser:
     pc.add_argument("--candidate", default="")
     pc.add_argument("--drive", type=float, default=None, help="LO available power, dBm (default: smoke trial)")
     pc.set_defaults(func=cmd_converge)
+    pk = sub.add_parser("collect", help="submit the full study as klt sim requests and, if the acceptance "
+                                         "gate passes, write the append-only record")
+    pk.add_argument("--klt-cmd", default="klt", help="klt client command (e.g. 'uvx --from klayout-tools==X klt')")
+    pk.add_argument("--backend", default="batch", help="klt sim backend (default batch; the host exports "
+                    "KLT_SIM_BACKEND=batch). A failed submit is an error, never a local fallback.")
+    pk.add_argument("--timeout-s", type=int, default=3600, help="klt per-corner timeout")
+    pk.add_argument("--no-stage-models", action="store_true")
+    pk.add_argument("--runner-version-check", default="", choices=("", "enforce", "warn"))
+    pk.add_argument("--workdir", default="", help="reuse/resume a working directory (existing reports are reused)")
+    pk.add_argument("--claim", default="")
+    pk.add_argument("--supersedes", default="")
+    pk.add_argument("--dry-run", action="store_true", help="write first-stage requests, submit nothing")
+    pk.add_argument("--stage1-only", action="store_true",
+                    help="submit only the LO-selection sweep and print the selection (diagnostic, no record)")
+    pk.set_defaults(func=cmd_collect)
     return p
 
 
