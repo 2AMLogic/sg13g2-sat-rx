@@ -96,3 +96,18 @@ The smoke runs single local points:
   with literal values, and the operating point's invariance to the input
   network.
 - **Process sensitivity.** hbt_wcs must move the baseline.
+
+## klt friction
+
+`klt sim` has no swept two-port (S-parameter/noise) acquisition and no
+per-frequency result channel. Each request therefore works around it:
+
+- it carries its own body-level `.control` block;
+- a sentinel `tran` `.meas` keeps the request valid;
+- `matchcollect.py` parses the printed tables out of each unit's
+  `ngspice.log`.
+
+`matchstudy.parse_log` refuses a unit whose blocks are missing, and the gate
+needs every declared cell, so a silently failed body cannot pass. Filed
+generically as 2AMLogic/klayout-tools#3029. The fleet runner/client version
+skew is already tracked upstream (klayout-tools#2851, #2877, #2901).
