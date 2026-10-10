@@ -332,7 +332,7 @@ def sweep_points(study, cells: list[dict], cand_name: str) -> list[dict]:
 def iip3_fits(study, cells: list[dict], cand_name: str, selection: dict) -> dict:
     out = {}
     if selection.get("status") != "selected":
-        reason = f"IIP3 unavailable: no selected LO drive ({selection.get('status')})"
+        reason = f"no selected LO drive ({selection.get('status')}); IIP3 is only defined at a selected drive"
         return {b: {"status": "IIP3 unavailable", "reason": reason} for b in study.matrices["iip3"].bands}
     rules = study.iip3_rules
     for b in study.matrices["iip3"].bands:
@@ -658,6 +658,31 @@ def render_md(*, record_id, study, tb, col: Collected, summary: dict, started, g
                 row.append(tag)
             w(f"| {d:g} | " + " | ".join(row) + " |")
         w("")
+    w("### Reading the sweep (nominal corner)")
+    w("")
+    for cand in study.candidates:
+        pts = [q for q in col.selections[cand.name]["points"] if q["band"] == study.smoke["band"]]
+        valid = [q for q in pts if q["status"] == "ok"]
+        rej = [q for q in pts if q["status"] == "rejected_stress"]
+        if not valid:
+            w(f"- {cand.name}: no stress-valid point at {study.smoke['band']}.")
+            continue
+        last = valid[-1]
+        prev = valid[-2] if len(valid) > 1 else None
+        txt = (f"- {cand.name}: at {study.smoke['band']} the last stress-valid drive is {last['drive_dbm']:g} dBm "
+               f"(gain {_f(last['gain_db'])} dB"
+               + (f"; {_f(last['gain_db'] - prev['gain_db'])} dB above the previous 3 dB step" if prev else "")
+               + ")")
+        if rej:
+            txt += (f"; the first rejected drive is {rej[0]['drive_dbm']:g} dBm (gain {_f(rej[0]['gain_db'])} dB, "
+                    f"{_f(rej[0]['gain_db'] - last['gain_db'])} dB further). The stress window closes while the gain "
+                    "is still rising, so the plateau rule finds no run of three qualifying stress-valid drives.")
+        w(txt)
+    w("")
+    w("These are findings at the declared sizing (one fixed bias and load per topology), not statements about "
+      "the topologies in general. The rule, the sweep bounds and the stress limits were not adjusted to change "
+      "the outcome.")
+    w("")
     w("### Stress rejections in the sweep (RF -60 dBm cells, worst value across the three bands)")
     w("")
     w("A rejected point is excluded from the plateau; it is an explicit outcome, not an averaged one. Lowest "
@@ -741,7 +766,7 @@ def render_md(*, record_id, study, tb, col: Collected, summary: dict, started, g
                 res = f"IIP3 unavailable: {fit.get('reason')}"
             w(f"| {cand.name} | {b.name} | {res} |")
     w("")
-    w("## Convergence and cross-check controls (local, one corner, at the selected drive)")
+    w("## Convergence and cross-check controls (local, one corner at a time)")
     w("")
     for name, c in converge.items():
         base = c.get("baseline", {})
