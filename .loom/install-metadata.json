@@ -1,6 +1,6 @@
 {
-  "loom_version": "0.19.1001",
-  "loom_commit": "03f8f74f6df8788c18457d2cfa4c0ec6e3d54019",
+  "loom_version": "0.19.1009",
+  "loom_commit": "8889f7bd1eccfb4bc8239e7f5669b65f9815c30e",
   "install_date": "2026-09-11",
   "loom_source_remote": "https://github.com/rjwalters/loom.git",
   "installed_files": [
@@ -509,7 +509,6 @@
     ".claude/commands/loom/cargo-target-isolation.md",
     ".claude/commands/loom/sweep-backend-detection.md",
     ".claude/commands/loom/sweep-reference.md",
-    ".loom/docs/eta.md",
     ".loom/docs/tracing.md",
     ".loom/hooks/guard-readonly-dirs.sh.template",
     ".loom/hooks/tests/test-guard-worktree-paths.sh",
@@ -538,7 +537,12 @@
     ".loom/docs/comment-trust.md",
     ".loom/docs/merge-pr-exit-code-exceptions.md",
     ".loom/scripts/tests/test-merge-pr-label-freshness.sh",
-    ".loom/scripts/tests/test-spawn-codex-session-exec.sh"
+    ".loom/scripts/tests/test-spawn-codex-session-exec.sh",
+    ".loom/docs/priority-model.md",
+    ".claude/commands/loom/champion-critical-file-hold.md",
+    ".loom/docs/rollout-check.md",
+    ".loom/docs/telemetry-kind-pick-decision.md",
+    ".loom/scripts/tests/test-sweep-lease-renew-lifecycle.sh"
   ],
   "last_resync": "2026-10-10",
   "requires_daemon": "0.19.772"
