@@ -41,6 +41,7 @@ import stage1_tables  # noqa: E402
 from harness import evidence as evidence_mod  # noqa: E402
 from harness.corners import CORNERS, PvtPoint, build_grid, resolve_corners, supply_points  # noqa: E402
 from harness import klt_driver  # noqa: E402
+from harness import pdkartifact  # noqa: E402
 from harness.report import (  # noqa: E402
     RecordExists, allocate_record_id, build_record, git_provenance, write_netlist_snapshot,
     write_record,
@@ -83,8 +84,32 @@ def _pdk():
     return klt_driver.find_pdk_or_exit(SIM_DIR)
 
 
+def _verified_pdk():
+    """(pdk, verified artifact identity), or (pdk, None) after printing the refusal.
+
+    Called BEFORE anything is submitted or written, the same refusal
+    `harness.cli run` makes (exit 3): a record needs the hash-verified
+    artifact identity (issue #103), and failing only inside `build_record`
+    would leave an orphan corners/<record-id>/ log directory in the
+    append-only evidence tree.
+    """
+    pdk = _pdk()
+    try:
+        return pdk, pdkartifact.verified_identity(pdk, SIM_DIR)
+    except pdkartifact.ArtifactNotVerified as exc:
+        print(str(exc), file=sys.stderr)
+        return pdk, None
+
+
 def cmd_characterize(args) -> int:
     tb = load(BENCH_DIR)
+    verified = None
+    if not args.dry_run:  # a dry run submits and records nothing
+        verified = _verified_pdk()
+        if verified[1] is None:
+            print("characterize: PDK artifact not verified; nothing submitted, no record written",
+                  file=sys.stderr)
+            return 3
     corners = resolve_corners(list(tb.corners))
     supplies = supply_points(tb.nominal_supply_v, tb.supply_tolerance)
     temps = list(tb.temperatures_c)
@@ -120,7 +145,7 @@ def cmd_characterize(args) -> int:
     if args.dry_run:
         print(f"--dry-run: requests and bodies written under {work}; nothing submitted")
         return 0
-    return ingest(tb, reports, args)
+    return ingest(tb, reports, args, verified)
 
 
 _body_supply = klt_driver.body_supply
@@ -136,8 +161,11 @@ def cmd_ingest(args) -> int:
     return ingest(tb, reports, args)
 
 
-def ingest(tb, reports, args) -> int:
-    pdk = _pdk()
+def ingest(tb, reports, args, verified=None) -> int:
+    pdk, pdk_artifact = verified if verified is not None else _verified_pdk()
+    if pdk_artifact is None:
+        print("ingest: PDK artifact not verified; NO record written", file=sys.stderr)
+        return 3
     started = _dt.datetime.now(_dt.timezone.utc)
     git = git_provenance(REPO_ROOT)
     expected = {p.corner_id: p for p in build_grid(
@@ -265,7 +293,7 @@ def ingest(tb, reports, args) -> int:
         tb, pdk, points, ordered, f"{', '.join('ngspice-' + e for e in engines)} via klt sim "
         f"(ingested on {ngspice_version()})", REPO_ROOT, record_id, started.isoformat(), wall,
         claim=args.claim or tb.claim, supersedes=args.supersedes or "", git=git,
-        extensions=extensions)
+        extensions=extensions, pdk_artifact=pdk_artifact)
     write_netlist_snapshot(tb, tb.experiment_dir, record_id)
     path = write_record(record, tb.experiment_dir)
     if all(f"{d}_vce" in next(iter(results.values())).measurements for d in ("q1", "q2", "qr")):
