@@ -18,9 +18,99 @@ process/temperature corners are follow-on work.
 | **openEMS stages (`em`, `convergence`)** | **`CAPABILITY_UNAVAILABLE`** on the authoring host — `openEMS` not on PATH, no openEMS python, `import CSXCAD` fails. See `records/*-CAPABILITY_UNAVAILABLE.md`. |
 | L/Q/SRF at 17.7 / 19.45 / 21.2 GHz, mesh and margin deltas, fit residuals | **not established** — no solver ran; no number from any other source is substituted |
 | Qualified p1 model | **none** |
+| Reproducible openEMS runner + real solver smoke control (issue [#46](https://github.com/2AMLogic/sg13g2-sat-rx/issues/46)) | **prepared**; see "Reproducible runner" below. A passing smoke control is capability evidence only. **p1 remains unqualified and DR-0005 remains deferred.** |
 
 Run `sim/passive-p1/run_extraction.sh` on a host that has openEMS (below) to
 produce the real record; it appends a new record and never edits an old one.
+
+## Reproducible runner (issue #46): bootstrap, probe, smoke, cleanup
+
+`runner/` builds, from public sources at pinned commits and with no root, secrets, paid
+service or container daemon, a user-owned prefix that satisfies the prerequisites of
+`run_extraction.sh`, and proves with a real solver run that the prefix works. It does **not**
+run the p1 campaign, choose a passive family, relax any spec value or touch the PDK tree.
+
+```
+R=sim/passive-p1/runner
+$R/bootstrap.sh build /path/outside/repo/p1-prefix      # build (cold, 2 jobs)   [--skip-ngspice] [--skip-pdk]
+source /path/outside/repo/p1-prefix/activate.sh         # OPENEMS_PYTHON FIT_PYTHON IHP_PDK_ROOT PATH LD_LIBRARY_PATH EM_THREADS
+$R/probe.sh                                             # every executable/import/path run_extraction.sh uses; exit 1 + exact list if any is missing
+$R/smoke.sh                                             # real openEMS known-answer solve under enforced limits
+$R/negative_controls.sh                                 # 1 baseline + 9 sabotaged runs (7 smoke, 2 probe), each must be rejected with its own status
+python3 sim/passive-p1/scripts/controls.py all          # existing synthetic controls (needs ngspice + numpy/scipy from the prefix)
+python3 sim/passive-p1/scripts/hash_inputs.py --check
+$R/bootstrap.sh clean /path/outside/repo/p1-prefix [--caches]   # remove everything (or only src/tmp/dl)
+```
+
+Paths with spaces are supported (the verification below used one). `probe.sh --build` checks the
+system build prerequisites without network.
+
+**What gets installed** (all under the prefix; `provenance.json` records versions, commits, sha256s):
+isolated venv with hash-pinned wheels (`runner/requirements-lock.txt`, generated from
+`requirements.in` with `uv pip compile --generate-hashes`, installed with `--require-hashes`;
+`gdspy` is sdist-only and is built from its hash-pinned sdist, `requirements-sdist-lock.txt`),
+openEMS v0.37.0-rc2 / CSXCAD 0.7.0rc2 (openEMS-Project commit and its three submodule gitlinks
+verified), `gds2openEMS` 0.3.0 (IHP helper commit, `--no-deps`: its declared PySide6 GUI dependency is
+never imported by the driver), ngspice 46 (same tarball and sha256 as the CI `sim-smoke` job), and a sparse
+checkout of IHP-Open-PDK v0.3.0 (`libs.tech/klayout`, `libs.tech/ngspice/models`; the pycell submodules the
+tarball omits are still supplied per run by `scripts/setup_pdk_overlay.sh`, unchanged). All pins live in
+`runner/LOCK.env`. **Headless KLayout is the system `klayout` binary** (apt `klayout`), checked by the probe and
+version-recorded but not built: a Qt-less source build is outside the preparation limits. If a worker lacks it the
+probe/bootstrap name it as the missing prerequisite (a worker-spec item, never installed by the runner). Other system
+prerequisites (compilers, cmake, hdf5/vtk/CGAL/boost/tinyxml headers, python3-venv, bison/flex) are likewise only
+checked, and named when absent.
+
+**Environment variables** exported by `activate.sh` and consumed by `run_extraction.sh`: `OPENEMS_PYTHON`,
+`FIT_PYTHON` (both the prefix venv), `IHP_PDK_ROOT`, `PATH` (venv python3 first: `run_extraction.sh` also runs
+`python3 -I -c 'import CSXCAD'`, and `-I` ignores `PYTHONPATH`), `LD_LIBRARY_PATH`, `EM_THREADS` (default 2).
+
+**Declared preparation limits** (`runner/LIMITS.env`; the environment or flags may only lower them; they are
+preparation limits chosen by the Builder, **not** an estimate for the full p1 campaign, which must establish its own
+bounds before launch): solver threads 2 (`--numThreads=2`, `OMP_NUM_THREADS`), make jobs 2, free disk >= 6 GiB before
+launch and prefix <= 3 GiB, whole bootstrap wall limit 1800 s (each phase gets the remaining budget, tree killed on
+expiry), smoke wall limit 60 s and process-tree RSS <= 1024 MB (`limited_run.py` samples `/proc` and kills the tree
+on breach). Each limit is at least 3x the measured cost below.
+
+**The known-answer control** (`runner/smoke_cavity.py`): a closed 30 x 20 x 25 mm PEC box, 1 mm cells, Gaussian
+soft source, 20 000 FDTD steps, run with the real `openEMS` executable. The lowest four spectral peaks of the recorded probe
+voltage (found from the spectrum alone) must match the closed-form `f_mnp = (c0/2) sqrt((m/a)^2+(n/b)^2+(p/d)^2)` for
+(1,0,1), (1,1,1), (2,0,1), (1,0,2) within a declared **0.5 %**. The check also requires the solver log to report all
+iterations, the probe record to span them and every value to be finite. Import-only checks, mocks and the synthetic L
+controls cannot pass it. The merged `smoke_log.json` (written outside the repo, also on failure) records openEMS/python/numpy
+versions, sha256 of the XML solver input and the script, the exact command, threads, enforced limits, measured wall
+time and peak memory.
+
+**Negative controls** (`runner/negative_controls.sh`) pass only when the smoke is rejected with a distinct status:
+missing python binding 14, missing executable 10, solver failure 11 (stub solver; truncated input XML), numerical
+mismatch 13 (analytic values scaled by 1.02), timeout 124, memory limit 125; and `probe.sh` must exit 1 naming a missing binding
+or executable. It also checks that no solver process is
+left running and that the repository work tree is unchanged.
+
+### Verification record (preparation host, 2026-10-10)
+
+Cold build in a fresh prefix whose path contains spaces, from a clean environment (`env -i`), then probe, smoke,
+negative controls, synthetic controls and hash checks all green. Measured: **build wall 330 s, peak process-tree RSS
+784 MB (single `/usr/bin/time` max 626 MB), prefix 0.68 GiB, 2 make jobs**; **smoke wall 2.0 s (solver 1.7 s, 20 000
+iterations, 2 threads), peak RSS 107 MB**; worst relative frequency error 0.13 % against the 0.5 % tolerance for
+7.8033 / 10.8199 / 11.6458 / 12.9743 GHz. Host: Ubuntu 24.04, gcc 13, KLayout 0.28.16 (system). This is evidence
+that the toolchain runs and reproduces a closed-form answer; it is **not** an EM result for p1 and measures nothing
+about the campaign's three solves, whose cost is unknown until they are run.
+
+### Launching and retrieving the full campaign with this environment
+
+The campaign itself is separate follow-on work and is **not** run or claimed by this preparation. Once its resource
+bounds have been established and recorded:
+
+```
+source /path/outside/repo/p1-prefix/activate.sh && sim/passive-p1/runner/probe.sh        # must exit 0
+sim/passive-p1/run_extraction.sh                          # geometry, em, convergence, post, fit, compare
+# retrieve: records/<id>-<STATUS>.{md,json} and solver-artifacts/<id>/ are the only tracked outputs (append-only);
+# results/ fit/ run_log/ are scratch. Commit the new record + package; never edit an old one.
+```
+
+If a solve fails, the script writes a new `CAPABILITY_UNAVAILABLE` record as before. A passing runner smoke control
+cannot stand in for `QUALIFIED`, `UNCONVERGED` or `FIT_FAILED`. **p1 qualification stays pending, DR-0005 stays deferred**
+until its measured-evidence and band-ratification gates are met; no matching-network or compliance claim follows.
 
 ## Geometry, ports, definitions
 
@@ -98,7 +188,8 @@ a `CAPABILITY_UNAVAILABLE` record (exit 3):
 - an IHP-Open-PDK v0.3.0 tree (`$IHP_PDK_ROOT`, `$PDK_ROOT/ihp-sg13g2`, or
   `~/share/pdk/ihp-sg13g2`).
 
-Host provisioning is out of scope; the script installs nothing. On a host without
+`run_extraction.sh` itself installs nothing; a user-owned toolchain that satisfies every
+prerequisite above is built by `runner/` (next section). On a host without
 numpy use a throwaway environment (for example `uv venv /tmp/venv && uv pip install
 --python /tmp/venv/bin/python numpy scipy`, then `FIT_PYTHON=/tmp/venv/bin/python`).
 Use `EM_THREADS` (default 2) to keep a shared host usable.

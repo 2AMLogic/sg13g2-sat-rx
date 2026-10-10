@@ -1,0 +1,9 @@
+numpy
+scipy
+h5py
+matplotlib
+gdspy
+shapely
+cython
+setuptools
+wheel
