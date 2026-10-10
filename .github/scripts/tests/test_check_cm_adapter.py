@@ -40,11 +40,14 @@ def make_env(rid: str) -> dict:
             "placeholder_sha256": SHA, "pdk_artifact_sha256": SHA,
             "ngspice": {"path": "/x/ngspice", "version": "ngspice-46", "major": 46, "sha256": SHA},
             "pdk": {"path": "/pdk", "fetched_version": "0.3.0", "sha256": {"cornerHBT.lib": SHA, "sg13g2_hbt_mod.lib": SHA},
-                    "device": "npn13G2"}}
+                    "device": "npn13G2"},
+            "pdk_integrity": {"gate": "stub", "ok": True, "problems": [], "notes": ["models match"]}}
 
 
-def write_probe_run(root: Path, rid: str = RID) -> str:
-    """A complete fresh probe run: record pair + probe-log package. Returns the file stem."""
+def write_probe_run(root: Path, rid: str = RID, gate: bool = True) -> str:
+    """A complete fresh probe run: record pair + probe-log package. Returns the file stem.
+
+    gate=False builds the env a pre-#107 record carries (no 'pdk_integrity' key)."""
     exp = root / "sim" / NAME
     stdout = fakelog.stdout(fakelog.marks())
     parsed = C.parse_log(stdout, "")
@@ -52,6 +55,8 @@ def write_probe_run(root: Path, rid: str = RID) -> str:
     ctl = C.evaluate_control(parsed["marks"])
     status, reasons = C.decide_status(True, matrix)
     env = make_env(rid)
+    if not gate:
+        env.pop("pdk_integrity")
     rec = {"record_id": rid, "status": status, "reasons": reasons,
            "scope": "interface-feasibility evidence only; no row-10/row-12 claim; no active-mixer NF number",
            "nominal_point": {"corner": "hbt_typ"}, "interface_matrix": matrix, "controls": ctl,
@@ -74,7 +79,7 @@ def write_unavailable(root: Path, rid: str = RID) -> str:
     (exp / "records").mkdir(parents=True, exist_ok=True)
     status = "CAPABILITY_UNAVAILABLE"
     failed = "pinned ngspice-46 not found"
-    env = {k: v for k, v in make_env(rid).items() if k not in ("ngspice", "pdk")}
+    env = {k: v for k, v in make_env(rid).items() if k not in ("ngspice", "pdk", "pdk_integrity")}
     rec = {"record_id": rid, "status": status, "reasons": ["pinned simulator not available"],
            "failed_check": failed, "scope": "no probe ran; no active-mixer NF number; no row-10/row-12 claim",
            "environment": env}
@@ -126,6 +131,16 @@ class ProbeRun(Base):
         self.assertIn(NAME, chk.ADAPTERS)
 
     def test_fresh_complete_run_passes(self):
+        self.assertEqual(self.problems(), [])
+        self.assertIn("Model integrity gate", self.md.read_text())
+
+    def test_pre_gate_run_without_pdk_integrity_still_renders_and_passes(self):
+        for p in (self.js, self.md):
+            p.unlink()
+        shutil.rmtree(self.logs)
+        stem = write_probe_run(self.root, gate=False)
+        self.assertNotIn("pdk_integrity", json.loads((self.rec / f"{stem}.json").read_text())["environment"])
+        self.assertNotIn("Model integrity gate", (self.rec / f"{stem}.md").read_text())
         self.assertEqual(self.problems(), [])
 
     def test_statuses_are_not_the_27_vocabulary(self):

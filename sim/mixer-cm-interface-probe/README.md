@@ -58,7 +58,9 @@ host with the pinned executable supersedes an earlier `CAPABILITY_UNAVAILABLE` o
 file is not edited. (`20261010-123114-1755c6d-INTERFACES_BLOCKED` supersedes
 `20261010-083631-709284d-CAPABILITY_UNAVAILABLE`.) `run_probe.py` runs the `pdkartifact`
 model-integrity gate before the simulator and stores its outcome in `environment.pdk_integrity`; a
-failed gate yields `CAPABILITY_UNAVAILABLE`.
+failed gate yields `CAPABILITY_UNAVAILABLE` with the gate's problems in `failed_check` and a reason
+that names the models (not a missing simulator); the simulator is not run. Records written before
+the gate existed carry no `environment.pdk_integrity` and render without the gate line.
 
 ## Layout
 

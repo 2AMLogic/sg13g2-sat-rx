@@ -191,5 +191,160 @@ class Plumbing(unittest.TestCase):
         self.assertIn(str(R.PLACEHOLDER), R.compose_deck("/m/lib.lib"))
 
 
+class IntegrityGate(unittest.TestCase):
+    """Issue #107: the PDK model-integrity gate runs before the simulator. No real simulator or
+    PDK is touched: shutil.which / ngspice_info / pdk_info / pdk_integrity / git_info are
+    stubbed, RECORDS / PROBE_LOGS / HERE point into a temp dir, and subprocess.run is replaced
+    by a recorder so the tests can assert whether the simulator was invoked."""
+
+    SHA = "a" * 64
+
+    def setUp(self):
+        import contextlib
+        from unittest import mock
+        self.tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(__import__("shutil").rmtree, self.tmp, True)
+        self.sim_calls = []
+
+        real_run = __import__("subprocess").run
+
+        def fake_run(cmd, *a, **kw):
+            if not cmd or cmd[0] != "/x/ngspice":  # e.g. platform.platform() -> `uname -p`
+                return real_run(cmd, *a, **kw)
+            self.sim_calls.append(cmd)
+            return __import__("subprocess").CompletedProcess(cmd, 0, fakelog.stdout(fakelog.marks()), "")
+
+        self.integ = {"gate": "stub", "ok": True, "problems": [], "notes": ["models match"]}
+        major = R.pinned_major()
+        patches = [
+            mock.patch.object(R, "RECORDS", self.tmp / "records"),
+            mock.patch.object(R, "PROBE_LOGS", self.tmp / "probe-logs"),
+            mock.patch.object(R, "HERE", self.tmp),
+            mock.patch.object(R.shutil, "which", lambda name: "/x/ngspice"),
+            mock.patch.object(R, "ngspice_info", lambda exe: {"path": exe, "version": f"ngspice-{major}",
+                                                              "major": major, "sha256": self.SHA}),
+            mock.patch.object(R, "pdk_info", lambda: {
+                "path": "/pdk", "fetched_version": "0.3.0", "model_lib": "/pdk/m/cornerHBT.lib",
+                "section": "hbt_typ", "sha256": {"cornerHBT.lib": self.SHA, "sg13g2_hbt_mod.lib": self.SHA},
+                "device": "npn13G2"}),
+            mock.patch.object(R, "pdk_integrity", lambda banner: dict(self.integ)),
+            mock.patch.object(R, "git_info", lambda: {"commit": "abcdef1" + "0" * 33, "dirty": False}),
+            mock.patch.object(R.subprocess, "run", fake_run),
+        ]
+        for p in patches:
+            p.start()
+            self.addCleanup(p.stop)
+        (self.tmp / "records").mkdir()
+        (self.tmp / "probe-logs").mkdir()
+        self._redirect = contextlib.redirect_stdout
+
+    def run_main(self, *argv):
+        import io
+        buf = io.StringIO()
+        with self._redirect(buf):
+            rc = R.main(list(argv))
+        return rc, buf.getvalue()
+
+    def fail_gate(self):
+        self.integ = {"gate": "stub", "ok": False, "problems": ["cornerHBT.lib sha256 mismatch"],
+                      "notes": []}
+
+    @staticmethod
+    def first_json(out: str) -> dict:
+        return json.JSONDecoder().raw_decode(out[out.index("{"):])[0]
+
+    def test_pass_path_runs_the_simulator_and_records_the_gate(self):
+        rc, out = self.run_main("--no-write")
+        self.assertEqual(rc, 0)
+        self.assertEqual(len(self.sim_calls), 1)
+        self.assertEqual(self.sim_calls[0][1:], ["-b", "deck.spice"])
+        self.assertIn("Model integrity gate (`sim/harness/pdkartifact.py`, run before the simulator): OK; "
+                      "models match", out)
+        self.assertNotIn("CAPABILITY_UNAVAILABLE", out)
+        self.assertEqual(list((self.tmp / "records").iterdir()), [])
+
+    def test_pass_path_write_carries_gate_outcome_in_environment(self):
+        rc, _ = self.run_main()
+        self.assertEqual(rc, 0)
+        (js,) = sorted((self.tmp / "records").glob("*.json"))
+        rec = json.loads(js.read_text())
+        self.assertEqual(rec["environment"]["pdk_integrity"]["ok"], True)
+        self.assertNotEqual(rec["status"], "CAPABILITY_UNAVAILABLE")
+
+    def test_fail_path_no_write_is_capability_unavailable_and_runs_nothing(self):
+        self.fail_gate()
+        rc, out = self.run_main("--no-write")
+        self.assertEqual(rc, 0)
+        self.assertEqual(self.sim_calls, [], "the simulator must not run when the gate fails")
+        rec = self.first_json(out)
+        self.assertEqual(rec["status"], "CAPABILITY_UNAVAILABLE")
+        self.assertIn("PDK model integrity gate failed", rec["failed_check"])
+        self.assertIn("cornerHBT.lib sha256 mismatch", rec["failed_check"])
+        self.assertEqual(rec["reasons"], [R.INTEGRITY_REASON])
+        self.assertNotIn("simulator not available", " ".join(rec["reasons"]))
+        for key in ("interface_matrix", "controls", "probe_logs"):
+            self.assertNotIn(key, rec)
+        self.assertEqual(list((self.tmp / "records").iterdir()), [])
+        self.assertEqual(list((self.tmp / "probe-logs").iterdir()), [])
+        self.assertFalse((self.tmp / "_build").exists())
+
+    def test_fail_path_write_emits_only_the_unavailable_pair(self):
+        self.fail_gate()
+        rc, _ = self.run_main()
+        self.assertEqual(rc, 0)
+        self.assertEqual(self.sim_calls, [])
+        names = sorted(p.name for p in (self.tmp / "records").iterdir())
+        self.assertEqual(len(names), 2)
+        self.assertTrue(all("-CAPABILITY_UNAVAILABLE." in n for n in names), names)
+        self.assertEqual(list((self.tmp / "probe-logs").iterdir()), [])
+        md = next((self.tmp / "records").glob("*.md")).read_text()
+        self.assertIn("Failed check: PDK model integrity gate failed", md)
+        self.assertIn("model-integrity outcome", md)
+        self.assertNotIn("missing-tool", md)
+
+    def test_allow_unpinned_bypasses_the_gate_but_never_writes(self):
+        self.fail_gate()
+        rc, _ = self.run_main("--allow-unpinned")
+        self.assertEqual(rc, 0)
+        self.assertEqual(len(self.sim_calls), 1)
+        self.assertEqual(list((self.tmp / "records").iterdir()), [])
+
+
+class RenderBackwardCompat(unittest.TestCase):
+    """render_md must accept an env written before the gate existed (no 'pdk_integrity')."""
+
+    def env(self, **extra):
+        sha = "a" * 64
+        env = {"host": "h", "git": {"commit": "c" * 40, "dirty": False}, "placeholder_sha256": sha,
+               "pdk_artifact_sha256": sha,
+               "ngspice": {"path": "/x", "version": "ngspice-46", "sha256": sha},
+               "pdk": {"path": "/pdk", "fetched_version": "0.3.0",
+                       "sha256": {"cornerHBT.lib": sha, "sg13g2_hbt_mod.lib": sha}, "device": "npn"}}
+        env.update(extra)
+        return env
+
+    def render(self, env):
+        m, parsed = matrix()
+        ctl = C.evaluate_control(parsed["marks"])
+        status, reasons = C.decide_status(True, m)
+        return R.render_md("rid", status, reasons, m, ctl, env)
+
+    def test_env_without_gate_renders_and_omits_the_line(self):
+        md = self.render(self.env())
+        self.assertNotIn("Model integrity gate", md)
+        self.assertIn("## Provenance", md)
+
+    def test_env_with_gate_ok_and_failed(self):
+        ok = self.render(self.env(pdk_integrity={"ok": True, "problems": [], "notes": ["n1"]}))
+        self.assertIn("run before the simulator): OK; n1\n", ok)
+        bad = self.render(self.env(pdk_integrity={"ok": False, "problems": ["p1"], "notes": []}))
+        self.assertIn("run before the simulator): FAILED; p1\n", bad)
+
+    def test_default_unavailable_text_is_unchanged(self):
+        md = R.render_unavailable_md("rid", "CAPABILITY_UNAVAILABLE", "x")
+        self.assertIn("This status is a missing-tool\n  outcome only; it never establishes", md)
+        self.assertIn("host that has the pinned executable supersedes", md)
+
+
 if __name__ == "__main__":
     unittest.main()

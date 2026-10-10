@@ -204,6 +204,21 @@ def compose_deck(model_lib: str, sabotage: str | None = None) -> str:
 
 # ---- rendering -----------------------------------------------------------------------------------
 
+def integrity_line(env: dict) -> str:
+    """Provenance bullet for the model-integrity gate, or "" when env carries no gate outcome.
+
+    Records written before the gate existed (issue #107) have no 'pdk_integrity' key; rendering
+    such an env must still work and must not invent a gate result for it.
+    """
+    integ = env.get("pdk_integrity")
+    if not isinstance(integ, dict):
+        return ""
+    verdict = "OK" if integ.get("ok") else "FAILED"
+    detail = "; ".join(list(integ.get("notes") or []) + list(integ.get("problems") or []))
+    return (f"- Model integrity gate (`sim/harness/pdkartifact.py`, run before the simulator): {verdict}"
+            f"{'; ' + detail if detail else ''}\n")
+
+
 def render_md(rid: str, status: str, reasons: list, matrix: dict, ctl: dict, env: dict) -> str:
     rows = "\n".join(f"| `{k}` | {v['state']} | {v['basis']} | {v['note']} |" for k, v in matrix.items())
     crows = "\n".join(f"| {k} | {'pass' if v['pass'] else 'FAIL'} | "
@@ -242,24 +257,34 @@ def render_md(rid: str, status: str, reasons: list, matrix: dict, ctl: dict, env
 - PDK: `{env['pdk']['path']}` (.fetched-version {env['pdk']['fetched_version']}), section `hbt_typ`;
   cornerHBT.lib `{env['pdk']['sha256']['cornerHBT.lib']}`, sg13g2_hbt_mod.lib
   `{env['pdk']['sha256']['sg13g2_hbt_mod.lib']}`; {env['pdk']['device']}
-- Model integrity gate (`sim/harness/pdkartifact.py`, run before the simulator): {'OK' if env['pdk_integrity']['ok'] else 'FAILED'}; {'; '.join(env['pdk_integrity']['notes'])}
-- Placeholder sha256 `{env['placeholder_sha256']}`; pdk-artifact.json sha256 `{env['pdk_artifact_sha256']}`
+{integrity_line(env)}- Placeholder sha256 `{env['placeholder_sha256']}`; pdk-artifact.json sha256 `{env['pdk_artifact_sha256']}`
 - Repo commit `{env['git']['commit']}` (dirty: {env['git']['dirty']}); host {env['host']}
 - Probe logs: `probe-logs/{rid}/`
 - Command: `python3 sim/{BENCH}/run_probe.py`
 """
 
 
-def render_unavailable_md(rid: str, status: str, failed: str) -> str:
+INTEGRITY_REASON = ("installed PDK models failed the integrity gate against sim/pdk-artifact.json "
+                    "(the pinned simulator was found but not run); this status never establishes absence")
+
+
+def render_unavailable_md(rid: str, status: str, failed: str, cause: str = "missing-tool") -> str:
+    """CAPABILITY_UNAVAILABLE record text. cause is "missing-tool" (default, the original
+    wording) or "model-integrity" (simulator present, models failed the pdkartifact gate)."""
+    if cause == "model-integrity":
+        kind = "a model-integrity outcome only (the simulator was present but was not run)"
+        later = "whose installed models pass the integrity gate"
+    else:
+        kind = "a missing-tool\n  outcome only"
+        later = "that has the pinned executable"
     return f"""# {BENCH} record {rid}-{status}
 
 - **Status: {status}**
 - **Scope: no probe ran.** No interface-feasibility result of any kind, no active-mixer NF
-  number, and no claim about `spec/target-spec.md` rows 10/12. This status is a missing-tool
-  outcome only; it never establishes that an interface is absent.
+  number, and no claim about `spec/target-spec.md` rows 10/12. This status is {kind}; it never establishes that an interface is absent.
 - Failed check: {failed}
 
-A later record produced on a host that has the pinned executable supersedes this one; this
+A later record produced on a host {later} supersedes this one; this
 file is not edited or removed (records are append-only).
 """
 
@@ -328,14 +353,18 @@ def main(argv=None) -> int:
     env["pdk_integrity"] = integ
     if not integ["ok"] and not args.allow_unpinned:
         failed = "PDK model integrity gate failed (sim/harness/pdkartifact.py): " + "; ".join(integ["problems"])
-        status, reasons = C.decide_status(False, None)
+        status, _ = C.decide_status(False, None)
+        # The simulator IS present here; the blocker is the models, so say that (not "simulator
+        # not available", which is decide_status's missing-tool wording).
+        reasons = [INTEGRITY_REASON]
         rec = {"record_id": rid, "status": status, "reasons": reasons, "failed_check": failed,
                "scope": "no probe ran; no active-mixer NF number; no row-10/row-12 claim",
                "environment": env}
         print(json.dumps(rec, indent=2))
         if not no_write:
             write_excl(RECORDS / f"{rid}-{status}.json", json.dumps(rec, indent=2) + "\n")
-            write_excl(RECORDS / f"{rid}-{status}.md", render_unavailable_md(rid, status, failed))
+            write_excl(RECORDS / f"{rid}-{status}.md",
+                       render_unavailable_md(rid, status, failed, cause="model-integrity"))
             print(f"wrote records/{rid}-{status}.md")
         return 0
     deck = compose_deck(env["pdk"]["model_lib"], args.sabotage)
