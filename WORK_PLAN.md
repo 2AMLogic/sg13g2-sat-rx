@@ -25,7 +25,7 @@ _None._
 
 Issues currently being built (`loom:building`).
 
-- **#74**: sim: map the first-stage LNA noise versus input-match feasibility tradeoff
+- **#92**: ci: propagate real check failures from single-corner smoke
 
 ## PRs Awaiting Review
 
@@ -43,13 +43,14 @@ _None._
 
 Issues carrying `loom:curated`.
 
+- **#4**: Track the gap to T1 sim-validated / bronze (klayout-tools design-evidence tiers) *(curated)*
 - **#38**: Auditor Capability Request: Python runtime for local harness smoke validation *(curated)*
-- **#74**: sim: map the first-stage LNA noise versus input-match feasibility tradeoff *(curated)*
+- **#45**: fix(sim): close mixer feasibility gate and conclusion validation gaps *(curated)*
 
 ## Proposed (Architect / Hermit)
 
-- **#46**: sim: execute the p1 EM campaign on a reproducible openEMS runner *(architect)*
 - **#57**: sim: qualify LNA two-tone IIP3 and single-tone input P1dB power sweeps *(architect)*
+- **#94**: docs: reconcile active LNA DUT status and characterization claims *(architect)*
 
 ## Epics
 
@@ -65,7 +66,7 @@ _None._
 | In Progress (`loom:building`) | 1 |
 | PRs awaiting review | 0 |
 | Approved PRs awaiting merge | 0 |
-| Curated | 2 |
+| Curated | 3 |
 | Architect / Hermit proposals | 2 |
 | Active epics | 0 |
 <!-- guide:plan-body:end -->

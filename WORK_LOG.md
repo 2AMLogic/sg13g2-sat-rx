@@ -4,6 +4,23 @@ Chronological record of merged pull requests and closed issues, maintained by th
 
 ### 2026-10-10
 
+- **PR #95**: sim: conversion-matrix interface probe, checker adapter and go/no-go note (#89)
+- **PR #98**: evidence: verify native frozen netlist payload digests
+- **PR #96**: sim(passive-p1): reproducible openEMS runner and real solver smoke control
+- **PR #88**: spec: ITU Art. 5 table-body check (row 1) and channel-bandwidth source (row 16)
+- **PR #87**: ci: bench cold-start READMEs and checked invariant for T1 item 9 preconditions
+- **PR #84**: ci: run passive numerical known-answer and sabotage controls (#83)
+- **PR #82**: fix(sim): verify full Cartesian PVT coverage before reporting a complete matrix
+- **PR #80**: feat: LNA first-stage input-match tradeoff study, fleet record and bound
+- **Issue #89** (closed): sim: probe periodic transfer and model-noise interfaces before a mixer NF conversion-matrix solver
+- **Issue #93** (closed): evidence: verify native frozen netlist payload digests
+- **Issue #46** (closed): sim: prepare a reproducible openEMS runner and solver smoke control
+- **Issue #86** (closed): spec: verify row 1 band edges (ITU Art. 5 table body) and row 16 channel bandwidth against primary sources
+- **Issue #85** (closed): ci: make T1 item 9 (testbenches shipped) attestable — bench cold-start READMEs and a checked invariant
+- **Issue #83** (closed): ci: run passive numerical known-answer and sabotage controls
+- **Issue #81** (closed): fix(sim): verify full Cartesian PVT coverage before reporting a complete matrix
+- **Issue #41** (closed): Auditor: use literal worktree paths for simulation output confinement
+- **Issue #74** (closed): sim: map the first-stage LNA noise versus input-match feasibility tradeoff
 - **PR #76**: ci: fix overclaim negative control after #73 (closes #75)
 - **PR #73**: row-coverage: refresh rows 2-6/17/18 and flag stale latest_record (#70)
 - **PR #72**: signoff: attest T1 item 10 (repo hygiene)
