@@ -204,6 +204,17 @@ jobs:
       - name: LNA match-tradeoff smoke (pinned models; records nothing)
         run: python3 sim/lna-match-tradeoff/run.py smoke
 
+      # passive-p1 (issue #83): the synthetic numerical controls of the passive
+      # analysis chain (known-answer, wrong-value, malformed-input, synthetic
+      # pipeline). No openEMS, no PDK passive model; one local ngspice -b per
+      # check. NO --write-record, so nothing is published. A missing dependency
+      # (SciPy included), a crash or a failed control exits nonzero and fails the
+      # job. A pass does NOT establish EM convergence and does NOT qualify p1.
+      - name: Passive-p1 synthetic numerical controls (known-answer, wrong-value, malformed, pipeline; records nothing)
+        run: |
+          pip install -r requirements-sim.txt
+          python3 sim/passive-p1/scripts/controls.py all
+
       - name: No evidence record or tracked file was created or changed
         run: |
           if [ -n "$(git status --porcelain)" ]; then

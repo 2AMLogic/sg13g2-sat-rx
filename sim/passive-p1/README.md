@@ -111,9 +111,19 @@ planning figure only.
 Controls (no EM solver, a few seconds, one local `ngspice -b` per check):
 
 ```
-python3 sim/passive-p1/scripts/controls.py all [--write-record]      # needs numpy
+python3 sim/passive-p1/scripts/controls.py all [--write-record]      # needs ngspice, numpy, scipy (requirements-sim.txt)
 python3 sim/passive-p1/scripts/hash_inputs.py --check
 ```
+
+CI (job `sim-smoke`, pinned ngspice 46) runs `controls.py all` **without**
+`--write-record` after `pip install -r requirements-sim.txt` (numpy + scipy with
+version bounds; `requirements-test.txt` stays simulator-free). A missing
+dependency, crash or failed control fails the job, and the job's clean-tree gate
+confirms nothing was written. This is an automated check of the *synthetic
+numerical controls only*. A pass does **not** establish EM convergence, does not
+exercise openEMS, and does **not** qualify p1; the EM campaign remains pending.
+It is also distinct from the evidence-format checks (`evidence-formats` job),
+which validate record structure and hash integrity, not numerical correctness.
 
 ## Layout
 

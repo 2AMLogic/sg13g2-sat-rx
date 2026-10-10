@@ -155,9 +155,13 @@ stay mutable on purpose; the permanent evidence there is the record pair, the
 hashed inputs it names and (for new records) the frozen package. The checks validate structure and provenance only, never
 a historical numerical claim, and need no simulator or PDK. Adapter tests:
 `python -m pytest .github/scripts/tests/test_check_evidence_adapters.py -q`
-(also runs under `python -m unittest`). CI does not run the
-simulator: `smoke` and `selftest` above are run by hand until a pinned PDK
-revision is chosen for a runner. `signoff.yml` separately re-grades the
+(also runs under `python -m unittest`). The simulator-backed
+`sim-smoke` job (pinned ngspice 46 and IHP models) also runs the passive-p1
+synthetic numerical controls (`python3 sim/passive-p1/scripts/controls.py all`,
+no `--write-record`; extra dependencies in `requirements-sim.txt`, numpy + scipy).
+These controls check the analysis chain on synthetic data only: a pass does **not**
+establish EM convergence and does **not** qualify p1, and it is separate from the
+evidence-format checks above. `signoff.yml` separately re-grades the
 committed tier report.
 
 ## License

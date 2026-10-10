@@ -1,0 +1,8 @@
+# Extra Python dependencies for the simulator-backed sim-smoke CI job
+# (passive-p1 synthetic numerical controls) and local reproduction of them.
+# Deliberately separate from requirements-test.txt, which stays the
+# simulator-free set (pytest + numpy). SciPy is needed by the passive fit stage
+# (sim/passive-p1/scripts/fit_p1.py); without it the controls must fail, not pass.
+# Install into a venv: pip install -r requirements-sim.txt
+numpy>=1.26,<3
+scipy>=1.11,<2
