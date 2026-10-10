@@ -28,7 +28,10 @@
 #       hbt_wcs x (-40, 27, 125) C x (2.25, 2.50, 2.75) V = 27 points per
 #       bench. Mints a new, dated, append-only record per bench under
 #       sim/<experiment>/records/ -- a genuinely new record, never an
-#       overwrite of one already committed. The Ka-band bench submits its
+#       overwrite of one already committed. The two harness-native benches run
+#       their 27 points as a LOCAL sequential ngspice loop (workstation only; on a
+#       shared dispatch host use sim/lna-sparam-nf/run.py characterize, which
+#       submits to the batch fleet). The Ka-band bench submits its
 #       grid as `klt sim` requests (backend from $KABAND_BACKEND, default
 #       "batch"; see its README.md "Running the full grid").
 #
@@ -40,8 +43,10 @@
 #       deliberately invalid deck that must be rejected) on its REDUCED bias
 #       sweep.
 #
-# The two harness-native benches are PLACEHOLDER circuits (see each tb.json's
-# "claim" field); the Ka-band bench is DEVICE-LEVEL evidence (a bare
+# lna-sparam-nf is a schematic-backed first-stage feasibility circuit with IDEAL
+# lossless matching; mixer-conversion-iip3 is a PLACEHOLDER circuit. Each
+# bench's own tb.json "claim" is what a new record carries (characterize passes
+# no --claim of its own). The Ka-band bench is DEVICE-LEVEL evidence (a bare
 # transistor, not a matched amplifier). No mode's PASS status should be read
 # as "the target spec (spec/target-spec.md) is met".
 #
@@ -109,8 +114,9 @@ for exp in "${HARNESS_EXPERIMENTS[@]}"; do
       continue
       ;;
     characterize)
-      python3 -m harness.cli run "${exp}" --corners hbt \
-        --claim "sim/characterize.sh characterize -- full HBT PVT campaign. PLACEHOLDER circuit; see tb.json claim for the spec-compliance disclaimer."
+      # No --claim: harness.cli records the bench own tb.json claim (LNA:
+      # ideal-matching feasibility; mixer: PLACEHOLDER disclaimer).
+      python3 -m harness.cli run "${exp}" --corners hbt
       ;;
     selftest)
       python3 -m harness.cli selftest "${exp}" --corners hbt

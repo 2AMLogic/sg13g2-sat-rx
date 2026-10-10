@@ -36,7 +36,7 @@ On a shared dispatch host the grid goes to the `klt sim` batch fleet instead
 
 ```
 python3 sim/lna-sparam-nf/run.py characterize --no-stage-models --runner-version-check warn \
-    --supersedes <previous-record-id> --claim '...'
+    --supersedes <previous-record-id>
 ```
 
 Where the result lands: a new `records/<UTC-date>-<time>-<git>.md` plus
