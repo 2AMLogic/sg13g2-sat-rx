@@ -129,27 +129,52 @@ deliberate pin change (next section).
 
 | Experiment | What it measures | Status |
 |---|---|---|
-| `lna-sparam-nf` | S11/S21/S22/S12, k-factor (stability), noise figure | placeholder circuit — see below |
-| `mixer-conversion-iip3` | Conversion gain, LO-to-RF leakage, two-tone IIP3 | placeholder circuit — see below |
+| `lna-sparam-nf` | S11/S21/S22/S12, k, \|Δ\| and μ stability, noise figure, per-device operating point | **schematic-backed first-stage feasibility** (`design/lna_stage1`, one cascode stage, **ideal lossless L/C matching**); no spec row claimed met — see below |
+| `mixer-conversion-iip3` | Conversion gain, LO-to-RF leakage, two-tone IIP3 | **placeholder circuit** (no schematic) — see below |
 | `hbt-kaband-characterization` | Bare `npn13G2` at 17.7/19.45/21.2 GHz: two-port noise parameters (NFmin, Zopt, Rn), NF₅₀, fT, K/\|Δ\| and MAG-or-MSG, DC power, over Nx × VCE × J_C inside every PVT point | **device-level evidence, not a matched-amplifier result** — see below |
 | `mixer-nf-method` | Feasibility of a mixer SSB-NF method without pnoise (issue #27): ngspice noise-capability inventory, SSB/image estimator and status gates | **`MODEL_ABSENT`** — no intrinsic device noise in `.tran`; no mixer NF number — see below |
 | `mixer-topology-feasibility` | Mixer-core topology comparison under row 17 (issue #35): stacked Gilbert vs folded single-balanced vs the placeholder floor; per-device V_CE/V_BE/Ic stress, gain into a physical 50 Ω IF load, LO-drive selection rule, DC power, mismatch-card leakage, swept-region IIP3 | **record exists: all three topologies `no acceptable drive in declared sweep` at the declared sizing; no recommendation** — see below |
 
-**The first two benches instantiate a PLACEHOLDER circuit, not a design candidate.**
-`design/` has no schematic yet — each bench's `testbench/*.spice` fragment is a
-single, minimally-sized `npn13G2` HBT stage sized only well enough to bias
-sanely, built solely to prove each bench's ngspice methodology end to end
-against the real device model. Every record these benches write states this
-in its `claim` line and `## Evidence` notes; **no number in either bench's
-records should be compared against any row of the target spec
-(`spec/target-spec.md`)**, because they come from placeholder circuits, not
-a design candidate. The spec itself is partially ratified per
+**`lna-sparam-nf` is a schematic-backed first-stage feasibility circuit; `mixer-conversion-iip3` is still a PLACEHOLDER.**
+The LNA bench's DUT is `design/lna_stage1` (xschem `npn13G2` cascode first
+stage, delivered by [#28](https://github.com/2AMLogic/sg13g2-sat-rx/issues/28),
+now completed) wrapped in **ideal lossless L/C matching** sized at the DRAFT
+band centre only. It is one stage (row 2 assumes two), has no PDK inductor
+model (none exists, so no loss, Q or layout parasitic is represented), has never
+been through layout, and the band (row 1) is still open. Its records are
+feasibility figures: **no spec row is claimed met** and nothing here is
+compliance evidence; the authoritative statement is the `claim` field of
+`lna-sparam-nf/testbench/tb.json`, which new records carry verbatim.
+Pre-#28 records of that bench (which measured the old single-transistor
+placeholder, `lna_ce_placeholder.spice`) are historical and untouched; read
+each record's own `claim` line to see which DUT it measured.
+
+The mixer bench's `testbench/*.spice` fragment is still a single,
+minimally-sized `npn13G2` HBT stage sized only well enough to bias sanely,
+built solely to prove the ngspice methodology end to end against the real
+device model; `design/` has no mixer schematic. Every record it writes says so
+in its `claim` line and `## Evidence` notes, and **no number in its records
+should be compared against any row of the target spec (`spec/target-spec.md`)**.
+The spec itself is partially ratified per
 [DR-0003](../spec/decision-records/0003-target-spec-first-ratification.md):
 eleven rows are binding targets and nine stay explicitly open (the band,
-row 1, among them — hence the "DRAFT band" wording below). Comparison against
-the binding rows becomes meaningful only once these `tb.json` files are
-re-pointed at a real schematic, which is the follow-up tracked in
-[#28](https://github.com/2AMLogic/sg13g2-sat-rx/issues/28).
+row 1, among them — hence the "DRAFT band" wording below). Comparison of the
+mixer against the binding rows becomes meaningful only once its `tb.json` is
+re-pointed at a real mixer schematic.
+
+### Where each command runs (local ngspice vs batch fleet)
+
+| Command | Runs |
+|---|---|
+| `sim/characterize.sh smoke` / `selftest` | local `ngspice -b`, small (single corner or negative controls) |
+| `sim/characterize.sh characterize` — `lna-sparam-nf`, `mixer-conversion-iip3` | **local**: `harness.cli run`, a sequential 27-point `ngspice -b` loop. Workstation only; on a shared dispatch host use the LNA driver below instead |
+| `sim/characterize.sh characterize` — `hbt-kaband-characterization` | `klt sim` requests, backend `$KABAND_BACKEND` (default `batch`) |
+| `python3 sim/lna-sparam-nf/run.py characterize` | `klt sim`, `--backend` default `batch` (use `--dry-run` to inspect the request) |
+| `python3 sim/mixer-topology-feasibility/run.py smoke` / `selftest` | local, no evidence written |
+
+The wrapper passes no `--claim` to `harness.cli run`, so each new record
+carries its own bench's `tb.json` claim (LNA: the ideal-matching feasibility
+claim; mixer: its PLACEHOLDER disclaimer).
 
 ### `lna-sparam-nf`
 
@@ -187,7 +212,7 @@ To reproduce the campaign on a shared dispatch host (the 27 points go to the
 
 ```
 python3 sim/lna-sparam-nf/run.py characterize --no-stage-models --runner-version-check warn \
-    --supersedes <previous-record-id> --claim '...'
+    --supersedes <previous-record-id>
 ```
 
 (`--no-stage-models --runner-version-check warn` are the same fleet/client
@@ -378,9 +403,10 @@ exception for it out of the general `*.log` rule. `sim/*/_build/` and
 
 ## klayout-tools
 
-Neither bench in this repo invokes `klayout-tools` (`klt`) — both are
-pre-layout ngspice testbenches; layout/DRC/LVS work has not started (`design/`
-has no schematic yet). No klayout-tools friction was hit building this
+The harness-native mixer bench does not invoke `klayout-tools` (`klt`); the LNA,
+Ka-band and some study drivers submit `klt sim` requests (see the table above).
+All benches are pre-layout ngspice testbenches; layout/DRC/LVS work has not
+started (`design/` holds only the LNA first-stage schematic). No klayout-tools friction was hit building this
 harness bootstrap. Later, `mixer-nf-method` (issue #27) filed
 2AMLogic/klayout-tools#2985. The `klt sim` contract does not disclose that ngspice
 transients carry no device or resistor noise. The missing noise itself is an ngspice

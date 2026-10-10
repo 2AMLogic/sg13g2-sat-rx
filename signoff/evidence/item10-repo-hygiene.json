@@ -17,7 +17,7 @@
       "readme:reproduce-names-characterize.sh": true
     },
     "files": {
-      "README.md": "sha256:508a6f13bc1b24d827f6c371ca166a2c6442cf85aadd4aa6f642d373081b253a",
+      "README.md": "sha256:cb1992942ac4e98e14be5bfecbfdd0b6971c71efc0af575ff48d649588a282f5",
       "LICENSE": "sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
       "spec/target-spec.md": "sha256:faf345959c3c9261c9a53b3d31669e59078bafc6f95f4d835451902dd5a19319"
     }

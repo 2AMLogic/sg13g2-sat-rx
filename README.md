@@ -114,6 +114,8 @@ sim/characterize.sh selftest      # negative controls (sabotaged corners must fa
 sim/characterize.sh characterize  # full 27-point PVT campaign; mints a NEW append-only record per bench
 ```
 
+Each new record carries its own bench's `tb.json` claim: `lna-sparam-nf` is a schematic-backed first-stage feasibility circuit with ideal lossless matching (no spec row claimed met); `mixer-conversion-iip3` stays a placeholder. `characterize` runs the two harness-native benches as a local 27-point `ngspice -b` loop (workstation only); on a shared dispatch host use `python3 sim/lna-sparam-nf/run.py characterize` (batch fleet). The Ka-band bench goes to the batch fleet by default. See [`sim/README.md`](sim/README.md) "Where each command runs".
+
 The wrapper does not cover `mixer-topology-feasibility`; its controls are separate
 (`python3 sim/mixer-topology-feasibility/run.py smoke` and `... selftest`, no evidence written) and
 the `sim-smoke` CI job runs them after `characterize.sh smoke`/`selftest`.
