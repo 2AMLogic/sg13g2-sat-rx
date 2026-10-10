@@ -60,10 +60,10 @@ file is not edited.
 ## Layout
 
 ```
-README.md  design-note.md  run_probe.py  cmprobe.py
+README.md  design-note.md  run_probe.py  cmprobe.py  ci_assert.py
 probe/interface_probe.spice      the deck template (placeholder included verbatim)
 controls/ideal_mixer.spice       known-answer ideal multiplying mixer + sabotage .param knobs
-tests/                           closed-form control, every sabotage failing it, status logic
+tests/                           closed-form control, ci_assert failure modes, every sabotage failing it, status logic
 records/<id>-<STATUS>.md|.json   <id> = <YYYYMMDD>-<HHMMSS>-<git-sha>
 probe-logs/<id>/{deck.spice,stdout.txt,stderr.txt,inventory.json}
 ```
@@ -97,3 +97,20 @@ source-EMF-to-node-voltage; the available-to-delivered gain reference is a solve
 None is needed for interface probing. If a later, justified task needs a sideband or seed
 sweep, express it as a `klt sim` request (`corners` / `monte_carlo`) so it goes to the fleet;
 do not loop `ngspice -b` locally.
+
+## CI coverage (issue #104)
+
+`harness-tests` runs `tests/` simulator-free (closed-form control, fake logs, and
+`ci_assert.assess` for every failure mode). The `sim-smoke` job additionally runs
+`python3 sim/mixer-cm-interface-probe/ci_assert.py` on the pinned ngspice 46: the positive
+ideal-mixer control plus the `gain`, `drop_image`, `image_sign` and `wrong_lo` sabotages, five
+sequential single-point ngspice processes (about one minute locally; no grid).
+
+The helper reads structured control results, because `run_probe.py` exits 0 on a missing or
+wrong executable. It fails CI if the pinned executable is missing or a different major, the deck
+does not complete, control marks are missing or non-finite, the unsabotaged control does not
+pass, or any sabotage passes or fails only a bookkeeping check. It does not assert an overall
+interface status, so `INTERFACES_BLOCKED`/`PARTIAL` noise-side outcomes remain acceptable. It
+runs in a temp directory and records nothing: this is a control-discrimination check, not
+evidence, not a row 10/12 claim and not `METHOD_VALIDATION`. `design-note.md` still states
+transfer feasibility as unresolved until a pinned, append-only record says otherwise.
