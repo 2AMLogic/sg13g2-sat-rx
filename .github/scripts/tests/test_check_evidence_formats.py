@@ -161,6 +161,88 @@ def test_native_snapshot_names_other_record(tree):
     assert_fails(tree, "snapshot header does not name record")
 
 
+def _snap(tree):
+    return own(tree / "sim" / NATIVE / "netlist-snapshots" / f"{NATIVE_ID}.spice")
+
+
+def _write_snapshot(path, payload: bytes, rid=NATIVE_ID, digest=None):
+    import hashlib
+    digest = digest or hashlib.sha256(payload).hexdigest()
+    head = (f"* Frozen netlist snapshot for record {rid}\n* sha256     : {digest}\n"
+            "* This is a verbatim copy taken at record time. Do not edit.\n").encode()
+    path.write_bytes(head + payload)
+
+
+@pytest.mark.parametrize("payload", [
+    b"", b"R1 a b 1k\n", b"R1 a b 1k", b"\n\n", b"R1 a b 1k\r\n",
+    b"* sha256     : " + b"0" * 64 + b"\n.end\n",
+    b"* Frozen netlist snapshot for record x\n",  # rejected as ambiguous below
+])
+def test_native_snapshot_round_trip(tree, payload):
+    snap = _snap(tree)
+    _write_snapshot(snap, payload)
+    found = problems_of(tree)
+    if payload.startswith(b"* Frozen") or payload.startswith(b"* sha256"):
+        # a payload opening with a provenance-looking line is ambiguous
+        assert any("duplicate provenance header" in p for p in found)
+    else:
+        assert not found, found
+
+
+def test_native_snapshot_comment_lines_inside_payload_are_payload(tree):
+    snap = _snap(tree)
+    _write_snapshot(snap, b"* DUT\n* sha256     : " + b"f" * 64 + b"\nR1 a b 1k\n")
+    assert not problems_of(tree)
+
+
+def test_native_snapshot_payload_changed(tree):
+    snap = _snap(tree)
+    snap.write_bytes(snap.read_bytes() + b"* tampered\n")
+    assert_fails(tree, f"{NATIVE_ID}.spice", "payload sha256", "does not match declared")
+
+
+def test_native_snapshot_trailing_newline_changed(tree):
+    snap = _snap(tree)
+    snap.write_bytes(snap.read_bytes().rstrip(b"\n"))
+    assert_fails(tree, "does not match declared")
+
+
+def test_native_snapshot_digest_replaced(tree):
+    snap = _snap(tree)
+    lines = snap.read_bytes().split(b"\n", 2)
+    lines[1] = b"* sha256     : " + b"0" * 64
+    snap.write_bytes(b"\n".join(lines))
+    assert_fails(tree, "does not match declared " + "0" * 64)
+
+
+def test_native_snapshot_truncated(tree):
+    snap = _snap(tree)
+    snap.write_bytes(b"".join(snap.read_bytes().splitlines(True)[:2]))
+    assert_fails(tree, "truncated")
+    snap.write_bytes(b"".join(snap.read_bytes().splitlines(True)[:1]) )
+    assert_fails(tree, "truncated")
+
+
+def test_native_snapshot_payload_truncated(tree):
+    snap = _snap(tree)
+    snap.write_bytes(snap.read_bytes()[:-40])
+    assert_fails(tree, "does not match declared")
+
+
+def test_native_snapshot_duplicate_header_before_payload(tree):
+    snap = _snap(tree)
+    data = snap.read_bytes()
+    head_end = len(b"\n".join(data.split(b"\n", 3)[:3])) + 1
+    snap.write_bytes(data[:head_end] + data[:head_end] + data[head_end:])
+    assert_fails(tree, "duplicate provenance header")
+
+
+def test_native_snapshot_malformed_digest(tree):
+    snap = _snap(tree)
+    snap.write_bytes(snap.read_bytes().replace(b"* sha256     : ", b"* sha256     : X", 1))
+    assert_fails(tree, "missing its '* sha256 :' provenance line")
+
+
 def test_orphan_corner_directory(tree):
     (tree / "sim" / NATIVE / "corners" / "20300101-000000-aaaaaaa").mkdir()
     assert_fails(tree, "orphan evidence")
