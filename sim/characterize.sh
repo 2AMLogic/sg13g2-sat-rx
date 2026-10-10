@@ -50,14 +50,13 @@
 # transistor, not a matched amplifier). No mode's PASS status should be read
 # as "the target spec (spec/target-spec.md) is met".
 #
-# Smoke failure semantics: a harness-native smoke run is a single corner, so
-# every tb.json min_spread_pct_by_axis check is structurally unverifiable and
-# `harness.cli run` exits non-zero BY CONSTRUCTION. That structural exit is
-# reported but not counted. What IS counted: any smoke whose simulation did
-# not complete ("<n>/<m> points ok" with n != m, or no such line at all), and
-# any non-zero exit of the Ka-band bench's smoke (which has no structural
-# exemption: it exits non-zero only when a measurement is missing or a check
-# fails).
+# Smoke failure semantics: a harness-native smoke run is a single process
+# corner, so the tb.json min_spread_pct_by_axis check on the never-swept
+# process axis is structurally unverifiable. `harness.cli run --no-write
+# --smoke-subset` skips exactly that (the CLI rejects --smoke-subset on an
+# evidence-writing run). Every other failure propagates through the harness
+# exit status; this wrapper does not interpret the output. The Ka-band bench
+# smoke likewise exits non-zero on a missing measurement or failed check.
 #
 # Exit status: 0 if every campaign that ran passed; otherwise the number of
 # failing campaigns.
@@ -98,18 +97,15 @@ for exp in "${HARNESS_EXPERIMENTS[@]}"; do
   echo "=== ${exp}: ${MODE} ==="
   case "${MODE}" in
     smoke)
-      out="$(python3 -m harness.cli run "${exp}" --corners hbt_typ --no-write 2>&1)"
+      # --smoke-subset (requires --no-write) skips ONLY the "axis never swept"
+      # sensitivity check (the single process corner). Every other failure --
+      # violated bound, stuck swept temperature/supply axis, missing
+      # measurement, simulator error -- is the harness's own non-zero exit.
+      python3 -m harness.cli run "${exp}" --corners hbt_typ --no-write --smoke-subset
       status=$?
-      printf '%s\n' "${out}"
-      counts="$(printf '%s\n' "${out}" | sed -n 's/^\([0-9]*\)\/\([0-9]*\) points ok$/\1 \2/p' | tail -1)"
-      if [ -z "${counts}" ]; then
-        echo "--- ${exp}: smoke FAILED (exit ${status}): the run never reported a point count -- the harness or simulator did not run ---" >&2
+      if [ "${status}" -ne 0 ]; then
+        echo "--- ${exp}: smoke FAILED (exit ${status}) ---" >&2
         FAILURES=$((FAILURES + 1))
-      elif [ "${counts% *}" != "${counts#* }" ]; then
-        echo "--- ${exp}: smoke FAILED: only ${counts% *}/${counts#* } points simulated (simulator/measurement failure, not a structural check) ---" >&2
-        FAILURES=$((FAILURES + 1))
-      elif [ "${status}" -ne 0 ]; then
-        echo "--- ${exp}: smoke exited ${status} with every point simulated (expected -- single-corner sensitivity checks are structurally unverifiable). Not counted as a failure. ---"
       fi
       continue
       ;;
