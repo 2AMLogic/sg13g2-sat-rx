@@ -8,7 +8,7 @@
       "bench": null,
       "latest_record": null,
       "verdict": "no_bench",
-      "blocked_by": "DR-0001 (still proposed); allocation edges unverified"
+      "blocked_by": "DR-0001 (still proposed); ITU-level edge check recorded in spec/literature-citations-2026-10-10.md Part 1 (source evidence only); target jurisdiction/service, sub-band scope and band selection undecided; passive feasibility gate open"
     },
     {
       "row": 2,
@@ -134,7 +134,7 @@
       "bench": null,
       "latest_record": null,
       "verdict": "no_bench",
-      "blocked_by": "no IF-bandwidth bench exists; IF plan is DRAFT (DR-0002)"
+      "blocked_by": "no IF-bandwidth bench exists; IF plan is DRAFT (DR-0002); 500 MHz is an unverified target with no single-channel source (spec/literature-citations-2026-10-10.md Part 2); operator channel plans not obtained; carrier/aggregation plan and flatness margin undecided"
     },
     {
       "row": 17,
