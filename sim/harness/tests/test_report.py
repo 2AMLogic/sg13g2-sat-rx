@@ -179,13 +179,21 @@ def test_explicit_required_override_is_recorded(tmp_path):
 
 
 class FakePdk(Pdk):
-    pass
+    """A Pdk with a stated revision: the real ``Pdk.version`` reads a SOURCES
+    file that the synthetic tree does not have and would print 'unknown', which
+    the evidence checker rejects for any non-grandfathered record (#85)."""
+
+    @property
+    def version(self) -> str:
+        return "fake-rev-0"
 
 
 def build_synthetic_record(tmp_path, record_id="20260101-000000-abc1234", status_points=None):
     exp = tmp_path / "sim" / "synthetic-bench"
     tbdir = exp / "testbench"
     tbdir.mkdir(parents=True)
+    # A bench with records/ must carry a cold-start README (check_bench_readmes, #85).
+    (exp / "README.md").write_text("# synthetic-bench\n\n## Cold start\n\n```\ntrue\n```\n")
     (tbdir / "d.spice").write_text("R1 a b 1k\n")
     (tbdir / "tb.json").write_text(json.dumps({
         "name": "synthetic", "netlist": "d.spice", "measure": {"gain": "1"},
