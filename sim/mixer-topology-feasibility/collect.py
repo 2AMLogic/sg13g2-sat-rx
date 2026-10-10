@@ -66,6 +66,10 @@ MODEL_FILES = ("cornerHBT.lib", "sg13g2_hbt_mod.lib", "sg13g2_hbt_mod_mismatch.l
 #: path) cells and the local harness path. Same deck, same models, same
 #: simulator version should agree to rounding.
 CROSSCHECK_TOL_DB = 1e-3
+#: Looser agreement permitted ONLY when the caller passes ``--crosscheck-tol-db``
+#: because this host's ngspice differs from the fleet's (#61: 42 local vs 46
+#: fleet gave 1.7e-3 dB). The value used is printed in the record. It stays far
+#: below the 0.2 dB convergence tolerance.
 
 #: Stage names as the record states them.
 STAGE_LABELS = {1: "Stage 1 (LO-selection sweep)", 2: "Stage 2 (IIP3 / main / leakage at the selected drive)"}
@@ -202,8 +206,12 @@ def backend_for(spec: RequestSpec, args) -> str:
     locally, as klt itself would keep them and as the host rules allow for a
     single corner; every multi-unit request goes to the requested backend
     (default batch). A failed batch submit is an error, never a local
-    fallback."""
-    return "local" if len(spec.corners) * len(spec.temps) == 1 else args.backend
+    fallback. ``--single-unit-backend`` (default ``local``) lets a caller send
+    single-unit requests to the fleet instead, e.g. when this host's ngspice
+    differs from the recorded one (#61)."""
+    if len(spec.corners) * len(spec.temps) == 1:
+        return getattr(args, "single_unit_backend", "local") or "local"
+    return args.backend
 
 
 def write_request(study, tb_options, spec: RequestSpec, work: Path, args) -> tuple[Path, Path]:
@@ -1051,6 +1059,9 @@ def klt_version_text(klt_cmd: str) -> str:
 def collect(args) -> int:
     import run as drv
 
+    global CROSSCHECK_TOL_DB
+    if getattr(args, "crosscheck_tol_db", None):
+        CROSSCHECK_TOL_DB = float(args.crosscheck_tol_db)
     tb, study = drv._load()
     manifest = json.loads((tb.directory / "tb.json").read_text())
     pdk = drv._pdk()

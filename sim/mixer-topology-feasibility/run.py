@@ -577,6 +577,10 @@ def build_parser() -> argparse.ArgumentParser:
     pk.add_argument("--klt-cmd", default="klt", help="klt client command (e.g. 'uvx --from klayout-tools==X klt')")
     pk.add_argument("--backend", default="batch", help="klt sim backend (default batch; the host exports "
                     "KLT_SIM_BACKEND=batch). A failed submit is an error, never a local fallback.")
+    pk.add_argument("--single-unit-backend", default="local",
+                    help="backend for single-unit requests (default local, as klt keeps them); 'batch' sends them to the fleet")
+    pk.add_argument("--crosscheck-tol-db", type=float, default=None,
+                    help="override the 1e-3 dB cross-check tolerance (use only for a documented ngspice version skew; recorded)")
     pk.add_argument("--timeout-s", type=int, default=3600, help="klt per-corner timeout")
     pk.add_argument("--no-stage-models", action="store_true")
     pk.add_argument("--runner-version-check", default="", choices=("", "enforce", "warn"))
