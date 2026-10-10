@@ -133,7 +133,7 @@ deliberate pin change (next section).
 | `mixer-conversion-iip3` | Conversion gain, LO-to-RF leakage, two-tone IIP3 | placeholder circuit — see below |
 | `hbt-kaband-characterization` | Bare `npn13G2` at 17.7/19.45/21.2 GHz: two-port noise parameters (NFmin, Zopt, Rn), NF₅₀, fT, K/\|Δ\| and MAG-or-MSG, DC power, over Nx × VCE × J_C inside every PVT point | **device-level evidence, not a matched-amplifier result** — see below |
 | `mixer-nf-method` | Feasibility of a mixer SSB-NF method without pnoise (issue #27): ngspice noise-capability inventory, SSB/image estimator and status gates | **`MODEL_ABSENT`** — no intrinsic device noise in `.tran`; no mixer NF number — see below |
-| `mixer-topology-feasibility` | Mixer-core topology comparison under row 17 (issue #35): stacked Gilbert vs folded single-balanced vs the placeholder floor; per-device V_CE/V_BE/Ic stress, gain into a physical 50 Ω IF load, LO-drive selection rule, DC power, mismatch-card leakage, swept-region IIP3 | **part 1 only: fixtures + validated extraction, no record yet** — see below |
+| `mixer-topology-feasibility` | Mixer-core topology comparison under row 17 (issue #35): stacked Gilbert vs folded single-balanced vs the placeholder floor; per-device V_CE/V_BE/Ic stress, gain into a physical 50 Ω IF load, LO-drive selection rule, DC power, mismatch-card leakage, swept-region IIP3 | **record exists: all three topologies `no acceptable drive in declared sweep` at the declared sizing; no recommendation** — see below |
 
 **The first two benches instantiate a PLACEHOLDER circuit, not a design candidate.**
 `design/` has no schematic yet — each bench's `testbench/*.spice` fragment is a
@@ -219,11 +219,16 @@ a 50 Ω RF port, a 100 Ω differential LO port quoted as total available power,
 and a physical 50 Ω IF load. Ideal baluns and passives keep it a
 **device-level topology study, not a design**; it claims no spec row.
 
-- **Status: part 1 of 2.** Part 1 has the fixtures, the study declaration,
-  the extraction/selection/IIP3/stress/acceptance-gate logic with unit tests,
-  and local single-corner `smoke`, `selftest` and `converge` modes. **No
-  record exists yet.** The 837-cell comparison is a multi-corner campaign
-  for `klt sim` batch submission (part 2).
+- **Status: collected, finding is negative.** `run.py collect` submits the
+  study as `klt sim` requests and writes one append-only record only if the
+  acceptance gate passes. The first record
+  (`mixer-topology-feasibility/records/20261010-010744-a10c193.md`) found no
+  acceptable LO drive for any of the three topologies at their declared
+  sizing: the switching devices leave the card's V_BE window before the gain
+  plateaus. Main-matrix, leakage and IIP3 cells are therefore explicit
+  `not_applicable_no_drive` outcomes and the recommendation is none. The
+  multi-unit batch stage has not yet run against the real fleet (see that
+  README's Status).
 - **Limitations.** The supply axis is an exploratory 2.25 V ± 10 %, wholly
   below the 2.5 V ceiling; it ratifies no rail. The LO-selection and IIP3
   sweeps are reduced to `hbt_typ`/27 °C/2.25 V. Leakage uses the
