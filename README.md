@@ -114,6 +114,10 @@ sim/characterize.sh selftest      # negative controls (sabotaged corners must fa
 sim/characterize.sh characterize  # full 27-point PVT campaign; mints a NEW append-only record per bench
 ```
 
+The wrapper does not cover `mixer-topology-feasibility`; its controls are separate
+(`python3 sim/mixer-topology-feasibility/run.py smoke` and `... selftest`, no evidence written) and
+the `sim-smoke` CI job runs them after `characterize.sh smoke`/`selftest`.
+
 Checks that need neither a PDK nor a simulator (Python 3, plus `pytest` and `numpy` from `requirements-test.txt`) are
 what CI runs on every push and pull request (`.github/workflows/ci.yml`):
 
