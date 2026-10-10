@@ -4,6 +4,27 @@ Chronological record of merged pull requests and closed issues, maintained by th
 
 ### 2026-10-10
 
+- **PR #124**: sim: run reduced lna-linearity cubic control on pinned ngspice in CI
+- **PR #119**: sim: qualify LNA two-tone IIP3 and single-tone input P1dB; nominal lna_stage1 record (#57)
+- **PR #116**: feat: add pumped mixer RF-port admittance method probe (scalar vs 2x2)
+- **PR #115**: spec: carry completed source findings into RF-band and IF rationale
+- **PR #114**: Deduplicate probe-log package validation in evidence checker
+- **PR #112**: ci: propagate real check failures from single-corner smoke
+- **PR #108**: sim: freeze pinned mixer interface-probe runtime evidence (#107)
+- **PR #105**: ci: exercise mixer CM-probe controls and sabotages on pinned ngspice
+- **PR #102**: fix(sim): close mixer feasibility gate and conclusion validation gaps
+- **PR #101**: docs: reconcile active LNA DUT status and characterization claims
+- **Issue #122** (closed): ci: run the LNA cubic linearity control on pinned ngspice
+- **Issue #57** (closed): sim: qualify LNA two-tone IIP3 and single-tone input P1dB power sweeps
+- **Issue #77** (closed): Auditor guard review: retain raw-field body literal-path protection
+- **Issue #111** (closed): sim: demonstrate pumped RF admittance for the proposed interstage convention
+- **Issue #113** (closed): spec: carry completed source findings into RF-band and IF rationale
+- **Issue #109** (closed): Deduplicate mixer probe-log package validation in the evidence checker
+- **Issue #92** (closed): ci: propagate real check failures from single-corner smoke
+- **Issue #107** (closed): sim: freeze pinned mixer interface-probe runtime evidence
+- **Issue #104** (closed): ci: exercise mixer conversion-matrix probe controls on pinned ngspice
+- **Issue #45** (closed): fix(sim): close mixer feasibility gate and conclusion validation gaps
+- **Issue #94** (closed): docs: reconcile active LNA DUT status and characterization claims
 - **PR #95**: sim: conversion-matrix interface probe, checker adapter and go/no-go note (#89)
 - **PR #98**: evidence: verify native frozen netlist payload digests
 - **PR #96**: sim(passive-p1): reproducible openEMS runner and real solver smoke control

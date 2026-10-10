@@ -12,8 +12,11 @@ to an intermediate frequency where beam steering can happen.
 
 ## Status
 
-**Just opened, specification phase.** Nothing is designed yet, nothing has been
-taped out, and nothing has been measured.
+**Schematic feasibility and testbench methodology.** The first-stage LNA
+[cascode schematic](design/lna_stage1.md) and append-only
+[simulation evidence](sim/README.md) exist. The LNA uses ideal matching
+elements and is not spec-compliant; mixer studies remain feasibility and
+method probes. Nothing has been taped out or measured on silicon.
 
 Deliberately not being built yet:
 
@@ -42,10 +45,11 @@ Deliberately not being built yet:
 The spec's [first ratification pass](spec/decision-records/0003-target-spec-first-ratification.md)
 (merged via the ratification-via-PR two-key path) binds **eleven rows as
 targets**; nine — including the band row itself, still gated on DR-0001 and
-allocation-edge verification — stay explicitly open. Until benches exist
-nothing can be claimed *met*, so the near-term work is still testbench
-methodology: what ngspice can and cannot measure for S-parameters, noise
-figure, and conversion gain on this PDK, stated with every assumption.
+allocation-edge verification — stay explicitly open. Existing benches record
+feasibility results and their limitations; no row is ratified as met.
+Near-term work includes LNA noise/input-match and output-headroom studies,
+mixer measurement methodology, and real passive EM evidence, with every
+assumption stated.
 
 ## Built agent-native
 

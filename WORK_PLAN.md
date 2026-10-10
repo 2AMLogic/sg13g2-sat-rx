@@ -25,7 +25,8 @@ _None._
 
 Issues currently being built (`loom:building`).
 
-- **#92**: ci: propagate real check failures from single-corner smoke
+- **#103**: sim: carry verified PDK artifact identity into native evidence provenance
+- **#121**: sim: qualify collector-current diagnostics for nonlinear LNA fits
 
 ## PRs Awaiting Review
 
@@ -37,20 +38,17 @@ _None._
 
 PRs that passed review and are queued for Champion auto-merge (`loom:pr`).
 
-_None._
+- **#118**: ci: guard that every sim bench tests file is run by ci.yml
 
 ## Proposed
 
 Issues carrying `loom:curated`.
 
-- **#4**: Track the gap to T1 sim-validated / bronze (klayout-tools design-evidence tiers) *(curated)*
 - **#38**: Auditor Capability Request: Python runtime for local harness smoke validation *(curated)*
-- **#45**: fix(sim): close mixer feasibility gate and conclusion validation gaps *(curated)*
 
 ## Proposed (Architect / Hermit)
 
-- **#57**: sim: qualify LNA two-tone IIP3 and single-tone input P1dB power sweeps *(architect)*
-- **#94**: docs: reconcile active LNA DUT status and characterization claims *(architect)*
+- **#123**: sim: map cascode bias and output-load headroom before a stress-valid P1dB claim *(architect)*
 
 ## Epics
 
@@ -63,10 +61,10 @@ _None._
 | Operator merge-risk holds | 0 |
 | Operator priority | 0 |
 | Ready (`loom:issue`) | 0 |
-| In Progress (`loom:building`) | 1 |
+| In Progress (`loom:building`) | 2 |
 | PRs awaiting review | 0 |
-| Approved PRs awaiting merge | 0 |
-| Curated | 3 |
-| Architect / Hermit proposals | 2 |
+| Approved PRs awaiting merge | 1 |
+| Curated | 1 |
+| Architect / Hermit proposals | 1 |
 | Active epics | 0 |
 <!-- guide:plan-body:end -->
