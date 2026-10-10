@@ -1,0 +1,626 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: * mixer-cm-interface-probe (issue #89) -- one nominal point:
+
+MARK ngspice_banner_follows
+******
+** ngspice-46
+** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html
+** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html
+** Creation Date: Sat Aug  1 17:32:09 UTC 2026
+******
+Reset re-loads circuit * mixer-cm-interface-probe (issue #89) -- one nominal point:
+
+Circuit: * mixer-cm-interface-probe (issue #89) -- one nominal point:
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vdd                                        2.5
+coll                                   1.58286
+base                                  0.887822
+emit                                 0.0306121
+xq1.s1                             1.10977e-09
+xq1.t                                  15.4817
+bb                                         0.9
+rfsrc                                        0
+prf                                          0
+rfsrc2                                       0
+prf2                                         0
+losrc                                        0
+plo                                          0
+pus                                          0
+pup                                          0
+pls                                          0
+plp                                          0
+clo                                        0.5
+cru                                          0
+crl                                          0
+cout                                         0
+bcm#branch                                   0
+vcrl#branch                                  0
+vcru#branch                                  0
+vclo#branch                                  0
+vpl#branch                                   0
+vpu#branch                                   0
+vlo#branch                                   0
+vrf2#branch                                  0
+vrf#branch                                   0
+vbb#branch                        -4.05923e-06
+vdd#branch                         -0.00305715
+
+ Reference value :  1.53933e-08
+ Reference value :  3.09133e-08
+ Reference value :  4.71363e-08
+ Reference value :  6.35463e-08
+ Reference value :  8.00093e-08
+ Reference value :  9.67593e-08
+ Reference value :  1.13240e-07
+No. of Data Rows : 120008
+MARK R_base_points=120008
+ctl_base_c          =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+ctl_base_s          =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK x_ctl_base_c=0 x_ctl_base_s=0
+dut_base_c          =  -2.45484e-16 from=  8.00000e-08 to=  1.20000e-07
+dut_base_s          =  5.60744e-16 from=  8.00000e-08 to=  1.20000e-07
+MARK x_dut_base_c=-2.45484E-16 x_dut_base_s=5.60744E-16
+wx_base_c           =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+wx_base_s           =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK w_ctl_base_c=0 w_ctl_base_s=0
+tf1w1_c             =  7.74291e-10 from=  8.00000e-08 to=  1.00000e-07
+tf1w1_s             =  -1.22483e-09 from=  8.00000e-08 to=  1.00000e-07
+MARK t_dut_base_w1_f1_c=7.74291E-10 t_dut_base_w1_f1_s=-1.22483E-09
+tf1w2_c             =  7.74291e-10 from=  1.00000e-07 to=  1.20000e-07
+tf1w2_s             =  -1.22483e-09 from=  1.00000e-07 to=  1.20000e-07
+MARK t_dut_base_w2_f1_c=7.74291E-10 t_dut_base_w2_f1_s=-1.22483E-09
+tf2w1_c             =  3.20172e-12 from=  8.00000e-08 to=  1.00000e-07
+tf2w1_s             =  1.31139e-11 from=  8.00000e-08 to=  1.00000e-07
+MARK t_dut_base_w1_f2_c=3.20172E-12 t_dut_base_w1_f2_s=1.31139E-11
+tf2w2_c             =  3.19498e-12 from=  1.00000e-07 to=  1.20000e-07
+tf2w2_s             =  1.31209e-11 from=  1.00000e-07 to=  1.20000e-07
+MARK t_dut_base_w2_f2_c=3.19498E-12 t_dut_base_w2_f2_s=1.31209E-11
+tavg1               =  1.57735e+00 from=  8.00000e-08 to=  1.00000e-07
+MARK t_dut_base_w1_avg=1.57735
+tavg2               =  1.57735e+00 from=  1.00000e-07 to=  1.20000e-07
+MARK t_dut_base_w2_avg=1.57735
+Reset re-loads circuit * mixer-cm-interface-probe (issue #89) -- one nominal point:
+
+Circuit: * mixer-cm-interface-probe (issue #89) -- one nominal point:
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vdd                                        2.5
+coll                                   1.58286
+base                                  0.887822
+emit                                 0.0306121
+xq1.s1                             1.10977e-09
+xq1.t                                  15.4817
+bb                                         0.9
+rfsrc                                        0
+prf                                          0
+rfsrc2                                       0
+prf2                                         0
+losrc                                        0
+plo                                          0
+pus                                 0.00068404
+pup                                 0.00068404
+pls                                          0
+plp                                          0
+clo                                        0.5
+cru                                 0.00068404
+crl                                          0
+cout                                0.00034202
+bcm#branch                         -3.4202e-07
+vcrl#branch                                  0
+vcru#branch                                  0
+vclo#branch                                  0
+vpl#branch                                   0
+vpu#branch                                   0
+vlo#branch                                   0
+vrf2#branch                                  0
+vrf#branch                                   0
+vbb#branch                        -4.05923e-06
+vdd#branch                         -0.00305715
+
+ Reference value :  6.01528e-09
+ Reference value :  1.95743e-08
+ Reference value :  3.30993e-08
+ Reference value :  4.68573e-08
+ Reference value :  6.05183e-08
+ Reference value :  7.40553e-08
+ Reference value :  8.77923e-08
+ Reference value :  1.01237e-07
+ Reference value :  1.14469e-07
+No. of Data Rows : 120008
+MARK R_u_points=120008
+ctl_u_c             =  1.96961e-11 from=  8.00000e-08 to=  1.20000e-07
+ctl_u_s             =  3.47297e-12 from=  8.00000e-08 to=  1.20000e-07
+MARK x_ctl_u_c=1.96961E-11 x_ctl_u_s=3.47297E-12
+dut_u_c             =  -2.20458e-12 from=  8.00000e-08 to=  1.20000e-07
+dut_u_s             =  6.74683e-13 from=  8.00000e-08 to=  1.20000e-07
+MARK x_dut_u_c=-2.20458E-12 x_dut_u_s=6.74683E-13
+wx_u_c              =  1.12998e-17 from=  8.00000e-08 to=  1.20000e-07
+wx_u_s              =  5.06703e-18 from=  8.00000e-08 to=  1.20000e-07
+MARK w_ctl_u_c=1.12998E-17 w_ctl_u_s=5.06703E-18
+Reset re-loads circuit * mixer-cm-interface-probe (issue #89) -- one nominal point:
+
+Circuit: * mixer-cm-interface-probe (issue #89) -- one nominal point:
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vdd                                        2.5
+coll                                   1.58286
+base                                  0.887822
+emit                                 0.0306121
+xq1.s1                             1.10977e-09
+xq1.t                                  15.4817
+bb                                         0.9
+rfsrc                                        0
+prf                                          0
+rfsrc2                                       0
+prf2                                         0
+losrc                                        0
+plo                                          0
+pus                                 0.00136808
+pup                                 0.00136808
+pls                                          0
+plp                                          0
+clo                                        0.5
+cru                                 0.00136808
+crl                                          0
+cout                                0.00068404
+bcm#branch                         -6.8404e-07
+vcrl#branch                                  0
+vcru#branch                                  0
+vclo#branch                                  0
+vpl#branch                                   0
+vpu#branch                                   0
+vlo#branch                                   0
+vrf2#branch                                  0
+vrf#branch                                   0
+vbb#branch                        -4.05923e-06
+vdd#branch                         -0.00305715
+
+ Reference value :  6.33628e-09
+ Reference value :  1.91243e-08
+ Reference value :  3.19943e-08
+ Reference value :  4.48193e-08
+ Reference value :  5.72983e-08
+ Reference value :  7.00263e-08
+ Reference value :  8.27183e-08
+ Reference value :  9.53883e-08
+ Reference value :  1.08138e-07
+No. of Data Rows : 120008
+MARK R_u2_points=120008
+ctl_u2_c            =  3.93922e-11 from=  8.00000e-08 to=  1.20000e-07
+ctl_u2_s            =  6.94594e-12 from=  8.00000e-08 to=  1.20000e-07
+MARK x_ctl_u2_c=3.93922E-11 x_ctl_u2_s=6.94594E-12
+dut_u2_c            =  -4.40878e-12 from=  8.00000e-08 to=  1.20000e-07
+dut_u2_s            =  1.34877e-12 from=  8.00000e-08 to=  1.20000e-07
+MARK x_dut_u2_c=-4.40878E-12 x_dut_u2_s=1.34877E-12
+wx_u2_c             =  2.24630e-17 from=  8.00000e-08 to=  1.20000e-07
+wx_u2_s             =  1.09685e-17 from=  8.00000e-08 to=  1.20000e-07
+MARK w_ctl_u2_c=2.2463E-17 w_ctl_u2_s=1.09685E-17
+Reset re-loads circuit * mixer-cm-interface-probe (issue #89) -- one nominal point:
+
+Circuit: * mixer-cm-interface-probe (issue #89) -- one nominal point:
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vdd                                        2.5
+coll                                   1.58286
+base                                  0.887822
+emit                                 0.0306121
+xq1.s1                             1.10977e-09
+xq1.t                                  15.4817
+bb                                         0.9
+rfsrc                                        0
+prf                                          0
+rfsrc2                                       0
+prf2                                         0
+losrc                                        0
+plo                                          0
+pus                                          0
+pup                                          0
+pls                                 0.00187939
+plp                                 0.00187939
+clo                                        0.5
+cru                                          0
+crl                                 0.00187939
+cout                               0.000939693
+bcm#branch                        -9.39693e-07
+vcrl#branch                                  0
+vcru#branch                                  0
+vclo#branch                                  0
+vpl#branch                                   0
+vpu#branch                                   0
+vlo#branch                                   0
+vrf2#branch                                  0
+vrf#branch                                   0
+vbb#branch                        -4.05923e-06
+vdd#branch                         -0.00305715
+
+ Reference value :  0.00000e+00
+ Reference value :  1.32633e-08
+ Reference value :  2.59113e-08
+ Reference value :  3.89603e-08
+ Reference value :  5.20673e-08
+ Reference value :  6.50923e-08
+ Reference value :  7.75233e-08
+ Reference value :  9.03283e-08
+ Reference value :  1.03792e-07
+ Reference value :  1.17100e-07
+No. of Data Rows : 120008
+MARK R_l_points=120008
+ctl_l_c             =  1.53208e-11 from=  8.00000e-08 to=  1.20000e-07
+ctl_l_s             =  1.28557e-11 from=  8.00000e-08 to=  1.20000e-07
+MARK x_ctl_l_c=1.53208E-11 x_ctl_l_s=1.28557E-11
+dut_l_c             =  -6.81009e-13 from=  8.00000e-08 to=  1.20000e-07
+dut_l_s             =  -2.22939e-12 from=  8.00000e-08 to=  1.20000e-07
+MARK x_dut_l_c=-6.81009E-13 x_dut_l_s=-2.22939E-12
+wx_l_c              =  1.42295e-18 from=  8.00000e-08 to=  1.20000e-07
+wx_l_s              =  1.20327e-17 from=  8.00000e-08 to=  1.20000e-07
+MARK w_ctl_l_c=1.42295E-18 w_ctl_l_s=1.20327E-17
+Reset re-loads circuit * mixer-cm-interface-probe (issue #89) -- one nominal point:
+
+Circuit: * mixer-cm-interface-probe (issue #89) -- one nominal point:
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vdd                                        2.5
+coll                                   1.58286
+base                                  0.887822
+emit                                 0.0306121
+xq1.s1                             1.10977e-09
+xq1.t                                  15.4817
+bb                                         0.9
+rfsrc                                        0
+prf                                          0
+rfsrc2                                       0
+prf2                                         0
+losrc                                        0
+plo                                          0
+pus                                 0.00068404
+pup                                 0.00068404
+pls                                 0.00187939
+plp                                 0.00187939
+clo                                        0.5
+cru                                 0.00068404
+crl                                 0.00187939
+cout                                0.00128171
+bcm#branch                        -1.28171e-06
+vcrl#branch                                  0
+vcru#branch                                  0
+vclo#branch                                  0
+vpl#branch                                   0
+vpu#branch                                   0
+vlo#branch                                   0
+vrf2#branch                                  0
+vrf#branch                                   0
+vbb#branch                        -4.05923e-06
+vdd#branch                         -0.00305715
+
+ Reference value :  9.25828e-09
+ Reference value :  2.20893e-08
+ Reference value :  3.51133e-08
+ Reference value :  4.83263e-08
+ Reference value :  6.15963e-08
+ Reference value :  7.47883e-08
+ Reference value :  8.75413e-08
+ Reference value :  1.01005e-07
+ Reference value :  1.14344e-07
+No. of Data Rows : 120008
+MARK R_ul_points=120008
+ctl_ul_c            =  3.50148e-11 from=  8.00000e-08 to=  1.20000e-07
+ctl_ul_s            =  1.63285e-11 from=  8.00000e-08 to=  1.20000e-07
+MARK x_ctl_ul_c=3.50148E-11 x_ctl_ul_s=1.63285E-11
+dut_ul_c            =  -2.88527e-12 from=  8.00000e-08 to=  1.20000e-07
+dut_ul_s            =  -1.55521e-12 from=  8.00000e-08 to=  1.20000e-07
+MARK x_dut_ul_c=-2.88527E-12 x_dut_ul_s=-1.55521E-12
+wx_ul_c             =  7.81990e-18 from=  8.00000e-08 to=  1.20000e-07
+wx_ul_s             =  1.20123e-17 from=  8.00000e-08 to=  1.20000e-07
+MARK w_ctl_ul_c=7.81991E-18 w_ctl_ul_s=1.20123E-17
+Reset re-loads circuit * mixer-cm-interface-probe (issue #89) -- one nominal point:
+
+Circuit: * mixer-cm-interface-probe (issue #89) -- one nominal point:
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+No. of Data Rows : 166
+
+No. of Data Rows : 1
+MARK N_section_begin=bias_a
+@bcm[i] = 0.000000e+00
+@c.xq1.csub[i] = 0.000000e+00
+@cin_lo[i] = 0.000000e+00
+@cin_rf2[i] = 0.000000e+00
+@cin_rf[i] = 0.000000e+00
+@cpl[i] = 0.000000e+00
+@cpu[i] = 0.000000e+00
+@q.xq1.qnpn13g2[ib] = 4.059228e-06
+@q.xq1.qnpn13g2[ic] = 3.057149e-03
+@q.xq1.qnpn13g2[ie] = -3.06121e-03
+@q.xq1.qnpn13g2[is] = 1.585381e-12
+@r.xq1.rsub[i] = 3.906339e-05
+@r.xq1.rt[i] = 6.792818e-13
+@rbias[i] = -5.24204e-05
+@rc[i] = -5.46128e-04
+@rcl[i] = 0.000000e+00
+@re[i] = 4.062118e-03
+@rlo[i] = -3.14653e-03
+@rpl[i] = -3.14653e-03
+@rpu[i] = -3.14653e-03
+@rrf2[i] = -3.14653e-03
+@rrf[i] = 1.685265e-02
+inoise_total = 4.063109e-03
+inoise_total_q.xq1.qnpn13g2 = 3.509041e-03
+inoise_total_q.xq1.qnpn13g2_1overfbe = 1.006760e-06
+inoise_total_q.xq1.qnpn13g2_1overfbep = 7.047321e-13
+inoise_total_q.xq1.qnpn13g2_ib = 1.760888e-04
+inoise_total_q.xq1.qnpn13g2_ibep = 7.271249e-08
+inoise_total_q.xq1.qnpn13g2_ic = 2.560703e-03
+inoise_total_q.xq1.qnpn13g2_iccp = 2.102116e-16
+inoise_total_q.xq1.qnpn13g2_rb = 1.096645e-03
+inoise_total_q.xq1.qnpn13g2_rbi = 1.365744e-03
+inoise_total_q.xq1.qnpn13g2_rbp = 1.029705e-03
+inoise_total_q.xq1.qnpn13g2_rc = 8.466184e-04
+inoise_total_q.xq1.qnpn13g2_rci = 1.968116e-04
+inoise_total_q.xq1.qnpn13g2_re = 9.139790e-04
+inoise_total_q.xq1.qnpn13g2_rs = 7.826172e-05
+inoise_total_r.xq1.rsub = 8.764685e-05
+inoise_total_r.xq1.rsub_1overf = 0.000000e+00
+inoise_total_r.xq1.rsub_thermal = 8.764685e-05
+inoise_total_r.xq1.rt = 1.041210e-10
+inoise_total_r.xq1.rt_1overf = 0.000000e+00
+inoise_total_r.xq1.rt_thermal = 1.041210e-10
+inoise_total_rbias = 8.774343e-05
+inoise_total_rbias_1overf = 0.000000e+00
+inoise_total_rbias_thermal = 8.774343e-05
+inoise_total_rc = 9.262548e-04
+inoise_total_rc_1overf = 0.000000e+00
+inoise_total_rc_thermal = 9.262548e-04
+inoise_total_rcl = 0.000000e+00
+inoise_total_rcl_1overf = 0.000000e+00
+inoise_total_rcl_thermal = 0.000000e+00
+inoise_total_re = 1.086477e-03
+inoise_total_re_1overf = 0.000000e+00
+inoise_total_re_thermal = 1.086477e-03
+inoise_total_rlo = 6.544800e-04
+inoise_total_rlo_1overf = 0.000000e+00
+inoise_total_rlo_thermal = 6.544800e-04
+inoise_total_rpl = 6.544800e-04
+inoise_total_rpl_1overf = 0.000000e+00
+inoise_total_rpl_thermal = 6.544800e-04
+inoise_total_rpu = 6.544800e-04
+inoise_total_rpu_1overf = 0.000000e+00
+inoise_total_rpu_thermal = 6.544800e-04
+inoise_total_rrf = 6.544800e-04
+inoise_total_rrf2 = 6.544800e-04
+inoise_total_rrf2_1overf = 0.000000e+00
+inoise_total_rrf2_thermal = 6.544800e-04
+inoise_total_rrf_1overf = 0.000000e+00
+inoise_total_rrf_thermal = 6.544800e-04
+onoise_total = 2.561795e-03
+onoise_total_q.xq1.qnpn13g2 = 2.118285e-03
+onoise_total_q.xq1.qnpn13g2_1overfbe = 1.849842e-06
+onoise_total_q.xq1.qnpn13g2_1overfbep = 1.285270e-12
+onoise_total_q.xq1.qnpn13g2_ib = 1.415944e-04
+onoise_total_q.xq1.qnpn13g2_ibep = 5.222714e-08
+onoise_total_q.xq1.qnpn13g2_ic = 1.062797e-03
+onoise_total_q.xq1.qnpn13g2_iccp = 1.596304e-16
+onoise_total_q.xq1.qnpn13g2_rb = 8.076750e-04
+onoise_total_q.xq1.qnpn13g2_rbi = 1.125464e-03
+onoise_total_q.xq1.qnpn13g2_rbp = 8.742582e-04
+onoise_total_q.xq1.qnpn13g2_rc = 2.208123e-04
+onoise_total_q.xq1.qnpn13g2_rci = 5.386760e-05
+onoise_total_q.xq1.qnpn13g2_re = 7.760026e-04
+onoise_total_q.xq1.qnpn13g2_rs = 1.919088e-05
+onoise_total_r.xq1.rsub = 4.732225e-05
+onoise_total_r.xq1.rsub_1overf = 0.000000e+00
+onoise_total_r.xq1.rsub_thermal = 4.732225e-05
+onoise_total_r.xq1.rt = 2.137908e-10
+onoise_total_r.xq1.rt_1overf = 0.000000e+00
+onoise_total_r.xq1.rt_thermal = 2.137908e-10
+onoise_total_rbias = 7.394048e-05
+onoise_total_rbias_1overf = 0.000000e+00
+onoise_total_rbias_thermal = 7.394048e-05
+onoise_total_rc = 5.243977e-04
+onoise_total_rc_1overf = 0.000000e+00
+onoise_total_rc_thermal = 5.243977e-04
+onoise_total_rcl = 0.000000e+00
+onoise_total_rcl_1overf = 0.000000e+00
+onoise_total_rcl_thermal = 0.000000e+00
+onoise_total_re = 9.278734e-04
+onoise_total_re_1overf = 0.000000e+00
+onoise_total_re_thermal = 9.278734e-04
+onoise_total_rlo = 4.317432e-04
+onoise_total_rlo_1overf = 0.000000e+00
+onoise_total_rlo_thermal = 4.317432e-04
+onoise_total_rpl = 4.317432e-04
+onoise_total_rpl_1overf = 0.000000e+00
+onoise_total_rpl_thermal = 4.317432e-04
+onoise_total_rpu = 4.317432e-04
+onoise_total_rpu_1overf = 0.000000e+00
+onoise_total_rpu_thermal = 4.317432e-04
+onoise_total_rrf = 4.317432e-04
+onoise_total_rrf2 = 4.317432e-04
+onoise_total_rrf2_1overf = 0.000000e+00
+onoise_total_rrf2_thermal = 4.317432e-04
+onoise_total_rrf_1overf = 0.000000e+00
+onoise_total_rrf_thermal = 4.317432e-04
+MARK N_section_end=bias_a
+Reset re-loads circuit * mixer-cm-interface-probe (issue #89) -- one nominal point:
+
+Circuit: * mixer-cm-interface-probe (issue #89) -- one nominal point:
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+No. of Data Rows : 166
+
+No. of Data Rows : 1
+MARK N_section_begin=bias_b
+@bcm[i] = 0.000000e+00
+@c.xq1.csub[i] = 0.000000e+00
+@cin_lo[i] = 0.000000e+00
+@cin_rf2[i] = 0.000000e+00
+@cin_rf[i] = 0.000000e+00
+@cpl[i] = 0.000000e+00
+@cpu[i] = 0.000000e+00
+@q.xq1.qnpn13g2[ib] = -2.36318e-06
+@q.xq1.qnpn13g2[ic] = 1.964296e-03
+@q.xq1.qnpn13g2[ie] = -1.96193e-03
+@q.xq1.qnpn13g2[is] = 1.913837e-12
+@r.xq1.rsub[i] = 3.642807e-05
+@r.xq1.rt[i] = 7.515339e-13
+@rbias[i] = -5.29986e-05
+@rc[i] = -5.26366e-04
+@rcl[i] = 0.000000e+00
+@re[i] = 3.825212e-03
+@rlo[i] = -3.18139e-03
+@rpl[i] = -3.18139e-03
+@rpu[i] = -3.18139e-03
+@rrf2[i] = -3.18139e-03
+@rrf[i] = 1.681779e-02
+inoise_total = 3.999888e-03
+inoise_total_q.xq1.qnpn13g2 = 3.414783e-03
+inoise_total_q.xq1.qnpn13g2_1overfbe = 6.324256e-07
+inoise_total_q.xq1.qnpn13g2_1overfbep = 1.086188e-12
+inoise_total_q.xq1.qnpn13g2_ib = 1.348769e-04
+inoise_total_q.xq1.qnpn13g2_ibep = 9.711098e-08
+inoise_total_q.xq1.qnpn13g2_ic = 2.439011e-03
+inoise_total_q.xq1.qnpn13g2_iccp = 2.656000e-19
+inoise_total_q.xq1.qnpn13g2_rb = 1.074795e-03
+inoise_total_q.xq1.qnpn13g2_rbi = 1.383371e-03
+inoise_total_q.xq1.qnpn13g2_rbp = 9.995654e-04
+inoise_total_q.xq1.qnpn13g2_rc = 8.912015e-04
+inoise_total_q.xq1.qnpn13g2_rci = 2.020957e-04
+inoise_total_q.xq1.qnpn13g2_re = 8.852246e-04
+inoise_total_q.xq1.qnpn13g2_rs = 8.392052e-05
+inoise_total_r.xq1.rsub = 9.646456e-05
+inoise_total_r.xq1.rsub_1overf = 0.000000e+00
+inoise_total_r.xq1.rsub_thermal = 9.646456e-05
+inoise_total_r.xq1.rt = 1.092246e-10
+inoise_total_r.xq1.rt_1overf = 0.000000e+00
+inoise_total_r.xq1.rt_thermal = 1.092246e-10
+inoise_total_rbias = 8.768230e-05
+inoise_total_rbias_1overf = 0.000000e+00
+inoise_total_rbias_thermal = 8.768230e-05
+inoise_total_rc = 1.039626e-03
+inoise_total_rc_1overf = 0.000000e+00
+inoise_total_rc_thermal = 1.039626e-03
+inoise_total_rcl = 0.000000e+00
+inoise_total_rcl_1overf = 0.000000e+00
+inoise_total_rcl_thermal = 0.000000e+00
+inoise_total_re = 1.049774e-03
+inoise_total_re_1overf = 0.000000e+00
+inoise_total_re_thermal = 1.049774e-03
+inoise_total_rlo = 6.539908e-04
+inoise_total_rlo_1overf = 0.000000e+00
+inoise_total_rlo_thermal = 6.539908e-04
+inoise_total_rpl = 6.539908e-04
+inoise_total_rpl_1overf = 0.000000e+00
+inoise_total_rpl_thermal = 6.539908e-04
+inoise_total_rpu = 6.539908e-04
+inoise_total_rpu_1overf = 0.000000e+00
+inoise_total_rpu_thermal = 6.539908e-04
+inoise_total_rrf = 6.539908e-04
+inoise_total_rrf2 = 6.539908e-04
+inoise_total_rrf2_1overf = 0.000000e+00
+inoise_total_rrf2_thermal = 6.539908e-04
+inoise_total_rrf_1overf = 0.000000e+00
+inoise_total_rrf_thermal = 6.539908e-04
+onoise_total = 2.307829e-03
+onoise_total_q.xq1.qnpn13g2 = 1.912566e-03
+onoise_total_q.xq1.qnpn13g2_1overfbe = 9.830446e-07
+onoise_total_q.xq1.qnpn13g2_1overfbep = 1.660812e-12
+onoise_total_q.xq1.qnpn13g2_ib = 9.683917e-05
+onoise_total_q.xq1.qnpn13g2_ibep = 6.176597e-08
+onoise_total_q.xq1.qnpn13g2_ic = 1.008395e-03
+onoise_total_q.xq1.qnpn13g2_iccp = 1.776204e-19
+onoise_total_q.xq1.qnpn13g2_rb = 7.022688e-04
+onoise_total_q.xq1.qnpn13g2_rbi = 1.022906e-03
+onoise_total_q.xq1.qnpn13g2_rbp = 7.640554e-04
+onoise_total_q.xq1.qnpn13g2_rc = 2.178198e-04
+onoise_total_q.xq1.qnpn13g2_rci = 5.183130e-05
+onoise_total_q.xq1.qnpn13g2_re = 6.766548e-04
+onoise_total_q.xq1.qnpn13g2_rs = 1.943175e-05
+onoise_total_r.xq1.rsub = 4.759609e-05
+onoise_total_r.xq1.rsub_1overf = 0.000000e+00
+onoise_total_r.xq1.rsub_thermal = 4.759609e-05
+onoise_total_r.xq1.rt = 1.886652e-10
+onoise_total_r.xq1.rt_1overf = 0.000000e+00
+onoise_total_r.xq1.rt_thermal = 1.886652e-10
+onoise_total_rbias = 6.378210e-05
+onoise_total_rbias_1overf = 0.000000e+00
+onoise_total_rbias_thermal = 6.378210e-05
+onoise_total_rc = 5.394057e-04
+onoise_total_rc_1overf = 0.000000e+00
+onoise_total_rc_thermal = 5.394057e-04
+onoise_total_rcl = 0.000000e+00
+onoise_total_rcl_1overf = 0.000000e+00
+onoise_total_rcl_thermal = 0.000000e+00
+onoise_total_re = 8.071754e-04
+onoise_total_re_1overf = 0.000000e+00
+onoise_total_re_thermal = 8.071754e-04
+onoise_total_rlo = 3.793000e-04
+onoise_total_rlo_1overf = 0.000000e+00
+onoise_total_rlo_thermal = 3.793000e-04
+onoise_total_rpl = 3.793000e-04
+onoise_total_rpl_1overf = 0.000000e+00
+onoise_total_rpl_thermal = 3.793000e-04
+onoise_total_rpu = 3.793000e-04
+onoise_total_rpu_1overf = 0.000000e+00
+onoise_total_rpu_thermal = 3.793000e-04
+onoise_total_rrf = 3.793000e-04
+onoise_total_rrf2 = 3.793000e-04
+onoise_total_rrf2_1overf = 0.000000e+00
+onoise_total_rrf2_thermal = 3.793000e-04
+onoise_total_rrf_1overf = 0.000000e+00
+onoise_total_rrf_thermal = 3.793000e-04
+MARK N_section_end=bias_b
+MARK E_pss_attempt_begin
+MARK E_pss_attempt_end
+MARK E_pnoise_attempt_begin
+MARK E_pnoise_attempt_end
+MARK done
+ngspice-46 done

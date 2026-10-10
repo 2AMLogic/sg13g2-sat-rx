@@ -55,7 +55,12 @@ only when it fails; they never write a record.
 
 Records are append-only (exclusive create; a re-run writes a new id). A later record made on a
 host with the pinned executable supersedes an earlier `CAPABILITY_UNAVAILABLE` one; the earlier
-file is not edited.
+file is not edited. (`20261010-123114-1755c6d-INTERFACES_BLOCKED` supersedes
+`20261010-083631-709284d-CAPABILITY_UNAVAILABLE`.) `run_probe.py` runs the `pdkartifact`
+model-integrity gate before the simulator and stores its outcome in `environment.pdk_integrity`; a
+failed gate yields `CAPABILITY_UNAVAILABLE` with the gate's problems in `failed_check` and a reason
+that names the models (not a missing simulator); the simulator is not run. Records written before
+the gate existed carry no `environment.pdk_integrity` and render without the gate line.
 
 ## Layout
 
@@ -112,5 +117,5 @@ does not complete, control marks are missing or non-finite, the unsabotaged cont
 pass, or any sabotage passes or fails only a bookkeeping check. It does not assert an overall
 interface status, so `INTERFACES_BLOCKED`/`PARTIAL` noise-side outcomes remain acceptable. It
 runs in a temp directory and records nothing: this is a control-discrimination check, not
-evidence, not a row 10/12 claim and not `METHOD_VALIDATION`. `design-note.md` still states
-transfer feasibility as unresolved until a pinned, append-only record says otherwise.
+evidence, not a row 10/12 claim and not `METHOD_VALIDATION`. The pinned runtime record
+(`records/20261010-123114-1755c6d-INTERFACES_BLOCKED.*`, issue #107) is the evidence; CI itself records nothing.

@@ -1,0 +1,253 @@
+* mixer-cm-interface-probe (issue #89) -- ONE nominal point:
+* hbt_typ / 27 C / VDD = 2.50 V. Template: run_probe.py substitutes the model
+* library path, the placeholder path, the control fragment and the generated run
+* blocks (the four brace tokens below), then runs the result ONCE with `ngspice -b`.
+* Single local probe process; no grid, no sweep, no loop outside the ngspice
+* control language's own sequential runs.
+*
+* What this measures: which interfaces a conversion-matrix NF solver would need
+* are reachable on the PINNED simulator/model (LO-period trajectory, wanted and
+* image sideband transfer, per-mechanism noise intensity, noise covariance).
+* It does not measure the mixer's noise. No number printed here is a noise figure.
+*
+* DUT: the placeholder mixer fragment included VERBATIM (one npn13G2, Nx=4;
+* RF two-tone + LO summed at the base; output node `coll`). Its own RF tones are
+* zeroed (alterparam vrf=0). LO drive is a PROBE SETTING (vlo as in the
+* placeholder), not a qualified design selection.
+*
+* Transfer probe: two extra perturbation sources (Vpu: wanted sideband
+* fLO+fIF, Vpl: image sideband fLO-fIF; fIF = 1 GHz) drive the base through
+* 50 ohm + 1 pF like every other port. Each run's IF-projection of v(coll)
+* minus the LO-only baseline run's projection is the perturbation response.
+* The same source parameters also drive the disjoint ideal-mixer control, so
+* control and DUT see identical stimuli in identical runs.
+*
+* Projections are .meas INTEG (trapezoid) of v*cos / v*sin over the last 40 ns of a 120 ns run (80n to 120n)
+* (40 IF periods and 738 LO periods: every analysed tone is an integer
+* multiple of 25 MHz = 1/40 ns, so the projections are orthogonal).
+
+.lib "/home/ubuntu/share/pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerHBT.lib" hbt_typ
+.temp 27
+.param vdd_val=2.5
+.include "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-107/sim/mixer-conversion-iip3/testbench/mixer_ce_placeholder.spice"
+
+.param apu=0 apl=0 phu=20 phl=70
+
+* ---- perturbation sources into the DUT base ----
+Vpu pus 0 DC 0 SIN(0 {apu} 19.45e9 0 0 {phu})
+Rpu pus pup 50
+Cpu pup base 1p
+Vpl pls 0 DC 0 SIN(0 {apl} 17.45e9 0 0 {phl})
+Rpl pls plp 50
+Cpl plp base 1p
+
+* ---- known-answer ideal-mixer control (disjoint circuit) ----
+* ---- inlined from sim/mixer-cm-interface-probe/controls/ideal_mixer.spice ----
+* Known-answer control: an IDEAL multiplying mixer (behavioural B source).
+* No device model, no noise, no memory: v(cout) = ck * v(clo) * (v(cru) + cimg*v(crl)).
+*
+* Closed form (LO = cA*sin(wLO t + th); upper tone = a*sin((wLO+wIF) t + ph_u);
+* lower (image) tone = a*sin((wLO-wIF) t + ph_l)), IF phasor X defined by
+* v(IF) = Re(X e^{j wIF t}):
+*   upper : X = (ck cA / 2) e^{-j th} * (a e^{j ph_u})        wanted transfer Gw
+*   lower : X = (ck cA / 2) e^{+j th} * conj(a e^{j ph_l})    image transfer  Gi
+* so |Gw| = |Gi| = ck cA / 2, arg Gw = -th, arg Gi = +th. The lower tone enters
+* conjugated (that is what makes it an image, not a second wanted tone); a
+* sabotaged device that drops the image, flips its sign, scales the gain or
+* moves the LO must fail tests/ and `run_probe.py --sabotage ...`.
+*
+* The sabotage knobs are .param defaults that run_probe.py overrides only in
+* --sabotage mode (which never writes a record): ck (gain), cimg (image path
+* weight: 1 normal, 0 dropped, -1 sign flipped), cflo (LO frequency).
+.param ck=1 cimg=1 cflo=18.45e9 cA=1 cth=30
+Vclo clo 0 DC 0 SIN(0 {cA} {cflo} 0 0 {cth})
+Vcru cru 0 DC 0 SIN(0 {apu} 19.45e9 0 0 {phu})
+Vcrl crl 0 DC 0 SIN(0 {apl} 17.45e9 0 0 {phl})
+Bcm cout 0 V = {ck}*V(clo)*(V(cru)+{cimg}*V(crl))
+Rcl cout 0 1k
+* ---- end inlined control ----
+
+
+.options savecurrents=0
+.control
+set noaskquit
+set filetype=ascii
+echo "MARK ngspice_banner_follows"
+version -s
+let wif = 2*pi*1e9
+let wxf = 2*pi*1.025e9
+let wlo = 2*pi*18.45e9
+let w2lo = 4*pi*18.45e9
+
+* ---- run base: apu=0 apl=0 ----
+alterparam apu=0
+alterparam apl=0
+alterparam vrf=0
+reset
+tran 1p 1.2e-07 0 1p
+let npts = length(time)
+echo "MARK R_base_points=$&npts"
+let ctl_c = v(cout)*cos(wif*time)
+let ctl_s = v(cout)*sin(wif*time)
+meas tran ctl_base_c INTEG ctl_c from=8e-08 to=1.2e-07
+meas tran ctl_base_s INTEG ctl_s from=8e-08 to=1.2e-07
+echo "MARK x_ctl_base_c=$&ctl_base_c x_ctl_base_s=$&ctl_base_s"
+let dut_c = v(coll)*cos(wif*time)
+let dut_s = v(coll)*sin(wif*time)
+meas tran dut_base_c INTEG dut_c from=8e-08 to=1.2e-07
+meas tran dut_base_s INTEG dut_s from=8e-08 to=1.2e-07
+echo "MARK x_dut_base_c=$&dut_base_c x_dut_base_s=$&dut_base_s"
+let wx_c = v(cout)*cos(wxf*time)
+let wx_s = v(cout)*sin(wxf*time)
+meas tran wx_base_c INTEG wx_c from=8e-08 to=1.2e-07
+meas tran wx_base_s INTEG wx_s from=8e-08 to=1.2e-07
+echo "MARK w_ctl_base_c=$&wx_base_c w_ctl_base_s=$&wx_base_s"
+let tf1_c = v(coll)*cos(wlo*time)
+let tf1_s = v(coll)*sin(wlo*time)
+meas tran tf1w1_c INTEG tf1_c from=8e-08 to=1e-07
+meas tran tf1w1_s INTEG tf1_s from=8e-08 to=1e-07
+echo "MARK t_dut_base_w1_f1_c=$&tf1w1_c t_dut_base_w1_f1_s=$&tf1w1_s"
+meas tran tf1w2_c INTEG tf1_c from=1e-07 to=1.2e-07
+meas tran tf1w2_s INTEG tf1_s from=1e-07 to=1.2e-07
+echo "MARK t_dut_base_w2_f1_c=$&tf1w2_c t_dut_base_w2_f1_s=$&tf1w2_s"
+let tf2_c = v(coll)*cos(w2lo*time)
+let tf2_s = v(coll)*sin(w2lo*time)
+meas tran tf2w1_c INTEG tf2_c from=8e-08 to=1e-07
+meas tran tf2w1_s INTEG tf2_s from=8e-08 to=1e-07
+echo "MARK t_dut_base_w1_f2_c=$&tf2w1_c t_dut_base_w1_f2_s=$&tf2w1_s"
+meas tran tf2w2_c INTEG tf2_c from=1e-07 to=1.2e-07
+meas tran tf2w2_s INTEG tf2_s from=1e-07 to=1.2e-07
+echo "MARK t_dut_base_w2_f2_c=$&tf2w2_c t_dut_base_w2_f2_s=$&tf2w2_s"
+meas tran tavg1 AVG v(coll) from=8e-08 to=1e-07
+echo "MARK t_dut_base_w1_avg=$&tavg1"
+meas tran tavg2 AVG v(coll) from=1e-07 to=1.2e-07
+echo "MARK t_dut_base_w2_avg=$&tavg2"
+
+* ---- run u: apu=0.002 apl=0 ----
+alterparam apu=0.002
+alterparam apl=0
+alterparam vrf=0
+reset
+tran 1p 1.2e-07 0 1p
+let npts = length(time)
+echo "MARK R_u_points=$&npts"
+let ctl_c = v(cout)*cos(wif*time)
+let ctl_s = v(cout)*sin(wif*time)
+meas tran ctl_u_c INTEG ctl_c from=8e-08 to=1.2e-07
+meas tran ctl_u_s INTEG ctl_s from=8e-08 to=1.2e-07
+echo "MARK x_ctl_u_c=$&ctl_u_c x_ctl_u_s=$&ctl_u_s"
+let dut_c = v(coll)*cos(wif*time)
+let dut_s = v(coll)*sin(wif*time)
+meas tran dut_u_c INTEG dut_c from=8e-08 to=1.2e-07
+meas tran dut_u_s INTEG dut_s from=8e-08 to=1.2e-07
+echo "MARK x_dut_u_c=$&dut_u_c x_dut_u_s=$&dut_u_s"
+let wx_c = v(cout)*cos(wxf*time)
+let wx_s = v(cout)*sin(wxf*time)
+meas tran wx_u_c INTEG wx_c from=8e-08 to=1.2e-07
+meas tran wx_u_s INTEG wx_s from=8e-08 to=1.2e-07
+echo "MARK w_ctl_u_c=$&wx_u_c w_ctl_u_s=$&wx_u_s"
+
+* ---- run u2: apu=0.004 apl=0 ----
+alterparam apu=0.004
+alterparam apl=0
+alterparam vrf=0
+reset
+tran 1p 1.2e-07 0 1p
+let npts = length(time)
+echo "MARK R_u2_points=$&npts"
+let ctl_c = v(cout)*cos(wif*time)
+let ctl_s = v(cout)*sin(wif*time)
+meas tran ctl_u2_c INTEG ctl_c from=8e-08 to=1.2e-07
+meas tran ctl_u2_s INTEG ctl_s from=8e-08 to=1.2e-07
+echo "MARK x_ctl_u2_c=$&ctl_u2_c x_ctl_u2_s=$&ctl_u2_s"
+let dut_c = v(coll)*cos(wif*time)
+let dut_s = v(coll)*sin(wif*time)
+meas tran dut_u2_c INTEG dut_c from=8e-08 to=1.2e-07
+meas tran dut_u2_s INTEG dut_s from=8e-08 to=1.2e-07
+echo "MARK x_dut_u2_c=$&dut_u2_c x_dut_u2_s=$&dut_u2_s"
+let wx_c = v(cout)*cos(wxf*time)
+let wx_s = v(cout)*sin(wxf*time)
+meas tran wx_u2_c INTEG wx_c from=8e-08 to=1.2e-07
+meas tran wx_u2_s INTEG wx_s from=8e-08 to=1.2e-07
+echo "MARK w_ctl_u2_c=$&wx_u2_c w_ctl_u2_s=$&wx_u2_s"
+
+* ---- run l: apu=0 apl=0.002 ----
+alterparam apu=0
+alterparam apl=0.002
+alterparam vrf=0
+reset
+tran 1p 1.2e-07 0 1p
+let npts = length(time)
+echo "MARK R_l_points=$&npts"
+let ctl_c = v(cout)*cos(wif*time)
+let ctl_s = v(cout)*sin(wif*time)
+meas tran ctl_l_c INTEG ctl_c from=8e-08 to=1.2e-07
+meas tran ctl_l_s INTEG ctl_s from=8e-08 to=1.2e-07
+echo "MARK x_ctl_l_c=$&ctl_l_c x_ctl_l_s=$&ctl_l_s"
+let dut_c = v(coll)*cos(wif*time)
+let dut_s = v(coll)*sin(wif*time)
+meas tran dut_l_c INTEG dut_c from=8e-08 to=1.2e-07
+meas tran dut_l_s INTEG dut_s from=8e-08 to=1.2e-07
+echo "MARK x_dut_l_c=$&dut_l_c x_dut_l_s=$&dut_l_s"
+let wx_c = v(cout)*cos(wxf*time)
+let wx_s = v(cout)*sin(wxf*time)
+meas tran wx_l_c INTEG wx_c from=8e-08 to=1.2e-07
+meas tran wx_l_s INTEG wx_s from=8e-08 to=1.2e-07
+echo "MARK w_ctl_l_c=$&wx_l_c w_ctl_l_s=$&wx_l_s"
+
+* ---- run ul: apu=0.002 apl=0.002 ----
+alterparam apu=0.002
+alterparam apl=0.002
+alterparam vrf=0
+reset
+tran 1p 1.2e-07 0 1p
+let npts = length(time)
+echo "MARK R_ul_points=$&npts"
+let ctl_c = v(cout)*cos(wif*time)
+let ctl_s = v(cout)*sin(wif*time)
+meas tran ctl_ul_c INTEG ctl_c from=8e-08 to=1.2e-07
+meas tran ctl_ul_s INTEG ctl_s from=8e-08 to=1.2e-07
+echo "MARK x_ctl_ul_c=$&ctl_ul_c x_ctl_ul_s=$&ctl_ul_s"
+let dut_c = v(coll)*cos(wif*time)
+let dut_s = v(coll)*sin(wif*time)
+meas tran dut_ul_c INTEG dut_c from=8e-08 to=1.2e-07
+meas tran dut_ul_s INTEG dut_s from=8e-08 to=1.2e-07
+echo "MARK x_dut_ul_c=$&dut_ul_c x_dut_ul_s=$&dut_ul_s"
+let wx_c = v(cout)*cos(wxf*time)
+let wx_s = v(cout)*sin(wxf*time)
+meas tran wx_ul_c INTEG wx_c from=8e-08 to=1.2e-07
+meas tran wx_ul_s INTEG wx_s from=8e-08 to=1.2e-07
+echo "MARK w_ctl_ul_c=$&wx_ul_c w_ctl_ul_s=$&wx_ul_s"
+
+* ---------- N: .noise about the LO-off DC operating point, two DC biases ----------
+alterparam apu=0
+alterparam apl=0
+alterparam vrf=0
+alterparam vlo=0
+alterparam vbb_mx=0.90
+reset
+alter @vrf[acmag] = 1
+noise v(coll) vrf dec 50 250e6 500e9 1
+echo "MARK N_section_begin=bias_a"
+print all
+echo "MARK N_section_end=bias_a"
+alterparam vbb_mx=0.85
+reset
+alter @vrf[acmag] = 1
+noise v(coll) vrf dec 50 250e6 500e9 1
+echo "MARK N_section_begin=bias_b"
+print all
+echo "MARK N_section_end=bias_b"
+
+* ---------- E: periodic steady state / periodic noise availability ----------
+echo "MARK E_pss_attempt_begin"
+pss 18.45e9 1n coll 1024 10 50 5e-3
+echo "MARK E_pss_attempt_end"
+echo "MARK E_pnoise_attempt_begin"
+pnoise
+pac
+echo "MARK E_pnoise_attempt_end"
+echo "MARK done"
+quit
+.endc
+.end

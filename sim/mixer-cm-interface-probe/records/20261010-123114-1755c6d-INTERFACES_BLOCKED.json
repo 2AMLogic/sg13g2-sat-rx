@@ -1,0 +1,188 @@
+{
+  "record_id": "20261010-123114-1755c6d",
+  "status": "INTERFACES_BLOCKED",
+  "reasons": [
+    "noise_intensity_per_mechanism: unsupported",
+    "noise_covariance_ib_ic: unsupported"
+  ],
+  "scope": "interface-feasibility evidence only; no row-10/row-12 claim; no active-mixer NF number",
+  "nominal_point": {
+    "corner": "hbt_typ",
+    "temp_c": 27,
+    "vdd_v": 2.5,
+    "lo_hz": 18450000000.0,
+    "if_hz": 1000000000.0,
+    "note": "LO drive is a probe setting, not a design selection"
+  },
+  "interface_matrix": {
+    "lo_period_trajectory": {
+      "state": "demonstrated",
+      "basis": "probe",
+      "reference": "ngspice User's Manual v46 (https://ngspice.sourceforge.io/docs/ngspice-46-manual.pdf, sha256 b5bc7c4f3aac00e670b01b1d1ab64ec87055a491014af1de828764bf98faf766), chapter 15 'Transient analysis' (.tran) and chapter 13 'Measurements' (.meas INTEG); probe marks are the evidence",
+      "probe_marks": {
+        "f1_amplitude_v": [
+          0.14490462661975295,
+          0.14490462661975295
+        ],
+        "f1_relative_change": 0.0,
+        "f2_amplitude_v": [
+          0.001349908827174636,
+          0.0013504292429090837
+        ],
+        "f2_relative_change": 0.0007195776106699034,
+        "mean_v": [
+          1.57735,
+          1.57735
+        ],
+        "mean_relative_change": 0.0,
+        "worst_relative_change": 0.0007195776106699034
+      },
+      "note": "transient-settled LO orbit read from .tran (no periodic steady-state solver); window-to-window change <= 0.001"
+    },
+    "wanted_sideband_transfer": {
+      "state": "demonstrated",
+      "basis": "probe",
+      "reference": "ngspice User's Manual v46 (https://ngspice.sourceforge.io/docs/ngspice-46-manual.pdf, sha256 b5bc7c4f3aac00e670b01b1d1ab64ec87055a491014af1de828764bf98faf766), chapter 15 'Transient analysis' (.tran) and chapter 13 'Measurements' (.meas INTEG); probe marks are the evidence",
+      "probe_marks": {
+        "gain_magnitude": 0.057627746542266246,
+        "gain_phase_deg": 177.0045058756134,
+        "linearity_err": 3.0163309185082907e-05,
+        "superposition_err": 4.009458104220621e-05,
+        "control_pass": true
+      },
+      "note": "perturbation (u/l tone) response minus LO-only baseline, IF projection over an integer number of IF periods; control passed"
+    },
+    "image_sideband_transfer": {
+      "state": "demonstrated",
+      "basis": "probe",
+      "reference": "ngspice User's Manual v46 (https://ngspice.sourceforge.io/docs/ngspice-46-manual.pdf, sha256 b5bc7c4f3aac00e670b01b1d1ab64ec87055a491014af1de828764bf98faf766), chapter 15 'Transient analysis' (.tran) and chapter 13 'Measurements' (.meas INTEG); probe marks are the evidence",
+      "probe_marks": {
+        "gain_magnitude": 0.05828871720465527,
+        "gain_phase_deg": 176.97647979439105,
+        "linearity_err": 3.0163309185082907e-05,
+        "superposition_err": 4.009458104220621e-05,
+        "control_pass": true
+      },
+      "note": "perturbation (u/l tone) response minus LO-only baseline, IF projection over an integer number of IF periods; control passed"
+    },
+    "noise_intensity_per_mechanism": {
+      "state": "unsupported",
+      "basis": "probe+source",
+      "reference": "ngspice User's Manual v46 (https://ngspice.sourceforge.io/docs/ngspice-46-manual.pdf, sha256 b5bc7c4f3aac00e670b01b1d1ab64ec87055a491014af1de828764bf98faf766) section 11.3.12 '.PSS: Experimental code, not yet made publicly available' and section 1.2.8 (PSS is the basis of PAC/PNoise, neither exists in the release); probe mark E: the binary replies 'pss: no such command' | ngspice source tag ngspice-46 (commit ebdaf58ec76a06ffaac7e0f138360dd1cf5ee4b6, https://git.code.sf.net/p/ngspice/ngspice): src/spicelib/devices/vbic/vbicnoise.c VBICnoise() defines 13 independent generators; reached only via DEVnoise from src/spicelib/analysis/cktnoise.c (.noise) and noisesp.c (.sp); src/spicelib/analysis/dcpss.c exists only under --enable-pss; no pnoise in the tree (findings carried from sim/mixer-nf-method/README.md 'Capability inventory', where the tag was inspected for issue #27; not re-fetched here)",
+      "probe_marks": {
+        "dc_noise_per_generator_available": true,
+        "dc_noise_by_bias": {
+          "bias_a": {
+            "onoise_total": 0.002561795,
+            "ic_shot": 0.001062797
+          },
+          "bias_b": {
+            "onoise_total": 0.002307829,
+            "ic_shot": 0.001008395
+          }
+        },
+        "pss_command_missing": true,
+        "pnoise_command_missing": true,
+        "pac_command_missing": true,
+        "pss_started": false,
+        "pss_convergence_not_reached": false
+      },
+      "note": "per-mechanism intensities are reachable only as DC .noise totals at a fixed operating point; no analysis evaluates them along a periodic trajectory (no pnoise, no pss command in this build)"
+    },
+    "noise_covariance_ib_ic": {
+      "state": "unsupported",
+      "basis": "source",
+      "reference": "ngspice source tag ngspice-46 (commit ebdaf58ec76a06ffaac7e0f138360dd1cf5ee4b6, https://git.code.sf.net/p/ngspice/ngspice): src/spicelib/devices/vbic/vbicnoise.c VBICnoise() defines 13 independent generators; reached only via DEVnoise from src/spicelib/analysis/cktnoise.c (.noise) and noisesp.c (.sp); src/spicelib/analysis/dcpss.c exists only under --enable-pss; no pnoise in the tree (findings carried from sim/mixer-nf-method/README.md 'Capability inventory', where the tag was inspected for issue #27; not re-fetched here)",
+      "probe_marks": {},
+      "note": "VBICnoise() evaluates every generator independently: the model defines no ib/ic covariance and no analysis exposes one"
+    }
+  },
+  "controls": {
+    "pass": true,
+    "checks": {
+      "wanted": {
+        "measured": [
+          0.49999867239255014,
+          -30.00004557843572
+        ],
+        "expected": [
+          0.5,
+          -29.999999999999996
+        ],
+        "mag_rel_err": 2.6552148997271985e-06,
+        "phase_err_deg": 4.557843573138598e-05,
+        "pass": true
+      },
+      "image": {
+        "measured": [
+          0.49999745944979584,
+          29.99995090609359
+        ],
+        "expected": [
+          0.5,
+          29.999999999999996
+        ],
+        "mag_rel_err": 5.081100408310668e-06,
+        "phase_err_deg": 4.9093906397956744e-05,
+        "pass": true
+      },
+      "frequency_null": {
+        "wrong_if_hz": 1025000000.0,
+        "relative_projection": 6.19195218556127e-07,
+        "pass": true
+      },
+      "linearity": {
+        "err": 4.807417272744608e-17,
+        "pass": true
+      },
+      "superposition": {
+        "err": 0.00010534376550790371,
+        "pass": true
+      }
+    }
+  },
+  "references": {
+    "manual_tran": "ngspice User's Manual v46 (https://ngspice.sourceforge.io/docs/ngspice-46-manual.pdf, sha256 b5bc7c4f3aac00e670b01b1d1ab64ec87055a491014af1de828764bf98faf766), chapter 15 'Transient analysis' (.tran) and chapter 13 'Measurements' (.meas INTEG); probe marks are the evidence",
+    "manual_pss": "ngspice User's Manual v46 (https://ngspice.sourceforge.io/docs/ngspice-46-manual.pdf, sha256 b5bc7c4f3aac00e670b01b1d1ab64ec87055a491014af1de828764bf98faf766) section 11.3.12 '.PSS: Experimental code, not yet made publicly available' and section 1.2.8 (PSS is the basis of PAC/PNoise, neither exists in the release); probe mark E: the binary replies 'pss: no such command'",
+    "source_noise": "ngspice source tag ngspice-46 (commit ebdaf58ec76a06ffaac7e0f138360dd1cf5ee4b6, https://git.code.sf.net/p/ngspice/ngspice): src/spicelib/devices/vbic/vbicnoise.c VBICnoise() defines 13 independent generators; reached only via DEVnoise from src/spicelib/analysis/cktnoise.c (.noise) and noisesp.c (.sp); src/spicelib/analysis/dcpss.c exists only under --enable-pss; no pnoise in the tree (findings carried from sim/mixer-nf-method/README.md 'Capability inventory', where the tag was inspected for issue #27; not re-fetched here)"
+  },
+  "probe_logs": "sim/mixer-cm-interface-probe/probe-logs/20261010-123114-1755c6d/",
+  "environment": {
+    "host": "loom-worker-1",
+    "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+    "python": "3.12.3",
+    "git": {
+      "commit": "1755c6df6cb512089aa9fba51509b54a7cec4aa8",
+      "dirty": true
+    },
+    "placeholder_sha256": "e2cd2af3fd9aa34b9c36dde453c7919abbec69fe9f675f1848657a5a85c7a74d",
+    "pdk_artifact_sha256": "2ca42a292eeef18dc0da32004bb2cfa66dfead21c73b4f77d4609d60dadeabf1",
+    "ngspice": {
+      "path": "/home/ubuntu/.local/bin/ngspice",
+      "version": "ngspice-46 : Circuit level simulation program",
+      "major": 46,
+      "sha256": "555e04b8ddf17a382fe28d409251ce8968ba983b8c82396fb78e1ff542aa5dd5"
+    },
+    "pdk": {
+      "path": "/home/ubuntu/share/pdk/ihp-sg13g2",
+      "fetched_version": "0.3.0",
+      "model_lib": "/home/ubuntu/share/pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerHBT.lib",
+      "section": "hbt_typ",
+      "sha256": {
+        "cornerHBT.lib": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+        "sg13g2_hbt_mod.lib": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+      },
+      "device": "npn13G2 (subckt) -> npn13G2_NX_vbic, VBIC level=9, Nx=4 in the placeholder"
+    },
+    "pdk_integrity": {
+      "gate": "sim/harness/pdkartifact.py verify(require_ngspice=True)",
+      "ok": true,
+      "problems": [],
+      "notes": [
+        "install marker '0.3.0' recorded as provenance (not an integrity check)",
+        "IHP model closure (4 files) matches the pin at 5cccb161f749 (https://github.com/IHP-GmbH/IHP-Open-PDK)"
+      ]
+    },
+    "ngspice_exit": 0
+  }
+}
