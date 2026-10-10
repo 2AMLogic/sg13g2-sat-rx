@@ -1,0 +1,2999 @@
+{
+  "accepted_cells": 1953,
+  "cells_file": "20261010-025859-2113f00-cells.json.gz",
+  "declared_cells": 1953,
+  "experiment": "mixer-topology-feasibility",
+  "gate": {
+    "problems": [],
+    "validate_collection": "passed"
+  },
+  "issue": 35,
+  "part": "collection",
+  "provenance": {
+    "converge": {
+      "folded_single_balanced": {
+        "baseline": {
+          "gain_db": -1.9695466033760383,
+          "lo_if_dbm": -28.536757908346804,
+          "lo_rf_dbm": -85.41950772199156,
+          "resolved_off": {
+            "loif": true,
+            "lorf": true
+          },
+          "status_off": "rejected_stress",
+          "status_on": "rejected_stress"
+        },
+        "checks": [
+          {
+            "delta_db": -0.005578960386280585,
+            "ok": true,
+            "quantity": "gain_db",
+            "reason": "",
+            "variant": "window2x"
+          },
+          {
+            "delta_db": 0.0002310209989211387,
+            "ok": true,
+            "quantity": "lo_if_dbm (RF off)",
+            "reason": "",
+            "variant": "window2x"
+          },
+          {
+            "delta_db": -0.012838883066407902,
+            "ok": true,
+            "quantity": "lo_rf_dbm (RF off)",
+            "reason": "",
+            "variant": "window2x"
+          },
+          {
+            "delta_db": -0.0006367868171324176,
+            "ok": true,
+            "quantity": "gain_db",
+            "reason": "",
+            "variant": "step0.5x"
+          },
+          {
+            "delta_db": 0.010208297124719934,
+            "ok": true,
+            "quantity": "lo_if_dbm (RF off)",
+            "reason": "",
+            "variant": "step0.5x"
+          },
+          {
+            "delta_db": -0.007513063998018765,
+            "ok": true,
+            "quantity": "lo_rf_dbm (RF off)",
+            "reason": "",
+            "variant": "step0.5x"
+          }
+        ],
+        "drive_dbm": 0.0,
+        "drive_kind": "trial (diagnostic, NOT a selected drive)",
+        "failures": [],
+        "ok": true
+      },
+      "folded_single_balanced_a": {
+        "baseline": {
+          "gain_db": -2.7048557630762033,
+          "lo_if_dbm": -23.069896612034476,
+          "lo_rf_dbm": -82.21933952944727,
+          "resolved_off": {
+            "loif": true,
+            "lorf": true
+          },
+          "status_off": "rejected_stress",
+          "status_on": "rejected_stress"
+        },
+        "checks": [
+          {
+            "delta_db": -0.005709282454368747,
+            "ok": true,
+            "quantity": "gain_db",
+            "reason": "",
+            "variant": "window2x"
+          },
+          {
+            "delta_db": -2.8934533862212675e-05,
+            "ok": true,
+            "quantity": "lo_if_dbm (RF off)",
+            "reason": "",
+            "variant": "window2x"
+          },
+          {
+            "delta_db": -0.020767872200949,
+            "ok": true,
+            "quantity": "lo_rf_dbm (RF off)",
+            "reason": "",
+            "variant": "window2x"
+          },
+          {
+            "delta_db": -0.0010582717910025963,
+            "ok": true,
+            "quantity": "gain_db",
+            "reason": "",
+            "variant": "step0.5x"
+          },
+          {
+            "delta_db": 0.01467545206201848,
+            "ok": true,
+            "quantity": "lo_if_dbm (RF off)",
+            "reason": "",
+            "variant": "step0.5x"
+          },
+          {
+            "delta_db": -0.005991084929888757,
+            "ok": true,
+            "quantity": "lo_rf_dbm (RF off)",
+            "reason": "",
+            "variant": "step0.5x"
+          }
+        ],
+        "drive_dbm": 0.0,
+        "drive_kind": "trial (diagnostic, NOT a selected drive)",
+        "failures": [],
+        "ok": true
+      },
+      "folded_single_balanced_b": {
+        "baseline": {
+          "gain_db": -3.2338858218816924,
+          "lo_if_dbm": -20.632678437064463,
+          "lo_rf_dbm": -80.56097413462184,
+          "resolved_off": {
+            "loif": true,
+            "lorf": true
+          },
+          "status_off": "rejected_stress",
+          "status_on": "rejected_stress"
+        },
+        "checks": [
+          {
+            "delta_db": -0.005312534758353138,
+            "ok": true,
+            "quantity": "gain_db",
+            "reason": "",
+            "variant": "window2x"
+          },
+          {
+            "delta_db": -0.00010334585415705533,
+            "ok": true,
+            "quantity": "lo_if_dbm (RF off)",
+            "reason": "",
+            "variant": "window2x"
+          },
+          {
+            "delta_db": -0.02378417560085211,
+            "ok": true,
+            "quantity": "lo_rf_dbm (RF off)",
+            "reason": "",
+            "variant": "window2x"
+          },
+          {
+            "delta_db": 0.0009532262951310599,
+            "ok": true,
+            "quantity": "gain_db",
+            "reason": "",
+            "variant": "step0.5x"
+          },
+          {
+            "delta_db": 0.012917677878402145,
+            "ok": true,
+            "quantity": "lo_if_dbm (RF off)",
+            "reason": "",
+            "variant": "step0.5x"
+          },
+          {
+            "delta_db": -0.012251678487146478,
+            "ok": true,
+            "quantity": "lo_rf_dbm (RF off)",
+            "reason": "",
+            "variant": "step0.5x"
+          }
+        ],
+        "drive_dbm": 0.0,
+        "drive_kind": "trial (diagnostic, NOT a selected drive)",
+        "failures": [],
+        "ok": true
+      },
+      "gilbert_stacked": {
+        "baseline": {
+          "gain_db": -2.319303178733712,
+          "lo_if_dbm": -49.79179036943261,
+          "lo_rf_dbm": -83.771303425033,
+          "resolved_off": {
+            "loif": true,
+            "lorf": true
+          },
+          "status_off": "rejected_stress",
+          "status_on": "rejected_stress"
+        },
+        "checks": [
+          {
+            "delta_db": -0.004510675283221133,
+            "ok": true,
+            "quantity": "gain_db",
+            "reason": "",
+            "variant": "window2x"
+          },
+          {
+            "delta_db": -0.00561258228944439,
+            "ok": true,
+            "quantity": "lo_if_dbm (RF off)",
+            "reason": "",
+            "variant": "window2x"
+          },
+          {
+            "delta_db": -0.010405902119217103,
+            "ok": true,
+            "quantity": "lo_rf_dbm (RF off)",
+            "reason": "",
+            "variant": "window2x"
+          },
+          {
+            "delta_db": -6.887646610920228e-05,
+            "ok": true,
+            "quantity": "gain_db",
+            "reason": "",
+            "variant": "step0.5x"
+          },
+          {
+            "delta_db": 0.015453139583691211,
+            "ok": true,
+            "quantity": "lo_if_dbm (RF off)",
+            "reason": "",
+            "variant": "step0.5x"
+          },
+          {
+            "delta_db": -0.010917805051533946,
+            "ok": true,
+            "quantity": "lo_rf_dbm (RF off)",
+            "reason": "",
+            "variant": "step0.5x"
+          }
+        ],
+        "drive_dbm": 0.0,
+        "drive_kind": "trial (diagnostic, NOT a selected drive)",
+        "failures": [],
+        "ok": true
+      },
+      "gilbert_stacked_a": {
+        "baseline": {
+          "gain_db": -1.6287283963398025,
+          "lo_if_dbm": -46.379605232013496,
+          "lo_rf_dbm": -82.18194022148845,
+          "resolved_off": {
+            "loif": true,
+            "lorf": true
+          },
+          "status_off": "rejected_stress",
+          "status_on": "rejected_stress"
+        },
+        "checks": [
+          {
+            "delta_db": -0.004971668850338062,
+            "ok": true,
+            "quantity": "gain_db",
+            "reason": "",
+            "variant": "window2x"
+          },
+          {
+            "delta_db": -0.008416570717820093,
+            "ok": true,
+            "quantity": "lo_if_dbm (RF off)",
+            "reason": "",
+            "variant": "window2x"
+          },
+          {
+            "delta_db": -0.00947835998346136,
+            "ok": true,
+            "quantity": "lo_rf_dbm (RF off)",
+            "reason": "",
+            "variant": "window2x"
+          },
+          {
+            "delta_db": -8.666989278083292e-05,
+            "ok": true,
+            "quantity": "gain_db",
+            "reason": "",
+            "variant": "step0.5x"
+          },
+          {
+            "delta_db": 0.015220807366496558,
+            "ok": true,
+            "quantity": "lo_if_dbm (RF off)",
+            "reason": "",
+            "variant": "step0.5x"
+          },
+          {
+            "delta_db": -0.0055101971315991705,
+            "ok": true,
+            "quantity": "lo_rf_dbm (RF off)",
+            "reason": "",
+            "variant": "step0.5x"
+          }
+        ],
+        "drive_dbm": 0.0,
+        "drive_kind": "trial (diagnostic, NOT a selected drive)",
+        "failures": [],
+        "ok": true
+      },
+      "gilbert_stacked_b": {
+        "baseline": {
+          "gain_db": -1.5092731740549965,
+          "lo_if_dbm": -43.04386477546164,
+          "lo_rf_dbm": -80.13601012239492,
+          "resolved_off": {
+            "loif": true,
+            "lorf": true
+          },
+          "status_off": "rejected_stress",
+          "status_on": "rejected_stress"
+        },
+        "checks": [
+          {
+            "delta_db": -0.004909496885602493,
+            "ok": true,
+            "quantity": "gain_db",
+            "reason": "",
+            "variant": "window2x"
+          },
+          {
+            "delta_db": -0.012814111852776477,
+            "ok": true,
+            "quantity": "lo_if_dbm (RF off)",
+            "reason": "",
+            "variant": "window2x"
+          },
+          {
+            "delta_db": -0.011674860599981685,
+            "ok": true,
+            "quantity": "lo_rf_dbm (RF off)",
+            "reason": "",
+            "variant": "window2x"
+          },
+          {
+            "delta_db": -0.00032782507990702925,
+            "ok": true,
+            "quantity": "gain_db",
+            "reason": "",
+            "variant": "step0.5x"
+          },
+          {
+            "delta_db": 0.01366542441489571,
+            "ok": true,
+            "quantity": "lo_if_dbm (RF off)",
+            "reason": "",
+            "variant": "step0.5x"
+          },
+          {
+            "delta_db": -0.0038047852478513278,
+            "ok": true,
+            "quantity": "lo_rf_dbm (RF off)",
+            "reason": "",
+            "variant": "step0.5x"
+          }
+        ],
+        "drive_dbm": 0.0,
+        "drive_kind": "trial (diagnostic, NOT a selected drive)",
+        "failures": [],
+        "ok": true
+      },
+      "placeholder_floor": {
+        "baseline": {
+          "gain_db": -4.083313913133594,
+          "lo_if_dbm": -14.08296533503009,
+          "lo_rf_dbm": -0.45257544683093565,
+          "resolved_off": {
+            "loif": true,
+            "lorf": true
+          },
+          "status_off": "rejected_stress",
+          "status_on": "rejected_stress"
+        },
+        "checks": [
+          {
+            "delta_db": 0.024667909591698844,
+            "ok": true,
+            "quantity": "gain_db",
+            "reason": "",
+            "variant": "window2x"
+          },
+          {
+            "delta_db": -0.00026348337930670596,
+            "ok": true,
+            "quantity": "lo_if_dbm (RF off)",
+            "reason": "",
+            "variant": "window2x"
+          },
+          {
+            "delta_db": 0.00017406251070695156,
+            "ok": true,
+            "quantity": "lo_rf_dbm (RF off)",
+            "reason": "",
+            "variant": "window2x"
+          },
+          {
+            "delta_db": -0.03137297169463693,
+            "ok": true,
+            "quantity": "gain_db",
+            "reason": "",
+            "variant": "step0.5x"
+          },
+          {
+            "delta_db": 0.014857554610953727,
+            "ok": true,
+            "quantity": "lo_if_dbm (RF off)",
+            "reason": "",
+            "variant": "step0.5x"
+          },
+          {
+            "delta_db": 0.008308511838215571,
+            "ok": true,
+            "quantity": "lo_rf_dbm (RF off)",
+            "reason": "",
+            "variant": "step0.5x"
+          }
+        ],
+        "drive_dbm": 0.0,
+        "drive_kind": "trial (diagnostic, NOT a selected drive)",
+        "failures": [],
+        "ok": true
+      }
+    },
+    "crosscheck": {
+      "compared": 7,
+      "kind": "off-host-vs-local",
+      "reference_backends": [
+        "batch"
+      ],
+      "summary": "collected cells from backend(s) `batch` re-simulated through the local harness path; 7 nominal value(s) compared (one ngspice process at a time); max |delta| 1.41e-02 dB (tolerance 0.05 dB)",
+      "tolerance_db": 0.05,
+      "worst_delta_db": 0.014057205296772679
+    },
+    "execution": {
+      "backends": [
+        "batch"
+      ],
+      "fleet_exercised": true,
+      "multi_unit_requests": [],
+      "not_simulated_cells": {
+        "iip3": 273,
+        "leakage": 567,
+        "main": 567
+      },
+      "off_host_requests": [
+        "lo_select__gilbert_stacked__2.250v",
+        "lo_select__folded_single_balanced__2.250v",
+        "lo_select__gilbert_stacked_a__2.250v",
+        "lo_select__gilbert_stacked_b__2.250v",
+        "lo_select__folded_single_balanced_a__2.250v",
+        "lo_select__folded_single_balanced_b__2.250v",
+        "lo_select__placeholder_floor__2.250v"
+      ],
+      "requests": 7,
+      "stages": {
+        "1": {
+          "batch": {
+            "max_units": 1,
+            "requests": 7,
+            "units": 7
+          }
+        }
+      },
+      "text": "simulated (ngspice, real npn13G2 VBIC card, cornerHBT.lib sections), 7 `klt sim` request(s); 7 ran off-host (backend(s) `batch`). Stage 1 (LO-selection sweep): backend `batch`: 7 request(s), 7 unit(s), largest request 1 unit(s). No multi-unit request was submitted. No stage-2 request was submitted (no candidate selected an LO drive). Not simulated (no LO drive selected; recorded as `not_applicable_no_drive` cells, no numbers): main 567, leakage 567, iip3 273 cell(s)."
+    },
+    "git": {
+      "branch": "feature/issue-61",
+      "commit": "2113f00f6db33828823b8a28488d471c7ed36739",
+      "dirty": false,
+      "short": "2113f00"
+    },
+    "klt": "klt 0.7.0+g5e5b55992a7f",
+    "klt_requests": [
+      {
+        "backend": "batch",
+        "candidate": "gilbert_stacked",
+        "environment": {
+          "engine": "ngspice",
+          "engine_version": "46",
+          "models_lib": {
+            "path": null,
+            "scope": "external"
+          },
+          "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+          "netlist_closure": [
+            {
+              "path": null,
+              "scope": "external",
+              "sha256": "79b26f964b28c4491c23fe5be3060aca2b4f11046e7659c8f58e6ced0c3a78da"
+            }
+          ],
+          "netlist_sha256": "79b26f964b28c4491c23fe5be3060aca2b4f11046e7659c8f58e6ced0c3a78da",
+          "ngspice_binary": "/usr/bin/ngspice",
+          "remote": {
+            "ami_id": "ami-0e40e3245f1923ac8",
+            "availability_zone": "us-east-1c",
+            "bucket": "2am-batch-jobs-221082181346",
+            "client_klt_version": "0.7.0+g5e5b55992a7f",
+            "concurrency": "1",
+            "elapsed_seconds": 235,
+            "exit_code": "0",
+            "instance_id": "i-0926daa44ed300608",
+            "instance_type": "c6i.4xlarge",
+            "job_id": "klt-sim-42157fd81948",
+            "lifecycle": "spot",
+            "physical_cores": "8",
+            "provider": "aws-batch-fleet",
+            "region": "us-east-1",
+            "runner_compatibility": "mismatch",
+            "runner_compatibility_warning": "the fleet runner ran klt 0.5.0 but the submitting client is 0.7.0+g5e5b55992a7f; request options the runner does not know may have been ignored -- update the runner image or use a compatible client",
+            "runner_klt_version": "0.5.0",
+            "spot": true,
+            "state": "done"
+          }
+        },
+        "matrix": "lo_select",
+        "report": "report_lo_select__gilbert_stacked__2.250v.json",
+        "request": "lo_select__gilbert_stacked__2.250v",
+        "stage": 1,
+        "status": "pass",
+        "units": 1
+      },
+      {
+        "backend": "batch",
+        "candidate": "folded_single_balanced",
+        "environment": {
+          "engine": "ngspice",
+          "engine_version": "46",
+          "models_lib": {
+            "path": null,
+            "scope": "external"
+          },
+          "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+          "netlist_closure": [
+            {
+              "path": null,
+              "scope": "external",
+              "sha256": "8d8c7c94cd2731081de42607d8247709f5b4a6c767a00025c79689f4ffcdef49"
+            }
+          ],
+          "netlist_sha256": "8d8c7c94cd2731081de42607d8247709f5b4a6c767a00025c79689f4ffcdef49",
+          "ngspice_binary": "/usr/bin/ngspice",
+          "remote": {
+            "ami_id": "ami-0e40e3245f1923ac8",
+            "availability_zone": "us-east-1d",
+            "bucket": "2am-batch-jobs-221082181346",
+            "client_klt_version": "0.7.0+g5e5b55992a7f",
+            "concurrency": "1",
+            "elapsed_seconds": 120,
+            "exit_code": "0",
+            "instance_id": "i-0417af401a2b4beb5",
+            "instance_type": "c7i.4xlarge",
+            "job_id": "klt-sim-5412468a9d4f",
+            "lifecycle": "spot",
+            "physical_cores": "8",
+            "provider": "aws-batch-fleet",
+            "region": "us-east-1",
+            "runner_compatibility": "mismatch",
+            "runner_compatibility_warning": "the fleet runner ran klt 0.5.0 but the submitting client is 0.7.0+g5e5b55992a7f; request options the runner does not know may have been ignored -- update the runner image or use a compatible client",
+            "runner_klt_version": "0.5.0",
+            "spot": true,
+            "state": "done"
+          }
+        },
+        "matrix": "lo_select",
+        "report": "report_lo_select__folded_single_balanced__2.250v.json",
+        "request": "lo_select__folded_single_balanced__2.250v",
+        "stage": 1,
+        "status": "pass",
+        "units": 1
+      },
+      {
+        "backend": "batch",
+        "candidate": "gilbert_stacked_a",
+        "environment": {
+          "engine": "ngspice",
+          "engine_version": "46",
+          "models_lib": {
+            "path": null,
+            "scope": "external"
+          },
+          "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+          "netlist_closure": [
+            {
+              "path": null,
+              "scope": "external",
+              "sha256": "3e6418c40bf24689fc18003b90eb66d91de1aac105f479207e98d821aa2a3e62"
+            }
+          ],
+          "netlist_sha256": "3e6418c40bf24689fc18003b90eb66d91de1aac105f479207e98d821aa2a3e62",
+          "ngspice_binary": "/usr/bin/ngspice",
+          "remote": {
+            "ami_id": "ami-0e40e3245f1923ac8",
+            "availability_zone": "us-east-1b",
+            "bucket": "2am-batch-jobs-221082181346",
+            "client_klt_version": "0.7.0+g5e5b55992a7f",
+            "concurrency": "1",
+            "elapsed_seconds": 190,
+            "exit_code": "0",
+            "instance_id": "i-0853a22c8ed77f37a",
+            "instance_type": "m7i.4xlarge",
+            "job_id": "klt-sim-7e162a95af08",
+            "lifecycle": "spot",
+            "physical_cores": "8",
+            "provider": "aws-batch-fleet",
+            "region": "us-east-1",
+            "runner_compatibility": "mismatch",
+            "runner_compatibility_warning": "the fleet runner ran klt 0.5.0 but the submitting client is 0.7.0+g5e5b55992a7f; request options the runner does not know may have been ignored -- update the runner image or use a compatible client",
+            "runner_klt_version": "0.5.0",
+            "spot": true,
+            "state": "done"
+          }
+        },
+        "matrix": "lo_select",
+        "report": "report_lo_select__gilbert_stacked_a__2.250v.json",
+        "request": "lo_select__gilbert_stacked_a__2.250v",
+        "stage": 1,
+        "status": "pass",
+        "units": 1
+      },
+      {
+        "backend": "batch",
+        "candidate": "gilbert_stacked_b",
+        "environment": {
+          "engine": "ngspice",
+          "engine_version": "46",
+          "models_lib": {
+            "path": null,
+            "scope": "external"
+          },
+          "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+          "netlist_closure": [
+            {
+              "path": null,
+              "scope": "external",
+              "sha256": "1888708ed5abe042841cb71db25e6f6998b55b0a111a8f8d75e3859eb8da5d40"
+            }
+          ],
+          "netlist_sha256": "1888708ed5abe042841cb71db25e6f6998b55b0a111a8f8d75e3859eb8da5d40",
+          "ngspice_binary": "/usr/bin/ngspice",
+          "remote": {
+            "ami_id": "ami-0e40e3245f1923ac8",
+            "availability_zone": "us-east-1f",
+            "bucket": "2am-batch-jobs-221082181346",
+            "client_klt_version": "0.7.0+g5e5b55992a7f",
+            "concurrency": "1",
+            "elapsed_seconds": 227,
+            "exit_code": "0",
+            "instance_id": "i-0b945bac419d9fe68",
+            "instance_type": "c7i.4xlarge",
+            "job_id": "klt-sim-61387a6c5683",
+            "lifecycle": "spot",
+            "physical_cores": "8",
+            "provider": "aws-batch-fleet",
+            "region": "us-east-1",
+            "runner_compatibility": "mismatch",
+            "runner_compatibility_warning": "the fleet runner ran klt 0.5.0 but the submitting client is 0.7.0+g5e5b55992a7f; request options the runner does not know may have been ignored -- update the runner image or use a compatible client",
+            "runner_klt_version": "0.5.0",
+            "spot": true,
+            "state": "done"
+          }
+        },
+        "matrix": "lo_select",
+        "report": "report_lo_select__gilbert_stacked_b__2.250v.json",
+        "request": "lo_select__gilbert_stacked_b__2.250v",
+        "stage": 1,
+        "status": "pass",
+        "units": 1
+      },
+      {
+        "backend": "batch",
+        "candidate": "folded_single_balanced_a",
+        "environment": {
+          "engine": "ngspice",
+          "engine_version": "46",
+          "models_lib": {
+            "path": null,
+            "scope": "external"
+          },
+          "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+          "netlist_closure": [
+            {
+              "path": null,
+              "scope": "external",
+              "sha256": "eb534d10d9b67c89a8d453bc2c56d3259bf078e8ed2859a0e6b0a053770a6f11"
+            }
+          ],
+          "netlist_sha256": "eb534d10d9b67c89a8d453bc2c56d3259bf078e8ed2859a0e6b0a053770a6f11",
+          "ngspice_binary": "/usr/bin/ngspice",
+          "remote": {
+            "ami_id": "ami-0e40e3245f1923ac8",
+            "availability_zone": "us-east-1f",
+            "bucket": "2am-batch-jobs-221082181346",
+            "client_klt_version": "0.7.0+g5e5b55992a7f",
+            "concurrency": "1",
+            "elapsed_seconds": 125,
+            "exit_code": "0",
+            "instance_id": "i-035c91a3d6ab4ed13",
+            "instance_type": "c7i.4xlarge",
+            "job_id": "klt-sim-90de409db5cd",
+            "lifecycle": "spot",
+            "physical_cores": "8",
+            "provider": "aws-batch-fleet",
+            "region": "us-east-1",
+            "runner_compatibility": "mismatch",
+            "runner_compatibility_warning": "the fleet runner ran klt 0.5.0 but the submitting client is 0.7.0+g5e5b55992a7f; request options the runner does not know may have been ignored -- update the runner image or use a compatible client",
+            "runner_klt_version": "0.5.0",
+            "spot": true,
+            "state": "done"
+          }
+        },
+        "matrix": "lo_select",
+        "report": "report_lo_select__folded_single_balanced_a__2.250v.json",
+        "request": "lo_select__folded_single_balanced_a__2.250v",
+        "stage": 1,
+        "status": "pass",
+        "units": 1
+      },
+      {
+        "backend": "batch",
+        "candidate": "folded_single_balanced_b",
+        "environment": {
+          "engine": "ngspice",
+          "engine_version": "46",
+          "models_lib": {
+            "path": null,
+            "scope": "external"
+          },
+          "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+          "netlist_closure": [
+            {
+              "path": null,
+              "scope": "external",
+              "sha256": "ecd450379c6c937e90d5062db9fe31e4a11c3502ca6be2f122640877b39525d2"
+            }
+          ],
+          "netlist_sha256": "ecd450379c6c937e90d5062db9fe31e4a11c3502ca6be2f122640877b39525d2",
+          "ngspice_binary": "/usr/bin/ngspice",
+          "remote": {
+            "ami_id": "ami-0e40e3245f1923ac8",
+            "availability_zone": "us-east-1f",
+            "bucket": "2am-batch-jobs-221082181346",
+            "client_klt_version": "0.7.0+g5e5b55992a7f",
+            "concurrency": "1",
+            "elapsed_seconds": 134,
+            "exit_code": "0",
+            "instance_id": "i-074d499451d6ba7e3",
+            "instance_type": "c7i.4xlarge",
+            "job_id": "klt-sim-dab905ceda3e",
+            "lifecycle": "spot",
+            "physical_cores": "8",
+            "provider": "aws-batch-fleet",
+            "region": "us-east-1",
+            "runner_compatibility": "mismatch",
+            "runner_compatibility_warning": "the fleet runner ran klt 0.5.0 but the submitting client is 0.7.0+g5e5b55992a7f; request options the runner does not know may have been ignored -- update the runner image or use a compatible client",
+            "runner_klt_version": "0.5.0",
+            "spot": true,
+            "state": "done"
+          }
+        },
+        "matrix": "lo_select",
+        "report": "report_lo_select__folded_single_balanced_b__2.250v.json",
+        "request": "lo_select__folded_single_balanced_b__2.250v",
+        "stage": 1,
+        "status": "pass",
+        "units": 1
+      },
+      {
+        "backend": "batch",
+        "candidate": "placeholder_floor",
+        "environment": {
+          "engine": "ngspice",
+          "engine_version": "46",
+          "models_lib": {
+            "path": null,
+            "scope": "external"
+          },
+          "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+          "netlist_closure": [
+            {
+              "path": null,
+              "scope": "external",
+              "sha256": "6d69a137337398120afe472ca8060cd9d99374bc3da93eb489c1e7d62a945184"
+            }
+          ],
+          "netlist_sha256": "6d69a137337398120afe472ca8060cd9d99374bc3da93eb489c1e7d62a945184",
+          "ngspice_binary": "/usr/bin/ngspice",
+          "remote": {
+            "ami_id": "ami-0e40e3245f1923ac8",
+            "availability_zone": "us-east-1c",
+            "bucket": "2am-batch-jobs-221082181346",
+            "client_klt_version": "0.7.0+g5e5b55992a7f",
+            "concurrency": "1",
+            "elapsed_seconds": 60,
+            "exit_code": "0",
+            "instance_id": "i-0dc1383299b8c4bb6",
+            "instance_type": "c7i.4xlarge",
+            "job_id": "klt-sim-3e1f5e79eee1",
+            "lifecycle": "spot",
+            "physical_cores": "8",
+            "provider": "aws-batch-fleet",
+            "region": "us-east-1",
+            "runner_compatibility": "mismatch",
+            "runner_compatibility_warning": "the fleet runner ran klt 0.5.0 but the submitting client is 0.7.0+g5e5b55992a7f; request options the runner does not know may have been ignored -- update the runner image or use a compatible client",
+            "runner_klt_version": "0.5.0",
+            "spot": true,
+            "state": "done"
+          }
+        },
+        "matrix": "lo_select",
+        "report": "report_lo_select__placeholder_floor__2.250v.json",
+        "request": "lo_select__placeholder_floor__2.250v",
+        "stage": 1,
+        "status": "pass",
+        "units": 1
+      }
+    ],
+    "mismatch_seed": 35001,
+    "ngspice": "ngspice-42 : Circuit level simulation program",
+    "pdk": {
+      "fetched_version_file": "0.3.0",
+      "model_sha256": {
+        "cornerHBT.lib": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+        "sg13g2_hbt_mod.lib": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79",
+        "sg13g2_hbt_mod_mismatch.lib": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+      },
+      "variant_path": "/home/ubuntu/share/pdk/ihp-sg13g2"
+    },
+    "tb_json_sha256": "7394f3038b6e712f5e3d51a664fec59b7ec21d39a87735a6f6603604724356bf"
+  },
+  "record_id": "20261010-025859-2113f00",
+  "reductions": [
+    "LO-selection sweep and IIP3 sweep run at hbt_typ / 27 C / 2.25 V only (all three band points); the selected drive is then HELD FIXED across the main and leakage matrices.",
+    "No MOS, capacitor or resistor corner axes: the fixtures use no PDK model of those families. Ideal passives do not cover the open passive/EM axis.",
+    "Ideal baluns, ideal R/C, ideal bias sources and ideal current sinks; one fixed sizing per topology; the RF input is unmatched. No inductor model exists in the PDK, none is used.",
+    "The 2.25 V +/- 10 % supply axis (2.025 / 2.25 / 2.475 V) is an exploratory nominal wholly below the 2.5 V ceiling; it ratifies no rail. The legacy 2.5 V +/- 10 % grid is not used.",
+    "Mismatch leakage cells use ONE deterministic realization per cell (fixed ngspice seed, applied to every cell; draw order follows instance order so realizations differ between candidates). This is card coverage, not Monte Carlo yield evidence.",
+    "No all-corner linearity, yield or compliance claim. SSB noise figure is out of scope (#27)."
+  ],
+  "scope": "device-level topology feasibility; no spec row claimed met",
+  "summary": {
+    "conclusion": {
+      "recommendation": {
+        "basis": "no candidate is feasible at its declared sizing within the declared sweep; no topology recommendation is forced (route a sizing follow-up or a DR proposal)",
+        "draw_first": null
+      },
+      "verdicts": {
+        "folded_single_balanced": {
+          "reason": "no run of 3 qualifying drives at band(s) f17p70, f19p45, f21p20",
+          "verdict": "infeasible at the declared sizing"
+        },
+        "folded_single_balanced_a": {
+          "reason": "no run of 3 qualifying drives at band(s) f17p70, f19p45, f21p20",
+          "verdict": "infeasible at the declared sizing"
+        },
+        "folded_single_balanced_b": {
+          "reason": "no run of 3 qualifying drives at band(s) f17p70, f19p45, f21p20",
+          "verdict": "infeasible at the declared sizing"
+        },
+        "gilbert_stacked": {
+          "reason": "no run of 3 qualifying drives at band(s) f17p70, f19p45, f21p20",
+          "verdict": "infeasible at the declared sizing"
+        },
+        "gilbert_stacked_a": {
+          "reason": "no run of 3 qualifying drives at band(s) f17p70, f19p45, f21p20",
+          "verdict": "infeasible at the declared sizing"
+        },
+        "gilbert_stacked_b": {
+          "reason": "no run of 3 qualifying drives at band(s) f17p70, f19p45, f21p20",
+          "verdict": "infeasible at the declared sizing"
+        },
+        "placeholder_floor": {
+          "reason": "no run of 3 qualifying drives at band(s) f17p70, f19p45, f21p20",
+          "verdict": "infeasible at the declared sizing"
+        }
+      }
+    },
+    "iip3": {
+      "folded_single_balanced": {
+        "f17p70": {
+          "reason": "no selected LO drive (no acceptable drive in declared sweep); IIP3 is only defined at a selected drive",
+          "status": "IIP3 unavailable"
+        },
+        "f19p45": {
+          "reason": "no selected LO drive (no acceptable drive in declared sweep); IIP3 is only defined at a selected drive",
+          "status": "IIP3 unavailable"
+        },
+        "f21p20": {
+          "reason": "no selected LO drive (no acceptable drive in declared sweep); IIP3 is only defined at a selected drive",
+          "status": "IIP3 unavailable"
+        }
+      },
+      "folded_single_balanced_a": {
+        "f17p70": {
+          "reason": "no selected LO drive (no acceptable drive in declared sweep); IIP3 is only defined at a selected drive",
+          "status": "IIP3 unavailable"
+        },
+        "f19p45": {
+          "reason": "no selected LO drive (no acceptable drive in declared sweep); IIP3 is only defined at a selected drive",
+          "status": "IIP3 unavailable"
+        },
+        "f21p20": {
+          "reason": "no selected LO drive (no acceptable drive in declared sweep); IIP3 is only defined at a selected drive",
+          "status": "IIP3 unavailable"
+        }
+      },
+      "folded_single_balanced_b": {
+        "f17p70": {
+          "reason": "no selected LO drive (no acceptable drive in declared sweep); IIP3 is only defined at a selected drive",
+          "status": "IIP3 unavailable"
+        },
+        "f19p45": {
+          "reason": "no selected LO drive (no acceptable drive in declared sweep); IIP3 is only defined at a selected drive",
+          "status": "IIP3 unavailable"
+        },
+        "f21p20": {
+          "reason": "no selected LO drive (no acceptable drive in declared sweep); IIP3 is only defined at a selected drive",
+          "status": "IIP3 unavailable"
+        }
+      },
+      "gilbert_stacked": {
+        "f17p70": {
+          "reason": "no selected LO drive (no acceptable drive in declared sweep); IIP3 is only defined at a selected drive",
+          "status": "IIP3 unavailable"
+        },
+        "f19p45": {
+          "reason": "no selected LO drive (no acceptable drive in declared sweep); IIP3 is only defined at a selected drive",
+          "status": "IIP3 unavailable"
+        },
+        "f21p20": {
+          "reason": "no selected LO drive (no acceptable drive in declared sweep); IIP3 is only defined at a selected drive",
+          "status": "IIP3 unavailable"
+        }
+      },
+      "gilbert_stacked_a": {
+        "f17p70": {
+          "reason": "no selected LO drive (no acceptable drive in declared sweep); IIP3 is only defined at a selected drive",
+          "status": "IIP3 unavailable"
+        },
+        "f19p45": {
+          "reason": "no selected LO drive (no acceptable drive in declared sweep); IIP3 is only defined at a selected drive",
+          "status": "IIP3 unavailable"
+        },
+        "f21p20": {
+          "reason": "no selected LO drive (no acceptable drive in declared sweep); IIP3 is only defined at a selected drive",
+          "status": "IIP3 unavailable"
+        }
+      },
+      "gilbert_stacked_b": {
+        "f17p70": {
+          "reason": "no selected LO drive (no acceptable drive in declared sweep); IIP3 is only defined at a selected drive",
+          "status": "IIP3 unavailable"
+        },
+        "f19p45": {
+          "reason": "no selected LO drive (no acceptable drive in declared sweep); IIP3 is only defined at a selected drive",
+          "status": "IIP3 unavailable"
+        },
+        "f21p20": {
+          "reason": "no selected LO drive (no acceptable drive in declared sweep); IIP3 is only defined at a selected drive",
+          "status": "IIP3 unavailable"
+        }
+      },
+      "placeholder_floor": {
+        "f17p70": {
+          "reason": "no selected LO drive (no acceptable drive in declared sweep); IIP3 is only defined at a selected drive",
+          "status": "IIP3 unavailable"
+        },
+        "f19p45": {
+          "reason": "no selected LO drive (no acceptable drive in declared sweep); IIP3 is only defined at a selected drive",
+          "status": "IIP3 unavailable"
+        },
+        "f21p20": {
+          "reason": "no selected LO drive (no acceptable drive in declared sweep); IIP3 is only defined at a selected drive",
+          "status": "IIP3 unavailable"
+        }
+      }
+    },
+    "leakage": {
+      "folded_single_balanced": {
+        "applicable": false
+      },
+      "folded_single_balanced_a": {
+        "applicable": false
+      },
+      "folded_single_balanced_b": {
+        "applicable": false
+      },
+      "gilbert_stacked": {
+        "applicable": false
+      },
+      "gilbert_stacked_a": {
+        "applicable": false
+      },
+      "gilbert_stacked_b": {
+        "applicable": false
+      },
+      "placeholder_floor": {
+        "applicable": false
+      }
+    },
+    "lo_sweep_stress": {
+      "folded_single_balanced": {
+        "-3": [
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.2560518
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.2559948
+          }
+        ],
+        "-6": [
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.4383122
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.4383111
+          }
+        ],
+        "-9": [
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.5674101
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.5674073
+          }
+        ],
+        "0": [
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.002087138
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.002104049
+          }
+        ],
+        "3": [
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.3665017
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.3660175
+          }
+        ],
+        "6": [
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.8519641
+          },
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.1820689
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.8519518
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.1820844
+          }
+        ]
+      },
+      "folded_single_balanced_a": {
+        "-3": [
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.3043868
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.304387
+          }
+        ],
+        "-6": [
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.4869806
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.4869799
+          }
+        ],
+        "-9": [
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.6162655
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.6162646
+          }
+        ],
+        "0": [
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.04608361
+          },
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 0.9607624
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.04607656
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 0.9607654
+          }
+        ],
+        "3": [
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.3180772
+          },
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 0.971541
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.3180833
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 0.9715374
+          }
+        ],
+        "6": [
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.7683407
+          },
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 1.000884
+          },
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.2465094
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.7683981
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 1.000845
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.2464692
+          }
+        ]
+      },
+      "folded_single_balanced_b": {
+        "-12": [
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 0.9618188
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 0.9618172
+          }
+        ],
+        "-3": [
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.3333754
+          },
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 0.9806253
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.33338
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 0.9806377
+          }
+        ],
+        "-6": [
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.5159947
+          },
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 0.9733376
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.5159954
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 0.9733307
+          }
+        ],
+        "-9": [
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.6452499
+          },
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 0.967523
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.6452493
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 0.9675273
+          }
+        ],
+        "0": [
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.003,
+            "quantity": "ic",
+            "worst_value": 0.003093397
+          },
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.07509644
+          },
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 0.9898732
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.003,
+            "quantity": "ic",
+            "worst_value": 0.003093407
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.07511179
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 0.9898742
+          }
+        ],
+        "3": [
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.003,
+            "quantity": "ic",
+            "worst_value": 0.003220292
+          },
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.2790324
+          },
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 1.00151
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.003,
+            "quantity": "ic",
+            "worst_value": 0.00321957
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.2790571
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 1.001302
+          }
+        ],
+        "6": [
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.003,
+            "quantity": "ic",
+            "worst_value": 0.003852924
+          },
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.7103825
+          },
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 1.04346
+          },
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.2822021
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.003,
+            "quantity": "ic",
+            "worst_value": 0.003853123
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.7104168
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 1.043433
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.2822149
+          }
+        ]
+      },
+      "gilbert_stacked": {
+        "-3": [
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.2498846
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.2498868
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.2498988
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.249888
+          }
+        ],
+        "-6": [
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.4343305
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.4343371
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.4343302
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.434321
+          }
+        ],
+        "-9": [
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.5649082
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.5648962
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.5648997
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.5648813
+          }
+        ],
+        "0": [
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.01086501
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.01088318
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.01088344
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.01088127
+          }
+        ],
+        "3": [
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.37741
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.2481814
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.3773909
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.2483104
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.3774339
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.2481721
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.377403
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.2482728
+          }
+        ],
+        "6": [
+          {
+            "device": "q1",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 1.4,
+            "quantity": "vce",
+            "worst_value": 1.535017
+          },
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 1.4,
+            "quantity": "vce",
+            "worst_value": 1.535023
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.7985065
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.09988325
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.7984464
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.09991327
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.7984992
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.09987567
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.7984929
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.09987756
+          }
+        ]
+      },
+      "gilbert_stacked_a": {
+        "-3": [
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.2768451
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.2768571
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.2768479
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.2768421
+          }
+        ],
+        "-6": [
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.4612798
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.4612784
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.4612775
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.4612613
+          }
+        ],
+        "-9": [
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.5918205
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.5918143
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.5918306
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.5917987
+          }
+        ],
+        "0": [
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.01625763
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.01624926
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.01625414
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.0162732
+          }
+        ],
+        "3": [
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.3397148
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 0.9626942
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.2517408
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.3397753
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 0.9626947
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.251744
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.3397574
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 0.9626387
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.2517315
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.3397645
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 0.9626833
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.2517419
+          }
+        ],
+        "6": [
+          {
+            "device": "q1",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 1.4,
+            "quantity": "vce",
+            "worst_value": 1.525776
+          },
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 1.4,
+            "quantity": "vce",
+            "worst_value": 1.525787
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.7352569
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 0.9861954
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.1309211
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.7352464
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 0.9862061
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.1309305
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.7352491
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 0.9861884
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.1309254
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.7352553
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 0.9861831
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.1309232
+          }
+        ]
+      },
+      "gilbert_stacked_b": {
+        "-3": [
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.3113191
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 0.9671163
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.3113341
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 0.9671283
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.311321
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 0.9671175
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.3113105
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 0.967129
+          }
+        ],
+        "-6": [
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.4956305
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.4956359
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.4956374
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.4956189
+          }
+        ],
+        "-9": [
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.6261076
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.6261081
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.6261241
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.6260918
+          }
+        ],
+        "0": [
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.0512662
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 0.9786652
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.05143308
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 0.9786652
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.05142373
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 0.9786682
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.05126767
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 0.9786637
+          }
+        ],
+        "3": [
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.2760363
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 0.9948322
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.2967944
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.2761134
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 0.994769
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.2967664
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.2760673
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 0.9948047
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.2967322
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.2761093
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 0.9947746
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.2966981
+          }
+        ],
+        "6": [
+          {
+            "device": "q1",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 1.4,
+            "quantity": "vce",
+            "worst_value": 1.503683
+          },
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 1.4,
+            "quantity": "vce",
+            "worst_value": 1.503613
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.003,
+            "quantity": "ic",
+            "worst_value": 0.00363675
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.663806
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 1.03109
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.1834629
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.003,
+            "quantity": "ic",
+            "worst_value": 0.003636641
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.6637753
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 1.03108
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.1835225
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.003,
+            "quantity": "ic",
+            "worst_value": 0.00363635
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.6637897
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 1.031083
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.1835106
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.003,
+            "quantity": "ic",
+            "worst_value": 0.003636352
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.6637691
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 1.031072
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.1834775
+          }
+        ]
+      },
+      "placeholder_floor": {
+        "-3": [
+          {
+            "device": "q1",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 0.9722591
+          }
+        ],
+        "0": [
+          {
+            "device": "q1",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.012,
+            "quantity": "ic",
+            "worst_value": 0.01396495
+          },
+          {
+            "device": "q1",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.5543166
+          },
+          {
+            "device": "q1",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 1.011854
+          }
+        ],
+        "3": [
+          {
+            "device": "q1",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.012,
+            "quantity": "ic",
+            "worst_value": 0.01328148
+          },
+          {
+            "device": "q1",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.3840128
+          },
+          {
+            "device": "q1",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 1.051528
+          },
+          {
+            "device": "q1",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.3522358
+          }
+        ],
+        "6": [
+          {
+            "device": "q1",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.012,
+            "quantity": "ic",
+            "worst_value": 0.01343293
+          },
+          {
+            "device": "q1",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.1215512
+          },
+          {
+            "device": "q1",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 1.091448
+          },
+          {
+            "device": "q1",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.3197746
+          }
+        ]
+      }
+    },
+    "main": {
+      "folded_single_balanced": {
+        "applicable": false,
+        "n": 81
+      },
+      "folded_single_balanced_a": {
+        "applicable": false,
+        "n": 81
+      },
+      "folded_single_balanced_b": {
+        "applicable": false,
+        "n": 81
+      },
+      "gilbert_stacked": {
+        "applicable": false,
+        "n": 81
+      },
+      "gilbert_stacked_a": {
+        "applicable": false,
+        "n": 81
+      },
+      "gilbert_stacked_b": {
+        "applicable": false,
+        "n": 81
+      },
+      "placeholder_floor": {
+        "applicable": false,
+        "n": 81
+      }
+    },
+    "selections": {
+      "folded_single_balanced": {
+        "per_band": {
+          "f17p70": {
+            "max_valid_gain_db": -2.7115472803357292,
+            "qualifying_dbm": [
+              -12.0
+            ]
+          },
+          "f19p45": {
+            "max_valid_gain_db": -2.724830370885499,
+            "qualifying_dbm": [
+              -12.0
+            ]
+          },
+          "f21p20": {
+            "max_valid_gain_db": -2.7394775277716192,
+            "qualifying_dbm": [
+              -12.0
+            ]
+          }
+        },
+        "reason": "no run of 3 qualifying drives at band(s) f17p70, f19p45, f21p20",
+        "status": "no acceptable drive in declared sweep"
+      },
+      "folded_single_balanced_a": {
+        "per_band": {
+          "f17p70": {
+            "max_valid_gain_db": -4.448976552965448,
+            "qualifying_dbm": [
+              -12.0
+            ]
+          },
+          "f19p45": {
+            "max_valid_gain_db": -4.4607021493491175,
+            "qualifying_dbm": [
+              -12.0
+            ]
+          },
+          "f21p20": {
+            "max_valid_gain_db": -4.47358782924978,
+            "qualifying_dbm": [
+              -12.0
+            ]
+          }
+        },
+        "reason": "no run of 3 qualifying drives at band(s) f17p70, f19p45, f21p20",
+        "status": "no acceptable drive in declared sweep"
+      },
+      "folded_single_balanced_b": {
+        "per_band": {
+          "f17p70": {
+            "max_valid_gain_db": -9.863015416923972,
+            "qualifying_dbm": [
+              -15.0
+            ]
+          },
+          "f19p45": {
+            "max_valid_gain_db": -9.885989783411219,
+            "qualifying_dbm": [
+              -15.0
+            ]
+          },
+          "f21p20": {
+            "max_valid_gain_db": -9.911063353416736,
+            "qualifying_dbm": [
+              -15.0
+            ]
+          }
+        },
+        "reason": "no run of 3 qualifying drives at band(s) f17p70, f19p45, f21p20",
+        "status": "no acceptable drive in declared sweep"
+      },
+      "gilbert_stacked": {
+        "per_band": {
+          "f17p70": {
+            "max_valid_gain_db": -3.02823933590696,
+            "qualifying_dbm": [
+              -12.0
+            ]
+          },
+          "f19p45": {
+            "max_valid_gain_db": -3.045685204012969,
+            "qualifying_dbm": [
+              -12.0
+            ]
+          },
+          "f21p20": {
+            "max_valid_gain_db": -3.0645684313923454,
+            "qualifying_dbm": [
+              -12.0
+            ]
+          }
+        },
+        "reason": "no run of 3 qualifying drives at band(s) f17p70, f19p45, f21p20",
+        "status": "no acceptable drive in declared sweep"
+      },
+      "gilbert_stacked_a": {
+        "per_band": {
+          "f17p70": {
+            "max_valid_gain_db": -2.76598751944519,
+            "qualifying_dbm": [
+              -12.0
+            ]
+          },
+          "f19p45": {
+            "max_valid_gain_db": -2.78562902318253,
+            "qualifying_dbm": [
+              -12.0
+            ]
+          },
+          "f21p20": {
+            "max_valid_gain_db": -2.806868395132973,
+            "qualifying_dbm": [
+              -12.0
+            ]
+          }
+        },
+        "reason": "no run of 3 qualifying drives at band(s) f17p70, f19p45, f21p20",
+        "status": "no acceptable drive in declared sweep"
+      },
+      "gilbert_stacked_b": {
+        "per_band": {
+          "f17p70": {
+            "max_valid_gain_db": -3.5333483401915657,
+            "qualifying_dbm": [
+              -12.0
+            ]
+          },
+          "f19p45": {
+            "max_valid_gain_db": -3.5590763743525713,
+            "qualifying_dbm": [
+              -12.0
+            ]
+          },
+          "f21p20": {
+            "max_valid_gain_db": -3.5870236148384222,
+            "qualifying_dbm": [
+              -12.0
+            ]
+          }
+        },
+        "reason": "no run of 3 qualifying drives at band(s) f17p70, f19p45, f21p20",
+        "status": "no acceptable drive in declared sweep"
+      },
+      "placeholder_floor": {
+        "per_band": {
+          "f17p70": {
+            "max_valid_gain_db": -4.461005788060845,
+            "qualifying_dbm": [
+              -6.0
+            ]
+          },
+          "f19p45": {
+            "max_valid_gain_db": -4.478189751272751,
+            "qualifying_dbm": [
+              -6.0
+            ]
+          },
+          "f21p20": {
+            "max_valid_gain_db": -4.496845760323083,
+            "qualifying_dbm": [
+              -6.0
+            ]
+          }
+        },
+        "reason": "no run of 3 qualifying drives at band(s) f17p70, f19p45, f21p20",
+        "status": "no acceptable drive in declared sweep"
+      }
+    }
+  },
+  "supersedes": null
+}

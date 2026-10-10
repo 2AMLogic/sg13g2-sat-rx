@@ -1,0 +1,212 @@
+{
+  "name": "mixer-topology-feasibility",
+  "description": "Mixer-core topology feasibility under the row-17 supply limits (issue #35): a classic stacked double-balanced Gilbert cell, a folded single-balanced alternative and the existing single-HBT placeholder (labelled floor) on npn13G2, compared with identical 50 ohm RF / 100 ohm differential LO / physical 50 ohm IF port conventions, ideal baluns and ideal passives. Per-device V_CE/V_BE/Ic stress (DC, startup, retained window), conversion gain into the physical 50 ohm IF load, the LO drive selected by a declared plateau rule, mixer-only DC rail power, LO-to-RF/IF leakage over the HBT mismatch cards, and IIP3 only from a verified 1:3-slope region.",
+  "claim": "DEVICE-LEVEL TOPOLOGY STUDY, NOT A DESIGN AND NOT SPEC EVIDENCE: candidates use ideal baluns, ideal R/C and ideal bias sources, one fixed documented sizing each, no matching network, no inductor, no layout. It establishes whether each topology can be biased inside the row-17 device limits and what LO drive it needs at that sizing; it claims no spec/target-spec.md row is met. The 2.25 V +/- 10 % supply axis is an exploratory nominal wholly below the 2.5 V ceiling, not a ratified rail.",
+  "netlist": "ports_common.spice",
+  "netlist_provenance": "schematic (topology-feasibility fixture: common ideal ports plus one of three candidate fragments with ideal baluns/passives; no design/ schematic exists and this is not one)",
+  "nominal_supply_v": 2.25,
+  "supply_tolerance": 0.1,
+  "temperatures_c": [-40.0, 27.0, 125.0],
+  "corners": ["hbt"],
+  "params": {
+    "f1": 19.45e9, "f2": 19.45e9, "flo": 18.45e9,
+    "vrf1": 0.0, "vrf2": 0.0, "vlo": 0.0, "rf_dc": 0.0, "lo_dc": 0.0
+  },
+  "options": ["reltol=1e-5"],
+  "analyses": ["op"],
+  "measure": {
+    "ports_rail_v": "v(vdd)"
+  },
+  "_harness_measure_note": "The 'analyses'/'measure' pair above is ONLY what a bare `python3 -m harness.cli run|selftest mixer-topology-feasibility` evaluates: the common port fragment alone, with no candidate attached, at its DC point (the rail node voltage). It keeps the generic harness manifest path valid and nothing more; it has no process sensitivity. The study is the 'study' block below, driven by ../run.py (see ../README.md).",
+  "study": {
+    "if_hz": 1e9,
+    "rf_band_hz": [17.7e9, 21.2e9],
+    "rail_max_v": 2.5,
+    "bands": [
+      {"name": "f17p70", "rf_hz": 17.7e9,  "two_tone_hz": [17.7e9, 17.725e9]},
+      {"name": "f19p45", "rf_hz": 19.45e9, "two_tone_hz": [19.4375e9, 19.4625e9]},
+      {"name": "f21p20", "rf_hz": 21.2e9,  "two_tone_hz": [21.175e9, 21.2e9]}
+    ],
+    "rf_small_signal_dbm": -60.0,
+    "rf_check_dbm": -66.0,
+    "small_signal_tol_db": 0.2,
+    "lo_sweep_dbm": {"start": -30.0, "stop": 6.0, "step": 3.0},
+    "lo_select": {"plateau_db": 0.5, "run_length": 3},
+    "iip3": {
+      "pin_dbm": {"start": -70.0, "stop": -10.0, "step": 5.0},
+      "slope_fund": [0.9, 1.1],
+      "slope_im3": [2.7, 3.3],
+      "min_points": 3,
+      "floor_margin_db": 10.0,
+      "compression_db": 1.0,
+      "max_residual_db": 0.5
+    },
+    "timing": {
+      "settle_s": 20e-9,
+      "window_single_s": 20e-9,
+      "window_two_tone_s": 80e-9,
+      "tmax_s": 1e-12,
+      "tstep_s": 1e-12
+    },
+    "convergence": {"tol_db": 0.2, "floor_margin_db": 10.0, "absolute_floor_dbm": -140.0},
+    "stress": {
+      "vce_v": [0.4, 1.4],
+      "vbe_v": [0.65, 0.96],
+      "ic_a_per_nx": 0.003,
+      "reject_intervals": ["dc", "retained"]
+    },
+    "matrices": {
+      "main": {
+        "corners": ["hbt_typ", "hbt_bcs", "hbt_wcs"],
+        "temperatures_c": [-40.0, 27.0, 125.0],
+        "supplies_v": "nominal_pm_tolerance",
+        "bands": "all"
+      },
+      "leakage": {
+        "corners": ["hbt_typ_mismatch", "hbt_bcs_mismatch", "hbt_wcs_mismatch"],
+        "temperatures_c": [-40.0, 27.0, 125.0],
+        "supplies_v": "nominal_pm_tolerance",
+        "bands": "all",
+        "seed": 35001
+      },
+      "lo_select": {
+        "corners": ["hbt_typ"],
+        "temperatures_c": [27.0],
+        "supplies_v": [2.25],
+        "bands": "all"
+      },
+      "iip3": {
+        "corners": ["hbt_typ"],
+        "temperatures_c": [27.0],
+        "supplies_v": [2.25],
+        "bands": "all"
+      }
+    },
+    "smoke": {"band": "f19p45", "trial_lo_dbm": 0.0},
+    "candidates": [
+      {
+        "name": "gilbert_stacked",
+        "role": "candidate",
+        "fragment": "cand_gilbert_stacked.spice",
+        "summary": "classic double-balanced Gilbert cell: ideal 2 mA tail sink, RF pair, LO quad, 400 ohm loads (three stacked levels)",
+        "rf_dc_v": 0.0,
+        "lo_dc_v": 1.85,
+        "ideal_sink_nodes": ["tail"],
+        "devices": [
+          {"name": "q1", "c": "c_q1", "b": "b_q1", "e": "e_q1", "nx": 1},
+          {"name": "q2", "c": "c_q2", "b": "b_q2", "e": "e_q2", "nx": 1},
+          {"name": "q3", "c": "c_q3", "b": "lo_p", "e": "x1", "nx": 1},
+          {"name": "q4", "c": "c_q4", "b": "lo_n", "e": "x1", "nx": 1},
+          {"name": "q5", "c": "c_q5", "b": "lo_p", "e": "x2", "nx": 1},
+          {"name": "q6", "c": "c_q6", "b": "lo_n", "e": "x2", "nx": 1}
+        ]
+      },
+      {
+        "name": "folded_single_balanced",
+        "role": "candidate",
+        "fragment": "cand_folded_single_balanced.spice",
+        "summary": "single-balanced mixer, RF transconductor folded into the LO pair through 2 pF; each DC path stacks one device on an ideal sink",
+        "rf_dc_v": 1.10,
+        "lo_dc_v": 1.70,
+        "ideal_sink_nodes": ["e_q1", "xe"],
+        "devices": [
+          {"name": "q1", "c": "c_q1", "b": "rf_port", "e": "e_q1", "nx": 1},
+          {"name": "q2", "c": "c_q2", "b": "lo_p", "e": "xe", "nx": 1},
+          {"name": "q3", "c": "c_q3", "b": "lo_n", "e": "xe", "nx": 1}
+        ]
+      },
+      {
+        "name": "gilbert_stacked_a",
+        "role": "candidate",
+        "fragment": "cand_gilbert_stacked_a.spice",
+        "summary": "#61 sizing A: gilbert_stacked with a 3 mA tail (1.5 mA per RF device), RL 270 ohm, LO quad bias 1.88 V; raises on-state V_BE to keep the quad trough above the 0.65 V floor. Declared up front, not tuned.",
+        "rf_dc_v": 0.0,
+        "lo_dc_v": 1.88,
+        "ideal_sink_nodes": ["tail"],
+        "devices": [
+          {"name": "q1", "c": "c_q1", "b": "b_q1", "e": "e_q1", "nx": 1},
+          {"name": "q2", "c": "c_q2", "b": "b_q2", "e": "e_q2", "nx": 1},
+          {"name": "q3", "c": "c_q3", "b": "lo_p", "e": "x1", "nx": 1},
+          {"name": "q4", "c": "c_q4", "b": "lo_n", "e": "x1", "nx": 1},
+          {"name": "q5", "c": "c_q5", "b": "lo_p", "e": "x2", "nx": 1},
+          {"name": "q6", "c": "c_q6", "b": "lo_n", "e": "x2", "nx": 1}
+        ]
+      },
+      {
+        "name": "gilbert_stacked_b",
+        "role": "candidate",
+        "fragment": "cand_gilbert_stacked_b.spice",
+        "summary": "#61 sizing B: gilbert_stacked with a 4.5 mA tail (2.25 mA per RF device), RL 180 ohm, LO quad bias 1.90 V; the higher-current variant of A. Declared up front, not tuned.",
+        "rf_dc_v": 0.0,
+        "lo_dc_v": 1.9,
+        "ideal_sink_nodes": ["tail"],
+        "devices": [
+          {"name": "q1", "c": "c_q1", "b": "b_q1", "e": "e_q1", "nx": 1},
+          {"name": "q2", "c": "c_q2", "b": "b_q2", "e": "e_q2", "nx": 1},
+          {"name": "q3", "c": "c_q3", "b": "lo_p", "e": "x1", "nx": 1},
+          {"name": "q4", "c": "c_q4", "b": "lo_n", "e": "x1", "nx": 1},
+          {"name": "q5", "c": "c_q5", "b": "lo_p", "e": "x2", "nx": 1},
+          {"name": "q6", "c": "c_q6", "b": "lo_n", "e": "x2", "nx": 1}
+        ]
+      },
+      {
+        "name": "folded_single_balanced_a",
+        "role": "candidate",
+        "fragment": "cand_folded_single_balanced_a.spice",
+        "summary": "#61 sizing A: folded_single_balanced with a 2 mA LO-pair sink, RL 400 ohm, LO bias 1.72 V. Declared up front, not tuned.",
+        "rf_dc_v": 1.10,
+        "lo_dc_v": 1.72,
+        "ideal_sink_nodes": ["e_q1", "xe"],
+        "devices": [
+          {"name": "q1", "c": "c_q1", "b": "rf_port", "e": "e_q1", "nx": 1},
+          {"name": "q2", "c": "c_q2", "b": "lo_p", "e": "xe", "nx": 1},
+          {"name": "q3", "c": "c_q3", "b": "lo_n", "e": "xe", "nx": 1}
+        ]
+      },
+      {
+        "name": "folded_single_balanced_b",
+        "role": "candidate",
+        "fragment": "cand_folded_single_balanced_b.spice",
+        "summary": "#61 sizing B: folded_single_balanced with a 2.7 mA LO-pair sink, RL 300 ohm, LO bias 1.74 V. Declared up front, not tuned.",
+        "rf_dc_v": 1.10,
+        "lo_dc_v": 1.74,
+        "ideal_sink_nodes": ["e_q1", "xe"],
+        "devices": [
+          {"name": "q1", "c": "c_q1", "b": "rf_port", "e": "e_q1", "nx": 1},
+          {"name": "q2", "c": "c_q2", "b": "lo_p", "e": "xe", "nx": 1},
+          {"name": "q3", "c": "c_q3", "b": "lo_n", "e": "xe", "nx": 1}
+        ]
+      },
+      {
+        "name": "placeholder_floor",
+        "role": "floor",
+        "fragment": "cand_placeholder_floor.spice",
+        "summary": "LABELLED FLOOR: the existing single-HBT placeholder core (RF and LO summed at one base), re-wrapped in this bench's ports; never recommended",
+        "rf_dc_v": 0.0,
+        "lo_dc_v": 0.0,
+        "devices": [
+          {"name": "q1", "c": "c_q1", "b": "b_q1", "e": "e_q1", "nx": 4}
+        ]
+      }
+    ],
+    "analytic_control": {
+      "name": "analytic_control",
+      "fragment": "control_analytic_multiplier.spice",
+      "summary": "ideal behavioural multiplier with closed-form gain, LO leakage and IM3 (extraction control, not a candidate)",
+      "rf_dc_v": 0.0,
+      "lo_dc_v": 0.0,
+      "devices": [],
+      "params": {"ac_k": 4.0, "ac_k3": -40.0, "ac_c": 0.01, "ac_g": 0.001}
+    },
+    "_notes": [
+      "Sizing follow-up (issue #61): the four *_a / *_b candidates are alternative FIXED sizings of the two balanced topologies, declared here before any collection and not tuned after seeing results. Rationale from the first record only (20261010-010744-a10c193): the switching devices' retained V_BE fell below the card's 0.65 V floor from -9 dBm while the gain was still rising. The lever kept inside the declared sweep, plateau rule, stress limits and spec is the on-state current density (raises V_BE,on, so the V_BE trough of the off-going device stays higher); load resistors keep the original ~0.4 V average drop and the LO base bias keeps the original emitter-node level. A = moderate increase, B = larger increase, each device peak current kept below the 3 mA/Nx card limit. The original sizings stay in the study unchanged. If neither sizing selects a drive the outcome is recorded as such and a decision-record proposal is routed; no rule, bound or limit is changed.",
+      "Supply: 2.25 V nominal +/- 10 % = 2.025 / 2.25 / 2.475 V, all below the 2.5 V row-17 ceiling. An exploratory nominal for this study only; it ratifies no rail. The legacy 2.5 V +/- 10 % grid is NOT used (2.75 V would exceed the ceiling) and is not clipped either.",
+      "LO sweep: -30 to +6 dBm TOTAL available power of the 100 ohm differential port in 3 dB steps (13 points). Exploratory bounds, not a row-15 drive commitment; never silently extended.",
+      "Selection rule (mixfeas.select_lo_drive): at each band the maximum gain over stress-valid points; a point qualifies if stress-valid, small-signal check passed (|G(-60 dBm) - G(-66 dBm)| <= 0.2 dB) and within 0.5 dB of that maximum; the lowest drive starting 3 consecutive qualifying drives at ALL THREE bands is selected. Otherwise 'no acceptable drive in declared sweep'; any missing/invalid point makes the outcome 'inconclusive'.",
+      "Reductions (deliberate, reported in every record): the LO-selection sweep and the IIP3 sweep run at hbt_typ / 27 C / 2.25 V only, at all three bands. Gain, DC power and stress use the full main matrix at the selected drive; leakage the full mismatch matrix at the selected drive with RF off. No MOS, capacitor or resistor corner axes: the fixtures use no PDK MOS/capacitor/resistor model (all passives are ideal). Ideal passives do not cover the open passive/EM axis.",
+      "Mismatch: cornerHBT.lib's *_mismatch sections draw each npn13G2 instance's area as agauss(1, 0.1, 1) (sg13g2_hbt_mod_mismatch.lib). ngspice draws are fixed by '.options seed=<n>'; the declared seed 35001 is applied to every leakage cell, so each cell is ONE deterministic realization per candidate (draw order follows instance order, so realizations differ between candidates). This is deterministic card coverage, not Monte Carlo yield evidence. Verified locally: same seed -> identical currents; reset/alterparam within one deck do not redraw.",
+      "Simulator accuracy: '.options reltol=1e-5' (default 1e-3). At reltol=1e-3 the -60 dBm IF product of the hard-driven placeholder moved 0.77 dB when the maximum timestep was halved (the IF bin shares the node with LO feedthrough ~48 dB larger); at 1e-5 every candidate's gain agrees to <= 0.12 dB from 1 ps down to 0.25 ps (local single-corner probe, 2026-10-09). Extraction floor: the larger of the strongest neighbouring empty bin and an absolute -140 dBm resolution floor; a quantity less than 10 dB above its floor is reported only as an upper bound.",
+      "Stress: row 17's effective V_CE interval [0.4, 1.4] V, the card's V_BE interval [0.65, 0.96] V, Ic >= 0.003*Nx A flagged. Violations in the DC point or the retained window reject the run (explicit 'rejected_stress' outcome); startup-interval (t < settle) violations are recorded as flags only, because the bench's sources step on at t = 0."
+    ]
+  }
+}

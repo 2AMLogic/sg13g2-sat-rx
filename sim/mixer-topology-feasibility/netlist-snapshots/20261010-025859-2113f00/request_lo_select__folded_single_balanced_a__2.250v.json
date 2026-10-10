@@ -1,0 +1,34 @@
+{
+  "netlist": "body_lo_select__folded_single_balanced_a__2.250v.spice",
+  "backend": "batch",
+  "models": {
+    "pdk": "ihp-sg13g2",
+    "lib": "libs.tech/ngspice/models/cornerHBT.lib"
+  },
+  "corners": {
+    "process": [
+      "hbt_typ"
+    ],
+    "temperature_c": [
+      27.0
+    ]
+  },
+  "analysis": {
+    "kind": "tran",
+    "args": "1p 2p"
+  },
+  "measurements": [
+    {
+      "name": "sentinel_rail_v",
+      "spice": ".meas tran sentinel_rail_v FIND v(vdd) AT=2p",
+      "unit": "V"
+    }
+  ],
+  "options": {
+    "timeout_s": 3600,
+    "keep_artifacts": true
+  },
+  "batch": {
+    "runner_version_check": "warn"
+  }
+}
