@@ -1,0 +1,22 @@
+* Known-answer control: an IDEAL multiplying mixer (behavioural B source).
+* No device model, no noise, no memory: v(cout) = ck * v(clo) * (v(cru) + cimg*v(crl)).
+*
+* Closed form (LO = cA*sin(wLO t + th); upper tone = a*sin((wLO+wIF) t + ph_u);
+* lower (image) tone = a*sin((wLO-wIF) t + ph_l)), IF phasor X defined by
+* v(IF) = Re(X e^{j wIF t}):
+*   upper : X = (ck cA / 2) e^{-j th} * (a e^{j ph_u})        wanted transfer Gw
+*   lower : X = (ck cA / 2) e^{+j th} * conj(a e^{j ph_l})    image transfer  Gi
+* so |Gw| = |Gi| = ck cA / 2, arg Gw = -th, arg Gi = +th. The lower tone enters
+* conjugated (that is what makes it an image, not a second wanted tone); a
+* sabotaged device that drops the image, flips its sign, scales the gain or
+* moves the LO must fail tests/ and `run_probe.py --sabotage ...`.
+*
+* The sabotage knobs are .param defaults that run_probe.py overrides only in
+* --sabotage mode (which never writes a record): ck (gain), cimg (image path
+* weight: 1 normal, 0 dropped, -1 sign flipped), cflo (LO frequency).
+.param ck=1 cimg=1 cflo=18.45e9 cA=1 cth=30
+Vclo clo 0 DC 0 SIN(0 {cA} {cflo} 0 0 {cth})
+Vcru cru 0 DC 0 SIN(0 {apu} 19.45e9 0 0 {phu})
+Vcrl crl 0 DC 0 SIN(0 {apl} 17.45e9 0 0 {phl})
+Bcm cout 0 V = {ck}*V(clo)*(V(cru)+{cimg}*V(crl))
+Rcl cout 0 1k
