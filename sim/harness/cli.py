@@ -95,7 +95,19 @@ def cmd_verify_pdk(args: argparse.Namespace) -> int:
     return 0 if rep.ok else 1
 
 
+SMOKE_SUBSET_REJECTION = (
+    "error: --smoke-subset only applies to non-recording runs; it requires "
+    "--no-write and cannot be combined with an evidence-writing run"
+)
+
+
 def cmd_run(args: argparse.Namespace) -> int:
+    # An evidence-writing run must keep every complete-axis check. --sabotage
+    # forces --no-write later, but it is not a smoke subset, so require the
+    # explicit flag here, before anything is loaded or simulated.
+    if args.smoke_subset and not args.no_write:
+        print(SMOKE_SUBSET_REJECTION, file=sys.stderr)
+        return 2
     try:
         tb = load(args.experiment)
     except (FileNotFoundError, ValueError) as exc:
@@ -167,7 +179,9 @@ def cmd_run(args: argparse.Namespace) -> int:
     measure_names = list(tb.measure)
     summary = summarize(results, measure_names)
     sensitivity = axis_sensitivity(results, measure_names)
-    failures = evaluate_checks(tb.checks, results, summary, sensitivity)
+    failures = evaluate_checks(
+        tb.checks, results, summary, sensitivity, allow_unswept_axes=args.smoke_subset
+    )
     for failure in failures:
         print(f"FAIL: {describe_failure(failure)}", file=sys.stderr)
 
@@ -262,6 +276,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_run.add_argument("--claim", default="")
     p_run.add_argument("--supersedes", default="")
     p_run.add_argument("--no-write", action="store_true", help="simulate but write no record")
+    p_run.add_argument("--smoke-subset", action="store_true",
+                        help="requires --no-write: skip only the 'axis never swept' sensitivity "
+                             "check (single-process-corner smoke); all other checks still fail the run")
     p_run.add_argument("--sabotage", action="store_true",
                         help="force every corner to typical (implies --no-write)")
     p_run.add_argument("--allow-toolchain-drift", action="store_true")
