@@ -30,6 +30,9 @@ def built(tmp_path, monkeypatch):
     monkeypatch.setattr(R, "SNAPS", tmp_path / "snaps")
     monkeypatch.setattr(R, "plan_provenance", lambda: {"file": "x", "sha256": R.sha256_file(R.PLAN_PATH), "commit": "b" * 40, "dirty": False})
     monkeypatch.setattr(R, "dirty_code", lambda: [])
+    # build and verify must not depend on a simulator binary on this host (the CI job has none)
+    real_which = R.shutil.which
+    monkeypatch.setattr(R.shutil, "which", lambda name, *a, **k: None if name == "ngspice" else real_which(name, *a, **k))
     work = tmp_path / "work"
     work.mkdir()
     args = types.SimpleNamespace(klt_cmd="echo klt-test", backend="batch", timeout_s=60, no_stage_models=True,
@@ -82,6 +85,8 @@ def test_record_states_the_placeholder_scope_and_targets(built):
     md = (tmp / "records" / f"{rid}.md").read_text()
     assert "**Claim**" in md and "IDEAL lossless L/C matching" in md and "unchanged" in md
     assert rec["status"] == "COLLECTED"
+    # host ngspice is collect-time provenance only; its absence is recorded, never fatal
+    assert rec["environment"]["host_ngspice"] == ["ngspice not found on the collecting host's PATH"]
 
 
 def test_failing_control_gives_a_controls_failed_record_not_a_verdict(tmp_path, monkeypatch):

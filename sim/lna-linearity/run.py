@@ -29,6 +29,7 @@ import gzip
 import hashlib
 import json
 import shlex
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -438,6 +439,20 @@ def collect(args) -> int:
     return finalize(plan, work, reqs, texts, reports, pyc, pdk, started, args)
 
 
+def host_ngspice_version() -> list[str]:
+    """Collect-time provenance only: the ngspice on the collecting host's PATH, if any.
+
+    The simulations themselves ran on the klt backend, whose engine version is recorded per
+    request (``klt_requests[].engine_version``). Nothing downstream re-derives or checks this
+    field, so a host without ngspice records that fact instead of failing; ``verify`` never
+    needs a simulator binary.
+    """
+    exe = shutil.which("ngspice")
+    if exe is None:
+        return ["ngspice not found on the collecting host's PATH"]
+    return subprocess.run([exe, "--version"], capture_output=True, text=True).stdout.splitlines()[1:2]
+
+
 def finalize(plan, work, reqs, texts, reports, pyc, pdk, started, args) -> int:
     res = A.analyze(plan, texts)
     if res["problems"]:
@@ -468,7 +483,7 @@ def finalize(plan, work, reqs, texts, reports, pyc, pdk, started, args) -> int:
         "environment": {"git": git, "klt_client": (client.stdout or client.stderr).strip(),
                         "pdk_artifact_sha256": sha256_file(SIM_DIR / "pdk-artifact.json"),
                         "pdk": klt_driver.pdk_provenance(pdk, MODEL_FILES),
-                        "host_ngspice": subprocess.run(["ngspice", "--version"], capture_output=True, text=True).stdout.splitlines()[1:2]},
+                        "host_ngspice": host_ngspice_version()},
     }
     # verify before writing: the published verdicts must reproduce from the raw logs
     check = A.analyze(plan, texts)

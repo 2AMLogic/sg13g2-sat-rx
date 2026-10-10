@@ -19,13 +19,13 @@
     "files": {
       "README.md": "sha256:cb1992942ac4e98e14be5bfecbfdd0b6971c71efc0af575ff48d649588a282f5",
       "LICENSE": "sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
-      "spec/target-spec.md": "sha256:faf345959c3c9261c9a53b3d31669e59078bafc6f95f4d835451902dd5a19319"
+      "spec/target-spec.md": "sha256:a561baf0ee9ad4a0bb696f8ecf4313e04506217fe5389cedc62954938a297c59"
     }
   },
   "provenance": {
     "input": {
       "path": ".github/workflows/ci.yml",
-      "content_hash": "sha256:7ccc5d9cda6dfab95d495bf00c4f7526e56d1df0fa0b7dab6919c83dc74963b2"
+      "content_hash": "sha256:cfc7304df473ff2e4ac00b842e89899b8d89a8319c5af4fced0dee4a2f767f69"
     }
   }
 }

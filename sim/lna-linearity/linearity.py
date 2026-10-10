@@ -429,11 +429,16 @@ def _finite(x) -> bool:
 
 
 def linfit(xs: list[float], ys: list[float]) -> tuple[float, float, float]:
-    """Least squares y = a + s x; returns (a, s, max |residual|)."""
+    """Least squares y = a + s x; returns (a, s, max |residual|).
+
+    Sums use ``math.fsum`` (correctly rounded): the builtin ``sum`` of floats changed to
+    compensated summation in Python 3.12, so with it a re-derivation on another interpreter
+    could differ in the last kept digit and a frozen record would not reproduce.
+    """
     n = len(xs)
-    mx, my = sum(xs) / n, sum(ys) / n
-    sxx = sum((x - mx) ** 2 for x in xs)
-    s = sum((x - mx) * (y - my) for x, y in zip(xs, ys)) / sxx
+    mx, my = math.fsum(xs) / n, math.fsum(ys) / n
+    sxx = math.fsum((x - mx) ** 2 for x in xs)
+    s = math.fsum((x - mx) * (y - my) for x, y in zip(xs, ys)) / sxx
     a = my - s * mx
     return a, s, max(abs(y - (a + s * x)) for x, y in zip(xs, ys))
 
@@ -446,7 +451,7 @@ def _baseline(rows: list[dict], gain_key: str, usable: list[bool], n: int, flat_
         g = [rows[j][gain_key] for j in range(i, i + n)]
         if max(g) - min(g) <= flat_db:
             return {"first_index": i, "n_points": n, "pin_dbm": [rows[j]["pin_dbm"] for j in range(i, i + n)],
-                    "gain_db": sum(g) / n, "spread_db": max(g) - min(g)}
+                    "gain_db": math.fsum(g) / n, "spread_db": max(g) - min(g)}
     return None
 
 
@@ -534,7 +539,7 @@ def fit_iip3(rows: list[dict], params: dict, limits: dict | None, *, enforce_lim
                 if max(r1, r3) > p["max_residual_db"]:
                     rejected.append({"interval_dbm": [xs[0], xs[-1]], "reason": f"residual {max(r1, r3):.3f} dB too large"})
                     continue
-                fixed = sum(per_pt) / len(per_pt)
+                fixed = math.fsum(per_pt) / len(per_pt)
                 free = (a1 - a3) / (s3 - s1)
                 if abs(fixed - free) > p["free_fixed_tol_db"]:
                     rejected.append({"interval_dbm": [xs[0], xs[-1]],
