@@ -217,6 +217,17 @@ jobs:
           pip install -r requirements-sim.txt
           python3 sim/passive-p1/scripts/controls.py all
 
+      # mixer-cm-interface-probe (issue #104): the real known-answer ideal-mixer
+      # control and its four sabotages (gain, drop_image, image_sign, wrong_lo) on
+      # the pinned ngspice, five sequential single-point runs (~1 min). The helper
+      # asserts structured control results (pinned executable ran, positive control
+      # passes, every sabotage fails on a measured check); run_probe.py's exit code
+      # cannot, since a missing binary exits 0. It asserts no overall interface
+      # status (BLOCKED/PARTIAL noise interfaces stay a legitimate outcome), writes
+      # under a temp dir only, and records nothing: not evidence, not METHOD_VALIDATION.
+      - name: Mixer CM-probe control + sabotages on pinned ngspice (records nothing)
+        run: python3 sim/mixer-cm-interface-probe/ci_assert.py
+
       - name: No evidence record or tracked file was created or changed
         run: |
           if [ -n "$(git status --porcelain)" ]; then
