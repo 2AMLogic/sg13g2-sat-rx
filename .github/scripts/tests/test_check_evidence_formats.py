@@ -343,6 +343,9 @@ def upstream(tmp_path_factory):
     root = tmp_path_factory.mktemp("upstream")
     shutil.copytree(REPO / "sim", root / "sim", symlinks=False,
                     ignore=shutil.ignore_patterns("harness", "_build", "_selftest", "__pycache__"))
+    # the lna-linearity adapter reads the ratified row 7/8 targets from the spec table
+    (root / "spec").mkdir()
+    shutil.copyfile(REPO / "spec" / "target-spec.md", root / "spec" / "target-spec.md")
     run(root, "git", "init", "-q", "-b", "trunk")
     commit(root, "base")
     return root

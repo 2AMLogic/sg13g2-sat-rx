@@ -130,7 +130,7 @@ class CommittedEvidence(FormatBase):
         self.assertEqual(self.problems(), [])
 
     def test_adapters_are_registered_explicitly(self):
-        self.assertEqual(set(chk.ADAPTERS), {PASSIVE, MIXER, LNAMATCH, CMPROBE, PRA})
+        self.assertEqual(set(chk.ADAPTERS), {PASSIVE, MIXER, LNAMATCH, CMPROBE, PRA, "lna-linearity"})
 
     def test_adapters_actually_run(self):
         # if discovery silently skipped these layouts this would stay green
