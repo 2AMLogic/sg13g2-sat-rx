@@ -1,0 +1,1034 @@
+{
+  "accepted_cells": 837,
+  "cells_file": "20261010-010744-a10c193-cells.json.gz",
+  "declared_cells": 837,
+  "experiment": "mixer-topology-feasibility",
+  "gate": {
+    "problems": [],
+    "validate_collection": "passed"
+  },
+  "issue": 35,
+  "part": "collection",
+  "provenance": {
+    "converge": {
+      "folded_single_balanced": {
+        "baseline": {
+          "gain_db": -1.983603808672811,
+          "lo_if_dbm": -28.536326165392442,
+          "lo_rf_dbm": -85.39622369503854,
+          "resolved_off": {
+            "loif": true,
+            "lorf": true
+          },
+          "status_off": "rejected_stress",
+          "status_on": "rejected_stress"
+        },
+        "checks": [
+          {
+            "delta_db": 0.000542024392856888,
+            "ok": true,
+            "quantity": "gain_db",
+            "reason": "",
+            "variant": "window2x"
+          },
+          {
+            "delta_db": 4.533286946539761e-05,
+            "ok": true,
+            "quantity": "lo_if_dbm (RF off)",
+            "reason": "",
+            "variant": "window2x"
+          },
+          {
+            "delta_db": -0.025172632208779078,
+            "ok": true,
+            "quantity": "lo_rf_dbm (RF off)",
+            "reason": "",
+            "variant": "window2x"
+          },
+          {
+            "delta_db": -0.00038190282941030773,
+            "ok": true,
+            "quantity": "gain_db",
+            "reason": "",
+            "variant": "step0.5x"
+          },
+          {
+            "delta_db": 0.009192159311691483,
+            "ok": true,
+            "quantity": "lo_if_dbm (RF off)",
+            "reason": "",
+            "variant": "step0.5x"
+          },
+          {
+            "delta_db": -0.028178812314152424,
+            "ok": true,
+            "quantity": "lo_rf_dbm (RF off)",
+            "reason": "",
+            "variant": "step0.5x"
+          }
+        ],
+        "drive_dbm": 0.0,
+        "drive_kind": "trial (diagnostic, NOT a selected drive)",
+        "failures": [],
+        "ok": true
+      },
+      "gilbert_stacked": {
+        "baseline": {
+          "gain_db": -2.3277055283006547,
+          "lo_if_dbm": -49.80081554530508,
+          "lo_rf_dbm": -83.77551430501,
+          "resolved_off": {
+            "loif": true,
+            "lorf": true
+          },
+          "status_off": "rejected_stress",
+          "status_on": "rejected_stress"
+        },
+        "checks": [
+          {
+            "delta_db": -0.0010280920888234846,
+            "ok": true,
+            "quantity": "gain_db",
+            "reason": "",
+            "variant": "window2x"
+          },
+          {
+            "delta_db": -0.0019916563598698644,
+            "ok": true,
+            "quantity": "lo_if_dbm (RF off)",
+            "reason": "",
+            "variant": "window2x"
+          },
+          {
+            "delta_db": -0.008017884325312252,
+            "ok": true,
+            "quantity": "lo_rf_dbm (RF off)",
+            "reason": "",
+            "variant": "window2x"
+          },
+          {
+            "delta_db": -8.339116958921977e-05,
+            "ok": true,
+            "quantity": "gain_db",
+            "reason": "",
+            "variant": "step0.5x"
+          },
+          {
+            "delta_db": 0.013230188477457716,
+            "ok": true,
+            "quantity": "lo_if_dbm (RF off)",
+            "reason": "",
+            "variant": "step0.5x"
+          },
+          {
+            "delta_db": -0.007606312108364932,
+            "ok": true,
+            "quantity": "lo_rf_dbm (RF off)",
+            "reason": "",
+            "variant": "step0.5x"
+          }
+        ],
+        "drive_dbm": 0.0,
+        "drive_kind": "trial (diagnostic, NOT a selected drive)",
+        "failures": [],
+        "ok": true
+      },
+      "placeholder_floor": {
+        "baseline": {
+          "gain_db": -4.08160298153453,
+          "lo_if_dbm": -14.083747398883803,
+          "lo_rf_dbm": -0.45254320472810644,
+          "resolved_off": {
+            "loif": true,
+            "lorf": true
+          },
+          "status_off": "rejected_stress",
+          "status_on": "rejected_stress"
+        },
+        "checks": [
+          {
+            "delta_db": 0.02273633545347309,
+            "ok": true,
+            "quantity": "gain_db",
+            "reason": "",
+            "variant": "window2x"
+          },
+          {
+            "delta_db": 0.00010444804363807236,
+            "ok": true,
+            "quantity": "lo_if_dbm (RF off)",
+            "reason": "",
+            "variant": "window2x"
+          },
+          {
+            "delta_db": 0.00014798881774752415,
+            "ok": true,
+            "quantity": "lo_rf_dbm (RF off)",
+            "reason": "",
+            "variant": "window2x"
+          },
+          {
+            "delta_db": -0.017949719520331087,
+            "ok": true,
+            "quantity": "gain_db",
+            "reason": "",
+            "variant": "step0.5x"
+          },
+          {
+            "delta_db": 0.013100874000700813,
+            "ok": true,
+            "quantity": "lo_if_dbm (RF off)",
+            "reason": "",
+            "variant": "step0.5x"
+          },
+          {
+            "delta_db": 0.006563930209401769,
+            "ok": true,
+            "quantity": "lo_rf_dbm (RF off)",
+            "reason": "",
+            "variant": "step0.5x"
+          }
+        ],
+        "drive_dbm": 0.0,
+        "drive_kind": "trial (diagnostic, NOT a selected drive)",
+        "failures": [],
+        "ok": true
+      }
+    },
+    "crosscheck": {
+      "compared": 3,
+      "kind": "local-vs-local",
+      "reference_backends": [
+        "local"
+      ],
+      "summary": "LOCAL-vs-LOCAL: the reference cells came from local single-host `klt sim` requests (backend `local`) and were re-simulated through the local harness path; this validates the klt-body path against the harness path, both local. It is NOT a fleet-vs-local check; 3 nominal value(s) compared (one ngspice process at a time); max |delta| 0.00e+00 dB (tolerance 0.001 dB)",
+      "tolerance_db": 0.001,
+      "worst_delta_db": 0.0
+    },
+    "execution": {
+      "backends": [
+        "local"
+      ],
+      "fleet_exercised": false,
+      "multi_unit_requests": [],
+      "not_simulated_cells": {
+        "iip3": 117,
+        "leakage": 243,
+        "main": 243
+      },
+      "off_host_requests": [],
+      "requests": 3,
+      "stages": {
+        "1": {
+          "local": {
+            "max_units": 1,
+            "requests": 3,
+            "units": 3
+          }
+        }
+      },
+      "text": "simulated (ngspice, real npn13G2 VBIC card, cornerHBT.lib sections), on this host only: 3 `klt sim` request(s), all with a local backend. Stage 1 (LO-selection sweep): backend `local`: 3 request(s), 3 unit(s), largest request 1 unit(s). No multi-unit request was submitted. No batch/off-host request was submitted: the batch path was NOT exercised against the real fleet by this record. No stage-2 request was submitted (no candidate selected an LO drive). Not simulated (no LO drive selected; recorded as `not_applicable_no_drive` cells, no numbers): main 243, leakage 243, iip3 117 cell(s)."
+    },
+    "git": {
+      "branch": "feature/issue-35",
+      "commit": "a10c193cb6ee8955ed3bb8329b6e74cd6b6b6368",
+      "dirty": false,
+      "short": "a10c193"
+    },
+    "klt": "klt 0.7.0+g5e5b55992a7f",
+    "klt_requests": [
+      {
+        "backend": "local",
+        "candidate": "gilbert_stacked",
+        "environment": {
+          "engine": "ngspice",
+          "engine_version": "46",
+          "models_lib": {
+            "path": null,
+            "scope": "external"
+          },
+          "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+          "netlist_closure": [
+            {
+              "path": null,
+              "scope": "external",
+              "sha256": "79b26f964b28c4491c23fe5be3060aca2b4f11046e7659c8f58e6ced0c3a78da"
+            }
+          ],
+          "netlist_sha256": "79b26f964b28c4491c23fe5be3060aca2b4f11046e7659c8f58e6ced0c3a78da",
+          "ngspice_binary": "/home/ubuntu/.local/bin/ngspice"
+        },
+        "matrix": "lo_select",
+        "report": "report_lo_select__gilbert_stacked__2.250v.json",
+        "request": "lo_select__gilbert_stacked__2.250v",
+        "stage": 1,
+        "status": "pass",
+        "units": 1
+      },
+      {
+        "backend": "local",
+        "candidate": "folded_single_balanced",
+        "environment": {
+          "engine": "ngspice",
+          "engine_version": "46",
+          "models_lib": {
+            "path": null,
+            "scope": "external"
+          },
+          "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+          "netlist_closure": [
+            {
+              "path": null,
+              "scope": "external",
+              "sha256": "8d8c7c94cd2731081de42607d8247709f5b4a6c767a00025c79689f4ffcdef49"
+            }
+          ],
+          "netlist_sha256": "8d8c7c94cd2731081de42607d8247709f5b4a6c767a00025c79689f4ffcdef49",
+          "ngspice_binary": "/home/ubuntu/.local/bin/ngspice"
+        },
+        "matrix": "lo_select",
+        "report": "report_lo_select__folded_single_balanced__2.250v.json",
+        "request": "lo_select__folded_single_balanced__2.250v",
+        "stage": 1,
+        "status": "pass",
+        "units": 1
+      },
+      {
+        "backend": "local",
+        "candidate": "placeholder_floor",
+        "environment": {
+          "engine": "ngspice",
+          "engine_version": "46",
+          "models_lib": {
+            "path": null,
+            "scope": "external"
+          },
+          "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+          "netlist_closure": [
+            {
+              "path": null,
+              "scope": "external",
+              "sha256": "6d69a137337398120afe472ca8060cd9d99374bc3da93eb489c1e7d62a945184"
+            }
+          ],
+          "netlist_sha256": "6d69a137337398120afe472ca8060cd9d99374bc3da93eb489c1e7d62a945184",
+          "ngspice_binary": "/home/ubuntu/.local/bin/ngspice"
+        },
+        "matrix": "lo_select",
+        "report": "report_lo_select__placeholder_floor__2.250v.json",
+        "request": "lo_select__placeholder_floor__2.250v",
+        "stage": 1,
+        "status": "pass",
+        "units": 1
+      }
+    ],
+    "mismatch_seed": 35001,
+    "ngspice": "ngspice-46 : Circuit level simulation program",
+    "pdk": {
+      "fetched_version_file": "0.3.0",
+      "model_sha256": {
+        "cornerHBT.lib": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+        "sg13g2_hbt_mod.lib": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79",
+        "sg13g2_hbt_mod_mismatch.lib": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+      },
+      "variant_path": "/home/ubuntu/share/pdk/ihp-sg13g2"
+    },
+    "tb_json_sha256": "ce04173e1374e7be371bb20b97fb9ad6240769e75fb57ae47491091ce0cfc125"
+  },
+  "record_id": "20261010-010744-a10c193",
+  "reductions": [
+    "LO-selection sweep and IIP3 sweep run at hbt_typ / 27 C / 2.25 V only (all three band points); the selected drive is then HELD FIXED across the main and leakage matrices.",
+    "No MOS, capacitor or resistor corner axes: the fixtures use no PDK model of those families. Ideal passives do not cover the open passive/EM axis.",
+    "Ideal baluns, ideal R/C, ideal bias sources and ideal current sinks; one fixed sizing per topology; the RF input is unmatched. No inductor model exists in the PDK, none is used.",
+    "The 2.25 V +/- 10 % supply axis (2.025 / 2.25 / 2.475 V) is an exploratory nominal wholly below the 2.5 V ceiling; it ratifies no rail. The legacy 2.5 V +/- 10 % grid is not used.",
+    "Mismatch leakage cells use ONE deterministic realization per cell (fixed ngspice seed, applied to every cell; draw order follows instance order so realizations differ between candidates). This is card coverage, not Monte Carlo yield evidence.",
+    "No all-corner linearity, yield or compliance claim. SSB noise figure is out of scope (#27)."
+  ],
+  "scope": "device-level topology feasibility; no spec row claimed met",
+  "summary": {
+    "conclusion": {
+      "recommendation": {
+        "basis": "no candidate is feasible at its declared sizing within the declared sweep; no topology recommendation is forced (route a sizing follow-up or a DR proposal)",
+        "draw_first": null
+      },
+      "verdicts": {
+        "folded_single_balanced": {
+          "reason": "no run of 3 qualifying drives at band(s) f17p70, f19p45, f21p20",
+          "verdict": "infeasible at the declared sizing"
+        },
+        "gilbert_stacked": {
+          "reason": "no run of 3 qualifying drives at band(s) f17p70, f19p45, f21p20",
+          "verdict": "infeasible at the declared sizing"
+        },
+        "placeholder_floor": {
+          "reason": "no run of 3 qualifying drives at band(s) f17p70, f19p45, f21p20",
+          "verdict": "infeasible at the declared sizing"
+        }
+      }
+    },
+    "iip3": {
+      "folded_single_balanced": {
+        "f17p70": {
+          "reason": "no selected LO drive (no acceptable drive in declared sweep); IIP3 is only defined at a selected drive",
+          "status": "IIP3 unavailable"
+        },
+        "f19p45": {
+          "reason": "no selected LO drive (no acceptable drive in declared sweep); IIP3 is only defined at a selected drive",
+          "status": "IIP3 unavailable"
+        },
+        "f21p20": {
+          "reason": "no selected LO drive (no acceptable drive in declared sweep); IIP3 is only defined at a selected drive",
+          "status": "IIP3 unavailable"
+        }
+      },
+      "gilbert_stacked": {
+        "f17p70": {
+          "reason": "no selected LO drive (no acceptable drive in declared sweep); IIP3 is only defined at a selected drive",
+          "status": "IIP3 unavailable"
+        },
+        "f19p45": {
+          "reason": "no selected LO drive (no acceptable drive in declared sweep); IIP3 is only defined at a selected drive",
+          "status": "IIP3 unavailable"
+        },
+        "f21p20": {
+          "reason": "no selected LO drive (no acceptable drive in declared sweep); IIP3 is only defined at a selected drive",
+          "status": "IIP3 unavailable"
+        }
+      },
+      "placeholder_floor": {
+        "f17p70": {
+          "reason": "no selected LO drive (no acceptable drive in declared sweep); IIP3 is only defined at a selected drive",
+          "status": "IIP3 unavailable"
+        },
+        "f19p45": {
+          "reason": "no selected LO drive (no acceptable drive in declared sweep); IIP3 is only defined at a selected drive",
+          "status": "IIP3 unavailable"
+        },
+        "f21p20": {
+          "reason": "no selected LO drive (no acceptable drive in declared sweep); IIP3 is only defined at a selected drive",
+          "status": "IIP3 unavailable"
+        }
+      }
+    },
+    "leakage": {
+      "folded_single_balanced": {
+        "applicable": false
+      },
+      "gilbert_stacked": {
+        "applicable": false
+      },
+      "placeholder_floor": {
+        "applicable": false
+      }
+    },
+    "lo_sweep_stress": {
+      "folded_single_balanced": {
+        "-3": [
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.2560518
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.2559948
+          }
+        ],
+        "-6": [
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.4383122
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.4383111
+          }
+        ],
+        "-9": [
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.5674101
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.5674073
+          }
+        ],
+        "0": [
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.002087138
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.002104049
+          }
+        ],
+        "3": [
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.3665017
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.3660175
+          }
+        ],
+        "6": [
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.8519641
+          },
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.1820689
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.8519518
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.1820844
+          }
+        ]
+      },
+      "gilbert_stacked": {
+        "-3": [
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.2498846
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.2498868
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.2498988
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.249888
+          }
+        ],
+        "-6": [
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.4343305
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.4343371
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.4343302
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.434321
+          }
+        ],
+        "-9": [
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.5649082
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.5648962
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.5648997
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.5648813
+          }
+        ],
+        "0": [
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.01086501
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.01088318
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.01088344
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.01088127
+          }
+        ],
+        "3": [
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.37741
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.2481814
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.3773909
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.2483104
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.3774339
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.2481721
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.377403
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.2482728
+          }
+        ],
+        "6": [
+          {
+            "device": "q1",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 1.4,
+            "quantity": "vce",
+            "worst_value": 1.535017
+          },
+          {
+            "device": "q2",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 1.4,
+            "quantity": "vce",
+            "worst_value": 1.535023
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.7985065
+          },
+          {
+            "device": "q3",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.09988325
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.7984464
+          },
+          {
+            "device": "q4",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.09991327
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.7984992
+          },
+          {
+            "device": "q5",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.09987567
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": -0.7984929
+          },
+          {
+            "device": "q6",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.09987756
+          }
+        ]
+      },
+      "placeholder_floor": {
+        "-3": [
+          {
+            "device": "q1",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 0.9722591
+          }
+        ],
+        "0": [
+          {
+            "device": "q1",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.012,
+            "quantity": "ic",
+            "worst_value": 0.01396495
+          },
+          {
+            "device": "q1",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.5543166
+          },
+          {
+            "device": "q1",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 1.011854
+          }
+        ],
+        "3": [
+          {
+            "device": "q1",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.012,
+            "quantity": "ic",
+            "worst_value": 0.01328148
+          },
+          {
+            "device": "q1",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.3840128
+          },
+          {
+            "device": "q1",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 1.051528
+          },
+          {
+            "device": "q1",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.3522358
+          }
+        ],
+        "6": [
+          {
+            "device": "q1",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.012,
+            "quantity": "ic",
+            "worst_value": 0.01343293
+          },
+          {
+            "device": "q1",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.65,
+            "quantity": "vbe",
+            "worst_value": 0.1215512
+          },
+          {
+            "device": "q1",
+            "interval": "retained",
+            "kind": "above",
+            "limit": 0.96,
+            "quantity": "vbe",
+            "worst_value": 1.091448
+          },
+          {
+            "device": "q1",
+            "interval": "retained",
+            "kind": "below",
+            "limit": 0.4,
+            "quantity": "vce",
+            "worst_value": 0.3197746
+          }
+        ]
+      }
+    },
+    "main": {
+      "folded_single_balanced": {
+        "applicable": false,
+        "n": 81
+      },
+      "gilbert_stacked": {
+        "applicable": false,
+        "n": 81
+      },
+      "placeholder_floor": {
+        "applicable": false,
+        "n": 81
+      }
+    },
+    "selections": {
+      "folded_single_balanced": {
+        "per_band": {
+          "f17p70": {
+            "max_valid_gain_db": -2.7115472803357292,
+            "qualifying_dbm": [
+              -12.0
+            ]
+          },
+          "f19p45": {
+            "max_valid_gain_db": -2.724830370885499,
+            "qualifying_dbm": [
+              -12.0
+            ]
+          },
+          "f21p20": {
+            "max_valid_gain_db": -2.7394775277716192,
+            "qualifying_dbm": [
+              -12.0
+            ]
+          }
+        },
+        "reason": "no run of 3 qualifying drives at band(s) f17p70, f19p45, f21p20",
+        "status": "no acceptable drive in declared sweep"
+      },
+      "gilbert_stacked": {
+        "per_band": {
+          "f17p70": {
+            "max_valid_gain_db": -3.02823933590696,
+            "qualifying_dbm": [
+              -12.0
+            ]
+          },
+          "f19p45": {
+            "max_valid_gain_db": -3.045685204012969,
+            "qualifying_dbm": [
+              -12.0
+            ]
+          },
+          "f21p20": {
+            "max_valid_gain_db": -3.0645684313923454,
+            "qualifying_dbm": [
+              -12.0
+            ]
+          }
+        },
+        "reason": "no run of 3 qualifying drives at band(s) f17p70, f19p45, f21p20",
+        "status": "no acceptable drive in declared sweep"
+      },
+      "placeholder_floor": {
+        "per_band": {
+          "f17p70": {
+            "max_valid_gain_db": -4.461005788060845,
+            "qualifying_dbm": [
+              -6.0
+            ]
+          },
+          "f19p45": {
+            "max_valid_gain_db": -4.478189751272751,
+            "qualifying_dbm": [
+              -6.0
+            ]
+          },
+          "f21p20": {
+            "max_valid_gain_db": -4.496845760323083,
+            "qualifying_dbm": [
+              -6.0
+            ]
+          }
+        },
+        "reason": "no run of 3 qualifying drives at band(s) f17p70, f19p45, f21p20",
+        "status": "no acceptable drive in declared sweep"
+      }
+    }
+  },
+  "supersedes": null
+}

@@ -1,0 +1,14 @@
+{
+  "key": "lo_select__folded_single_balanced__2.250v",
+  "matrix": "lo_select",
+  "candidate": "folded_single_balanced",
+  "vdd": 2.25,
+  "corners": [
+    "hbt_typ"
+  ],
+  "temps": [
+    27.0
+  ],
+  "drive_dbm": null,
+  "seed": null
+}

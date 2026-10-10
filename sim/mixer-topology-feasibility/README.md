@@ -10,33 +10,60 @@ candidate uses ideal baluns, ideal R/C and ideal bias sources. Each has one
 fixed, documented sizing. There is no matching network, no inductor and no
 layout. Nothing here claims any spec row is met.
 
-## Status: part 1 of 2 (fixtures and extraction validation)
+## Status: parts 1 and 2 landed; first record says "no acceptable drive"
 
-The issue allows the work to be split: fixture and extraction validation
-first, then collection. **This directory is part 1.** It contains:
+Part 1 (PR #44) delivered the fixtures, the study declaration, the
+extraction, LO-selection, IIP3, stress and acceptance-gate logic
+(`mixfeas.py`), unit tests and the local `plan`/`smoke`/`selftest`/`converge`
+modes. Part 2 (this directory's `collect.py`, driven by `run.py collect`)
+adds:
 
-- the three candidate fixtures and the analytic control;
-- the study declaration (`testbench/tb.json`, block `study`);
-- the extraction, LO-selection, IIP3, stress and acceptance-gate logic
-  (`mixfeas.py`);
-- unit tests on analytic and synthetic data (`tests/`);
-- a local driver (`run.py`) with `plan`, `smoke`, `selftest` and `converge`.
+- request generation: the study as `klt sim` requests, staged because each
+  stage's LO drive depends on the previous stage's selection (below);
+- ingest of the returned per-unit logs into declared cells, with the gate
+  `mixfeas.validate_collection`, and a local convergence and cross-check
+  control;
+- the append-only record writer (`records/`, `corners/`,
+  `netlist-snapshots/`) and `.github/scripts/check_evidence_formats.py`
+  support for that layout, with negative controls in
+  `.github/scripts/tests/test_check_mixfeas_adapter.py`;
+- `tests/test_collect.py`: the whole collection against a closed-form fake
+  `klt sim` (request plan, staging, no-drive cells, corrupt-run exits,
+  typical-forced corners, stress rejection, rendering).
 
-**No record exists yet, and none of these modes writes one.** Every number
-printed by `smoke`/`converge` comes from one corner at a trial LO drive. It
-is a method check, not a result, and must not be quoted as evidence.
+**Result of the first collection** (`records/20261010-010744-a10c193.md`):
+all three topologies return `no acceptable drive in declared sweep` at their
+declared sizing. For both balanced candidates the switching devices' V_BE
+falls below the card's 0.65 V floor from -9 dBm total available LO power
+upward, while the gain is still rising at the last stress-valid point
+(-12 dBm). For the floor, V_BE exceeds 0.96 V from -3 dBm. No drive was
+selected, so no main-matrix, leakage or IIP3 simulation ran: those cells are
+explicit `not_applicable_no_drive` outcomes, the LO-selection cells are the
+only gain/stress data, and the recommendation is **none**. This is a finding
+about one fixed sizing and the declared sweep, not about the topologies in
+general; the next step is a sizing follow-up or a decision-record proposal,
+not an edited rule (see the record's conclusion).
 
-Still to do (part 2, on #35):
-
-1. Submit the LO-selection sweep and the full matrices as `klt sim`
-   requests. Per the host rules these must not run locally.
-2. Ingest the results through `mixfeas.validate_collection`.
-3. Re-run `converge` at the drive the sweep selects.
-4. Write the append-only comparison record and the recommendation
-   (`mixfeas.conclude`).
-5. Teach `.github/scripts/check_evidence_formats.py` the record layout.
-   Today the checker treats this bench as harness-native, and that is
-   harmless only while `records/` does not exist.
+**Not yet exercised against the real fleet.** The stage-2 path (IIP3, 243-cell
+main matrix, 243-cell mismatch leakage matrix: 18 multi-unit `klt sim` batch
+requests of 9 units each, plus 3 single-unit IIP3 requests) is covered by
+`tests/test_collect.py` with a fake `klt sim`, but has never been submitted
+for real, because no candidate reached it. The first time a sizing selects a
+drive, `collect` will submit those requests with `--backend batch`. A failed
+batch submit makes `collect` exit non-zero without a record; it never falls
+back to a local grid. The fleet/client skew described in
+`../hbt-kaband-characterization/README.md` ("Fleet/client version skew") may
+require `--no-stage-models --runner-version-check warn`; if it does, the
+local cross-check (which reproduces the nominal main cell and the seeded
+nominal leakage cell on this host's model files) is what ties the fleet's
+numbers to the checksums the record states. The first record ran three
+single-unit `klt sim --backend local` requests and nothing else, so its
+cross-check is local-vs-local (klt-body path vs harness path, both on this
+host). Its data-provenance line is derived from the backend and unit count
+recorded per request (`collect.execution_provenance`), not written by hand, and
+a test fails if a record claims an off-host or multi-unit run that its requests
+do not show. The batch stage-2 path has still not run against the real fleet.
+That has to wait for a sizing that selects a drive (sizing follow-up #61).
 
 ## Candidates
 
@@ -180,8 +207,10 @@ probe).
 - gain on `hbt_typ`, leakage on `hbt_typ_mismatch` with the declared seed;
 - the requirement is agreement within 0.2 dB.
 
-Today it runs at the 0 dBm trial drive. Part 2 must repeat it at the
-selected drive. On this commit, all deltas are ≤ 0.03 dB.
+`collect` runs it at the selected drive. With no selected drive, as in the
+first record, it runs at the 0 dBm smoke trial drive and the record labels
+that a diagnostic, not a selected drive. In the first record all deltas are
+≤ 0.03 dB.
 
 ## Decision rules
 
@@ -224,7 +253,9 @@ selected drive. On this commit, all deltas are ≤ 0.03 dB.
   "inconclusive". The recommendation is the feasible non-floor candidate
   with the highest worst-case gain, or **none**. A topology is never forced.
 
-## Running it (local, single corner, never writes)
+## Running it
+
+Local, single corner, never writes:
 
 ```
 python3 sim/mixer-topology-feasibility/run.py plan       # declared matrices / cell counts
@@ -233,6 +264,29 @@ python3 sim/mixer-topology-feasibility/run.py selftest   # ~30 s
 python3 sim/mixer-topology-feasibility/run.py converge   # ~1 min
 python3 -m pytest sim/mixer-topology-feasibility/tests -q
 ```
+
+Collection (writes ONE record only if everything passes the gate):
+
+```
+python3 sim/mixer-topology-feasibility/run.py collect --dry-run      # write stage-1 requests only
+python3 sim/mixer-topology-feasibility/run.py collect --stage1-only  # LO sweep, print selection, no record
+python3 sim/mixer-topology-feasibility/run.py collect [--workdir DIR] [--backend batch]
+```
+
+- Stage 1 is one single-unit `klt sim` request per candidate (hbt_typ /
+  27 C / 2.25 V; 78 transient runs, ~4 min each). Single-unit requests run
+  with `--backend local`, as klt itself would keep them; every multi-unit
+  request uses `--backend` (default `batch`).
+- `--workdir` resumes: a request whose report already exists is not
+  resubmitted. A corrupt or incomplete collection exits non-zero, leaves the
+  work directory for inspection and writes nothing under `records/`.
+- The sentinel `.meas` that every klt request needs is named
+  `sentinel_rail_v`, not `mf_...`: the deck's own values all start with
+  `mf_`, and a sentinel with that prefix is rejected by the parser as a value
+  outside any run.
+- Like the Ka-band bench, the request body carries its own `.control` block
+  (klt's docs call that unsupported; it works, ngspice runs it before klt's
+  sentinel analysis). No new klt gap was found beyond that known one.
 
 `selftest` covers five controls:
 
@@ -257,5 +311,7 @@ python3 -m pytest sim/mixer-topology-feasibility/tests -q
 - One sizing per topology. A different bias could change any verdict; a
   verdict is "at the declared sizing".
 - SSB NF is out of scope (#27).
-- `klayout-tools` is not invoked. No klt friction was hit in part 1; part 2's
-  `klt sim` submission is where any would surface.
+- `klayout-tools` is not invoked for layout, DRC or LVS. `klt sim` is used for
+  collection; see "Running it" for the one known friction (a body-level
+  `.control` block).
+- The first record never reached the multi-unit stage (see Status).
