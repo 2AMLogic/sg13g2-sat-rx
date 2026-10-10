@@ -54,12 +54,18 @@ def format_problems(root: Path) -> list[str]:
     return [m for m in chk.check_format(root).items if "names the PDK as 'unknown'" not in m]
 
 
+ART = {"status": "verified", "upstream_repo": "https://example.invalid/pdk", "upstream_tag": "v0",
+       "upstream_commit": "a" * 40, "manifest": "sim/pdk-artifact.json", "manifest_sha256": "b" * 64,
+       "files_verified": 4}
+
+
 def render(root: Path, points, subset_reason: str = "") -> tuple[Path, dict, str]:
     exp, tb = make_bench(root)
     res = [PointResult(point=p, status="ok", measurements={"gain": 1.0 + i}) for i, p in enumerate(points)]
     pdk = Pdk(name="fake", path=root, variant="v", source="test", model_lib_rel="m.lib")
     rec = R.build_record(tb, pdk, points, res, "ngspice-0", root, RECORD_ID,
-                         "2026-01-01T00:00:00+00:00", 1.0, subset_reason=subset_reason, git=GIT)
+                         "2026-01-01T00:00:00+00:00", 1.0, subset_reason=subset_reason, git=GIT,
+                         pdk_artifact=ART)
     return exp, rec, R.render_markdown(rec)
 
 

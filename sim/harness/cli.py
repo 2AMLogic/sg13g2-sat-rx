@@ -145,6 +145,17 @@ def cmd_run(args: argparse.Namespace) -> int:
         corners = sabotage(corners)
         args.no_write = True  # a sabotaged run must never enter the evidence tree
 
+    # An evidence-writing run records the hash-verified artifact identity, and
+    # is refused (before any simulation) if the install does not match the pin.
+    # --no-write/--sabotage record nothing, so they need no identity.
+    pdk_artifact = None
+    if not args.no_write:
+        try:
+            pdk_artifact = pdkartifact.verified_identity(pdk, SIM_DIR)
+        except pdkartifact.ArtifactNotVerified as exc:
+            print(str(exc), file=sys.stderr)
+            return 3
+
     temperatures = tb.temperatures_c
     supplies = supply_points(tb.nominal_supply_v, tb.supply_tolerance)
     points = build_grid(corners, temperatures, supplies)
@@ -194,6 +205,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         tb, pdk, points, results, ngspice, SIM_DIR.parent, record_id,
         started.isoformat(), wall_seconds, claim=args.claim or tb.claim,
         supersedes=args.supersedes or "", git=git, toolchain=tc_summary,
+        pdk_artifact=pdk_artifact,
     )
     try:
         write_netlist_snapshot(tb, tb.experiment_dir, record_id)

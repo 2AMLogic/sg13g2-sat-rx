@@ -54,6 +54,10 @@ harness's `Pdk.version` reads a `SOURCES` file that IHP-Open-PDK does not ship
 (`.fetched-version` instead). Records are append-only, so it cannot be edited;
 the checker grandfathers exactly four legacy records by id
 (`LEGACY_UNKNOWN_PDK`) and rejects any other record naming the PDK `unknown`.
+Since #103 the harness records the hash-verified artifact identity (upstream
+commit, manifest digest, verification result) on a `- PDK artifact:` line,
+separate from the install marker, and refuses to record without it; no record
+has been taken with it yet, so this is a capability, not an attestation.
 Item 9 can honestly be attested once a later record of each harness-native
 bench carries a pinned PDK revision (fix `Pdk.version` to read `.fetched-version`
 or have `report.py` print the `pdk-artifact.json` commit, then re-run the bench),

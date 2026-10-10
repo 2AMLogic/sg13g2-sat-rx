@@ -2410,6 +2410,14 @@ LEGACY_UNKNOWN_PDK = frozenset({
     "sim/lna-sparam-nf/records/20261010-012923-6cad7fc.md",
 })
 PDK_UNKNOWN_RE = re.compile(r"^- PDK:.*\(unknown\b", re.M)
+#: Native records written since #103 print the installation marker separately
+#: ("(install marker: <v>, via ...)") and carry the verified artifact identity on
+#: a "- PDK artifact:" line. The marker may legitimately be ``unknown`` (markerless
+#: installs); the artifact line may not be anything but a verified full identity.
+PDK_MARKER_RE = re.compile(r"^- PDK:.*\(install marker:", re.M)
+PDK_ARTIFACT_RE = re.compile(
+    r"^- PDK artifact: \*\*verified\*\* -- upstream .*? commit `[0-9a-f]{40}`; "
+    r"\S+ sha256 `[0-9a-f]{64}`; \d+ model files hash-verified", re.M)
 
 
 def readme_invocation_problem(readme: Path) -> str | None:
@@ -2443,7 +2451,11 @@ def check_bench_readmes(problems: Problems, root: Path) -> None:
                          f"bench has records/ but no cold-start README: {why}")
         for md in sorted(records.glob("*.md")):
             r = rel(root, md)
-            if PDK_UNKNOWN_RE.search(md.read_text(errors="replace")) and r not in LEGACY_UNKNOWN_PDK:
+            text = md.read_text(errors="replace")
+            if PDK_MARKER_RE.search(text) and not PDK_ARTIFACT_RE.search(text):
+                problems.add(r, "record separates the PDK install marker but carries no verified "
+                             "'- PDK artifact: **verified** -- ... commit `<40-hex>`; ... sha256 `<64-hex>`' line")
+            if PDK_UNKNOWN_RE.search(text) and r not in LEGACY_UNKNOWN_PDK:
                 problems.add(r, "record names the PDK as 'unknown' and is not a grandfathered legacy record; "
                              "cite the pinned artifact (sim/pdk-artifact.json) instead")
 

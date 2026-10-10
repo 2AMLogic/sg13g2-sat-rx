@@ -108,6 +108,42 @@ def test_new_record_naming_pdk_unknown_fails(tree):
     assert any("20270101-000000-deadbee.md" in p and "'unknown'" in p for p in problems_of(tree))
 
 
+def _marker_record(tmp_tree, name, artifact_line):
+    """A copy of a legacy record rewritten to the post-#103 PDK line shape."""
+    rec = tmp_tree / "sim" / "mixer-conversion-iip3" / "records"
+    src = next(iter(rec.glob("*.md"))).read_text()
+    lines = []
+    for ln in src.splitlines():
+        if ln.startswith("- PDK:"):
+            ln = "- PDK: ihp-sg13g2 sg13g2 (install marker: unknown, via test)"
+            lines.append(ln)
+            if artifact_line:
+                lines.append(artifact_line)
+        else:
+            lines.append(ln)
+    (rec / name).write_text("\n".join(lines) + "\n")
+
+
+GOOD_ARTIFACT = ("- PDK artifact: **verified** -- upstream https://x v0.3.0 commit `" + "a" * 40 + "`; "
+                 "sim/pdk-artifact.json sha256 `" + "b" * 64 + "`; 4 model files hash-verified before the run")
+
+
+def test_marker_record_with_verified_artifact_line_passes(tree):
+    _marker_record(tree, "20270101-000000-deadbee.md", GOOD_ARTIFACT)
+    assert not any("deadbee" in p and "PDK" in p for p in problems_of(tree))
+
+
+@pytest.mark.parametrize("line", [
+    None,
+    GOOD_ARTIFACT.replace("**verified**", "**unverified**"),
+    GOOD_ARTIFACT.replace("a" * 40, "a" * 12),
+    GOOD_ARTIFACT.replace("b" * 64, "b" * 8),
+])
+def test_marker_record_without_verified_artifact_fails(tree, line):
+    _marker_record(tree, "20270101-000000-deadbee.md", line)
+    assert any("deadbee" in p and "PDK artifact" in p for p in problems_of(tree))
+
+
 # ---------------------------------------------------------------- format
 
 

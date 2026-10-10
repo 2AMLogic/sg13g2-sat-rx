@@ -125,3 +125,26 @@ def test_committed_manifest_is_well_formed():
     from harness.pdk import SIM_DIR
     m = pdkartifact.load_manifest(SIM_DIR)
     assert len(m["upstream"]["commit"]) == 40 and m["files"]
+
+
+def test_verified_identity_on_markerless_install(env):
+    pdk, sim, *_ = env
+    (pdk.path / ".fetched-version").unlink()
+    ident = pdkartifact.verified_identity(pdk, sim)
+    assert ident["status"] == "verified" and ident["upstream_commit"] == COMMIT
+    assert ident["manifest_sha256"] == _sha((sim / "pdk-artifact.json").read_bytes())
+    assert ident["files_verified"] == 2 and pdk.version == "unknown"
+    pdkartifact.validate_identity(ident)
+
+
+def test_no_identity_for_tampered_or_missing_models_or_manifest(env):
+    pdk, sim, models, _ = env
+    (models / "sub.lib").write_bytes(b"tampered\n")
+    with pytest.raises(pdkartifact.ArtifactNotVerified):
+        pdkartifact.verified_identity(pdk, sim)
+    (models / "sub.lib").unlink()
+    with pytest.raises(pdkartifact.ArtifactNotVerified):
+        pdkartifact.verified_identity(pdk, sim)
+    (sim / "pdk-artifact.json").unlink()
+    with pytest.raises(pdkartifact.ArtifactNotVerified):
+        pdkartifact.verified_identity(pdk, sim)

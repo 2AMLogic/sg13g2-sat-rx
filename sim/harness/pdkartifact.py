@@ -171,6 +171,50 @@ def verify(pdk: Pdk, sim_dir: Path, ngspice_banner: str | None = None,
     return rep
 
 
+class ArtifactNotVerified(RuntimeError):
+    """Verified artifact identity was requested but the install does not match the pin."""
+
+
+def verified_identity(pdk: Pdk, sim_dir: Path) -> dict:
+    """Run :func:`verify` and, ONLY on success, return the identity to record.
+
+    The returned dict is what native evidence records carry: the immutable
+    upstream commit, the SHA-256 of the committed manifest bytes, and the
+    verification result. It is never built from the manifest alone -- a
+    missing, tampered or unlisted model raises :class:`ArtifactNotVerified`,
+    so no record can claim a verified identity merely because a manifest
+    exists. The install's own marker is NOT part of this identity (it lives
+    under ``pdk.version`` / the install provenance and may be ``unknown``).
+    """
+    rep = verify(pdk, sim_dir)
+    if not rep.ok:
+        raise ArtifactNotVerified(rep.format() + REFUSAL)
+    m = load_manifest(sim_dir)  # already parsed once by verify(); re-read for the bytes' digest
+    up = m["upstream"]
+    return {
+        "status": "verified",
+        "upstream_repo": up.get("repo", ""),
+        "upstream_tag": up.get("tag", ""),
+        "upstream_commit": up["commit"],
+        "manifest": f"sim/{MANIFEST_FILENAME}",
+        "manifest_sha256": sha256_file(sim_dir / MANIFEST_FILENAME),
+        "files_verified": len(m["files"]),
+        "method": "sha256 of every model file in the include closure of model_lib, "
+                  "re-derived from the install (harness/pdkartifact.py verify)",
+    }
+
+
+def validate_identity(identity: object) -> dict:
+    """Reject anything that is not a well-formed verified identity (no overclaiming)."""
+    if not isinstance(identity, dict) or identity.get("status") != "verified":
+        raise ArtifactNotVerified("record requires a verified PDK artifact identity (status 'verified')")
+    if not _COMMIT_RE.match(str(identity.get("upstream_commit", ""))):
+        raise ArtifactNotVerified("verified identity lacks a full 40-hex upstream_commit")
+    if not _SHA256_RE.match(str(identity.get("manifest_sha256", ""))):
+        raise ArtifactNotVerified("verified identity lacks a sha256 manifest_sha256")
+    return identity
+
+
 REFUSAL = (
     "\nNothing was simulated: the installed IHP models are not the pinned artifact "
     "(sim/pdk-artifact.json). See sim/README.md 'IHP model artifact' to reinstall the "
