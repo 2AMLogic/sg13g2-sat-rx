@@ -28,6 +28,7 @@ import freeze_package as fz  # noqa: E402
 
 PASSIVE = "passive-p1"
 MIXER = "mixer-nf-method"
+LNAMATCH = "lna-match-tradeoff"  # its negative controls: test_check_lnamatch_adapter.py
 P_UNAVAIL = "20261009-141515-0e10117-CAPABILITY_UNAVAILABLE"
 P_CONTROLS = "20261009-141527-0e10117-CONTROLS-PASS"
 M_ID = "20261009-181241-c40c552"
@@ -127,7 +128,7 @@ class CommittedEvidence(FormatBase):
         self.assertEqual(self.problems(), [])
 
     def test_adapters_are_registered_explicitly(self):
-        self.assertEqual(set(chk.ADAPTERS), {PASSIVE, MIXER})
+        self.assertEqual(set(chk.ADAPTERS), {PASSIVE, MIXER, LNAMATCH})
 
     def test_adapters_actually_run(self):
         # if discovery silently skipped these layouts this would stay green
