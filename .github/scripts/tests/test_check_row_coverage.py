@@ -31,7 +31,7 @@ class RowCoverage(unittest.TestCase):
         (self.root / "spec").mkdir()
         for f in ("target-spec.md", "row-coverage.json"):
             shutil.copy(REPO / "spec" / f, self.root / "spec" / f)
-        for name in ("lna-sparam-nf", "mixer-conversion-iip3", "mixer-nf-method"):
+        for name in ("lna-sparam-nf", "mixer-conversion-iip3", "mixer-nf-method", "lna-linearity"):
             shutil.copytree(REPO / "sim" / name, self.root / "sim" / name, ignore=IGNORE)
         self.man = self.root / "spec" / "row-coverage.json"
 
@@ -85,8 +85,19 @@ class RowCoverage(unittest.TestCase):
         self.assertIn("overclaimed", self.messages())
 
     def test_no_bench_needs_blocker(self) -> None:
-        self.edit(lambda d: self.row(d, 7).pop("blocked_by"))
+        self.edit(lambda d: self.row(d, 12).pop("blocked_by"))
         self.assertIn("blocked_by", self.messages())
+
+    def test_rows_7_and_8_cite_the_linearity_record_without_overclaiming(self) -> None:
+        d = json.loads(self.man.read_text())
+        for n in (7, 8):
+            r = self.row(d, n)
+            self.assertEqual(r["bench"], "sim/lna-linearity")
+            self.assertEqual(r["verdict"], "placeholder_circuit")
+            self.assertTrue(r["latest_record"].startswith("sim/lna-linearity/records/"))
+        # the record's Claim line says placeholder circuit: a measured_* verdict on it is an overclaim
+        self.edit(lambda d: self.row(d, 7).update(verdict="measured_pass"))
+        self.assertIn("overclaimed", self.messages())
 
     def test_unknown_verdict(self) -> None:
         self.edit(lambda d: self.row(d, 2).update(verdict="looks_fine"))

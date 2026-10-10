@@ -54,19 +54,19 @@
       "row": 7,
       "status": "ratified-target",
       "bound_corner": "`hbt_typ`, nominal supply/temperature (to be confirmed — linearity's corner dependence is a bench finding, not an assumption)",
-      "bench": null,
-      "latest_record": null,
-      "verdict": "no_bench",
-      "blocked_by": "no LNA two-tone transient+FFT bench exists"
+      "bench": "sim/lna-linearity",
+      "latest_record": "sim/lna-linearity/records/20261010-174208-0f67eaf.md",
+      "verdict": "placeholder_circuit",
+      "note": "Nominal-corner (hbt_typ, 27 C, 2.5 V) two-tone IIP3 of the ideal-matching placeholder at 17.9/18.0, 19.4/19.5 and 20.9/21.0 GHz: -13.29, -13.88 and -11.77 dBm (converged under timestep halving and window doubling; fitted over -56..-44 dBm per tone, extrapolated ~30 dB). Meets the unchanged -15 dBm target at that corner on that placeholder only; not measured compliance (ideal matching, one corner, draft band, row 17 limits break from about -43 dBm per tone)."
     },
     {
       "row": 8,
       "status": "ratified-target",
       "bound_corner": "as row 7",
-      "bench": null,
-      "latest_record": null,
-      "verdict": "no_bench",
-      "blocked_by": "no LNA single-tone power-sweep bench exists"
+      "bench": "sim/lna-linearity",
+      "latest_record": "sim/lna-linearity/records/20261010-174208-0f67eaf.md",
+      "verdict": "placeholder_circuit",
+      "note": "Input P1dB is NOT determined within the DUT operating limits: the instantaneous Q2 V_CE exceeds the 1.4 V row-17 limit from -36 dBm (low/mid) / -34 dBm (high) single-tone available power, well below the -25 dBm target, so only a lower bound (> -38 / -38 / -36 dBm) is recorded. The limit-ignoring reference (labelled NOT A RESULT in the record) crosses 1 dB at -16.1 and -17.5 dBm (low, mid) and above -16 dBm (high). Target unchanged; placeholder circuit, one corner."
     },
     {
       "row": 9,

@@ -114,9 +114,32 @@ baseline, out-of-limit points.
 | `tests/` | method qualification (`test_linearity.py`), record round trip (`test_records.py`), closed-form fake logs (`fakes.py`) |
 | `records/`, `corners/`, `netlist-snapshots/` | append-only evidence; the checker is the `lna-linearity` adapter in `.github/scripts/check_evidence_formats.py` |
 
-## Status
+## Status: one record, nominal corner, ideal-matching placeholder
 
-See the newest file in `records/`. Method-development probes (a handful of
-local single-unit runs at the mid placement) fixed the solver options, the
-sweep ranges and the IM3 floor margin before the plan was committed; the
-limits, the targets and the tolerances were not tuned on DUT results.
+Record: `records/20261010-174208-0f67eaf.md` (plan committed at `0f67eaf`, all
+eight klt requests on the batch fleet, both analytic ngspice controls and all
+17 negative controls passing, every convergence check passing).
+
+| placement | IIP3 (two-tone, row 7, target >= -15 dBm) | input P1dB (row 8, target >= -25 dBm) |
+|---|---|---|
+| 17.9/18.0 GHz | -13.29 dBm, `ok`, converged, fitted -56..-44 dBm per tone | `bounded` > -38 dBm within limits; limit-ignoring reference -16.1 dBm (NOT A RESULT) |
+| 19.4/19.5 GHz | -13.88 dBm, `ok`, converged | `bounded` > -38 dBm; reference -17.5 dBm |
+| 20.9/21.0 GHz | -11.77 dBm, `ok`, converged | `bounded` > -36 dBm; reference above -16 dBm |
+
+* IIP3 meets the unchanged target at this corner on this placeholder, with a
+  ~30 dB extrapolation above the highest fitted power (the declared extrapolation
+  range). It is not recorded as measured compliance.
+* **P1dB is not determined.** Q2's instantaneous V_CE exceeds the 1.4 V row-17
+  limit from -36 dBm (single tone; -43/-40 dBm per tone for two tones), far below
+  the -25 dBm target level, so no crossing lies inside the operating limits. The
+  DUT therefore cannot be shown to meet row 8 without also breaking row 17 at that
+  input level; that is a design finding for the first-stage biasing/output
+  network, not something the bench may relax.
+* Rows 7 and 8 in `spec/row-coverage.json` stay `placeholder_circuit`, now
+  citing this record. Corners other than nominal, real (lossy) passives and the
+  second stage are not covered.
+
+Method-development probes (a handful of local single-unit runs at the mid
+placement) fixed the solver options, the sweep ranges and the IM3 floor margin
+before the plan was committed; the limits, the targets and the tolerances were
+not tuned on DUT results.

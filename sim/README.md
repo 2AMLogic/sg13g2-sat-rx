@@ -132,6 +132,7 @@ deliberate pin change (next section).
 | `lna-sparam-nf` | S11/S21/S22/S12, k, \|Δ\| and μ stability, noise figure, per-device operating point | **schematic-backed first-stage feasibility** (`design/lna_stage1`, one cascode stage, **ideal lossless L/C matching**); no spec row claimed met — see below |
 | `mixer-conversion-iip3` | Conversion gain, LO-to-RF leakage, two-tone IIP3 | **placeholder circuit** (no schematic) — see below |
 | `hbt-kaband-characterization` | Bare `npn13G2` at 17.7/19.45/21.2 GHz: two-port noise parameters (NFmin, Zopt, Rn), NF₅₀, fT, K/\|Δ\| and MAG-or-MSG, DC power, over Nx × VCE × J_C inside every PVT point | **device-level evidence, not a matched-amplifier result** — see below |
+| `lna-linearity` | Two-tone IIP3 (row 7) and single-tone input P1dB (row 8) of `design/lna_stage1` at three in-band placements, nominal corner only (issue #57): coherent-bin extraction qualified on closed-form controls, timestep-halving and duration-doubling convergence, operating-limit classification | **placeholder circuit (ideal matching), one corner; ratified targets unchanged, no row claimed met** — see [its README](lna-linearity/README.md) |
 | `mixer-nf-method` | Feasibility of a mixer SSB-NF method without pnoise (issue #27): ngspice noise-capability inventory, SSB/image estimator and status gates | **`MODEL_ABSENT`** — no intrinsic device noise in `.tran`; no mixer NF number — see below |
 | `mixer-pumped-rf-admittance` | Method feasibility (issue #111) for the LO-on mixer RF-port admittance DR-0004 row 5 needs: two-phase transient extraction of the sideband-coupled 2×2 admittance, qualified on RC and ideal-modulated known answers | **`SCALAR_ADEQUATE` at one nominal point of the placeholder at its probe LO drive; method feasibility only, no row-5 claim** — see [its README](mixer-pumped-rf-admittance/README.md) |
 | `mixer-topology-feasibility` | Mixer-core topology comparison under row 17 (issue #35): stacked Gilbert vs folded single-balanced vs the placeholder floor; per-device V_CE/V_BE/Ic stress, gain into a physical 50 Ω IF load, LO-drive selection rule, DC power, mismatch-card leakage, swept-region IIP3 | **record exists: all three topologies `no acceptable drive in declared sweep` at the declared sizing; no recommendation** — see below |
@@ -172,6 +173,7 @@ re-pointed at a real mixer schematic.
 | `sim/characterize.sh characterize` — `hbt-kaband-characterization` | `klt sim` requests, backend `$KABAND_BACKEND` (default `batch`) |
 | `python3 sim/lna-sparam-nf/run.py characterize` | `klt sim`, `--backend` default `batch` (use `--dry-run` to inspect the request) |
 | `python3 sim/mixer-topology-feasibility/run.py smoke` / `selftest` | local, no evidence written |
+| `python3 sim/lna-linearity/run.py collect` | `klt sim`, explicit `--backend batch` for every request (even single-unit ones); a failed submit writes nothing and never falls back to a local run |
 
 The wrapper passes no `--claim` to `harness.cli run`, so each new record
 carries its own bench's `tb.json` claim (LNA: the ideal-matching feasibility
