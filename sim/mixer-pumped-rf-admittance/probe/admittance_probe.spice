@@ -1,0 +1,54 @@
+* mixer-pumped-rf-admittance (issue #111) -- ONE nominal point:
+* hbt_typ / 27 C / VDD = 2.50 V. Template: run_probe.py substitutes the model
+* library path, the placeholder path, the two control fragments and the
+* generated run blocks (the brace tokens below), then runs the result ONCE with
+* `ngspice -b`. Single local process; no grid, no sweep, no loop outside the
+* ngspice control language's own sequential runs.
+*
+* What this measures: the LO-on (pumped) small-signal RF-port admittance of the
+* exploratory placeholder mixer, restricted to the wanted (f_u = 19.45 GHz) and
+* image (f_l = 17.45 GHz) sidebands, as a 2x2 conjugate-coupled matrix, plus two
+* known-answer fixtures that see the same perturbation parameters in the same
+* runs. Deterministic input admittance only: nothing here is a noise figure,
+* and nothing here is a row-5 compliance measurement.
+*
+* DUT: the placeholder mixer fragment included VERBATIM (one npn13G2, Nx=4;
+* RF + LO summed at the base). Its own RF tones are zeroed (alterparam vrf=0),
+* so its RF source resistor Rrf (z0 = 50 ohm, rfsrc -> prf) is a 50 ohm
+* termination of the RF port. LO drive vlo = 0.08 V EMF is the placeholder's
+* own value: a PROBE SETTING, not a qualified drive (issue #68).
+*
+* Port reference plane: node prf (the placeholder's RF port), looking into its
+* 1 pF coupling capacitor Cin_rf towards the base. The perturbation is a Norton
+* current per sideband (J = E/z0, E = {apu}, {apl}) injected into prf through a
+* 0 V ammeter, in parallel with Rrf: identical to driving the port from a
+* Thevenin EMF E through the placeholder's own 50 ohm, so the termination the
+* mixer sees at every frequency is unchanged. Port current, positive INTO the
+* mixer:  I = i(vpsense) + (v(rfsrc) - v(prf)) / 50.
+*
+* Projections: .meas INTEG (trapezoid) of v*cos / v*sin at f_u and f_l over the
+* retained window [80, 120] ns and the extended window [80, 160] ns. Every tone
+* is an integer multiple of 25 MHz, so each window holds an integer number of
+* periods of f_u, f_l and f_LO and the projections are orthogonal.
+.param apu=0 apl=0 phu=20 phl=70
+{dut_block}
+
+* ---- known-answer control fixtures (disjoint circuits) ----
+.include "{control_rc}"
+.include "{control_md}"
+
+.options savecurrents=0
+.control
+set noaskquit
+set filetype=ascii
+echo "MARK ngspice_banner_follows"
+version -s
+let wu = 2*pi*19.45e9
+let wl = 2*pi*17.45e9
+
+{runs}
+
+echo "MARK done"
+quit
+.endc
+.end

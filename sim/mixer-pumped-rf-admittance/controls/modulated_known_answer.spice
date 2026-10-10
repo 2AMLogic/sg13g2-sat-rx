@@ -1,0 +1,20 @@
+* Known-answer control 2: an IDEAL periodically modulated port (linear,
+* periodically time-varying, memoryless conductance plus a shunt capacitor).
+*   i(t) = (g0 + 2 g2 cos(2 w_LO t + th)) v(t) + Cm dv/dt + ib sin(w_u t + phb)
+* Driven by an IDEAL voltage source (both sideband tones in series) through a
+* 0 V ammeter, so the port voltage is exactly the applied tones and the closed
+* form is exact (no other mixing frequency reaches the port voltage):
+*   Y_uu = g0 + j w_u Cm,  Y_ll = g0 + j w_l Cm,  Y_ul = Y_lu = g2 e^{j th}
+* (pumped.md_expected; g0 = 20 mS, Cm = 0.1 pF, g2 = 6 mS, th = 40 deg). The
+* modulation at 2 f_LO maps f_u onto the conjugated image f_l and back, so
+* |Y_ul|/|Y_uu| ~ 0.26: the fixture must classify MATRIX_REQUIRED, and a scalar
+* extraction (sabotage omit_image) must fail it. The ib term is an LO-only
+* (perturbation-independent) current at f_u that baseline subtraction must
+* remove (sabotage no_baseline must fail). I_port = i(vmsense), positive into
+* the modulated element.
+.param mg0=0.02 mg2=0.006 mth=40 mib=1e-6 mphb=10
+Vmu mu 0 DC 0 SIN(0 {apu} 19.45e9 0 0 {phu})
+Vml mv mu DC 0 SIN(0 {apl} 17.45e9 0 0 {phl})
+Vmsense mv mp DC 0
+Bmd mp 0 I = ({mg0} + 2*{mg2}*cos(2*2*pi*18.45e9*time + {mth}*pi/180))*V(mp) + {mib}*sin(2*pi*19.45e9*time + {mphb}*pi/180)
+Cmd mp 0 0.1p

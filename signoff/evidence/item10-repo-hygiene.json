@@ -25,7 +25,7 @@
   "provenance": {
     "input": {
       "path": ".github/workflows/ci.yml",
-      "content_hash": "sha256:c64c44fda12205550af89f029de5f7c339ddca1fc00e5e8f9580412f91353b0e"
+      "content_hash": "sha256:7ccc5d9cda6dfab95d495bf00c4f7526e56d1df0fa0b7dab6919c83dc74963b2"
     }
   }
 }
