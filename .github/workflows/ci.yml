@@ -47,6 +47,8 @@ jobs:
         run: python -m pytest sim/mixer-cm-interface-probe/tests -q
       - name: mixer-pumped-rf-admittance extraction / known-answer / sabotage / classification tests (no simulator; method feasibility only)
         run: python -m pytest sim/mixer-pumped-rf-admittance/tests -q
+      - name: lna-linearity analytic controls / negative controls / convergence / record round-trip tests (closed-form fake klt; no simulator)
+        run: python -m pytest sim/lna-linearity/tests -q
 
   evidence-formats:
     name: evidence formats + append-only history

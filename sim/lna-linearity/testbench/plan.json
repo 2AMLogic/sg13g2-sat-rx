@@ -1,0 +1,151 @@
+{
+  "name": "lna-linearity",
+  "issue": 57,
+  "plan_version": 1,
+  "scope": "NOMINAL-CORNER nonlinear method qualification and first collection for design/lna_stage1 with IDEAL lossless L/C matching: two-tone IIP3 (spec row 7) and single-tone input P1dB (spec row 8). Rows 7 and 8 keep their ratified targets; a result here is a placeholder-circuit measurement at one corner (hbt_typ, 27 C, 2.5 V), not compliance and not an all-corner statement. The band (row 1) is still a DRAFT.",
+  "band_hz": [
+    17700000000.0,
+    21200000000.0
+  ],
+  "ports": {
+    "z0_ohm": 50.0,
+    "source": "ideal voltage source behind 50 ohm; open-circuit peak Vs per tone; available power per tone = Vs^2/(8*Z0)",
+    "load": "50 ohm to ground at the DUT out port; a component of peak V delivers V^2/(2*Z0)",
+    "input_axis": "per-tone AVAILABLE source power (not absorbed power); the DUT input match is not ideal, so absorbed power differs",
+    "gain": "transducer gain = delivered load power / available source power"
+  },
+  "dut": {
+    "netlist": "design/netlist/lna_stage1.spice",
+    "subckt": "lna_stage1"
+  },
+  "nominal": {
+    "process": "hbt_typ",
+    "temperature_c": 27.0,
+    "vdd_v": 2.5
+  },
+  "placements": [
+    {
+      "name": "low",
+      "f_tone1_hz": 17900000000.0,
+      "f_tone2_hz": 18000000000.0
+    },
+    {
+      "name": "mid",
+      "f_tone1_hz": 19400000000.0,
+      "f_tone2_hz": 19500000000.0
+    },
+    {
+      "name": "high",
+      "f_tone1_hz": 20900000000.0,
+      "f_tone2_hz": 21000000000.0
+    }
+  ],
+  "placement_note": "Both tones and both IM3 products (2f1-f2, 2f2-f1) lie inside the draft band; the single-tone P1dB frequency is the midpoint of each pair. Tone spacing 100 MHz.",
+  "sweep": {
+    "two": {
+      "start_dbm": -56.0,
+      "stop_dbm": -36.0,
+      "step_db": 1.0
+    },
+    "one": {
+      "start_dbm": -56.0,
+      "stop_dbm": -16.0,
+      "step_db": 2.0
+    },
+    "axis": "per-tone available input power (two-tone: each of two equal tones; single-tone: the one tone)",
+    "note": "the two-tone sweep stops where the DUT leaves its operating limits plus a margin (IM3 fitting needs the uncompressed region); the single-tone sweep must reach the 1 dB crossing. A tighter solver is used for the two-tone IM3 products (they are 60-100 dB below the carriers) than for the single-tone compression sweep, where a tight solver aborts the transient at high drive (observed in method development)."
+  },
+  "time": {
+    "step_s": 1e-12,
+    "settle_discard_s": 4e-08,
+    "window_s": 2e-08,
+    "ramp_s": 5e-09,
+    "note": "window = 2 periods of the 100 MHz spacing; every analysed frequency (tones, IM3 products, floor probes at 50 MHz offsets) is an integer multiple of 1/window = 50 MHz, so the rectangular window is exactly coherent and no window correction applies. FFT bin spacing 50 MHz."
+  },
+  "numerics": {
+    "two": {
+      "reltol": 1e-07,
+      "trtol": 1
+    },
+    "one": {
+      "reltol": 1e-06
+    },
+    "note": "ngspice .options per request. Method-development probes (local, hbt_typ, 19.45 GHz tones) showed the integrator's truncation error creates spurious products AT the IM3 bins that the no-product floor-probe bins do not see (IM3 at -50 dBm per tone moved by ~0.3 dB between reltol 1e-6 and 1e-7/trtol=1, and by up to ~1.7 dB between 1e-5 and 1e-7), so IM3 needs the tight setting and the timestep-halving check is the qualification, not the floor probes alone."
+  },
+  "extraction": {
+    "floor_probe_offset_hz": 50000000.0,
+    "floor_definition": "numerical floor of a run = the larger of the delivered powers at two coherent bins that carry no tone, harmonic or intermodulation product (2f1-f2 minus 50 MHz, 2f2-f1 plus 50 MHz; single tone: f0 -/+ 50 MHz)",
+    "iip3": {
+      "min_points": 4,
+      "floor_margin_db": 20.0,
+      "compression_db": 0.25,
+      "slope_fund": [
+        0.9,
+        1.1
+      ],
+      "slope_im3": [
+        2.7,
+        3.3
+      ],
+      "max_residual_db": 0.5,
+      "free_fixed_tol_db": 1.0,
+      "max_point_spread_db": 1.5,
+      "baseline_points": 3,
+      "baseline_flat_db": 0.15
+    },
+    "p1db": {
+      "drop_db": 1.0,
+      "floor_margin_db": 10.0,
+      "baseline_points": 3,
+      "baseline_flat_db": 0.15
+    },
+    "operating_limits": {
+      "vce_max_v": 1.4,
+      "vce_window_v": [
+        0.4,
+        2.0
+      ],
+      "vbe_window_v": [
+        0.65,
+        0.96
+      ],
+      "source": "spec row 17 (no npn13G2 above 1.4 V V_CE; model card vce window 0.4-2.0 V) and the model-card V_BE box 0.65-0.96 V used by sim/lna-sparam-nf/stage1_tables.py",
+      "applied_to": "instantaneous peak/minimum over the retained window for Q1 and Q2; the card Ic box is not monitored (instantaneous collector current is not saved)",
+      "rule": "a sweep point that breaks a limit is classified 'outside DUT operating limits' and is excluded from fits and baselines; it is never fitted through"
+    }
+  },
+  "convergence": {
+    "timestep_factor": 0.5,
+    "duration_factor": 2.0,
+    "iip3_tol_db": 0.25,
+    "p1db_tol_db": 0.1,
+    "point_fund_tol_db": 0.05,
+    "point_im3_tol_db": 0.5,
+    "note": "variants: base; half_step (solver max step and DFT grid halved, same window); double_window (same step, retained window doubled, same discard). A refined variant must reproduce the baseline estimator outcome within the tolerances; a failure is published as 'unconverged' and the number is not a result."
+  },
+  "controls": {
+    "a1": 10.0,
+    "a3": -2000.0,
+    "placement": "mid",
+    "iip3_tol_db": 0.15,
+    "p1db_tol_db": 0.1,
+    "gain_tol_db": 0.05,
+    "description": "memoryless cubic y = a1 x + a3 x^3 between the same 50 ohm terminations (closed forms in linearity.cubic_expectations): run through the identical generated ngspice block and extractor as the DUT",
+    "negative_scale_factors": [
+      0.5,
+      2.0,
+      1.4142135623730951
+    ],
+    "negative_shift_db": [
+      3.0,
+      6.0
+    ]
+  },
+  "targets": {
+    "iip3_dbm": -15.0,
+    "p1db_dbm": -25.0,
+    "source": "spec/target-spec.md rows 7 and 8 (ratified, input-referred); unchanged by this plan"
+  },
+  "dut_expected_corner_note": "hbt_typ, 27 C, 2.5 V only. Corner dependence is a later campaign.",
+  "development_note": "Numerics, sweep ranges and the IM3 floor margin were fixed after ~10 local single-unit ngspice debug probes at the mid placement (run before this plan was committed); the limits, targets, tolerances of the closed-form controls and the convergence tolerances were not tuned on DUT results. The plan is committed before the collection and the record cites its commit."
+}
