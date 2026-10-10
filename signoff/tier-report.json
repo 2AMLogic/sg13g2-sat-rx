@@ -161,13 +161,13 @@
         "command": null,
         "kind": "generic",
         "check_status": "pass",
-        "content_hash": "sha256:bfb0364b3bd4cb588c0e0f512023c81a2511391f225ca873bd49f5196c8c1694",
+        "content_hash": "sha256:9ce68f8b713fcfb6ea23d12803c9e293ad42b77835cd6f2b056e7340dc82b60d",
         "input_verified": true,
         "exit_status": 0,
         "artifact_binding": {
           "t1_item": 10,
           "path": ".github/workflows/ci.yml",
-          "content_hash": "sha256:bfb0364b3bd4cb588c0e0f512023c81a2511391f225ca873bd49f5196c8c1694",
+          "content_hash": "sha256:9ce68f8b713fcfb6ea23d12803c9e293ad42b77835cd6f2b056e7340dc82b60d",
           "input_verified": true,
           "summary": "Repo hygiene: README (with a Reproduce section linking sim/README.md), LICENSE and spec/target-spec.md are present; CI (.github/workflows/ci.yml) runs the evidence-format check and the harness smoke test. Presence/invocation checks only; they do not judge the content's quality.",
           "source": "signoff/make_item10_evidence.py"

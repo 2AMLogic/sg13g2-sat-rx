@@ -1,0 +1,20 @@
+{
+  "record_id": "20261010-083631-709284d",
+  "status": "CAPABILITY_UNAVAILABLE",
+  "reasons": [
+    "pinned simulator not available on this host; this status never establishes absence"
+  ],
+  "failed_check": "pinned ngspice-46 (sim/pdk-artifact.json) not found: 'ngspice' resolves to /usr/bin/ngspice = 'ngspice-42 : Circuit level simulation program'; a different version is not the pinned executable, so no result from it is evidence for this record",
+  "scope": "no probe ran; no active-mixer NF number; no row-10/row-12 claim",
+  "environment": {
+    "host": "loom-worker-3",
+    "platform": "Linux-7.0.0-1013-aws-x86_64-with-glibc2.39",
+    "python": "3.12.3",
+    "git": {
+      "commit": "709284d955902caf39cd2bc579be0db64d3a5cca",
+      "dirty": true
+    },
+    "placeholder_sha256": "e2cd2af3fd9aa34b9c36dde453c7919abbec69fe9f675f1848657a5a85c7a74d",
+    "pdk_artifact_sha256": "2ca42a292eeef18dc0da32004bb2cfa66dfead21c73b4f77d4609d60dadeabf1"
+  }
+}

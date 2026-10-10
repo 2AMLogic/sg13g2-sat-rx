@@ -215,3 +215,11 @@ them says nothing about active-device noise, and does not qualify spec rows 10/1
 the record's inventory) and protects `probe-logs/` append-only; see the
 top-level README. A run that crashes between writing logs and records leaves an
 orphan `probe-logs/<id>/` that fails format CI until its record exists.
+
+## Conversion-matrix feasibility (#89)
+
+The conversion-matrix alternative deferred above is investigated as a separate, bounded
+interface-feasibility task in [`../mixer-cm-interface-probe/`](../mixer-cm-interface-probe/README.md);
+its go/no-go is in [`design-note.md`](../mixer-cm-interface-probe/design-note.md). That bench has
+its own record statuses and checker adapter. It leaves the `MODEL_ABSENT` result, the transient-noise
+gates and the records here unchanged, and it reports no active-mixer NF number.
