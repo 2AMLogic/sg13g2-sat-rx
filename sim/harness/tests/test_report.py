@@ -279,3 +279,25 @@ def test_rendered_harness_record_satisfies_the_evidence_format_checker(tmp_path)
 
     (logs / f"{pts[0].corner_id}.log").unlink()          # negative control
     assert any("missing declared corner identity" in m for m in chk.check_format(tmp_path).items)
+
+
+def test_rendered_subset_record_satisfies_the_evidence_format_checker(tmp_path):
+    """The subset wording ('N point grid (subset of ...)') must parse too, or
+    the first committed subset record fails the evidence-formats CI job."""
+    spec = importlib.util.spec_from_file_location("check_evidence_formats", CHECKER)
+    chk = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(chk)
+
+    exp, tb, _, _ = build_synthetic_record(tmp_path)
+    pts = grid(corners=("hbt_typ",), temps=(27,), supplies=(2.5,))
+    rec = R.build_record(tb, FakePdk("f", tmp_path, "v", "t", "m"), pts, results_for(pts, gain), "n", tmp_path,
+                         "20260101-000000-abc1234", "2026-01-01T00:00:00+00:00", 1.0, subset_reason="because",
+                         git={"short": "abc1234", "branch": "b", "dirty": False})
+    assert not rec["matrix"]["full"]
+    assert chk.declared_native_matrix(R.render_markdown(rec)) == (["hbt_typ"], [27.0], [2.5], 1, 1)
+    R.write_record(rec, exp)
+    R.write_netlist_snapshot(tb, exp, rec["record_id"])
+    logs = exp / "corners" / rec["record_id"]
+    logs.mkdir(parents=True)
+    (logs / f"{pts[0].corner_id}.log").write_text("log\n")
+    assert chk.check_format(tmp_path).items == []

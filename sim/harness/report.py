@@ -52,10 +52,6 @@ from .testbench import AXES, Testbench
 SNAPSHOT_DIR = "netlist-snapshots"
 RECORDS_DIR = "records"
 
-#: Minimum number of distinct process corners for the matrix to count as
-#: "full" without a written justification.
-MIN_PROCESS_CORNERS = 3
-
 _AXIS_GROUP_KEY = {
     "process": lambda p: (p["temp_c"], p["vdd"]),
     "temperature": lambda p: (p["corner"], p["vdd"]),

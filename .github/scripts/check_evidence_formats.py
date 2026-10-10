@@ -15,7 +15,10 @@ reinterprets a historical scientific claim; corrections go in a later record):
        records/<id>.md, corners/<id>/<corner_id>.log (plain text),
        netlist-snapshots/<id>.spice (one frozen file).
        The record declares its matrix as ``Process: ..`` / ``Temperature: ..``
-       / ``Supply: ..`` / ``N point full-factorial grid ..``.
+       / ``Supply: ..`` / ``N point full-factorial grid .., M completed`` (a
+       run covering the bench's whole required product) or ``N point grid
+       (subset of ..), M completed`` (an intentional subset, issue #81). Both
+       wordings go through the same expansion and artifact checks.
 
    Ka-band (sim/hbt-kaband-characterization/report_kaband.py)
        records/<id>.md, corners/<id>/<corner_id>.log.gz (gzip),
@@ -257,7 +260,26 @@ def csv_corner_ids(problems: Problems, root: Path, path: Path) -> list[str] | No
 # ---------------------------------------------------------------------------
 
 
+#: The harness-native grid-size line, in either wording ``render_markdown``
+#: emits: ``- N point full-factorial grid (...), M completed`` for a run that
+#: covers the required process x temperature x supply product, or
+#: ``- N point grid (subset of ...), M completed`` for an intentional subset.
+NATIVE_GRID_LINE_RE = re.compile(
+    r"^\s*- (\d+) point (?:full-factorial grid|grid \(subset of)[^\n]*?, (\d+) completed",
+    re.MULTILINE,
+)
+
+
 def declared_native_matrix(text: str) -> tuple[list[str], list[float], list[float], int | None, int | None]:
+    """Return (processes, temperatures, supplies, n_total, n_done) as declared
+    by a harness-native record.
+
+    The grid-size line may use the full-factorial or the subset wording (see
+    :data:`NATIVE_GRID_LINE_RE`). The wording only says whether the run met the
+    bench's required product; either way N must equal the expansion of the
+    Process/Temperature/Supply lists and the corner logs must match that
+    expansion, so accepting a subset relaxes none of the other checks.
+    """
     def line(label: str) -> str:
         m = re.search(rf"^\s*- {label}: (.+)$", text, re.MULTILINE)
         return m.group(1) if m else ""
@@ -265,7 +287,7 @@ def declared_native_matrix(text: str) -> tuple[list[str], list[float], list[floa
     processes = [p.strip() for p in line("Process").split(",") if p.strip()]
     temps = numbers(line("Temperature"))
     supplies = numbers(line("Supply"))
-    m = re.search(r"^\s*- (\d+) point full-factorial grid .*?, (\d+) completed", text, re.MULTILINE)
+    m = NATIVE_GRID_LINE_RE.search(text)
     n_total = int(m.group(1)) if m else None
     n_done = int(m.group(2)) if m else None
     return processes, temps, supplies, n_total, n_done
@@ -302,7 +324,8 @@ def check_native_record(problems: Problems, root: Path, exp_dir: Path, md: Path)
     processes, temps, supplies, n_total, n_done = declared_native_matrix(text)
     if not (processes and temps and supplies) or n_total is None:
         problems.add(where, "cannot find the declared corner matrix "
-                     "('Process:', 'Temperature:', 'Supply:' and 'N point full-factorial grid' lines)")
+                     "('Process:', 'Temperature:', 'Supply:' and an 'N point full-factorial grid ..., M completed' "
+                     "or 'N point grid (subset of ...), M completed' line)")
         expected: list[str] | None = None
     else:
         expected = expand_matrix(processes, temps, supplies)
