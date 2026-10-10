@@ -62,6 +62,7 @@ def repo(tmp_path, monkeypatch):
         crosscheck={"summary": "synthetic", "compared": 3}, converge={"c": {"drive_dbm": -6.0, "drive_kind": "selected", "ok": True, "checks": [], "failures": []}},
         claim="synthetic", supersedes="", started=dt.datetime(2026, 10, 10, tzinfo=dt.timezone.utc),
         git={"commit": "abcdef0" * 5 + "abcde", "short": "abcdef0", "branch": "t", "dirty": False})
+    shutil.copyfile(BENCH / "README.md", exp / "README.md")  # cold-start README invariant (issue #85)
     return root, exp, rid
 
 

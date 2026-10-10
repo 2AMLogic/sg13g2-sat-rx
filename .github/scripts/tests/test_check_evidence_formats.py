@@ -286,7 +286,8 @@ def clone_record(exp: Path, old: str, new: str):
             dest = exp / str(p.relative_to(exp)).replace(old, new)
             dest.parent.mkdir(parents=True, exist_ok=True)
             if p.suffix == ".md" or (p.suffix == ".spice" and p.parent.name == "netlist-snapshots"):
-                dest.write_text(p.read_text().replace(old, new))
+                # a fresh record must cite a pinned PDK, not the legacy 'unknown' (issue #85)
+                dest.write_text(p.read_text().replace(old, new).replace("(unknown, via", "(0.3.0, via"))
             else:
                 shutil.copyfile(p, dest)
 
