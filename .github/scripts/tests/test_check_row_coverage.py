@@ -77,7 +77,11 @@ class RowCoverage(unittest.TestCase):
         self.assertIn("does not exist", self.messages())
 
     def test_overclaimed_verdict(self) -> None:
-        self.edit(lambda d: self.row(d, 2).update(verdict="measured_pass"))
+        # Row 9 cites the mixer placeholder-circuit record, whose Claim line
+        # still matches OVERCLAIM_RE. (Row 2 cites the LNA feasibility record,
+        # whose Claim line is deliberately not a placeholder claim, so it is
+        # not a valid overclaim control.)
+        self.edit(lambda d: self.row(d, 9).update(verdict="measured_pass"))
         self.assertIn("overclaimed", self.messages())
 
     def test_no_bench_needs_blocker(self) -> None:
