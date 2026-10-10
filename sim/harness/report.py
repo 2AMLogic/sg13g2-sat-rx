@@ -37,7 +37,12 @@ from collections import defaultdict
 from pathlib import Path
 
 from . import HARNESS_VERSION, UPSTREAM_PATTERN
-from .corners import DEFAULT_SUPPLY_TOLERANCE, DEFAULT_TEMPERATURES_C
+from .corners import (
+    DEFAULT_SUPPLY_TOLERANCE,
+    DEFAULT_TEMPERATURES_C,
+    resolve_corners,
+    supply_points,
+)
 from .evidence import BaseExtensions
 from .pdk import Pdk
 from .runner import PointResult
@@ -46,10 +51,6 @@ from .testbench import AXES, Testbench
 #: Subdirectories of ``sim/<experiment-slug>/`` this module writes into.
 SNAPSHOT_DIR = "netlist-snapshots"
 RECORDS_DIR = "records"
-
-#: Minimum number of distinct process corners for the matrix to count as
-#: "full" without a written justification.
-MIN_PROCESS_CORNERS = 3
 
 _AXIS_GROUP_KEY = {
     "process": lambda p: (p["temp_c"], p["vdd"]),
@@ -288,41 +289,83 @@ def environment(
     }
 
 
-def matrix_conformance(tb: Testbench, points) -> dict:
+#: Cap on how many missing / unexpected combinations are spelled out in the
+#: human-readable ``missing`` strings (the full lists are in the record keys).
+MAX_LISTED_COMBOS = 12
+
+
+def _combo(corner: str, temp_c: float, vdd: float) -> tuple[str, float, float]:
+    return (str(corner), round(float(temp_c), 6), round(float(vdd), 6))
+
+
+def _fmt_combos(combos) -> str:
+    combos = sorted(combos)
+    shown = ", ".join(f"{c}/{t:g} C/{v:.2f} V" for c, t, v in combos[:MAX_LISTED_COMBOS])
+    if len(combos) > MAX_LISTED_COMBOS:
+        shown += f", ... (+{len(combos) - MAX_LISTED_COMBOS} more)"
+    return shown
+
+
+def required_matrix(tb: Testbench) -> set[tuple[str, float, float]]:
+    """The mandated Cartesian product for ``tb``: its declared (resolved)
+    process corners x the default temperatures x nominal supply +/-10 %."""
+    return {
+        _combo(c.name, t, v)
+        for c in resolve_corners(list(tb.corners))
+        for t in DEFAULT_TEMPERATURES_C
+        for v in supply_points(tb.nominal_supply_v, DEFAULT_SUPPLY_TOLERANCE)
+    }
+
+
+def matrix_conformance(tb: Testbench, points, required=None) -> dict:
     """Is this run the full PVT matrix, or a subset?
+
+    Coverage is judged on canonical (process, temperature, supply) tuples
+    against the required Cartesian product, not on each axis independently:
+    a diagonal of points can hit every axis level and still cover few of the
+    required combinations. Duplicates collapse; tuples outside the required
+    set (e.g. undeclared process names) are reported separately and never
+    count toward coverage.
+
+    ``required`` deliberately overrides the required set (an iterable of
+    ``(process, temp_c, vdd)``); it is recorded under ``required_source`` /
+    ``required_points`` so the record shows what was demanded. Otherwise the
+    set derives from the testbench's declared corners.
 
     A block's evidence convention should require the "corner matrix run"
     field to state the full matrix unless the record states why a subset was
-    used; this returns what is missing so the caller can insist on a written
-    justification instead of quietly recording a thinner run.
+    used; ``missing`` lets the caller insist on a written justification.
     """
-    temps = {round(p.temp_c, 6) for p in points}
-    supplies = {round(p.vdd, 6) for p in points}
-    process = {p.corner.name for p in points}
-
-    required_temps = {round(t, 6) for t in DEFAULT_TEMPERATURES_C}
-    nominal = tb.nominal_supply_v
-    required_supplies = {
-        round(nominal * (1.0 - DEFAULT_SUPPLY_TOLERANCE), 6),
-        round(nominal, 6),
-        round(nominal * (1.0 + DEFAULT_SUPPLY_TOLERANCE), 6),
-    }
+    if required is None:
+        req = required_matrix(tb)
+        source = "testbench"
+    else:
+        req = {_combo(*r) for r in required}
+        source = "override"
+    observed = {_combo(p.corner.name, p.temp_c, p.vdd) for p in points}
+    covered = observed & req
+    gaps = req - observed
+    unexpected = observed - req
 
     missing: list[str] = []
-    if not required_temps <= temps:
+    if gaps:
         missing.append(
-            "temperature: missing " + ", ".join(f"{t:g} C" for t in sorted(required_temps - temps))
+            f"{len(covered)} of {len(req)} required process/temperature/supply "
+            f"combinations covered; missing {_fmt_combos(gaps)}"
         )
-    if not required_supplies <= supplies:
+    if unexpected:
         missing.append(
-            "supply: missing " + ", ".join(f"{v:.2f} V" for v in sorted(required_supplies - supplies))
+            f"{len(unexpected)} unexpected combination(s) not counted: {_fmt_combos(unexpected)}"
         )
-    if len(process) < MIN_PROCESS_CORNERS:
-        missing.append(
-            f"process: only {len(process)} corner(s) ({', '.join(sorted(process))}); "
-            f"at least {MIN_PROCESS_CORNERS} expected"
-        )
-    return {"full": not missing, "missing": missing}
+    return {
+        "full": not gaps,
+        "missing": missing,
+        "required_source": source,
+        "required_points": len(req),
+        "covered_points": len(covered),
+        "missing_combinations": [list(c) for c in sorted(gaps)],
+        "unexpected_combinations": [list(c) for c in sorted(unexpected)],
+    }
 
 
 def build_record(
@@ -475,8 +518,10 @@ def render_markdown(record: dict) -> str:
         "  - Process: " + ", ".join(c["name"] for c in grid["corners"]),
         "  - Temperature: " + ", ".join(f"{t:g} C" for t in grid["temperatures_c"]),
         "  - Supply: " + ", ".join(f"{v:.2f} V" for v in grid["supplies_v"]),
-        (f"  - {grid['points']} point full-factorial grid (process x temperature x supply), "
-         f"{grid['points_ok']} completed"),
+        (f"  - {grid['points']} point "
+         + ("full-factorial grid (process x temperature x supply)" if record["matrix"]["full"]
+            else "grid (subset of the required process x temperature x supply product)")
+         + f", {grid['points_ok']} completed"),
     ]
     if record["matrix"]["full"]:
         lines.append("  - Full PVT matrix.")
