@@ -2,8 +2,30 @@
 
 Chronological record of merged pull requests and closed issues, maintained by the Loom Guide role.
 
+### 2026-10-10
+
+- **PR #76**: ci: fix overclaim negative control after #73 (closes #75)
+- **PR #73**: row-coverage: refresh rows 2-6/17/18 and flag stale latest_record (#70)
+- **PR #72**: signoff: attest T1 item 10 (repo hygiene)
+- **PR #69**: sim: mixer-core sizing follow-up after #35 (no acceptable drive at any declared sizing)
+- **PR #67**: refactor: share klt-driver helpers across study drivers
+- **PR #66**: ci: exercise mixer-topology real-model smoke and negative controls
+- **PR #64**: design: first xschem LNA stage (cascode) + ideal-matching feasibility record; signoff item 1 (#28)
+- **PR #62**: sim: mixer-topology feasibility collection, record and evidence-format adapter (#35)
+- **Issue #75** (closed): ci: main red after #73 — test_check_row_coverage::test_overclaimed_verdict fails
+- **Issue #70** (closed): spec: refresh row-coverage.json stale rows 17/18 and latest_record pointers, with a staleness check
+- **Issue #71** (closed): signoff: attest T1 item 10 (repo hygiene) and, if checkable, item 9 (testbenches shipped)
+- **Issue #40** (closed): Auditor: retain destructive cleanup guard for uncommitted evidence
+- **Issue #61** (closed): sim: mixer-core sizing follow-up after the #35 'no acceptable drive' finding
+- **Issue #65** (closed): Consolidate duplicated klt driver helpers across sim study scripts
+- **Issue #63** (closed): ci: exercise mixer-topology real-model smoke and negative controls
+- **Issue #28** (closed): design: first xschem LNA first-stage schematic from the Ka-band HBT characterization (T1 item 1)
+- **Issue #35** (closed): sim: mixer-core topology feasibility under the row-17 supply limits (before any mixer schematic)
+
 ### 2026-10-09
 
+- **PR #60**: sim: freeze per-record passive solver artifacts before publishing evidence
+- **Issue #58** (closed): sim: freeze per-record passive solver artifacts before publishing evidence
 - **PR #56**: spec: machine-checked spec-row to bench/record coverage manifest (#50)
 - **PR #55**: docs(sim): refresh stale spec-status paragraph in sim/README.md
 - **PR #54**: spec: DR-0006 LO source class and port convention (proposed)
