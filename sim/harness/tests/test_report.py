@@ -108,16 +108,74 @@ def test_unswept_axis_is_a_failure_unless_allowed():
     assert R.evaluate_checks(chk, res, summ, sens, allow_unswept_axes=True) == []
 
 
-def test_matrix_conformance(tmp_path):
+def make_tb(tmp_path, corners=("hbt",)):
     bench = tmp_path / "exp" / "testbench"
     bench.mkdir(parents=True)
     (bench / "d.spice").write_text("R1 a b 1\n")
     (bench / "tb.json").write_text(json.dumps(
-        {"netlist": "d.spice", "measure": {"gain": "1"}, "nominal_supply_v": 2.5}))
-    tb = T.load(tmp_path / "exp")
-    assert R.matrix_conformance(tb, grid())["full"]
+        {"netlist": "d.spice", "measure": {"gain": "1"}, "nominal_supply_v": 2.5,
+         "corners": list(corners)}))
+    return T.load(tmp_path / "exp")
+
+
+def pt(name, temp, vdd):
+    return C.PvtPoint(C.CORNERS[name], temp, vdd)
+
+
+def test_matrix_conformance(tmp_path):
+    tb = make_tb(tmp_path)
+    full = R.matrix_conformance(tb, grid())
+    assert full["full"] and full["missing"] == [] and full["covered_points"] == 27
     thin = R.matrix_conformance(tb, grid(corners=("hbt_typ",), temps=(27,), supplies=(2.5,)))
-    assert not thin["full"] and len(thin["missing"]) == 3
+    assert not thin["full"] and thin["covered_points"] == 1 and len(thin["missing_combinations"]) == 26
+
+
+def test_diagonal_points_are_incomplete_and_list_missing_combos(tmp_path):
+    tb = make_tb(tmp_path)
+    diag = [pt("hbt_typ", -40, 2.25), pt("hbt_bcs", 27, 2.5), pt("hbt_wcs", 125, 2.75)]
+    m = R.matrix_conformance(tb, diag)
+    assert not m["full"]
+    assert m["covered_points"] == 3 and m["required_points"] == 27
+    assert len(m["missing_combinations"]) == 24
+    assert ["hbt_typ", 27.0, 2.5] in m["missing_combinations"]
+    assert "missing" in m["missing"][0] and "hbt_typ/27 C/2.50 V" in m["missing"][0]
+
+
+def test_removing_one_combination_is_incomplete_though_axes_are_covered(tmp_path):
+    tb = make_tb(tmp_path)
+    pts = grid()
+    dropped = pts[13]
+    m = R.matrix_conformance(tb, pts[:13] + pts[14:])
+    assert not m["full"]
+    assert m["missing_combinations"] == [[dropped.corner.name, dropped.temp_c, dropped.vdd]]
+
+
+def test_duplicates_do_not_fill_gaps(tmp_path):
+    tb = make_tb(tmp_path)
+    pts = grid()
+    m = R.matrix_conformance(tb, pts[1:] + [pts[1]])
+    assert not m["full"] and m["covered_points"] == 26
+
+
+def test_unexpected_process_names_do_not_satisfy_declared_corners(tmp_path):
+    tb = make_tb(tmp_path)
+    # three arbitrary process names (the old len(process) >= 3 rule) in place of hbt_*
+    pts = grid(corners=("tt", "ff", "ss"))
+    m = R.matrix_conformance(tb, pts)
+    assert not m["full"] and m["covered_points"] == 0
+    assert len(m["unexpected_combinations"]) == 27
+    assert any("unexpected" in x for x in m["missing"])
+    # a full grid plus extras is still full coverage; the extras are reported
+    extra = R.matrix_conformance(tb, grid() + grid(corners=("tt",)))
+    assert extra["full"] and len(extra["unexpected_combinations"]) == 9
+
+
+def test_explicit_required_override_is_recorded(tmp_path):
+    tb = make_tb(tmp_path)
+    req = [("hbt_typ", 27, 2.5)]
+    m = R.matrix_conformance(tb, [pt("hbt_typ", 27, 2.5)], required=req)
+    assert m["full"] and m["required_source"] == "override" and m["required_points"] == 1
+    assert R.matrix_conformance(tb, grid())["required_source"] == "testbench"
 
 
 class FakePdk(Pdk):
@@ -172,6 +230,21 @@ def test_subset_run_states_gaps_and_justification(tmp_path):
                          "id", "t", 1.0, subset_reason="because", git={"short": "x", "branch": "b", "dirty": False})
     md = R.render_markdown(rec)
     assert "Subset of the mandated PVT matrix" in md and "Justification: because" in md
+    assert "full-factorial" not in md and "Full PVT matrix." not in md
+    assert "1 point grid (subset" in md
+
+
+def test_diagonal_record_renders_as_subset_and_failed_points_stay_error(tmp_path):
+    exp, tb, _, _ = build_synthetic_record(tmp_path)
+    pts = [pt("hbt_typ", -40, 2.25), pt("hbt_bcs", 27, 2.5), pt("hbt_wcs", 125, 2.75)]
+    res = results_for(pts, gain)
+    res[0] = PointResult(point=pts[0], status="failed")
+    rec = R.build_record(tb, FakePdk("f", tmp_path, "v", "t", "m"), pts, res, "n", tmp_path,
+                         "id", "t", 1.0, git={"short": "x", "branch": "b", "dirty": False})
+    assert rec["status"] == "error" and rec["grid"]["points_ok"] == 2
+    assert not rec["matrix"]["full"]
+    md = R.render_markdown(rec)
+    assert "full-factorial" not in md and "Subset of the mandated PVT matrix" in md
 
 
 def test_writers_are_append_only(tmp_path):
