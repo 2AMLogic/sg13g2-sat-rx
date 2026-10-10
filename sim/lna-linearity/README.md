@@ -18,6 +18,7 @@ outcome is published as it is.
 python3 -m pytest sim/lna-linearity/tests -q              # method qualification, no simulator
 python3 sim/lna-linearity/run.py check-plan               # band + coherence of every declared placement/variant
 python3 sim/lna-linearity/run.py controls                 # closed-form positive and negative controls
+python3 sim/lna-linearity/ci_assert.py                    # reduced cubic deck on the pinned ngspice (records nothing)
 python3 sim/lna-linearity/run.py collect --dry-run        # write the klt bodies/requests only
 python3 sim/lna-linearity/run.py collect \
     --runner-version-check warn --no-stage-models         # submit to the Spot batch fleet, write ONE record
@@ -103,6 +104,27 @@ amplitude normalization, wrong power axis, non-coherent placement, non-integer
 window, IM3 below the floor, missing 1:3 region, unbracketed P1dB, missing
 baseline, out-of-limit points.
 
+### CI control (`ci_assert.py`, issue #122)
+
+The eight fleet collection requests are the only place the real ngspice
+controls ran; `ci_assert.py` closes that gap between campaigns. It generates
+ONE reduced cubic-only deck through the bench's own generator (the analytic
+control circuit on a declared sweep subset: two-tone -50..-36 dBm at 1 dB,
+single-tone -48..-16 dBm at 2 dB -- same step and time grid as the plan, so
+coherence is inherited; the subset keeps a flat baseline, a 1:3 region far
+above the measured floor and a bracketed 1 dB crossing), runs it in ONE
+pinned ngspice process (deck-wide the plan's TIGHT two-tone numerics: the
+looser single-tone setting guards against DUT high-drive aborts, a stress the
+memoryless cubic does not have), and evaluates the measured log with the
+bench's own extractor. It asserts the pinned executable identity, completion
+(`LNLIN_DONE`) and finite marks, that the measured log recovers all three
+known-answer quantities, and that the two extraction-side sabotages (every
+measured bin amplitude scaled; the swept power axis shifted) each fail their
+intended measured check (the gain; the input-referred dB answers). Green
+means the method still works on the pinned simulator -- nothing else: no
+record is written (temp dir only), no spec row is claimed, and the DUT
+collection stays on the fleet. It runs in the sim-smoke CI job.
+
 ## Files
 
 | file | role |
@@ -111,7 +133,8 @@ baseline, out-of-limit points.
 | `linearity.py` | pure logic: power conventions, coherence, deck text, log parsing, the IIP3 and P1dB estimators, convergence verdicts, analytic controls |
 | `analysis.py` | frozen logs to published verdicts (deterministic, simulator-free) |
 | `run.py` | CLI: `check-plan`, `controls`, `build`, `collect`, `verify` |
-| `tests/` | method qualification (`test_linearity.py`), record round trip (`test_records.py`), closed-form fake logs (`fakes.py`) |
+| `ci_assert.py` | reduced cubic-only CI control on the pinned ngspice (one process, records nothing; sim-smoke job) |
+| `tests/` | method qualification (`test_linearity.py`), CI-control assertions (`test_ci_assert.py`), record round trip (`test_records.py`), closed-form fake logs (`fakes.py`) |
 | `records/`, `corners/`, `netlist-snapshots/` | append-only evidence; the checker is the `lna-linearity` adapter in `.github/scripts/check_evidence_formats.py` |
 
 ## Status: one record, nominal corner, ideal-matching placeholder
