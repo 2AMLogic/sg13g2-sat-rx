@@ -1,0 +1,31 @@
+{
+  "netlist": "body_screen__2.500v.spice",
+  "backend": "local",
+  "models": {
+    "pdk": "ihp-sg13g2",
+    "lib": "libs.tech/ngspice/models/cornerHBT.lib"
+  },
+  "corners": {
+    "process": [
+      "hbt_typ"
+    ],
+    "temperature_c": [
+      27.0
+    ]
+  },
+  "analysis": {
+    "kind": "tran",
+    "args": "1p 2p"
+  },
+  "measurements": [
+    {
+      "name": "lm_rail_v",
+      "spice": ".meas tran lm_rail_v FIND v(vdd) AT=2p",
+      "unit": "V"
+    }
+  ],
+  "options": {
+    "timeout_s": 3600,
+    "keep_artifacts": true
+  }
+}
