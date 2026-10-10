@@ -602,7 +602,8 @@ def test_conclusion_never_recommends_floor_and_respects_stress(study):
     for cand in study.candidates:
         if cand.role == "candidate":
             mc = per[cand.name]["main_cells"]
-            mc[0] = dict(mc[0], status="rejected_stress")
+            mc[0] = dict(mc[0], status="rejected_stress",
+                         stress={"rejecting": [{"device": "q1", "interval": "retained", "quantity": "vbe"}]})
     out = mf.conclude(study, per)
     assert out["verdicts"]["gilbert_stacked"]["verdict"] == "infeasible at the declared sizing"
     assert out["recommendation"]["draw_first"] is None
@@ -641,3 +642,119 @@ def test_ideal_sink_compliance_is_required_and_reported(study):
     res = mf.analyze_run(run, vals, cand.devices, study.stress, sink_nodes=cand.sink_nodes)
     assert res["status"] == "ok"
     assert res["ideal_sink_v"]["tail"] == {"dc": 0.22, "startup_min": 0.21, "retained_min": 0.215}
+
+
+# ---------------------------------------------------------------------------
+# Issue #45 regressions: gate / conclusion / nonfinite sample count
+# ---------------------------------------------------------------------------
+
+_DEPENDENT_FIELDS = ("stress", "gain_db", "rail_power_mw", "dc_rail_power_mw", "lo_vdiff_loaded_peak_v",
+                     "lo_rf_dbm", "lo_if_dbm", "p_if1_dbm", "p_if2_dbm", "p_im3l_dbm", "p_im3h_dbm")
+
+
+def _skip(cell):
+    cell["status"] = "not_applicable_no_drive"
+    for key in _DEPENDENT_FIELDS:
+        cell.pop(key, None)
+
+
+def test_gate_rejects_all_cells_skipped_as_no_drive(study):
+    cells = good_collection(study)
+    for c in cells:
+        _skip(c)
+    problems = mf.validate_collection(study, cells)
+    assert any("never not_applicable_no_drive" in p for p in problems)
+    assert any("without a validated selection outcome" in p for p in problems)
+
+
+def test_gate_rejects_dependent_skip_when_drive_selected(study):
+    cells = good_collection(study)
+    _skip(next(c for c in cells if c["matrix"] == "main"))
+    assert any("has a selected drive" in p for p in mf.validate_collection(study, cells))
+
+
+def test_gate_rejects_dependent_skip_without_validated_selection(study):
+    cells = good_collection(study)
+    cand = study.candidates[0].name
+    dropped = next(c for c in cells if c["matrix"] == "lo_select" and c["candidate"] == cand)
+    cells = [c for c in cells if c is not dropped]
+    for c in cells:
+        if c["candidate"] == cand and c["matrix"] in mf.DRIVE_DEPENDENT_MATRICES:
+            _skip(c)
+    assert any("without a validated selection outcome" in p for p in mf.validate_collection(study, cells))
+
+
+def _no_drive_candidate(study, cand):
+    cells = good_collection(study)
+    for c in cells:
+        if c["candidate"] != cand:
+            continue
+        if c["matrix"] == "lo_select":
+            c["status"] = "rejected_stress"
+            c["stress"] = {"rejecting": [{"device": "q1", "interval": "retained", "quantity": "vbe"}]}
+            c["gain_db"] = None
+        elif c["matrix"] in mf.DRIVE_DEPENDENT_MATRICES:
+            _skip(c)
+    return cells
+
+
+def test_gate_accepts_validated_no_drive_candidate_beside_driven_one(study):
+    cand = study.candidates[0].name
+    assert mf.validate_collection(study, _no_drive_candidate(study, cand)) == []
+
+
+def test_gate_rejects_unskipped_dependent_cell_when_no_drive(study):
+    cand = study.candidates[0].name
+    cells = _no_drive_candidate(study, cand)
+    dep = next(c for c in cells if c["candidate"] == cand and c["matrix"] == "main")
+    dep.update(status="ok", stress={"rejecting": []}, gain_db=5.0, rail_power_mw=1.0,
+               dc_rail_power_mw=1.0, lo_vdiff_loaded_peak_v=0.3)
+    assert any("no selected drive" in p for p in mf.validate_collection(study, cells))
+
+
+def _per_with(study, cells, main_for):
+    return {c.name: {"lo_selection": {"status": "selected", "drive_dbm": -9.0},
+                     "main_cells": main_for(c.name, [x for x in cells if x["matrix"] == "main"
+                                                     and x["candidate"] == c.name])}
+            for c in study.candidates}
+
+
+def test_conclude_single_main_cell_is_inconclusive(study):
+    out = mf.conclude(study, _per_with(study, good_collection(study), lambda n, m: m[:1]))
+    assert all(v["verdict"] == "inconclusive" for v in out["verdicts"].values())
+    assert out["recommendation"]["draw_first"] is None
+
+
+def test_conclude_complete_main_cells_still_feasible(study):
+    out = mf.conclude(study, _per_with(study, good_collection(study), lambda n, m: m))
+    assert out["recommendation"]["draw_first"] is not None
+
+
+@pytest.mark.parametrize("case", ["duplicate", "foreign", "nonfinite", "missing_value", "wrong_candidate"])
+def test_conclude_rejects_bad_main_cells(study, case):
+    def mutate(name, m):
+        m = copy.deepcopy(m)
+        if case == "duplicate":
+            m[-1] = copy.deepcopy(m[0])   # one id twice, one id missing
+        elif case == "foreign":
+            m.append(dict(m[0], id="main|candidate=nope"))
+        elif case == "nonfinite":
+            m[0]["gain_db"] = float("nan")
+        elif case == "missing_value":
+            del m[0]["rail_power_mw"]
+        elif case == "wrong_candidate":
+            m[0] = dict(m[0], candidate="other", id=m[0]["id"].replace(name, "other"))
+        return m
+    out = mf.conclude(study, _per_with(study, good_collection(study), mutate))
+    assert all(v["verdict"] == "inconclusive" for v in out["verdicts"].values())
+    assert out["recommendation"]["draw_first"] is None
+
+
+@pytest.mark.parametrize("bad", [float("nan"), float("inf"), float("-inf")])
+def test_analyze_run_nonfinite_sample_count_is_invalid(study, bad):
+    run = make_run(study)
+    values = synth_values(run, (), {"if": .001, "loif": .001, "lorf": .001, "lodiff": .5})
+    values["mf_n"] = bad
+    out = mf.analyze_run(run, values, (), study.stress)
+    assert out["status"] == "invalid"
+    assert any("nonfinite" in p and "mf_n" in p for p in out["problems"])

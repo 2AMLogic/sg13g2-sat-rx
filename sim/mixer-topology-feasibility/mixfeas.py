@@ -775,7 +775,7 @@ def analyze_run(run: RunSpec, values: dict[str, float], devices: tuple[Device, .
         out["problems"].append("missing " + ",".join(missing[:8]) + (" ..." if len(missing) > 8 else ""))
     if nonfinite:
         out["problems"].append("nonfinite " + ",".join(sorted(nonfinite)[:8]))
-    if not missing and int(round(values["mf_n"])) != run.n_samples:
+    if not missing and "mf_n" not in nonfinite and int(round(values["mf_n"])) != run.n_samples:
         out["problems"].append(f"retained window holds {values['mf_n']:.0f} samples, expected {run.n_samples}")
     out["problems"] += coherence_problems(run)
     if out["problems"]:
@@ -1166,6 +1166,41 @@ REQUIRED_CELL_KEYS = {
 CELL_STATUSES = ("ok", "rejected_stress", "not_applicable_no_drive")
 
 
+#: Matrices whose cells exist only at a selected LO drive.
+DRIVE_DEPENDENT_MATRICES = ("main", "leakage", "iip3")
+
+
+def selection_from_cells(study: Study, cells: list[dict], cand_name: str) -> dict:
+    """Re-derive one candidate's LO-drive selection from its collected
+    lo_select cells (rf main/check pairs per band and drive), exactly as the
+    collector pairs them. Missing, duplicate or non-measured points make the
+    selection ``inconclusive``."""
+    by: dict = {}
+    dup = False
+    for c in cells:
+        if c.get("matrix") == "lo_select" and c.get("candidate") == cand_name:
+            key = (c.get("band"), c.get("drive_dbm"), c.get("rf_dbm"))
+            dup = dup or key in by
+            by[key] = c
+    if dup:
+        return {"status": "inconclusive", "reason": "duplicate lo_select cells"}
+    points = []
+    for b in study.matrices["lo_select"].bands:
+        for d in study.lo_sweep_dbm:
+            main, chk = by.get((b, d, study.rf_dbm)), by.get((b, d, study.rf_check_dbm))
+            if main is None or chk is None:
+                points.append({"band": b, "drive_dbm": d, "status": "missing"})
+                continue
+            ss = small_signal_check(main.get("gain_db"), chk.get("gain_db"), study.small_signal_tol_db)
+            status = main.get("status")
+            if status == "ok" and chk.get("status") != "ok":
+                status = chk.get("status")
+            points.append({"band": b, "drive_dbm": d, "status": status, "gain_db": main.get("gain_db"),
+                           "ss_ok": ss["ok"]})
+    return select_lo_drive(points, list(study.matrices["lo_select"].bands), list(study.lo_sweep_dbm),
+                           plateau_db=study.plateau_db, run_length=study.plateau_run)
+
+
 def validate_collection(study: Study, cells: list[dict]) -> list[str]:
     """Acceptance gate for a collected comparison: returns problems (empty =
     acceptable). A corrupt or incomplete collection must not become a record.
@@ -1177,7 +1212,14 @@ def validate_collection(study: Study, cells: list[dict]) -> list[str]:
     none, is a classification error); each cell's recorded model section is
     its own corner; leakage cells carry the declared seed; and the process
     axis actually moves the main-matrix gain (the sabotage control: corners
-    forced to typical collapse it)."""
+    forced to typical collapse it).
+
+    ``not_applicable_no_drive`` is accepted only for drive-dependent matrices
+    (main, leakage, iip3) and only for a candidate whose LO selection,
+    re-derived from its own lo_select cells, is a definite "no acceptable
+    drive"; lo_select cells must be measured or stress-rejected, and a
+    candidate with a selected drive must have its dependent cells simulated.
+    A missing/inconclusive selection never licenses a skip."""
     problems = []
     expected = {c["id"]: c for c in expected_cells(study)}
     seen: dict[str, int] = {}
@@ -1192,6 +1234,7 @@ def validate_collection(study: Study, cells: list[dict]) -> list[str]:
     for cid in expected:
         if cid not in seen:
             problems.append(f"missing cell {cid}")
+    selections: dict[str, dict] = {}
     for cell in cells:
         cid = cell.get("id")
         if cid not in expected:
@@ -1201,6 +1244,25 @@ def validate_collection(study: Study, cells: list[dict]) -> list[str]:
         if status not in CELL_STATUSES:
             problems.append(f"{cid}: status {status!r} is not a scientific outcome (corrupt run)")
             continue
+        cand_name = decl["candidate"]
+        if decl["matrix"] == "lo_select":
+            if status == "not_applicable_no_drive":
+                problems.append(f"{cid}: lo_select cells establish whether a drive exists and must be "
+                                "measured or rejected_stress, never not_applicable_no_drive")
+        else:
+            if cand_name not in selections:
+                selections[cand_name] = selection_from_cells(study, cells, cand_name)
+            sel = selections[cand_name]
+            if status == "not_applicable_no_drive":
+                if sel["status"] == "selected":
+                    problems.append(f"{cid}: not_applicable_no_drive but {cand_name} has a selected drive "
+                                    f"({sel['drive_dbm']:g} dBm)")
+                elif sel["status"] == "inconclusive":
+                    problems.append(f"{cid}: not_applicable_no_drive without a validated selection outcome "
+                                    f"for {cand_name} ({sel.get('reason')})")
+            elif sel["status"] != "selected":
+                problems.append(f"{cid}: {cand_name} has no selected drive ({sel['status']}) but the cell "
+                                f"carries status {status!r}")
         if cell.get("model_section") != decl["corner"]:
             problems.append(f"{cid}: simulated with model section {cell.get('model_section')!r}, "
                             f"declared {decl['corner']!r}")
@@ -1232,6 +1294,43 @@ def validate_collection(study: Study, cells: list[dict]) -> list[str]:
     return problems
 
 
+def main_cell_problems(study: Study, cand_name: str, main: list[dict]) -> list[str]:
+    """Exact-identity and measurement check of one candidate's main cells:
+    each declared main cell present exactly once, nothing foreign, status
+    ok/rejected_stress, "ok" cells carry finite required values and no
+    rejecting violation, rejected cells carry one."""
+    expected = {c["id"] for c in expected_cells(study) if c["matrix"] == "main" and c["candidate"] == cand_name}
+    problems = []
+    seen: dict = {}
+    for c in main:
+        seen[c.get("id")] = seen.get(c.get("id"), 0) + 1
+    for cid, n in sorted(seen.items(), key=lambda x: str(x[0])):
+        if n > 1:
+            problems.append(f"duplicate main cell {cid} ({n}x)")
+        if cid not in expected:
+            problems.append(f"foreign main cell {cid}")
+    problems += [f"missing main cell {cid}" for cid in sorted(expected) if cid not in seen]
+    for c in main:
+        if c.get("id") not in expected:
+            continue
+        cid, status = c["id"], c.get("status")
+        if status not in ("ok", "rejected_stress"):
+            problems.append(f"{cid}: main cell status {status!r}")
+            continue
+        violations = (c.get("stress") or {}).get("rejecting")
+        if violations is None:
+            problems.append(f"{cid}: no stress classification recorded")
+        elif status == "ok" and violations:
+            problems.append(f"{cid}: status ok with rejecting violation(s)")
+        elif status == "rejected_stress" and not violations:
+            problems.append(f"{cid}: rejected_stress without violation")
+        if status == "ok":
+            for key in REQUIRED_CELL_KEYS["main"]:
+                if not _finite(c.get(key)):
+                    problems.append(f"{cid}: {key} missing or nonfinite ({c.get(key)!r})")
+    return problems
+
+
 def conclude(study: Study, per_candidate: dict) -> dict:
     """Per-candidate verdict and a CONDITIONAL recommendation.
 
@@ -1258,8 +1357,14 @@ def conclude(study: Study, per_candidate: dict) -> dict:
                                    "reason": sel.get("reason", "no acceptable drive")}
             continue
         main = info.get("main_cells", [])
-        if any(c.get("status") not in ("ok", "rejected_stress") for c in main) or not main:
-            verdicts[cand.name] = {"verdict": "inconclusive", "reason": "main-matrix data incomplete"}
+        if not _finite(sel.get("drive_dbm")):
+            verdicts[cand.name] = {"verdict": "inconclusive", "reason": "selected drive missing or nonfinite"}
+            continue
+        mp = main_cell_problems(study, cand.name, main)
+        if mp:
+            verdicts[cand.name] = {"verdict": "inconclusive",
+                                   "reason": "main-matrix data incomplete or invalid: " + "; ".join(mp[:3])
+                                             + (f" (+{len(mp) - 3} more)" if len(mp) > 3 else "")}
             continue
         rejected = [c for c in main if c["status"] == "rejected_stress"]
         if rejected:
