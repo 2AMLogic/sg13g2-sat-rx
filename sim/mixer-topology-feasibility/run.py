@@ -53,7 +53,7 @@ import mixfeas as mf  # noqa: E402
 from harness.corners import (  # noqa: E402
     CORNERS, PvtPoint, build_grid, register_corner, resolve_corners, sabotage,
 )
-from harness.pdk import PdkConfigError, PdkNotFound, find_pdk  # noqa: E402
+from harness import klt_driver  # noqa: E402
 from harness.runner import NgspiceMissing, ngspice_version, run_point  # noqa: E402
 from harness.testbench import load  # noqa: E402
 
@@ -76,10 +76,7 @@ def _load():
 
 
 def _pdk():
-    try:
-        return find_pdk(SIM_DIR)
-    except (PdkNotFound, PdkConfigError) as exc:
-        raise SystemExit(f"error: {exc}")
+    return klt_driver.find_pdk_or_exit(SIM_DIR)
 
 
 def compose_fragment(cand: mf.Candidate, workdir: Path) -> Path:

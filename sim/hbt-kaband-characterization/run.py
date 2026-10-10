@@ -26,7 +26,6 @@ import csv
 import dataclasses
 import datetime as _dt
 import gzip
-import hashlib
 import io
 import json
 import math
@@ -46,8 +45,7 @@ import kaband  # noqa: E402
 from harness.corners import (  # noqa: E402
     CORNERS, PvtPoint, build_grid, resolve_corners, sabotage, supply_points,
 )
-from harness import pdkartifact  # noqa: E402
-from harness.pdk import PdkConfigError, PdkNotFound, find_pdk  # noqa: E402
+from harness import klt_driver  # noqa: E402
 from harness.report import RecordExists, allocate_record_id, git_provenance  # noqa: E402
 from harness.runner import NgspiceMissing, ngspice_version, run_point  # noqa: E402
 from harness.testbench import load  # noqa: E402
@@ -79,12 +77,8 @@ def _load():
 
 
 def _pdk():
-    try:
-        pdk = find_pdk(SIM_DIR)
-    except (PdkNotFound, PdkConfigError) as exc:
-        raise SystemExit(f"error: {exc}")
-    pdkartifact.require(pdk, SIM_DIR)  # integrity gate before any simulator runs
-    return pdk
+    # integrity gate (pdkartifact.require) before any simulator runs
+    return klt_driver.find_pdk_or_exit(SIM_DIR, require_artifact=True)
 
 
 def _run_local(tb, pdk, point: PvtPoint, sweep, workdir: Path, *, sabotage_measurement=False,
@@ -348,28 +342,12 @@ def klt_body(tb, sweep, vdd: float) -> str:
 def klt_request(body_name: str, corners, temps, backend: str, timeout_s: int,
                 stage_models: bool = True, runner_version_check: str = "") -> dict:
     """One klt sim request (9 process x temperature corners at one supply).
-
-    klt's own trailing analysis is a 2 ps transient whose only purpose is a
-    sentinel `.meas` of the supply rail (so klt grades every corner on a
-    real value). A `.meas tran` card -- not an `expr` measurement -- keeps
-    the request valid for older klt clients/runners too, and the body's
-    sweep runs no transient, so the card never fires inside it."""
-    req = {
-        "netlist": body_name,
-        "backend": backend,
-        "models": {"pdk": "ihp-sg13g2", "lib": "libs.tech/ngspice/models/cornerHBT.lib"},
-        "corners": {"process": [c.name for c in corners], "temperature_c": list(temps)},
-        "analysis": {"kind": "tran", "args": "1p 2p"},
-        "measurements": [
-            {"name": "ka_rail_v", "spice": ".meas tran ka_rail_v FIND v(vsupply) AT=2p", "unit": "V"},
-        ],
-        "options": {"timeout_s": timeout_s, "keep_artifacts": True},
-    }
-    if stage_models:
-        req["options"]["stage_model_inputs"] = True
-    if backend == "batch" and runner_version_check:
-        req["batch"] = {"runner_version_check": runner_version_check}
-    return req
+    Sentinel: a `.meas tran` of the supply rail (see harness.klt_driver); the
+    body's sweep runs no transient, so the card never fires inside it."""
+    return klt_driver.klt_request(
+        body_name, [c.name for c in corners], temps, backend, timeout_s,
+        sentinel_name="ka_rail_v", sentinel_node="v(vsupply)",
+        stage_models=stage_models, runner_version_check=runner_version_check)
 
 
 def cmd_characterize(args) -> int:
@@ -434,29 +412,12 @@ def cmd_ingest(args) -> int:
     return ingest(tb, sweep, reports, args, Path(args.reports[0]).resolve().parent)
 
 
-def _body_supply(body: Path) -> float:
-    for line in body.read_text().splitlines():
-        if line.startswith(".param vdd_val="):
-            return float(line.split("=", 1)[1])
-    raise SystemExit(f"error: no .param vdd_val in {body}")
-
-
-def _sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+_body_supply = klt_driver.body_supply
+_sha256 = klt_driver.sha256_file
 
 
 def pdk_provenance(pdk) -> dict:
-    models_dir = pdk.model_lib.parent
-    prov = {
-        "variant_path": str(pdk.path),
-        "fetched_version_file": None,
-        "model_sha256": {name: _sha256(models_dir / name) for name in MODEL_FILES
-                         if (models_dir / name).is_file()},
-    }
-    fv = pdk.path / ".fetched-version"
-    if fv.is_file():
-        prov["fetched_version_file"] = fv.read_text().strip()
-    return prov
+    return klt_driver.pdk_provenance(pdk, MODEL_FILES)
 
 
 #: Agreement required between the off-host result and a local re-simulation

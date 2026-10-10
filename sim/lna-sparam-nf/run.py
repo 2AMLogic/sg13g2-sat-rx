@@ -40,7 +40,7 @@ import lna_nf  # noqa: E402
 import stage1_tables  # noqa: E402
 from harness import evidence as evidence_mod  # noqa: E402
 from harness.corners import CORNERS, PvtPoint, build_grid, resolve_corners, supply_points  # noqa: E402
-from harness.pdk import PdkConfigError, PdkNotFound, find_pdk  # noqa: E402
+from harness import klt_driver  # noqa: E402
 from harness.report import (  # noqa: E402
     RecordExists, allocate_record_id, build_record, git_provenance, write_netlist_snapshot,
     write_record,
@@ -70,33 +70,17 @@ def klt_body(tb, vdd: float) -> str:
 
 
 def klt_request(body_name, corners, temps, backend, timeout_s, stage_models, runner_version_check):
-    """One klt sim request. klt's own analysis is a 2 ps transient whose only
-    purpose is a `.meas tran` sentinel on the supply rail (valid for the older
-    klt 0.5.0 fleet runner too); the body's own .control block runs the real
+    """One klt sim request; sentinel `.meas tran` on the supply rail (see
+    harness.klt_driver). The body's own .control block runs the real
     analyses first, as in the Ka-band driver."""
-    req = {
-        "netlist": body_name,
-        "backend": backend,
-        "models": {"pdk": "ihp-sg13g2", "lib": "libs.tech/ngspice/models/cornerHBT.lib"},
-        "corners": {"process": [c.name for c in corners], "temperature_c": list(temps)},
-        "analysis": {"kind": "tran", "args": "1p 2p"},
-        "measurements": [
-            {"name": "lna_rail_v", "spice": ".meas tran lna_rail_v FIND v(vdd) AT=2p", "unit": "V"},
-        ],
-        "options": {"timeout_s": timeout_s, "keep_artifacts": True},
-    }
-    if stage_models:
-        req["options"]["stage_model_inputs"] = True
-    if backend == "batch" and runner_version_check:
-        req["batch"] = {"runner_version_check": runner_version_check}
-    return req
+    return klt_driver.klt_request(
+        body_name, [c.name for c in corners], temps, backend, timeout_s,
+        sentinel_name="lna_rail_v", sentinel_node="v(vdd)",
+        stage_models=stage_models, runner_version_check=runner_version_check)
 
 
 def _pdk():
-    try:
-        return find_pdk(SIM_DIR)
-    except (PdkNotFound, PdkConfigError) as exc:
-        raise SystemExit(f"error: {exc}")
+    return klt_driver.find_pdk_or_exit(SIM_DIR)
 
 
 def cmd_characterize(args) -> int:
@@ -139,11 +123,7 @@ def cmd_characterize(args) -> int:
     return ingest(tb, reports, args)
 
 
-def _body_supply(body: Path) -> float:
-    for line in body.read_text().splitlines():
-        if line.startswith(".param vdd_val="):
-            return float(line.split("=", 1)[1])
-    raise SystemExit(f"error: no .param vdd_val in {body}")
+_body_supply = klt_driver.body_supply
 
 
 def cmd_ingest(args) -> int:
