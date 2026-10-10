@@ -29,7 +29,7 @@ a go.
 | Item | State |
 |---|---|
 | Frozen record on this branch | `records/20261010-083631-709284d-CAPABILITY_UNAVAILABLE.*`: the pinned `ngspice-46` is **not installed on the build host** (`/usr/bin/ngspice` is 42). No probe result is claimed from it. |
-| Noise-side blockers | Supported by primary references (below), independent of any binary run on this host. The pinned-binary corroboration (`pss: no such command`, `pnoise: no such command`) is the inventory of issue #27 (probe E) and is re-checked by this probe's step E when it runs on a host with the pinned binary. |
+| Noise-side blockers | Supported by primary references (below), independent of any binary run on this host. The only pinned-binary probe so far is issue #27's probe E, which sent `pss` alone to ngspice-46 and recorded `pss: no such command available in ngspice` (`sim/mixer-nf-method/probe-logs/20261009-181241-c40c552/`). `pnoise` and `pac` were never sent to the pinned binary: their absence rests on manual section 1.2.8 and the ngspice-46 source tree, not on a probe. This probe's step E sends both `pss` and `pnoise` and will check them once it runs on a host with the pinned binary. |
 | Transfer-side feasibility | **Not yet frozen on the pinned executable.** An unpinned exploratory run on `ngspice-42` (not evidence, nothing recorded) passed the known-answer control and showed both sideband transfers and a settled orbit; see "Exploratory dry run". A record on `ngspice-46` has to be appended by a host that has it (CI builds exactly that tarball). |
 
 The expected record on the pinned binary is `INTERFACES_BLOCKED` (transfers and trajectory
@@ -74,7 +74,8 @@ Run with `--allow-unpinned --no-write` on this host to validate the probe itself
   below `1e-6`. A 20 ns settle was **not** enough (mean drifted 0.1 %, which is why the probe
   projects over the last 40 ns of a 120 ns run).
 - Noise: per-generator `.noise` totals are reachable at a DC point. `pnoise` and `pac` do not exist
-  in this build either. This Debian build does ship a `pss` command, unlike the pinned build, and
+  in this Debian build (an observation on the unpinned binary only; on ngspice-46 their absence is
+  still reference-based, see "Status of the evidence"). This Debian build does ship a `pss` command, unlike the pinned build, and
   it did **not** converge on the placeholder (`Convergence not reached` after 50 shooting
   iterations); this is a single observation on an unpinned binary, recorded only as a pointer for
   a later question, not as an interface finding.
