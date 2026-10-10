@@ -116,6 +116,68 @@
         ]
       },
       {
+        "name": "gilbert_stacked_a",
+        "role": "candidate",
+        "fragment": "cand_gilbert_stacked_a.spice",
+        "summary": "#61 sizing A: gilbert_stacked with a 3 mA tail (1.5 mA per RF device), RL 270 ohm, LO quad bias 1.88 V; raises on-state V_BE to keep the quad trough above the 0.65 V floor. Declared up front, not tuned.",
+        "rf_dc_v": 0.0,
+        "lo_dc_v": 1.88,
+        "ideal_sink_nodes": ["tail"],
+        "devices": [
+          {"name": "q1", "c": "c_q1", "b": "b_q1", "e": "e_q1", "nx": 1},
+          {"name": "q2", "c": "c_q2", "b": "b_q2", "e": "e_q2", "nx": 1},
+          {"name": "q3", "c": "c_q3", "b": "lo_p", "e": "x1", "nx": 1},
+          {"name": "q4", "c": "c_q4", "b": "lo_n", "e": "x1", "nx": 1},
+          {"name": "q5", "c": "c_q5", "b": "lo_p", "e": "x2", "nx": 1},
+          {"name": "q6", "c": "c_q6", "b": "lo_n", "e": "x2", "nx": 1}
+        ]
+      },
+      {
+        "name": "gilbert_stacked_b",
+        "role": "candidate",
+        "fragment": "cand_gilbert_stacked_b.spice",
+        "summary": "#61 sizing B: gilbert_stacked with a 4.5 mA tail (2.25 mA per RF device), RL 180 ohm, LO quad bias 1.90 V; the higher-current variant of A. Declared up front, not tuned.",
+        "rf_dc_v": 0.0,
+        "lo_dc_v": 1.9,
+        "ideal_sink_nodes": ["tail"],
+        "devices": [
+          {"name": "q1", "c": "c_q1", "b": "b_q1", "e": "e_q1", "nx": 1},
+          {"name": "q2", "c": "c_q2", "b": "b_q2", "e": "e_q2", "nx": 1},
+          {"name": "q3", "c": "c_q3", "b": "lo_p", "e": "x1", "nx": 1},
+          {"name": "q4", "c": "c_q4", "b": "lo_n", "e": "x1", "nx": 1},
+          {"name": "q5", "c": "c_q5", "b": "lo_p", "e": "x2", "nx": 1},
+          {"name": "q6", "c": "c_q6", "b": "lo_n", "e": "x2", "nx": 1}
+        ]
+      },
+      {
+        "name": "folded_single_balanced_a",
+        "role": "candidate",
+        "fragment": "cand_folded_single_balanced_a.spice",
+        "summary": "#61 sizing A: folded_single_balanced with a 2 mA LO-pair sink, RL 400 ohm, LO bias 1.72 V. Declared up front, not tuned.",
+        "rf_dc_v": 1.10,
+        "lo_dc_v": 1.72,
+        "ideal_sink_nodes": ["e_q1", "xe"],
+        "devices": [
+          {"name": "q1", "c": "c_q1", "b": "rf_port", "e": "e_q1", "nx": 1},
+          {"name": "q2", "c": "c_q2", "b": "lo_p", "e": "xe", "nx": 1},
+          {"name": "q3", "c": "c_q3", "b": "lo_n", "e": "xe", "nx": 1}
+        ]
+      },
+      {
+        "name": "folded_single_balanced_b",
+        "role": "candidate",
+        "fragment": "cand_folded_single_balanced_b.spice",
+        "summary": "#61 sizing B: folded_single_balanced with a 2.7 mA LO-pair sink, RL 300 ohm, LO bias 1.74 V. Declared up front, not tuned.",
+        "rf_dc_v": 1.10,
+        "lo_dc_v": 1.74,
+        "ideal_sink_nodes": ["e_q1", "xe"],
+        "devices": [
+          {"name": "q1", "c": "c_q1", "b": "rf_port", "e": "e_q1", "nx": 1},
+          {"name": "q2", "c": "c_q2", "b": "lo_p", "e": "xe", "nx": 1},
+          {"name": "q3", "c": "c_q3", "b": "lo_n", "e": "xe", "nx": 1}
+        ]
+      },
+      {
         "name": "placeholder_floor",
         "role": "floor",
         "fragment": "cand_placeholder_floor.spice",
@@ -137,6 +199,7 @@
       "params": {"ac_k": 4.0, "ac_k3": -40.0, "ac_c": 0.01, "ac_g": 0.001}
     },
     "_notes": [
+      "Sizing follow-up (issue #61): the four *_a / *_b candidates are alternative FIXED sizings of the two balanced topologies, declared here before any collection and not tuned after seeing results. Rationale from the first record only (20261010-010744-a10c193): the switching devices' retained V_BE fell below the card's 0.65 V floor from -9 dBm while the gain was still rising. The lever kept inside the declared sweep, plateau rule, stress limits and spec is the on-state current density (raises V_BE,on, so the V_BE trough of the off-going device stays higher); load resistors keep the original ~0.4 V average drop and the LO base bias keeps the original emitter-node level. A = moderate increase, B = larger increase, each device peak current kept below the 3 mA/Nx card limit. The original sizings stay in the study unchanged. If neither sizing selects a drive the outcome is recorded as such and a decision-record proposal is routed; no rule, bound or limit is changed.",
       "Supply: 2.25 V nominal +/- 10 % = 2.025 / 2.25 / 2.475 V, all below the 2.5 V row-17 ceiling. An exploratory nominal for this study only; it ratifies no rail. The legacy 2.5 V +/- 10 % grid is NOT used (2.75 V would exceed the ceiling) and is not clipped either.",
       "LO sweep: -30 to +6 dBm TOTAL available power of the 100 ohm differential port in 3 dB steps (13 points). Exploratory bounds, not a row-15 drive commitment; never silently extended.",
       "Selection rule (mixfeas.select_lo_drive): at each band the maximum gain over stress-valid points; a point qualifies if stress-valid, small-signal check passed (|G(-60 dBm) - G(-66 dBm)| <= 0.2 dB) and within 0.5 dB of that maximum; the lowest drive starting 3 consecutive qualifying drives at ALL THREE bands is selected. Otherwise 'no acceptable drive in declared sweep'; any missing/invalid point makes the outcome 'inconclusive'.",
