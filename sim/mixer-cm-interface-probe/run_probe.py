@@ -120,6 +120,15 @@ def pdk_info() -> dict:
             "device": "npn13G2 (subckt) -> npn13G2_NX_vbic, VBIC level=9, Nx=4 in the placeholder"}
 
 
+def pdk_integrity(banner: str) -> dict:
+    """Run the harness model-integrity gate against sim/pdk-artifact.json (no simulator involved)."""
+    from harness import pdkartifact  # noqa: WPS433
+    from harness.pdk import find_pdk  # noqa: WPS433
+    rep = pdkartifact.verify(find_pdk(SIM_DIR), SIM_DIR, banner, require_ngspice=True)
+    return {"gate": "sim/harness/pdkartifact.py verify(require_ngspice=True)", "ok": rep.ok,
+            "problems": list(rep.problems), "notes": list(rep.notes)}
+
+
 def git_info() -> dict:
     def g(*a):
         return subprocess.run(["git", *a], cwd=REPO, capture_output=True, text=True).stdout.strip()
@@ -233,6 +242,7 @@ def render_md(rid: str, status: str, reasons: list, matrix: dict, ctl: dict, env
 - PDK: `{env['pdk']['path']}` (.fetched-version {env['pdk']['fetched_version']}), section `hbt_typ`;
   cornerHBT.lib `{env['pdk']['sha256']['cornerHBT.lib']}`, sg13g2_hbt_mod.lib
   `{env['pdk']['sha256']['sg13g2_hbt_mod.lib']}`; {env['pdk']['device']}
+- Model integrity gate (`sim/harness/pdkartifact.py`, run before the simulator): {'OK' if env['pdk_integrity']['ok'] else 'FAILED'}; {'; '.join(env['pdk_integrity']['notes'])}
 - Placeholder sha256 `{env['placeholder_sha256']}`; pdk-artifact.json sha256 `{env['pdk_artifact_sha256']}`
 - Repo commit `{env['git']['commit']}` (dirty: {env['git']['dirty']}); host {env['host']}
 - Probe logs: `probe-logs/{rid}/`
@@ -312,6 +322,22 @@ def main(argv=None) -> int:
 
     env["ngspice"] = info
     env["pdk"] = pdk_info()
+    # Integrity gate (issue #107): the installed models must match sim/pdk-artifact.json BEFORE any
+    # simulator run. A mismatch is a capability blocker, not an interface result.
+    integ = pdk_integrity(info["version"])
+    env["pdk_integrity"] = integ
+    if not integ["ok"] and not args.allow_unpinned:
+        failed = "PDK model integrity gate failed (sim/harness/pdkartifact.py): " + "; ".join(integ["problems"])
+        status, reasons = C.decide_status(False, None)
+        rec = {"record_id": rid, "status": status, "reasons": reasons, "failed_check": failed,
+               "scope": "no probe ran; no active-mixer NF number; no row-10/row-12 claim",
+               "environment": env}
+        print(json.dumps(rec, indent=2))
+        if not no_write:
+            write_excl(RECORDS / f"{rid}-{status}.json", json.dumps(rec, indent=2) + "\n")
+            write_excl(RECORDS / f"{rid}-{status}.md", render_unavailable_md(rid, status, failed))
+            print(f"wrote records/{rid}-{status}.md")
+        return 0
     deck = compose_deck(env["pdk"]["model_lib"], args.sabotage)
     work = PROBE_LOGS / rid if not no_write else HERE / "_build" / rid
     work.mkdir(parents=True, exist_ok=False)

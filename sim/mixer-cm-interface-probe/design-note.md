@@ -26,23 +26,35 @@ a go.
 
 ## Status of the evidence (read this before citing it)
 
+Record: `records/20261010-123114-1755c6d-INTERFACES_BLOCKED.*` with frozen package
+`probe-logs/20261010-123114-1755c6d/` (issue #107). It was produced on the pinned
+`ngspice-46` (`/home/ubuntu/.local/bin/ngspice`, sha256 `555e04b8...aa5dd5`) after the harness
+model-integrity gate (`sim/harness/pdkartifact.py`, `require_ngspice=True`) reported OK: the
+four-file IHP closure matches the pin at `5cccb161f749`. The gate outcome is stored in the record
+(`environment.pdk_integrity`). This record **supersedes**
+`records/20261010-083631-709284d-CAPABILITY_UNAVAILABLE.*` (the missing-tool outcome, which
+carried no probe result and is unchanged). Caveat: the run used the working tree with the
+`run_probe.py` integrity-gate change (#107) uncommitted, so the record shows `dirty: True`
+against base commit `1755c6d`.
+
 | Item | State |
 |---|---|
-| Frozen record on this branch | `records/20261010-083631-709284d-CAPABILITY_UNAVAILABLE.*`: the pinned `ngspice-46` is **not installed on the build host** (`/usr/bin/ngspice` is 42). No probe result is claimed from it. |
-| Noise-side blockers | Supported by primary references (below), independent of any binary run on this host. The only pinned-binary probe so far is issue #27's probe E, which sent `pss` alone to ngspice-46 and recorded `pss: no such command available in ngspice` (`sim/mixer-nf-method/probe-logs/20261009-181241-c40c552/`). `pnoise` and `pac` were never sent to the pinned binary: their absence rests on manual section 1.2.8 and the ngspice-46 source tree, not on a probe. This probe's step E sends both `pss` and `pnoise` and will check them once it runs on a host with the pinned binary. |
-| Transfer-side feasibility | **Not yet frozen on the pinned executable.** An unpinned exploratory run on `ngspice-42` (not evidence, nothing recorded) passed the known-answer control and showed both sideband transfers and a settled orbit; see "Exploratory dry run". A record on `ngspice-46` has to be appended by a host that has it (CI builds exactly that tarball). |
+| Transfer side (measured, pinned) | The known-answer control passed all five checks in the same run (wanted/image magnitude error about `3e-6`/`5e-6`, phase error about `5e-5` degrees, wrong-IF null `6e-7`, linearity `5e-17`, superposition `1e-4`). Gated on that: LO-period trajectory demonstrated (window-to-window change at most `7.2e-4`, in the LO 2nd harmonic; fundamental and mean unchanged), wanted-sideband transfer `|G| = 0.0576` and image-sideband transfer `|G| = 0.0583` (source EMF to `coll` voltage; phase about 177 degrees; linearity `3e-5`, superposition `4e-5`). This is the nominal placeholder point only. |
+| Measured on the pinned binary, noise side | `pss`, `pnoise` and `pac` each answered `no such command available in ngspice` (`probe-logs/20261010-123114-1755c6d/stderr.txt`). This is the first pinned-binary observation for `pnoise` and `pac` (issue #27 probed only `pss`). Per-generator `.noise` totals exist at two DC biases (quasi-static, not along the trajectory). |
+| Reference-based (not a probe result) | That `VBICnoise()` evaluates 13 independent generators (no ib/ic covariance), that no analysis evaluates intensities along a trajectory, and the manual 11.3.12 / 1.2.8 statements rest on primary references (below); the absence of a command in this binary is consistent with them but does not establish the source-level claims. |
 
-The expected record on the pinned binary is `INTERFACES_BLOCKED` (transfers and trajectory
-demonstrated, the two noise interfaces unsupported). That expectation is a prediction, not a
-result, until the record exists.
+Observed status `INTERFACES_BLOCKED` matches the earlier prediction (transfers and trajectory
+demonstrated, the two noise interfaces unsupported); the prediction is now a result. It is
+interface feasibility only: no solver, no NF number, nothing for row 10 (`method_absent`) or
+row 12.
 
 ## Required-interface matrix
 
 | Interface | State | Primary basis |
 |---|---|---|
-| LO-period trajectory | demonstrable via `.tran` settling; frozen only on a pinned host | probe: window-to-window change of the LO-only harmonics and mean below `1e-3` |
-| Wanted-sideband transfer | demonstrable; gated on the known-answer control | probe: base-referred perturbation at fLO + fIF, IF projection minus LO-only baseline |
-| Image-sideband transfer | demonstrable; gated on the known-answer control | probe: perturbation at fLO − fIF, arrives conjugated |
+| LO-period trajectory | **demonstrated** (pinned record, `.tran` settling) | probe: window-to-window change of the LO-only harmonics and mean below `1e-3` |
+| Wanted-sideband transfer | **demonstrated** (pinned record; control passed) | probe: base-referred perturbation at fLO + fIF, IF projection minus LO-only baseline |
+| Image-sideband transfer | **demonstrated** (pinned record; control passed) | probe: perturbation at fLO − fIF, arrives conjugated |
 | Per-mechanism noise intensity along the trajectory | **unsupported** | manual v46 section 11.3.12 (`.PSS` "Experimental code, not yet made publicly available") and 1.2.8 (PSS is the basis of PAC/PNoise, neither exists in the release); source `ngspice-46` `vbicnoise.c` reached only via `DEVnoise` from `cktnoise.c` (`.noise`) and `noisesp.c` (`.sp`); `dcpss.c` only under `--enable-pss`; no pnoise in the tree |
 | Noise covariance (ib/ic) | **unsupported** | source `ngspice-46` `src/spicelib/devices/vbic/vbicnoise.c`: 13 independent generators |
 
@@ -100,7 +112,8 @@ investigation can never grant that status).
 
 ## Reproduce
 
-See [`README.md`](README.md) "Cold start". A host with the pinned `ngspice-46` appends the
-pinned record with `python3 sim/mixer-cm-interface-probe/run_probe.py`, and
+See [`README.md`](README.md) "Cold start". The pinned record was produced with
+`python3 sim/mixer-cm-interface-probe/run_probe.py` (preceded by `python3 -m harness.cli verify-pdk
+--require-ngspice` from `sim/`), and
 `python3 sim/mixer-cm-interface-probe/run_probe.py --reparse probe-logs/<id>` re-derives its status
 from the frozen logs without a simulator.
