@@ -1,0 +1,1193 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: * mixer-pumped-rf-admittance (issue #111) -- one nominal point:
+
+MARK ngspice_banner_follows
+******
+** ngspice-46
+** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html
+** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html
+** Creation Date: Wed Aug  5 10:12:28 UTC 2026
+******
+Reset re-loads circuit * mixer-pumped-rf-admittance (issue #111) -- one nominal point:
+
+Circuit: * mixer-pumped-rf-admittance (issue #111) -- one nominal point:
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vdd                                        2.5
+coll                                   1.58286
+base                                  0.887822
+emit                                 0.0306121
+xq1.s1                             1.10977e-09
+xq1.t                                  15.4817
+bb                                         0.9
+rfsrc                                        0
+prf                                          0
+rfsrc2                                       0
+prf2                                         0
+losrc                                        0
+plo                                          0
+pj                                           0
+kj                                           0
+kp                                           0
+krs                                          0
+kx                                           0
+mu                                           0
+mv                                           0
+mp                                           0
+vmsense#branch                     1.73648e-07
+vml#branch                        -1.73648e-07
+vmu#branch                        -1.73648e-07
+vkrs#branch                                  0
+vksense#branch                               0
+vpsense#branch                               0
+vlo#branch                                   0
+vrf2#branch                                  0
+vrf#branch                                   0
+vbb#branch                        -4.05923e-06
+vdd#branch                         -0.00305715
+
+ Reference value :  8.64228e-09
+ Reference value :  1.79553e-08
+ Reference value :  2.72303e-08
+ Reference value :  3.65493e-08
+ Reference value :  4.60303e-08
+ Reference value :  5.55263e-08
+ Reference value :  6.49493e-08
+ Reference value :  7.42653e-08
+ Reference value :  8.34673e-08
+ Reference value :  9.27563e-08
+ Reference value :  1.02134e-07
+ Reference value :  1.11436e-07
+ Reference value :  1.20672e-07
+ Reference value :  1.30182e-07
+ Reference value :  1.39526e-07
+ Reference value :  1.48760e-07
+ Reference value :  1.57917e-07
+No. of Data Rows : 160008
+MARK R_base_points=160008
+rc_v_base_w_u_c     =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+rc_v_base_w_u_s     =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_v_base_w_u_c=0 rc_v_base_w_u_s=0
+rc_v_base_x_u_c     =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+rc_v_base_x_u_s     =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+MARK rc_v_base_x_u_c=0 rc_v_base_x_u_s=0
+rc_v_base_w_l_c     =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+rc_v_base_w_l_s     =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_v_base_w_l_c=0 rc_v_base_w_l_s=0
+rc_v_base_x_l_c     =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+rc_v_base_x_l_s     =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+MARK rc_v_base_x_l_c=0 rc_v_base_x_l_s=0
+rc_i_base_w_u_c     =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+rc_i_base_w_u_s     =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_i_base_w_u_c=0 rc_i_base_w_u_s=0
+rc_i_base_x_u_c     =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+rc_i_base_x_u_s     =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+MARK rc_i_base_x_u_c=0 rc_i_base_x_u_s=0
+rc_i_base_w_l_c     =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+rc_i_base_w_l_s     =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_i_base_w_l_c=0 rc_i_base_w_l_s=0
+rc_i_base_x_l_c     =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+rc_i_base_x_l_s     =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+MARK rc_i_base_x_l_c=0 rc_i_base_x_l_s=0
+rc_t_base_w_u_c     =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+rc_t_base_w_u_s     =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_t_base_w_u_c=0 rc_t_base_w_u_s=0
+rc_t_base_x_u_c     =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+rc_t_base_x_u_s     =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+MARK rc_t_base_x_u_c=0 rc_t_base_x_u_s=0
+rc_t_base_w_l_c     =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+rc_t_base_w_l_s     =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_t_base_w_l_c=0 rc_t_base_w_l_s=0
+rc_t_base_x_l_c     =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+rc_t_base_x_l_s     =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+MARK rc_t_base_x_l_c=0 rc_t_base_x_l_s=0
+md_v_base_w_u_c     =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+md_v_base_w_u_s     =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK md_v_base_w_u_c=0 md_v_base_w_u_s=0
+md_v_base_x_u_c     =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+md_v_base_x_u_s     =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+MARK md_v_base_x_u_c=0 md_v_base_x_u_s=0
+md_v_base_w_l_c     =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+md_v_base_w_l_s     =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK md_v_base_w_l_c=0 md_v_base_w_l_s=0
+md_v_base_x_l_c     =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+md_v_base_x_l_s     =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+MARK md_v_base_x_l_c=0 md_v_base_x_l_s=0
+md_i_base_w_u_c     =  3.47296e-15 from=  8.00000e-08 to=  1.20000e-07
+md_i_base_w_u_s     =  1.96962e-14 from=  8.00000e-08 to=  1.20000e-07
+MARK md_i_base_w_u_c=3.47296E-15 md_i_base_w_u_s=1.96962E-14
+md_i_base_x_u_c     =  6.94592e-15 from=  8.00000e-08 to=  1.60000e-07
+md_i_base_x_u_s     =  3.93923e-14 from=  8.00000e-08 to=  1.60000e-07
+MARK md_i_base_x_u_c=6.94592E-15 md_i_base_x_u_s=3.93923E-14
+md_i_base_w_l_c     =  1.66118e-21 from=  8.00000e-08 to=  1.20000e-07
+md_i_base_w_l_s     =  1.06175e-20 from=  8.00000e-08 to=  1.20000e-07
+MARK md_i_base_w_l_c=1.66118E-21 md_i_base_w_l_s=1.06175E-20
+md_i_base_x_l_c     =  1.94552e-21 from=  8.00000e-08 to=  1.60000e-07
+md_i_base_x_l_s     =  1.16675e-20 from=  8.00000e-08 to=  1.60000e-07
+MARK md_i_base_x_l_c=1.94552E-21 md_i_base_x_l_s=1.16675E-20
+dut_v_base_w_u_c    =  -5.02372e-17 from=  8.00000e-08 to=  1.20000e-07
+dut_v_base_w_u_s    =  3.11283e-16 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_v_base_w_u_c=-5.02372E-17 dut_v_base_w_u_s=3.11283E-16
+dut_v_base_x_u_c    =  -3.98903e-17 from=  8.00000e-08 to=  1.60000e-07
+dut_v_base_x_u_s    =  3.35803e-16 from=  8.00000e-08 to=  1.60000e-07
+MARK dut_v_base_x_u_c=-3.98903E-17 dut_v_base_x_u_s=3.35803E-16
+dut_v_base_w_l_c    =  4.55835e-17 from=  8.00000e-08 to=  1.20000e-07
+dut_v_base_w_l_s    =  1.09550e-16 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_v_base_w_l_c=4.55835E-17 dut_v_base_w_l_s=1.0955E-16
+dut_v_base_x_l_c    =  5.40900e-17 from=  8.00000e-08 to=  1.60000e-07
+dut_v_base_x_l_s    =  1.32837e-16 from=  8.00000e-08 to=  1.60000e-07
+MARK dut_v_base_x_l_c=5.409E-17 dut_v_base_x_l_s=1.32837E-16
+dut_i_base_w_u_c    =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+dut_i_base_w_u_s    =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_i_base_w_u_c=0 dut_i_base_w_u_s=0
+dut_i_base_x_u_c    =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+dut_i_base_x_u_s    =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+MARK dut_i_base_x_u_c=0 dut_i_base_x_u_s=0
+dut_i_base_w_l_c    =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+dut_i_base_w_l_s    =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_i_base_w_l_c=0 dut_i_base_w_l_s=0
+dut_i_base_x_l_c    =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+dut_i_base_x_l_s    =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+MARK dut_i_base_x_l_c=0 dut_i_base_x_l_s=0
+dut_t_base_w_u_c    =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+dut_t_base_w_u_s    =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_t_base_w_u_c=0 dut_t_base_w_u_s=0
+dut_t_base_x_u_c    =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+dut_t_base_x_u_s    =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+MARK dut_t_base_x_u_c=0 dut_t_base_x_u_s=0
+dut_t_base_w_l_c    =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+dut_t_base_w_l_s    =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_t_base_w_l_c=0 dut_t_base_w_l_s=0
+dut_t_base_x_l_c    =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+dut_t_base_x_l_s    =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+MARK dut_t_base_x_l_c=0 dut_t_base_x_l_s=0
+Reset re-loads circuit * mixer-pumped-rf-admittance (issue #111) -- one nominal point:
+
+Circuit: * mixer-pumped-rf-admittance (issue #111) -- one nominal point:
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vdd                                        2.5
+coll                                   1.58286
+base                                  0.887822
+emit                                 0.0306121
+xq1.s1                             1.10977e-09
+xq1.t                                  15.4817
+bb                                         0.9
+rfsrc                                        0
+prf                                 0.00256343
+rfsrc2                                       0
+prf2                                         0
+losrc                                        0
+plo                                          0
+pj                                  0.00256343
+kj                                  0.00256343
+kp                                  0.00256343
+krs                                          0
+kx                                           0
+mu                                  0.00068404
+mv                                  0.00256343
+mp                                  0.00256343
+vmsense#branch                     7.50065e-05
+vml#branch                        -7.50065e-05
+vmu#branch                        -7.50065e-05
+vkrs#branch                        5.12685e-05
+vksense#branch                     5.12685e-05
+vpsense#branch                     5.12685e-05
+vlo#branch                                   0
+vrf2#branch                                  0
+vrf#branch                         5.12685e-05
+vbb#branch                        -4.05923e-06
+vdd#branch                         -0.00305715
+
+ Reference value :  0.00000e+00
+ Reference value :  9.33428e-09
+ Reference value :  1.86043e-08
+ Reference value :  2.81493e-08
+ Reference value :  3.75063e-08
+ Reference value :  4.69513e-08
+ Reference value :  5.63213e-08
+ Reference value :  6.56583e-08
+ Reference value :  7.51273e-08
+ Reference value :  8.46653e-08
+ Reference value :  9.40243e-08
+ Reference value :  1.03197e-07
+ Reference value :  1.12295e-07
+ Reference value :  1.21502e-07
+ Reference value :  1.30780e-07
+ Reference value :  1.40127e-07
+ Reference value :  1.49463e-07
+ Reference value :  1.58752e-07
+No. of Data Rows : 160008
+MARK R_p1_points=160008
+rc_v_p1_w_u_c       =  1.96876e-12 from=  8.00000e-08 to=  1.20000e-07
+rc_v_p1_w_u_s       =  1.38055e-11 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_v_p1_w_u_c=1.96876E-12 rc_v_p1_w_u_s=1.38055E-11
+rc_v_p1_x_u_c       =  3.93753e-12 from=  8.00000e-08 to=  1.60000e-07
+rc_v_p1_x_u_s       =  2.76110e-11 from=  8.00000e-08 to=  1.60000e-07
+MARK rc_v_p1_x_u_c=3.93753E-12 rc_v_p1_x_u_s=2.76109E-11
+rc_v_p1_w_l_c       =  1.18018e-11 from=  8.00000e-08 to=  1.20000e-07
+rc_v_p1_w_l_s       =  7.69292e-12 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_v_p1_w_l_c=1.18018E-11 rc_v_p1_w_l_s=7.69292E-12
+rc_v_p1_x_l_c       =  2.36036e-11 from=  8.00000e-08 to=  1.60000e-07
+rc_v_p1_x_l_s       =  1.53858e-11 from=  8.00000e-08 to=  1.60000e-07
+MARK rc_v_p1_x_l_c=2.36036E-11 rc_v_p1_x_l_s=1.53858E-11
+rc_i_p1_w_u_c       =  2.73615e-13 from=  8.00000e-08 to=  1.20000e-07
+rc_i_p1_w_u_s       =  7.51755e-13 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_i_p1_w_u_c=2.73615E-13 rc_i_p1_w_u_s=7.51755E-13
+rc_i_p1_x_u_c       =  5.47232e-13 from=  8.00000e-08 to=  1.60000e-07
+rc_i_p1_x_u_s       =  1.50351e-12 from=  8.00000e-08 to=  1.60000e-07
+MARK rc_i_p1_x_u_c=5.47232E-13 rc_i_p1_x_u_s=1.50351E-12
+rc_i_p1_w_l_c       =  7.51754e-13 from=  8.00000e-08 to=  1.20000e-07
+rc_i_p1_w_l_s       =  2.73616e-13 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_i_p1_w_l_c=7.51754E-13 rc_i_p1_w_l_s=2.73616E-13
+rc_i_p1_x_l_c       =  1.50351e-12 from=  8.00000e-08 to=  1.60000e-07
+rc_i_p1_x_l_s       =  5.47233e-13 from=  8.00000e-08 to=  1.60000e-07
+MARK rc_i_p1_x_l_c=1.50351E-12 rc_i_p1_x_l_s=5.47233E-13
+rc_t_p1_w_u_c       =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+rc_t_p1_w_u_s       =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_t_p1_w_u_c=0 rc_t_p1_w_u_s=0
+rc_t_p1_x_u_c       =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+rc_t_p1_x_u_s       =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+MARK rc_t_p1_x_u_c=0 rc_t_p1_x_u_s=0
+rc_t_p1_w_l_c       =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+rc_t_p1_w_l_s       =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_t_p1_w_l_c=0 rc_t_p1_w_l_s=0
+rc_t_p1_x_l_c       =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+rc_t_p1_x_l_s       =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+MARK rc_t_p1_x_l_c=0 rc_t_p1_x_l_s=0
+md_v_p1_w_u_c       =  1.36808e-11 from=  8.00000e-08 to=  1.20000e-07
+md_v_p1_w_u_s       =  3.75877e-11 from=  8.00000e-08 to=  1.20000e-07
+MARK md_v_p1_w_u_c=1.36808E-11 md_v_p1_w_u_s=3.75877E-11
+md_v_p1_x_u_c       =  2.73616e-11 from=  8.00000e-08 to=  1.60000e-07
+md_v_p1_x_u_s       =  7.51754e-11 from=  8.00000e-08 to=  1.60000e-07
+MARK md_v_p1_x_u_c=2.73616E-11 md_v_p1_x_u_s=7.51754E-11
+md_v_p1_w_l_c       =  3.75877e-11 from=  8.00000e-08 to=  1.20000e-07
+md_v_p1_w_l_s       =  1.36808e-11 from=  8.00000e-08 to=  1.20000e-07
+MARK md_v_p1_w_l_c=3.75877E-11 md_v_p1_w_l_s=1.36808E-11
+md_v_p1_x_l_c       =  7.51754e-11 from=  8.00000e-08 to=  1.60000e-07
+md_v_p1_x_l_s       =  2.73616e-11 from=  8.00000e-08 to=  1.60000e-07
+MARK md_v_p1_x_l_c=7.51754E-11 md_v_p1_x_l_s=2.73616E-11
+md_i_p1_w_u_c       =  8.57011e-13 from=  8.00000e-08 to=  1.20000e-07
+md_i_p1_w_u_s       =  3.96206e-13 from=  8.00000e-08 to=  1.20000e-07
+MARK md_i_p1_w_u_c=8.57011E-13 md_i_p1_w_u_s=3.96206E-13
+md_i_p1_x_u_c       =  1.71402e-12 from=  8.00000e-08 to=  1.60000e-07
+md_i_p1_x_u_s       =  7.92411e-13 from=  8.00000e-08 to=  1.60000e-07
+MARK md_i_p1_x_u_c=1.71402E-12 md_i_p1_x_u_s=7.92411E-13
+md_i_p1_w_l_c       =  8.19817e-13 from=  8.00000e-08 to=  1.20000e-07
+md_i_p1_w_l_s       =  -3.64441e-13 from=  8.00000e-08 to=  1.20000e-07
+MARK md_i_p1_w_l_c=8.19817E-13 md_i_p1_w_l_s=-3.64441E-13
+md_i_p1_x_l_c       =  1.63964e-12 from=  8.00000e-08 to=  1.60000e-07
+md_i_p1_x_l_s       =  -7.28882e-13 from=  8.00000e-08 to=  1.60000e-07
+MARK md_i_p1_x_l_c=1.63964E-12 md_i_p1_x_l_s=-7.28882E-13
+dut_v_p1_w_u_c      =  -1.28029e-12 from=  8.00000e-08 to=  1.20000e-07
+dut_v_p1_w_u_s      =  1.41243e-11 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_v_p1_w_u_c=-1.28029E-12 dut_v_p1_w_u_s=1.41243E-11
+dut_v_p1_x_u_c      =  -2.56052e-12 from=  8.00000e-08 to=  1.60000e-07
+dut_v_p1_x_u_s      =  2.82483e-11 from=  8.00000e-08 to=  1.60000e-07
+MARK dut_v_p1_x_u_c=-2.56052E-12 dut_v_p1_x_u_s=2.82483E-11
+dut_v_p1_w_l_c      =  1.01773e-11 from=  8.00000e-08 to=  1.20000e-07
+dut_v_p1_w_l_s      =  1.05137e-11 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_v_p1_w_l_c=1.01773E-11 dut_v_p1_w_l_s=1.05136E-11
+dut_v_p1_x_l_c      =  2.03545e-11 from=  8.00000e-08 to=  1.60000e-07
+dut_v_p1_x_l_s      =  2.10272e-11 from=  8.00000e-08 to=  1.60000e-07
+MARK dut_v_p1_x_l_c=2.03545E-11 dut_v_p1_x_l_s=2.10272E-11
+dut_i_p1_w_u_c      =  2.73615e-13 from=  8.00000e-08 to=  1.20000e-07
+dut_i_p1_w_u_s      =  7.51755e-13 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_i_p1_w_u_c=2.73615E-13 dut_i_p1_w_u_s=7.51755E-13
+dut_i_p1_x_u_c      =  5.47232e-13 from=  8.00000e-08 to=  1.60000e-07
+dut_i_p1_x_u_s      =  1.50351e-12 from=  8.00000e-08 to=  1.60000e-07
+MARK dut_i_p1_x_u_c=5.47232E-13 dut_i_p1_x_u_s=1.50351E-12
+dut_i_p1_w_l_c      =  7.51754e-13 from=  8.00000e-08 to=  1.20000e-07
+dut_i_p1_w_l_s      =  2.73616e-13 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_i_p1_w_l_c=7.51754E-13 dut_i_p1_w_l_s=2.73616E-13
+dut_i_p1_x_l_c      =  1.50351e-12 from=  8.00000e-08 to=  1.60000e-07
+dut_i_p1_x_l_s      =  5.47233e-13 from=  8.00000e-08 to=  1.60000e-07
+MARK dut_i_p1_x_l_c=1.50351E-12 dut_i_p1_x_l_s=5.47233E-13
+dut_t_p1_w_u_c      =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+dut_t_p1_w_u_s      =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_t_p1_w_u_c=0 dut_t_p1_w_u_s=0
+dut_t_p1_x_u_c      =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+dut_t_p1_x_u_s      =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+MARK dut_t_p1_x_u_c=0 dut_t_p1_x_u_s=0
+dut_t_p1_w_l_c      =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+dut_t_p1_w_l_s      =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_t_p1_w_l_c=0 dut_t_p1_w_l_s=0
+dut_t_p1_x_l_c      =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+dut_t_p1_x_l_s      =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+MARK dut_t_p1_x_l_c=0 dut_t_p1_x_l_s=0
+Reset re-loads circuit * mixer-pumped-rf-admittance (issue #111) -- one nominal point:
+
+Circuit: * mixer-pumped-rf-admittance (issue #111) -- one nominal point:
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vdd                                        2.5
+coll                                   1.58286
+base                                  0.887822
+emit                                 0.0306121
+xq1.s1                             1.10977e-09
+xq1.t                                  15.4817
+bb                                         0.9
+rfsrc                                        0
+prf                                -0.00119534
+rfsrc2                                       0
+prf2                                         0
+losrc                                        0
+plo                                          0
+pj                                 -0.00119534
+kj                                 -0.00119534
+kp                                 -0.00119534
+krs                                          0
+kx                                           0
+mu                                  0.00068404
+mv                                 -0.00119534
+mp                                 -0.00119534
+vmsense#branch                    -3.47215e-05
+vml#branch                         3.47215e-05
+vmu#branch                         3.47215e-05
+vkrs#branch                       -2.39069e-05
+vksense#branch                    -2.39069e-05
+vpsense#branch                    -2.39069e-05
+vlo#branch                                   0
+vrf2#branch                                  0
+vrf#branch                        -2.39069e-05
+vbb#branch                        -4.05923e-06
+vdd#branch                         -0.00305715
+
+ Reference value :  0.00000e+00
+ Reference value :  9.10928e-09
+ Reference value :  1.81713e-08
+ Reference value :  2.74293e-08
+ Reference value :  3.64893e-08
+ Reference value :  4.55403e-08
+ Reference value :  5.46093e-08
+ Reference value :  6.36563e-08
+ Reference value :  7.25823e-08
+ Reference value :  8.11843e-08
+ Reference value :  9.00913e-08
+ Reference value :  9.91573e-08
+ Reference value :  1.08127e-07
+ Reference value :  1.17323e-07
+ Reference value :  1.26470e-07
+ Reference value :  1.35745e-07
+ Reference value :  1.44691e-07
+ Reference value :  1.53795e-07
+No. of Data Rows : 160008
+MARK R_p2_points=160008
+rc_v_p2_w_u_c       =  1.96877e-12 from=  8.00000e-08 to=  1.20000e-07
+rc_v_p2_w_u_s       =  1.38055e-11 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_v_p2_w_u_c=1.96877E-12 rc_v_p2_w_u_s=1.38055E-11
+rc_v_p2_x_u_c       =  3.93754e-12 from=  8.00000e-08 to=  1.60000e-07
+rc_v_p2_x_u_s       =  2.76109e-11 from=  8.00000e-08 to=  1.60000e-07
+MARK rc_v_p2_x_u_c=3.93754E-12 rc_v_p2_x_u_s=2.76109E-11
+rc_v_p2_w_l_c       =  -1.18018e-11 from=  8.00000e-08 to=  1.20000e-07
+rc_v_p2_w_l_s       =  -7.69290e-12 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_v_p2_w_l_c=-1.18018E-11 rc_v_p2_w_l_s=-7.6929E-12
+rc_v_p2_x_l_c       =  -2.36036e-11 from=  8.00000e-08 to=  1.60000e-07
+rc_v_p2_x_l_s       =  -1.53858e-11 from=  8.00000e-08 to=  1.60000e-07
+MARK rc_v_p2_x_l_c=-2.36036E-11 rc_v_p2_x_l_s=-1.53858E-11
+rc_i_p2_w_u_c       =  2.73616e-13 from=  8.00000e-08 to=  1.20000e-07
+rc_i_p2_w_u_s       =  7.51754e-13 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_i_p2_w_u_c=2.73616E-13 rc_i_p2_w_u_s=7.51754E-13
+rc_i_p2_x_u_c       =  5.47232e-13 from=  8.00000e-08 to=  1.60000e-07
+rc_i_p2_x_u_s       =  1.50351e-12 from=  8.00000e-08 to=  1.60000e-07
+MARK rc_i_p2_x_u_c=5.47232E-13 rc_i_p2_x_u_s=1.50351E-12
+rc_i_p2_w_l_c       =  -7.51754e-13 from=  8.00000e-08 to=  1.20000e-07
+rc_i_p2_w_l_s       =  -2.73616e-13 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_i_p2_w_l_c=-7.51754E-13 rc_i_p2_w_l_s=-2.73616E-13
+rc_i_p2_x_l_c       =  -1.50351e-12 from=  8.00000e-08 to=  1.60000e-07
+rc_i_p2_x_l_s       =  -5.47232e-13 from=  8.00000e-08 to=  1.60000e-07
+MARK rc_i_p2_x_l_c=-1.50351E-12 rc_i_p2_x_l_s=-5.47232E-13
+rc_t_p2_w_u_c       =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+rc_t_p2_w_u_s       =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_t_p2_w_u_c=0 rc_t_p2_w_u_s=0
+rc_t_p2_x_u_c       =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+rc_t_p2_x_u_s       =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+MARK rc_t_p2_x_u_c=0 rc_t_p2_x_u_s=0
+rc_t_p2_w_l_c       =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+rc_t_p2_w_l_s       =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_t_p2_w_l_c=0 rc_t_p2_w_l_s=0
+rc_t_p2_x_l_c       =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+rc_t_p2_x_l_s       =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+MARK rc_t_p2_x_l_c=0 rc_t_p2_x_l_s=0
+md_v_p2_w_u_c       =  1.36808e-11 from=  8.00000e-08 to=  1.20000e-07
+md_v_p2_w_u_s       =  3.75877e-11 from=  8.00000e-08 to=  1.20000e-07
+MARK md_v_p2_w_u_c=1.36808E-11 md_v_p2_w_u_s=3.75877E-11
+md_v_p2_x_u_c       =  2.73616e-11 from=  8.00000e-08 to=  1.60000e-07
+md_v_p2_x_u_s       =  7.51754e-11 from=  8.00000e-08 to=  1.60000e-07
+MARK md_v_p2_x_u_c=2.73616E-11 md_v_p2_x_u_s=7.51754E-11
+md_v_p2_w_l_c       =  -3.75877e-11 from=  8.00000e-08 to=  1.20000e-07
+md_v_p2_w_l_s       =  -1.36808e-11 from=  8.00000e-08 to=  1.20000e-07
+MARK md_v_p2_w_l_c=-3.75877E-11 md_v_p2_w_l_s=-1.36808E-11
+md_v_p2_x_l_c       =  -7.51754e-11 from=  8.00000e-08 to=  1.60000e-07
+md_v_p2_x_l_s       =  -2.73616e-11 from=  8.00000e-08 to=  1.60000e-07
+MARK md_v_p2_x_l_c=-7.51754E-11 md_v_p2_x_l_s=-2.73616E-11
+md_i_p2_w_u_c       =  6.17013e-13 from=  8.00000e-08 to=  1.20000e-07
+md_i_p2_w_u_s       =  8.11898e-13 from=  8.00000e-08 to=  1.20000e-07
+MARK md_i_p2_w_u_c=6.17013E-13 md_i_p2_w_u_s=8.11898E-13
+md_i_p2_x_u_c       =  1.23403e-12 from=  8.00000e-08 to=  1.60000e-07
+md_i_p2_x_u_s       =  1.62380e-12 from=  8.00000e-08 to=  1.60000e-07
+MARK md_i_p2_x_u_c=1.23403E-12 md_i_p2_x_u_s=1.62379E-12
+md_i_p2_w_l_c       =  -9.83988e-13 from=  8.00000e-08 to=  1.20000e-07
+md_i_p2_w_l_s       =  -8.66102e-14 from=  8.00000e-08 to=  1.20000e-07
+MARK md_i_p2_w_l_c=-9.83988E-13 md_i_p2_w_l_s=-8.66102E-14
+md_i_p2_x_l_c       =  -1.96798e-12 from=  8.00000e-08 to=  1.60000e-07
+md_i_p2_x_l_s       =  -1.73222e-13 from=  8.00000e-08 to=  1.60000e-07
+MARK md_i_p2_x_l_c=-1.96798E-12 md_i_p2_x_l_s=-1.73222E-13
+dut_v_p2_w_u_c      =  -1.28014e-12 from=  8.00000e-08 to=  1.20000e-07
+dut_v_p2_w_u_s      =  1.41167e-11 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_v_p2_w_u_c=-1.28014E-12 dut_v_p2_w_u_s=1.41167E-11
+dut_v_p2_x_u_c      =  -2.56021e-12 from=  8.00000e-08 to=  1.60000e-07
+dut_v_p2_x_u_s      =  2.82331e-11 from=  8.00000e-08 to=  1.60000e-07
+MARK dut_v_p2_x_u_c=-2.56021E-12 dut_v_p2_x_u_s=2.82331E-11
+dut_v_p2_w_l_c      =  -1.01722e-11 from=  8.00000e-08 to=  1.20000e-07
+dut_v_p2_w_l_s      =  -1.05090e-11 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_v_p2_w_l_c=-1.01722E-11 dut_v_p2_w_l_s=-1.0509E-11
+dut_v_p2_x_l_c      =  -2.03444e-11 from=  8.00000e-08 to=  1.60000e-07
+dut_v_p2_x_l_s      =  -2.10181e-11 from=  8.00000e-08 to=  1.60000e-07
+MARK dut_v_p2_x_l_c=-2.03444E-11 dut_v_p2_x_l_s=-2.10181E-11
+dut_i_p2_w_u_c      =  2.73616e-13 from=  8.00000e-08 to=  1.20000e-07
+dut_i_p2_w_u_s      =  7.51754e-13 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_i_p2_w_u_c=2.73616E-13 dut_i_p2_w_u_s=7.51754E-13
+dut_i_p2_x_u_c      =  5.47232e-13 from=  8.00000e-08 to=  1.60000e-07
+dut_i_p2_x_u_s      =  1.50351e-12 from=  8.00000e-08 to=  1.60000e-07
+MARK dut_i_p2_x_u_c=5.47232E-13 dut_i_p2_x_u_s=1.50351E-12
+dut_i_p2_w_l_c      =  -7.51754e-13 from=  8.00000e-08 to=  1.20000e-07
+dut_i_p2_w_l_s      =  -2.73616e-13 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_i_p2_w_l_c=-7.51754E-13 dut_i_p2_w_l_s=-2.73616E-13
+dut_i_p2_x_l_c      =  -1.50351e-12 from=  8.00000e-08 to=  1.60000e-07
+dut_i_p2_x_l_s      =  -5.47232e-13 from=  8.00000e-08 to=  1.60000e-07
+MARK dut_i_p2_x_l_c=-1.50351E-12 dut_i_p2_x_l_s=-5.47232E-13
+dut_t_p2_w_u_c      =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+dut_t_p2_w_u_s      =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_t_p2_w_u_c=0 dut_t_p2_w_u_s=0
+dut_t_p2_x_u_c      =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+dut_t_p2_x_u_s      =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+MARK dut_t_p2_x_u_c=0 dut_t_p2_x_u_s=0
+dut_t_p2_w_l_c      =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+dut_t_p2_w_l_s      =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_t_p2_w_l_c=0 dut_t_p2_w_l_s=0
+dut_t_p2_x_l_c      =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+dut_t_p2_x_l_s      =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+MARK dut_t_p2_x_l_c=0 dut_t_p2_x_l_s=0
+Reset re-loads circuit * mixer-pumped-rf-admittance (issue #111) -- one nominal point:
+
+Circuit: * mixer-pumped-rf-admittance (issue #111) -- one nominal point:
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vdd                                        2.5
+coll                                   1.58286
+base                                  0.887822
+emit                                 0.0306121
+xq1.s1                             1.10977e-09
+xq1.t                                  15.4817
+bb                                         0.9
+rfsrc                                        0
+prf                                 0.00128171
+rfsrc2                                       0
+prf2                                         0
+losrc                                        0
+plo                                          0
+pj                                  0.00128171
+kj                                  0.00128171
+kp                                  0.00128171
+krs                                          0
+kx                                           0
+mu                                  0.00034202
+mv                                  0.00128171
+mp                                  0.00128171
+vmsense#branch                     3.75901e-05
+vml#branch                        -3.75901e-05
+vmu#branch                        -3.75901e-05
+vkrs#branch                        2.56343e-05
+vksense#branch                     2.56343e-05
+vpsense#branch                     2.56343e-05
+vlo#branch                                   0
+vrf2#branch                                  0
+vrf#branch                         2.56343e-05
+vbb#branch                        -4.05923e-06
+vdd#branch                         -0.00305715
+
+ Reference value :  0.00000e+00
+ Reference value :  9.20028e-09
+ Reference value :  1.86353e-08
+ Reference value :  2.77233e-08
+ Reference value :  3.68143e-08
+ Reference value :  4.61223e-08
+ Reference value :  5.52363e-08
+ Reference value :  6.43573e-08
+ Reference value :  7.35743e-08
+ Reference value :  8.29103e-08
+ Reference value :  9.20763e-08
+ Reference value :  1.01101e-07
+ Reference value :  1.10323e-07
+ Reference value :  1.19471e-07
+ Reference value :  1.28856e-07
+ Reference value :  1.38043e-07
+ Reference value :  1.47244e-07
+ Reference value :  1.56238e-07
+No. of Data Rows : 160008
+MARK R_p1h_points=160008
+rc_v_p1h_w_u_c      =  9.84380e-13 from=  8.00000e-08 to=  1.20000e-07
+rc_v_p1h_w_u_s      =  6.90274e-12 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_v_p1h_w_u_c=9.8438E-13 rc_v_p1h_w_u_s=6.90274E-12
+rc_v_p1h_x_u_c      =  1.96877e-12 from=  8.00000e-08 to=  1.60000e-07
+rc_v_p1h_x_u_s      =  1.38055e-11 from=  8.00000e-08 to=  1.60000e-07
+MARK rc_v_p1h_x_u_c=1.96876E-12 rc_v_p1h_x_u_s=1.38055E-11
+rc_v_p1h_w_l_c      =  5.90089e-12 from=  8.00000e-08 to=  1.20000e-07
+rc_v_p1h_w_l_s      =  3.84646e-12 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_v_p1h_w_l_c=5.90089E-12 rc_v_p1h_w_l_s=3.84646E-12
+rc_v_p1h_x_l_c      =  1.18018e-11 from=  8.00000e-08 to=  1.60000e-07
+rc_v_p1h_x_l_s      =  7.69291e-12 from=  8.00000e-08 to=  1.60000e-07
+MARK rc_v_p1h_x_l_c=1.18018E-11 rc_v_p1h_x_l_s=7.69291E-12
+rc_i_p1h_w_u_c      =  1.36808e-13 from=  8.00000e-08 to=  1.20000e-07
+rc_i_p1h_w_u_s      =  3.75877e-13 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_i_p1h_w_u_c=1.36808E-13 rc_i_p1h_w_u_s=3.75877E-13
+rc_i_p1h_x_u_c      =  2.73616e-13 from=  8.00000e-08 to=  1.60000e-07
+rc_i_p1h_x_u_s      =  7.51754e-13 from=  8.00000e-08 to=  1.60000e-07
+MARK rc_i_p1h_x_u_c=2.73616E-13 rc_i_p1h_x_u_s=7.51754E-13
+rc_i_p1h_w_l_c      =  3.75877e-13 from=  8.00000e-08 to=  1.20000e-07
+rc_i_p1h_w_l_s      =  1.36808e-13 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_i_p1h_w_l_c=3.75877E-13 rc_i_p1h_w_l_s=1.36808E-13
+rc_i_p1h_x_l_c      =  7.51754e-13 from=  8.00000e-08 to=  1.60000e-07
+rc_i_p1h_x_l_s      =  2.73616e-13 from=  8.00000e-08 to=  1.60000e-07
+MARK rc_i_p1h_x_l_c=7.51754E-13 rc_i_p1h_x_l_s=2.73616E-13
+rc_t_p1h_w_u_c      =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+rc_t_p1h_w_u_s      =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_t_p1h_w_u_c=0 rc_t_p1h_w_u_s=0
+rc_t_p1h_x_u_c      =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+rc_t_p1h_x_u_s      =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+MARK rc_t_p1h_x_u_c=0 rc_t_p1h_x_u_s=0
+rc_t_p1h_w_l_c      =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+rc_t_p1h_w_l_s      =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_t_p1h_w_l_c=0 rc_t_p1h_w_l_s=0
+rc_t_p1h_x_l_c      =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+rc_t_p1h_x_l_s      =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+MARK rc_t_p1h_x_l_c=0 rc_t_p1h_x_l_s=0
+md_v_p1h_w_u_c      =  6.84039e-12 from=  8.00000e-08 to=  1.20000e-07
+md_v_p1h_w_u_s      =  1.87939e-11 from=  8.00000e-08 to=  1.20000e-07
+MARK md_v_p1h_w_u_c=6.84039E-12 md_v_p1h_w_u_s=1.87939E-11
+md_v_p1h_x_u_c      =  1.36808e-11 from=  8.00000e-08 to=  1.60000e-07
+md_v_p1h_x_u_s      =  3.75877e-11 from=  8.00000e-08 to=  1.60000e-07
+MARK md_v_p1h_x_u_c=1.36808E-11 md_v_p1h_x_u_s=3.75877E-11
+md_v_p1h_w_l_c      =  1.87938e-11 from=  8.00000e-08 to=  1.20000e-07
+md_v_p1h_w_l_s      =  6.84041e-12 from=  8.00000e-08 to=  1.20000e-07
+MARK md_v_p1h_w_l_c=1.87938E-11 md_v_p1h_w_l_s=6.84041E-12
+md_v_p1h_x_l_c      =  3.75877e-11 from=  8.00000e-08 to=  1.60000e-07
+md_v_p1h_x_l_s      =  1.36808e-11 from=  8.00000e-08 to=  1.60000e-07
+MARK md_v_p1h_x_l_c=3.75877E-11 md_v_p1h_x_l_s=1.36808E-11
+md_i_p1h_w_u_c      =  4.30242e-13 from=  8.00000e-08 to=  1.20000e-07
+md_i_p1h_w_u_s      =  2.07951e-13 from=  8.00000e-08 to=  1.20000e-07
+MARK md_i_p1h_w_u_c=4.30242E-13 md_i_p1h_w_u_s=2.07951E-13
+md_i_p1h_x_u_c      =  8.60485e-13 from=  8.00000e-08 to=  1.60000e-07
+md_i_p1h_x_u_s      =  4.15902e-13 from=  8.00000e-08 to=  1.60000e-07
+MARK md_i_p1h_x_u_c=8.60485E-13 md_i_p1h_x_u_s=4.15902E-13
+md_i_p1h_w_l_c      =  4.09909e-13 from=  8.00000e-08 to=  1.20000e-07
+md_i_p1h_w_l_s      =  -1.82220e-13 from=  8.00000e-08 to=  1.20000e-07
+MARK md_i_p1h_w_l_c=4.09908E-13 md_i_p1h_w_l_s=-1.8222E-13
+md_i_p1h_x_l_c      =  8.19818e-13 from=  8.00000e-08 to=  1.60000e-07
+md_i_p1h_x_l_s      =  -3.64441e-13 from=  8.00000e-08 to=  1.60000e-07
+MARK md_i_p1h_x_l_c=8.19817E-13 md_i_p1h_x_l_s=-3.64441E-13
+dut_v_p1h_w_u_c     =  -6.40174e-13 from=  8.00000e-08 to=  1.20000e-07
+dut_v_p1h_w_u_s     =  7.06231e-12 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_v_p1h_w_u_c=-6.40174E-13 dut_v_p1h_w_u_s=7.06231E-12
+dut_v_p1h_x_u_c     =  -1.28028e-12 from=  8.00000e-08 to=  1.60000e-07
+dut_v_p1h_x_u_s     =  1.41243e-11 from=  8.00000e-08 to=  1.60000e-07
+MARK dut_v_p1h_x_u_c=-1.28028E-12 dut_v_p1h_x_u_s=1.41243E-11
+dut_v_p1h_w_l_c     =  5.08867e-12 from=  8.00000e-08 to=  1.20000e-07
+dut_v_p1h_w_l_s     =  5.25688e-12 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_v_p1h_w_l_c=5.08867E-12 dut_v_p1h_w_l_s=5.25688E-12
+dut_v_p1h_x_l_c     =  1.01773e-11 from=  8.00000e-08 to=  1.60000e-07
+dut_v_p1h_x_l_s     =  1.05137e-11 from=  8.00000e-08 to=  1.60000e-07
+MARK dut_v_p1h_x_l_c=1.01773E-11 dut_v_p1h_x_l_s=1.05137E-11
+dut_i_p1h_w_u_c     =  1.36808e-13 from=  8.00000e-08 to=  1.20000e-07
+dut_i_p1h_w_u_s     =  3.75877e-13 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_i_p1h_w_u_c=1.36808E-13 dut_i_p1h_w_u_s=3.75877E-13
+dut_i_p1h_x_u_c     =  2.73616e-13 from=  8.00000e-08 to=  1.60000e-07
+dut_i_p1h_x_u_s     =  7.51754e-13 from=  8.00000e-08 to=  1.60000e-07
+MARK dut_i_p1h_x_u_c=2.73616E-13 dut_i_p1h_x_u_s=7.51754E-13
+dut_i_p1h_w_l_c     =  3.75877e-13 from=  8.00000e-08 to=  1.20000e-07
+dut_i_p1h_w_l_s     =  1.36808e-13 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_i_p1h_w_l_c=3.75877E-13 dut_i_p1h_w_l_s=1.36808E-13
+dut_i_p1h_x_l_c     =  7.51754e-13 from=  8.00000e-08 to=  1.60000e-07
+dut_i_p1h_x_l_s     =  2.73616e-13 from=  8.00000e-08 to=  1.60000e-07
+MARK dut_i_p1h_x_l_c=7.51754E-13 dut_i_p1h_x_l_s=2.73616E-13
+dut_t_p1h_w_u_c     =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+dut_t_p1h_w_u_s     =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_t_p1h_w_u_c=0 dut_t_p1h_w_u_s=0
+dut_t_p1h_x_u_c     =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+dut_t_p1h_x_u_s     =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+MARK dut_t_p1h_x_u_c=0 dut_t_p1h_x_u_s=0
+dut_t_p1h_w_l_c     =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+dut_t_p1h_w_l_s     =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_t_p1h_w_l_c=0 dut_t_p1h_w_l_s=0
+dut_t_p1h_x_l_c     =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+dut_t_p1h_x_l_s     =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+MARK dut_t_p1h_x_l_c=0 dut_t_p1h_x_l_s=0
+Reset re-loads circuit * mixer-pumped-rf-admittance (issue #111) -- one nominal point:
+
+Circuit: * mixer-pumped-rf-admittance (issue #111) -- one nominal point:
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vdd                                        2.5
+coll                                   1.58286
+base                                  0.887822
+emit                                 0.0306121
+xq1.s1                             1.10977e-09
+xq1.t                                  15.4817
+bb                                         0.9
+rfsrc                                        0
+prf                               -0.000597672
+rfsrc2                                       0
+prf2                                         0
+losrc                                        0
+plo                                          0
+pj                                -0.000597672
+kj                                -0.000597672
+kp                                -0.000597672
+krs                                          0
+kx                                           0
+mu                                  0.00034202
+mv                                -0.000597672
+mp                                -0.000597672
+vmsense#branch                    -1.72739e-05
+vml#branch                         1.72739e-05
+vmu#branch                         1.72739e-05
+vkrs#branch                       -1.19534e-05
+vksense#branch                    -1.19534e-05
+vpsense#branch                    -1.19534e-05
+vlo#branch                                   0
+vrf2#branch                                  0
+vrf#branch                        -1.19534e-05
+vbb#branch                        -4.05923e-06
+vdd#branch                         -0.00305715
+
+ Reference value :  0.00000e+00
+ Reference value :  8.88528e-09
+ Reference value :  1.77273e-08
+ Reference value :  2.66173e-08
+ Reference value :  3.63173e-08
+ Reference value :  4.56233e-08
+ Reference value :  5.44413e-08
+ Reference value :  6.32613e-08
+ Reference value :  7.21463e-08
+ Reference value :  8.10123e-08
+ Reference value :  8.99323e-08
+ Reference value :  9.89683e-08
+ Reference value :  1.08157e-07
+ Reference value :  1.17121e-07
+ Reference value :  1.25973e-07
+ Reference value :  1.35057e-07
+ Reference value :  1.43906e-07
+ Reference value :  1.52919e-07
+No. of Data Rows : 160008
+MARK R_p2h_points=160008
+rc_v_p2h_w_u_c      =  9.84385e-13 from=  8.00000e-08 to=  1.20000e-07
+rc_v_p2h_w_u_s      =  6.90273e-12 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_v_p2h_w_u_c=9.84385E-13 rc_v_p2h_w_u_s=6.90273E-12
+rc_v_p2h_x_u_c      =  1.96877e-12 from=  8.00000e-08 to=  1.60000e-07
+rc_v_p2h_x_u_s      =  1.38055e-11 from=  8.00000e-08 to=  1.60000e-07
+MARK rc_v_p2h_x_u_c=1.96877E-12 rc_v_p2h_x_u_s=1.38055E-11
+rc_v_p2h_w_l_c      =  -5.90089e-12 from=  8.00000e-08 to=  1.20000e-07
+rc_v_p2h_w_l_s      =  -3.84645e-12 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_v_p2h_w_l_c=-5.90089E-12 rc_v_p2h_w_l_s=-3.84645E-12
+rc_v_p2h_x_l_c      =  -1.18018e-11 from=  8.00000e-08 to=  1.60000e-07
+rc_v_p2h_x_l_s      =  -7.69291e-12 from=  8.00000e-08 to=  1.60000e-07
+MARK rc_v_p2h_x_l_c=-1.18018E-11 rc_v_p2h_x_l_s=-7.69291E-12
+rc_i_p2h_w_u_c      =  1.36808e-13 from=  8.00000e-08 to=  1.20000e-07
+rc_i_p2h_w_u_s      =  3.75877e-13 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_i_p2h_w_u_c=1.36808E-13 rc_i_p2h_w_u_s=3.75877E-13
+rc_i_p2h_x_u_c      =  2.73616e-13 from=  8.00000e-08 to=  1.60000e-07
+rc_i_p2h_x_u_s      =  7.51754e-13 from=  8.00000e-08 to=  1.60000e-07
+MARK rc_i_p2h_x_u_c=2.73616E-13 rc_i_p2h_x_u_s=7.51754E-13
+rc_i_p2h_w_l_c      =  -3.75877e-13 from=  8.00000e-08 to=  1.20000e-07
+rc_i_p2h_w_l_s      =  -1.36808e-13 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_i_p2h_w_l_c=-3.75877E-13 rc_i_p2h_w_l_s=-1.36808E-13
+rc_i_p2h_x_l_c      =  -7.51754e-13 from=  8.00000e-08 to=  1.60000e-07
+rc_i_p2h_x_l_s      =  -2.73616e-13 from=  8.00000e-08 to=  1.60000e-07
+MARK rc_i_p2h_x_l_c=-7.51754E-13 rc_i_p2h_x_l_s=-2.73616E-13
+rc_t_p2h_w_u_c      =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+rc_t_p2h_w_u_s      =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_t_p2h_w_u_c=0 rc_t_p2h_w_u_s=0
+rc_t_p2h_x_u_c      =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+rc_t_p2h_x_u_s      =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+MARK rc_t_p2h_x_u_c=0 rc_t_p2h_x_u_s=0
+rc_t_p2h_w_l_c      =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+rc_t_p2h_w_l_s      =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_t_p2h_w_l_c=0 rc_t_p2h_w_l_s=0
+rc_t_p2h_x_l_c      =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+rc_t_p2h_x_l_s      =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+MARK rc_t_p2h_x_l_c=0 rc_t_p2h_x_l_s=0
+md_v_p2h_w_u_c      =  6.84040e-12 from=  8.00000e-08 to=  1.20000e-07
+md_v_p2h_w_u_s      =  1.87939e-11 from=  8.00000e-08 to=  1.20000e-07
+MARK md_v_p2h_w_u_c=6.8404E-12 md_v_p2h_w_u_s=1.87938E-11
+md_v_p2h_x_u_c      =  1.36808e-11 from=  8.00000e-08 to=  1.60000e-07
+md_v_p2h_x_u_s      =  3.75877e-11 from=  8.00000e-08 to=  1.60000e-07
+MARK md_v_p2h_x_u_c=1.36808E-11 md_v_p2h_x_u_s=3.75877E-11
+md_v_p2h_w_l_c      =  -1.87938e-11 from=  8.00000e-08 to=  1.20000e-07
+md_v_p2h_w_l_s      =  -6.84039e-12 from=  8.00000e-08 to=  1.20000e-07
+MARK md_v_p2h_w_l_c=-1.87938E-11 md_v_p2h_w_l_s=-6.84039E-12
+md_v_p2h_x_l_c      =  -3.75877e-11 from=  8.00000e-08 to=  1.60000e-07
+md_v_p2h_x_l_s      =  -1.36808e-11 from=  8.00000e-08 to=  1.60000e-07
+MARK md_v_p2h_x_l_c=-3.75877E-11 md_v_p2h_x_l_s=-1.36808E-11
+md_i_p2h_w_u_c      =  3.10243e-13 from=  8.00000e-08 to=  1.20000e-07
+md_i_p2h_w_u_s      =  4.15797e-13 from=  8.00000e-08 to=  1.20000e-07
+MARK md_i_p2h_w_u_c=3.10243E-13 md_i_p2h_w_u_s=4.15797E-13
+md_i_p2h_x_u_c      =  6.20486e-13 from=  8.00000e-08 to=  1.60000e-07
+md_i_p2h_x_u_s      =  8.31594e-13 from=  8.00000e-08 to=  1.60000e-07
+MARK md_i_p2h_x_u_c=6.20486E-13 md_i_p2h_x_u_s=8.31594E-13
+md_i_p2h_w_l_c      =  -4.91994e-13 from=  8.00000e-08 to=  1.20000e-07
+md_i_p2h_w_l_s      =  -4.33051e-14 from=  8.00000e-08 to=  1.20000e-07
+MARK md_i_p2h_w_l_c=-4.91994E-13 md_i_p2h_w_l_s=-4.33051E-14
+md_i_p2h_x_l_c      =  -9.83988e-13 from=  8.00000e-08 to=  1.60000e-07
+md_i_p2h_x_l_s      =  -8.66108e-14 from=  8.00000e-08 to=  1.60000e-07
+MARK md_i_p2h_x_l_c=-9.83988E-13 md_i_p2h_x_l_s=-8.66108E-14
+dut_v_p2h_w_u_c     =  -6.40094e-13 from=  8.00000e-08 to=  1.20000e-07
+dut_v_p2h_w_u_s     =  7.05850e-12 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_v_p2h_w_u_c=-6.40094E-13 dut_v_p2h_w_u_s=7.0585E-12
+dut_v_p2h_x_u_c     =  -1.28013e-12 from=  8.00000e-08 to=  1.60000e-07
+dut_v_p2h_x_u_s     =  1.41167e-11 from=  8.00000e-08 to=  1.60000e-07
+MARK dut_v_p2h_x_u_c=-1.28013E-12 dut_v_p2h_x_u_s=1.41167E-11
+dut_v_p2h_w_l_c     =  -5.08607e-12 from=  8.00000e-08 to=  1.20000e-07
+dut_v_p2h_w_l_s     =  -5.25445e-12 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_v_p2h_w_l_c=-5.08607E-12 dut_v_p2h_w_l_s=-5.25445E-12
+dut_v_p2h_x_l_c     =  -1.01722e-11 from=  8.00000e-08 to=  1.60000e-07
+dut_v_p2h_x_l_s     =  -1.05090e-11 from=  8.00000e-08 to=  1.60000e-07
+MARK dut_v_p2h_x_l_c=-1.01722E-11 dut_v_p2h_x_l_s=-1.0509E-11
+dut_i_p2h_w_u_c     =  1.36808e-13 from=  8.00000e-08 to=  1.20000e-07
+dut_i_p2h_w_u_s     =  3.75877e-13 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_i_p2h_w_u_c=1.36808E-13 dut_i_p2h_w_u_s=3.75877E-13
+dut_i_p2h_x_u_c     =  2.73616e-13 from=  8.00000e-08 to=  1.60000e-07
+dut_i_p2h_x_u_s     =  7.51754e-13 from=  8.00000e-08 to=  1.60000e-07
+MARK dut_i_p2h_x_u_c=2.73616E-13 dut_i_p2h_x_u_s=7.51754E-13
+dut_i_p2h_w_l_c     =  -3.75877e-13 from=  8.00000e-08 to=  1.20000e-07
+dut_i_p2h_w_l_s     =  -1.36808e-13 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_i_p2h_w_l_c=-3.75877E-13 dut_i_p2h_w_l_s=-1.36808E-13
+dut_i_p2h_x_l_c     =  -7.51754e-13 from=  8.00000e-08 to=  1.60000e-07
+dut_i_p2h_x_l_s     =  -2.73616e-13 from=  8.00000e-08 to=  1.60000e-07
+MARK dut_i_p2h_x_l_c=-7.51754E-13 dut_i_p2h_x_l_s=-2.73616E-13
+dut_t_p2h_w_u_c     =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+dut_t_p2h_w_u_s     =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_t_p2h_w_u_c=0 dut_t_p2h_w_u_s=0
+dut_t_p2h_x_u_c     =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+dut_t_p2h_x_u_s     =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+MARK dut_t_p2h_x_u_c=0 dut_t_p2h_x_u_s=0
+dut_t_p2h_w_l_c     =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+dut_t_p2h_w_l_s     =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_t_p2h_w_l_c=0 dut_t_p2h_w_l_s=0
+dut_t_p2h_x_l_c     =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+dut_t_p2h_x_l_s     =  0.00000e+00 from=  8.00000e-08 to=  1.60000e-07
+MARK dut_t_p2h_x_l_c=0 dut_t_p2h_x_l_s=0
+Reset re-loads circuit * mixer-pumped-rf-admittance (issue #111) -- one nominal point:
+
+Circuit: * mixer-pumped-rf-admittance (issue #111) -- one nominal point:
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vdd                                        2.5
+coll                                   1.58286
+base                                  0.887822
+emit                                 0.0306121
+xq1.s1                             1.10977e-09
+xq1.t                                  15.4817
+bb                                         0.9
+rfsrc                                        0
+prf                                          0
+rfsrc2                                       0
+prf2                                         0
+losrc                                        0
+plo                                          0
+pj                                           0
+kj                                           0
+kp                                           0
+krs                                          0
+kx                                           0
+mu                                           0
+mv                                           0
+mp                                           0
+vmsense#branch                     1.73648e-07
+vml#branch                        -1.73648e-07
+vmu#branch                        -1.73648e-07
+vkrs#branch                                  0
+vksense#branch                               0
+vpsense#branch                               0
+vlo#branch                                   0
+vrf2#branch                                  0
+vrf#branch                                   0
+vbb#branch                        -4.05923e-06
+vdd#branch                         -0.00305715
+
+ Reference value :  0.00000e+00
+ Reference value :  4.50864e-09
+ Reference value :  9.04564e-09
+ Reference value :  1.35356e-08
+ Reference value :  1.80346e-08
+ Reference value :  2.24851e-08
+ Reference value :  2.69551e-08
+ Reference value :  3.14286e-08
+ Reference value :  3.59141e-08
+ Reference value :  4.04246e-08
+ Reference value :  4.48821e-08
+ Reference value :  4.94031e-08
+ Reference value :  5.40371e-08
+ Reference value :  5.85786e-08
+ Reference value :  6.31671e-08
+ Reference value :  6.76381e-08
+ Reference value :  7.21876e-08
+ Reference value :  7.68391e-08
+ Reference value :  8.14026e-08
+ Reference value :  8.59401e-08
+ Reference value :  9.04321e-08
+ Reference value :  9.49581e-08
+ Reference value :  9.95231e-08
+ Reference value :  1.04031e-07
+ Reference value :  1.08558e-07
+ Reference value :  1.13145e-07
+ Reference value :  1.17752e-07
+No. of Data Rows : 240008
+MARK R_base_r_points=240008
+rc_v_base_r_w_u_c   =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+rc_v_base_r_w_u_s   =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_v_base_r_w_u_c=0 rc_v_base_r_w_u_s=0
+rc_v_base_r_w_l_c   =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+rc_v_base_r_w_l_s   =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_v_base_r_w_l_c=0 rc_v_base_r_w_l_s=0
+rc_i_base_r_w_u_c   =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+rc_i_base_r_w_u_s   =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_i_base_r_w_u_c=0 rc_i_base_r_w_u_s=0
+rc_i_base_r_w_l_c   =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+rc_i_base_r_w_l_s   =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_i_base_r_w_l_c=0 rc_i_base_r_w_l_s=0
+rc_t_base_r_w_u_c   =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+rc_t_base_r_w_u_s   =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_t_base_r_w_u_c=0 rc_t_base_r_w_u_s=0
+rc_t_base_r_w_l_c   =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+rc_t_base_r_w_l_s   =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_t_base_r_w_l_c=0 rc_t_base_r_w_l_s=0
+md_v_base_r_w_u_c   =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+md_v_base_r_w_u_s   =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK md_v_base_r_w_u_c=0 md_v_base_r_w_u_s=0
+md_v_base_r_w_l_c   =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+md_v_base_r_w_l_s   =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK md_v_base_r_w_l_c=0 md_v_base_r_w_l_s=0
+md_i_base_r_w_u_c   =  3.47296e-15 from=  8.00000e-08 to=  1.20000e-07
+md_i_base_r_w_u_s   =  1.96962e-14 from=  8.00000e-08 to=  1.20000e-07
+MARK md_i_base_r_w_u_c=3.47296E-15 md_i_base_r_w_u_s=1.96962E-14
+md_i_base_r_w_l_c   =  3.92971e-23 from=  8.00000e-08 to=  1.20000e-07
+md_i_base_r_w_l_s   =  1.58600e-21 from=  8.00000e-08 to=  1.20000e-07
+MARK md_i_base_r_w_l_c=3.92971E-23 md_i_base_r_w_l_s=1.586E-21
+dut_v_base_r_w_u_c  =  -1.64260e-18 from=  8.00000e-08 to=  1.20000e-07
+dut_v_base_r_w_u_s  =  4.23699e-17 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_v_base_r_w_u_c=-1.6426E-18 dut_v_base_r_w_u_s=4.237E-17
+dut_v_base_r_w_l_c  =  4.22502e-18 from=  8.00000e-08 to=  1.20000e-07
+dut_v_base_r_w_l_s  =  2.81466e-17 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_v_base_r_w_l_c=4.22502E-18 dut_v_base_r_w_l_s=2.81466E-17
+dut_i_base_r_w_u_c  =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+dut_i_base_r_w_u_s  =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_i_base_r_w_u_c=0 dut_i_base_r_w_u_s=0
+dut_i_base_r_w_l_c  =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+dut_i_base_r_w_l_s  =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_i_base_r_w_l_c=0 dut_i_base_r_w_l_s=0
+dut_t_base_r_w_u_c  =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+dut_t_base_r_w_u_s  =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_t_base_r_w_u_c=0 dut_t_base_r_w_u_s=0
+dut_t_base_r_w_l_c  =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+dut_t_base_r_w_l_s  =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_t_base_r_w_l_c=0 dut_t_base_r_w_l_s=0
+Reset re-loads circuit * mixer-pumped-rf-admittance (issue #111) -- one nominal point:
+
+Circuit: * mixer-pumped-rf-admittance (issue #111) -- one nominal point:
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vdd                                        2.5
+coll                                   1.58286
+base                                  0.887822
+emit                                 0.0306121
+xq1.s1                             1.10977e-09
+xq1.t                                  15.4817
+bb                                         0.9
+rfsrc                                        0
+prf                                 0.00256343
+rfsrc2                                       0
+prf2                                         0
+losrc                                        0
+plo                                          0
+pj                                  0.00256343
+kj                                  0.00256343
+kp                                  0.00256343
+krs                                          0
+kx                                           0
+mu                                  0.00068404
+mv                                  0.00256343
+mp                                  0.00256343
+vmsense#branch                     7.50065e-05
+vml#branch                        -7.50065e-05
+vmu#branch                        -7.50065e-05
+vkrs#branch                        5.12685e-05
+vksense#branch                     5.12685e-05
+vpsense#branch                     5.12685e-05
+vlo#branch                                   0
+vrf2#branch                                  0
+vrf#branch                         5.12685e-05
+vbb#branch                        -4.05923e-06
+vdd#branch                         -0.00305715
+
+ Reference value :  0.00000e+00
+ Reference value :  4.56014e-09
+ Reference value :  9.07114e-09
+ Reference value :  1.35541e-08
+ Reference value :  1.80736e-08
+ Reference value :  2.24921e-08
+ Reference value :  2.69161e-08
+ Reference value :  3.13866e-08
+ Reference value :  3.59356e-08
+ Reference value :  4.04651e-08
+ Reference value :  4.49661e-08
+ Reference value :  4.94811e-08
+ Reference value :  5.38851e-08
+ Reference value :  5.83296e-08
+ Reference value :  6.28101e-08
+ Reference value :  6.73321e-08
+ Reference value :  7.18236e-08
+ Reference value :  7.62586e-08
+ Reference value :  8.06876e-08
+ Reference value :  8.52176e-08
+ Reference value :  8.97076e-08
+ Reference value :  9.41826e-08
+ Reference value :  9.87806e-08
+ Reference value :  1.03228e-07
+ Reference value :  1.07809e-07
+ Reference value :  1.12200e-07
+ Reference value :  1.16691e-07
+No. of Data Rows : 240008
+MARK R_p1_r_points=240008
+rc_v_p1_r_w_u_c     =  1.96650e-12 from=  8.00000e-08 to=  1.20000e-07
+rc_v_p1_r_w_u_s     =  1.38069e-11 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_v_p1_r_w_u_c=1.9665E-12 rc_v_p1_r_w_u_s=1.38069E-11
+rc_v_p1_r_w_l_c     =  1.18015e-11 from=  8.00000e-08 to=  1.20000e-07
+rc_v_p1_r_w_l_s     =  7.69530e-12 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_v_p1_r_w_l_c=1.18015E-11 rc_v_p1_r_w_l_s=7.6953E-12
+rc_i_p1_r_w_u_c     =  2.73616e-13 from=  8.00000e-08 to=  1.20000e-07
+rc_i_p1_r_w_u_s     =  7.51754e-13 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_i_p1_r_w_u_c=2.73616E-13 rc_i_p1_r_w_u_s=7.51754E-13
+rc_i_p1_r_w_l_c     =  7.51754e-13 from=  8.00000e-08 to=  1.20000e-07
+rc_i_p1_r_w_l_s     =  2.73616e-13 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_i_p1_r_w_l_c=7.51754E-13 rc_i_p1_r_w_l_s=2.73616E-13
+rc_t_p1_r_w_u_c     =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+rc_t_p1_r_w_u_s     =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_t_p1_r_w_u_c=0 rc_t_p1_r_w_u_s=0
+rc_t_p1_r_w_l_c     =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+rc_t_p1_r_w_l_s     =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_t_p1_r_w_l_c=0 rc_t_p1_r_w_l_s=0
+md_v_p1_r_w_u_c     =  1.36808e-11 from=  8.00000e-08 to=  1.20000e-07
+md_v_p1_r_w_u_s     =  3.75877e-11 from=  8.00000e-08 to=  1.20000e-07
+MARK md_v_p1_r_w_u_c=1.36808E-11 md_v_p1_r_w_u_s=3.75877E-11
+md_v_p1_r_w_l_c     =  3.75877e-11 from=  8.00000e-08 to=  1.20000e-07
+md_v_p1_r_w_l_s     =  1.36808e-11 from=  8.00000e-08 to=  1.20000e-07
+MARK md_v_p1_r_w_l_c=3.75877E-11 md_v_p1_r_w_l_s=1.36808E-11
+md_i_p1_r_w_u_c     =  8.56583e-13 from=  8.00000e-08 to=  1.20000e-07
+md_i_p1_r_w_u_s     =  3.96362e-13 from=  8.00000e-08 to=  1.20000e-07
+MARK md_i_p1_r_w_u_c=8.56583E-13 md_i_p1_r_w_u_s=3.96362E-13
+md_i_p1_r_w_l_c     =  8.19705e-13 from=  8.00000e-08 to=  1.20000e-07
+md_i_p1_r_w_l_s     =  -3.64131e-13 from=  8.00000e-08 to=  1.20000e-07
+MARK md_i_p1_r_w_l_c=8.19705E-13 md_i_p1_r_w_l_s=-3.64131E-13
+dut_v_p1_r_w_u_c    =  -1.28199e-12 from=  8.00000e-08 to=  1.20000e-07
+dut_v_p1_r_w_u_s    =  1.41276e-11 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_v_p1_r_w_u_c=-1.28199E-12 dut_v_p1_r_w_u_s=1.41276E-11
+dut_v_p1_r_w_l_c    =  1.01786e-11 from=  8.00000e-08 to=  1.20000e-07
+dut_v_p1_r_w_l_s    =  1.05167e-11 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_v_p1_r_w_l_c=1.01786E-11 dut_v_p1_r_w_l_s=1.05167E-11
+dut_i_p1_r_w_u_c    =  2.73616e-13 from=  8.00000e-08 to=  1.20000e-07
+dut_i_p1_r_w_u_s    =  7.51754e-13 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_i_p1_r_w_u_c=2.73616E-13 dut_i_p1_r_w_u_s=7.51754E-13
+dut_i_p1_r_w_l_c    =  7.51754e-13 from=  8.00000e-08 to=  1.20000e-07
+dut_i_p1_r_w_l_s    =  2.73616e-13 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_i_p1_r_w_l_c=7.51754E-13 dut_i_p1_r_w_l_s=2.73616E-13
+dut_t_p1_r_w_u_c    =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+dut_t_p1_r_w_u_s    =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_t_p1_r_w_u_c=0 dut_t_p1_r_w_u_s=0
+dut_t_p1_r_w_l_c    =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+dut_t_p1_r_w_l_s    =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_t_p1_r_w_l_c=0 dut_t_p1_r_w_l_s=0
+Reset re-loads circuit * mixer-pumped-rf-admittance (issue #111) -- one nominal point:
+
+Circuit: * mixer-pumped-rf-admittance (issue #111) -- one nominal point:
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vdd                                        2.5
+coll                                   1.58286
+base                                  0.887822
+emit                                 0.0306121
+xq1.s1                             1.10977e-09
+xq1.t                                  15.4817
+bb                                         0.9
+rfsrc                                        0
+prf                                -0.00119534
+rfsrc2                                       0
+prf2                                         0
+losrc                                        0
+plo                                          0
+pj                                 -0.00119534
+kj                                 -0.00119534
+kp                                 -0.00119534
+krs                                          0
+kx                                           0
+mu                                  0.00068404
+mv                                 -0.00119534
+mp                                 -0.00119534
+vmsense#branch                    -3.47215e-05
+vml#branch                         3.47215e-05
+vmu#branch                         3.47215e-05
+vkrs#branch                       -2.39069e-05
+vksense#branch                    -2.39069e-05
+vpsense#branch                    -2.39069e-05
+vlo#branch                                   0
+vrf2#branch                                  0
+vrf#branch                        -2.39069e-05
+vbb#branch                        -4.05923e-06
+vdd#branch                         -0.00305715
+
+ Reference value :  0.00000e+00
+ Reference value :  4.49414e-09
+ Reference value :  8.85114e-09
+ Reference value :  1.32991e-08
+ Reference value :  1.78401e-08
+ Reference value :  2.23671e-08
+ Reference value :  2.67841e-08
+ Reference value :  3.13151e-08
+ Reference value :  3.57586e-08
+ Reference value :  4.02861e-08
+ Reference value :  4.47391e-08
+ Reference value :  4.91361e-08
+ Reference value :  5.36296e-08
+ Reference value :  5.80476e-08
+ Reference value :  6.24601e-08
+ Reference value :  6.69151e-08
+ Reference value :  7.13396e-08
+ Reference value :  7.57641e-08
+ Reference value :  8.02611e-08
+ Reference value :  8.46821e-08
+ Reference value :  8.91581e-08
+ Reference value :  9.35256e-08
+ Reference value :  9.79216e-08
+ Reference value :  1.02391e-07
+ Reference value :  1.06822e-07
+ Reference value :  1.11278e-07
+ Reference value :  1.15671e-07
+No. of Data Rows : 240008
+MARK R_p2_r_points=240008
+rc_v_p2_r_w_u_c     =  1.96651e-12 from=  8.00000e-08 to=  1.20000e-07
+rc_v_p2_r_w_u_s     =  1.38069e-11 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_v_p2_r_w_u_c=1.9665E-12 rc_v_p2_r_w_u_s=1.38069E-11
+rc_v_p2_r_w_l_c     =  -1.18015e-11 from=  8.00000e-08 to=  1.20000e-07
+rc_v_p2_r_w_l_s     =  -7.69530e-12 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_v_p2_r_w_l_c=-1.18015E-11 rc_v_p2_r_w_l_s=-7.6953E-12
+rc_i_p2_r_w_u_c     =  2.73616e-13 from=  8.00000e-08 to=  1.20000e-07
+rc_i_p2_r_w_u_s     =  7.51754e-13 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_i_p2_r_w_u_c=2.73616E-13 rc_i_p2_r_w_u_s=7.51754E-13
+rc_i_p2_r_w_l_c     =  -7.51754e-13 from=  8.00000e-08 to=  1.20000e-07
+rc_i_p2_r_w_l_s     =  -2.73616e-13 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_i_p2_r_w_l_c=-7.51754E-13 rc_i_p2_r_w_l_s=-2.73616E-13
+rc_t_p2_r_w_u_c     =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+rc_t_p2_r_w_u_s     =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_t_p2_r_w_u_c=0 rc_t_p2_r_w_u_s=0
+rc_t_p2_r_w_l_c     =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+rc_t_p2_r_w_l_s     =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK rc_t_p2_r_w_l_c=0 rc_t_p2_r_w_l_s=0
+md_v_p2_r_w_u_c     =  1.36808e-11 from=  8.00000e-08 to=  1.20000e-07
+md_v_p2_r_w_u_s     =  3.75877e-11 from=  8.00000e-08 to=  1.20000e-07
+MARK md_v_p2_r_w_u_c=1.36808E-11 md_v_p2_r_w_u_s=3.75877E-11
+md_v_p2_r_w_l_c     =  -3.75877e-11 from=  8.00000e-08 to=  1.20000e-07
+md_v_p2_r_w_l_s     =  -1.36808e-11 from=  8.00000e-08 to=  1.20000e-07
+MARK md_v_p2_r_w_l_c=-3.75877E-11 md_v_p2_r_w_l_s=-1.36808E-11
+md_i_p2_r_w_u_c     =  6.16584e-13 from=  8.00000e-08 to=  1.20000e-07
+md_i_p2_r_w_u_s     =  8.12054e-13 from=  8.00000e-08 to=  1.20000e-07
+MARK md_i_p2_r_w_u_c=6.16584E-13 md_i_p2_r_w_u_s=8.12054E-13
+md_i_p2_r_w_l_c     =  -9.83875e-13 from=  8.00000e-08 to=  1.20000e-07
+md_i_p2_r_w_l_s     =  -8.69214e-14 from=  8.00000e-08 to=  1.20000e-07
+MARK md_i_p2_r_w_l_c=-9.83875E-13 md_i_p2_r_w_l_s=-8.69214E-14
+dut_v_p2_r_w_u_c    =  -1.28184e-12 from=  8.00000e-08 to=  1.20000e-07
+dut_v_p2_r_w_u_s    =  1.41200e-11 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_v_p2_r_w_u_c=-1.28184E-12 dut_v_p2_r_w_u_s=1.412E-11
+dut_v_p2_r_w_l_c    =  -1.01736e-11 from=  8.00000e-08 to=  1.20000e-07
+dut_v_p2_r_w_l_s    =  -1.05123e-11 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_v_p2_r_w_l_c=-1.01736E-11 dut_v_p2_r_w_l_s=-1.05123E-11
+dut_i_p2_r_w_u_c    =  2.73616e-13 from=  8.00000e-08 to=  1.20000e-07
+dut_i_p2_r_w_u_s    =  7.51754e-13 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_i_p2_r_w_u_c=2.73616E-13 dut_i_p2_r_w_u_s=7.51754E-13
+dut_i_p2_r_w_l_c    =  -7.51754e-13 from=  8.00000e-08 to=  1.20000e-07
+dut_i_p2_r_w_l_s    =  -2.73616e-13 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_i_p2_r_w_l_c=-7.51754E-13 dut_i_p2_r_w_l_s=-2.73616E-13
+dut_t_p2_r_w_u_c    =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+dut_t_p2_r_w_u_s    =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_t_p2_r_w_u_c=0 dut_t_p2_r_w_u_s=0
+dut_t_p2_r_w_l_c    =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+dut_t_p2_r_w_l_s    =  0.00000e+00 from=  8.00000e-08 to=  1.20000e-07
+MARK dut_t_p2_r_w_l_c=0 dut_t_p2_r_w_l_s=0
+MARK done
+ngspice-46 done

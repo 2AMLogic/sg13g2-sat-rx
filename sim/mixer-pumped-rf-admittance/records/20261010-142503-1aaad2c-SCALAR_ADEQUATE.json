@@ -1,0 +1,711 @@
+{
+  "record_id": "20261010-142503-1aaad2c",
+  "status": "SCALAR_ADEQUATE",
+  "reasons": [
+    "kappa 0.000373 + uncertainty 0.00042 < 0.05: a scalar sideband admittance describes the port at this point"
+  ],
+  "scope": "method-feasibility evidence only; nominal single point; no row-5 compliance claim; no mixer or cascade NF claim; DR-0004 is neither ratified nor reversed",
+  "nominal_point": {
+    "corner": "hbt_typ",
+    "temp_c": 27,
+    "vdd_v": 2.5,
+    "lo_hz": 18450000000.0,
+    "if_hz": 1000000000.0,
+    "f_u_hz": 19450000000.0,
+    "f_l_hz": 17450000000.0,
+    "vlo_emf_v": 0.08,
+    "note": "LO drive is the placeholder's own value, a probe setting (issue #68)"
+  },
+  "port": {
+    "node": "prf",
+    "into": "Cin_rf (placeholder RF coupling capacitor)",
+    "termination": "placeholder Rrf = 50 ohm to its zeroed RF source",
+    "current_direction": "positive into the mixer",
+    "perturbation": "Norton current per sideband, EMF 0.002 V equivalent; half amplitude for the halving check"
+  },
+  "thresholds": {
+    "control_mag_rel_tol": 0.005,
+    "control_phase_tol_deg": 0.3,
+    "control_null_rel_tol": 0.005,
+    "cond_max": 10.0,
+    "halving_rel_tol": 0.01,
+    "window_rel_tol": 0.005,
+    "timestep_rel_tol": 0.005,
+    "response_to_baseline_min": 10.0,
+    "kappa_scalar_max": 0.05
+  },
+  "thresholds_provenance": {
+    "file": "sim/mixer-pumped-rf-admittance/thresholds.json",
+    "sha256": "d6736f98e3535936c6c1055907d0c7a0a184038cd67a9316605471f57521f69b",
+    "commit": "e853ece742175050afa4b57f01c2f38ac26b12e2",
+    "dirty": false
+  },
+  "classification": "SCALAR_ADEQUATE",
+  "evaluation": {
+    "controls": {
+      "pass": true,
+      "checks": {
+        "rc.uu": {
+          "expected": [
+            0.03612937189220536,
+            0.011825538565449599
+          ],
+          "measured": [
+            0.03613797076689063,
+            0.011813627031469006
+          ],
+          "mag_rel_err": 0.00011757024305203423,
+          "phase_err_deg": 0.021091018909061177,
+          "pass": true
+        },
+        "rc.ul": {
+          "expected": [
+            0.0,
+            0.0
+          ],
+          "measured": [
+            -3.0133038217375417e-08,
+            -1.7719425320449506e-08
+          ],
+          "relative_to_diagonal": 9.194337460850679e-07,
+          "tol": 0.005,
+          "pass": true
+        },
+        "rc.lu": {
+          "expected": [
+            0.0,
+            0.0
+          ],
+          "measured": [
+            3.796218471844855e-08,
+            1.4735294153783011e-08
+          ],
+          "relative_to_diagonal": 1.0835501868171094e-06,
+          "tol": 0.005,
+          "pass": true
+        },
+        "rc.ll": {
+          "expected": [
+            0.035301468381128555,
+            0.012878861183401393
+          ],
+          "measured": [
+            0.03530972724983219,
+            0.012868948283955014
+          ],
+          "mag_rel_err": 0.00011611206458028711,
+          "phase_err_deg": 0.01851289870552364,
+          "pass": true
+        },
+        "rc.numerics": {
+          "failed": [],
+          "pass": true
+        },
+        "rc.classification": {
+          "expected": "SCALAR_ADEQUATE",
+          "got": "SCALAR_ADEQUATE",
+          "pass": true
+        },
+        "md.uu": {
+          "expected": [
+            0.02,
+            0.012220795422464296
+          ],
+          "measured": [
+            0.020000001127182865,
+            0.0122359980679647
+          ],
+          "mag_rel_err": 0.00033839228607535077,
+          "phase_err_deg": 0.031699892093314475,
+          "pass": true
+        },
+        "md.ul": {
+          "expected": [
+            0.004596266658713868,
+            0.0038567256581192354
+          ],
+          "measured": [
+            0.00459624272466747,
+            0.0038567329879819526
+          ],
+          "mag_rel_err": 2.270493593470313e-06,
+          "phase_err_deg": 0.00020053099564165677,
+          "pass": true
+        },
+        "md.lu": {
+          "expected": [
+            0.004596266658713868,
+            0.0038567256581192354
+          ],
+          "measured": [
+            0.004596247533407243,
+            0.003856736243936655
+          ],
+          "mag_rel_err": 1.3077279829021293e-06,
+          "phase_err_deg": 0.0001948318480913258,
+          "pass": true
+        },
+        "md.ll": {
+          "expected": [
+            0.02,
+            0.010964158361028379
+          ],
+          "measured": [
+            0.019999985747701617,
+            0.010975164881521246
+          ],
+          "mag_rel_err": 0.00023151838045110118,
+          "phase_err_deg": 0.024256566598268137,
+          "pass": true
+        },
+        "md.numerics": {
+          "failed": [],
+          "pass": true
+        },
+        "md.classification": {
+          "expected": "MATRIX_REQUIRED",
+          "got": "MATRIX_REQUIRED",
+          "pass": true
+        }
+      },
+      "fixtures": {
+        "rc": {
+          "y": {
+            "uu": [
+              0.03613797076689063,
+              0.011813627031469006
+            ],
+            "ul": [
+              -3.0133038217375417e-08,
+              -1.7719425320449506e-08
+            ],
+            "lu": [
+              3.796218471844855e-08,
+              1.4735294153783011e-08
+            ],
+            "ll": [
+              0.03530972724983219,
+              0.012868948283955014
+            ]
+          },
+          "y_sets": {
+            "primary": {
+              "uu": [
+                0.03613797076689063,
+                0.011813627031469006
+              ],
+              "ul": [
+                -3.0133038217375417e-08,
+                -1.7719425320449506e-08
+              ],
+              "lu": [
+                3.796218471844855e-08,
+                1.4735294153783011e-08
+              ],
+              "ll": [
+                0.03530972724983219,
+                0.012868948283955014
+              ]
+            },
+            "halved": {
+              "uu": [
+                0.036138063480480015,
+                0.011813675698991685
+              ],
+              "ul": [
+                3.371653142844129e-08,
+                3.059460280825885e-08
+              ],
+              "lu": [
+                3.7962294819598305e-08,
+                1.4735384022207102e-08
+              ],
+              "ll": [
+                0.035309783054103254,
+                0.012869006468044272
+              ]
+            },
+            "extended": {
+              "uu": [
+                0.036138217246107815,
+                0.011813660719348043
+              ],
+              "ul": [
+                9.490592550480205e-09,
+                -3.6838471790481563e-09
+              ],
+              "lu": [
+                -1.774785161192407e-08,
+                -2.530985474901663e-09
+              ],
+              "ll": [
+                0.03530982549833882,
+                0.01286894427766649
+              ]
+            },
+            "refined": {
+              "uu": [
+                0.036131580097351436,
+                0.011822584920478774
+              ],
+              "ul": [
+                0.0,
+                -0.0
+              ],
+              "lu": [
+                -0.0,
+                -0.0
+              ],
+              "ll": [
+                0.0353036106242432,
+                0.01287648814445101
+              ]
+            }
+          },
+          "kappa": 1.0835501868171094e-06,
+          "kappa_uncertainty": 0.00029279749095984707,
+          "scalar_phase_spread": 2.1451753352695807e-06,
+          "checks": {
+            "halving": {
+              "rel_change": 2.7541014736267495e-06,
+              "tol": 0.01,
+              "pass": true
+            },
+            "window": {
+              "rel_change": 6.543167343692401e-06,
+              "tol": 0.005,
+              "pass": true
+            },
+            "timestep": {
+              "rel_change": 0.0002894229042195502,
+              "tol": 0.005,
+              "pass": true
+            },
+            "conditioning": {
+              "cond_max_over_sets": 1.010223796311388,
+              "tol": 10.0,
+              "pass": true
+            },
+            "response_to_baseline": {
+              "min_ratio": 1.3236015045518801e+25,
+              "tol": 10.0,
+              "pass": true
+            }
+          },
+          "numerics_pass": true,
+          "classification": "SCALAR_ADEQUATE",
+          "classification_reasons": [
+            "kappa 1.084e-06 + uncertainty 0.000293 < 0.05: a scalar sideband admittance describes the port at this point"
+          ],
+          "phasors": {
+            "Vu1": [
+              9.843800000000004e-05,
+              -0.0006902750000000003
+            ],
+            "Iu1": [
+              1.1711990000000003e-05,
+              -2.3782250000000004e-05
+            ],
+            "Vu2": [
+              9.843850000000003e-05,
+              -0.0006902750000000003
+            ],
+            "Iu2": [
+              1.1712030000000004e-05,
+              -2.3782200000000008e-05
+            ],
+            "Vl1": [
+              0.0005900900000000001,
+              -0.00038464600000000015
+            ],
+            "Il1": [
+              2.578590000000001e-05,
+              -5.987880000000001e-06
+            ],
+            "Vl2": [
+              -0.0005900900000000001,
+              0.00038464500000000014
+            ],
+            "Il2": [
+              -2.578590000000001e-05,
+              5.987900000000002e-06
+            ]
+          }
+        },
+        "md": {
+          "y": {
+            "uu": [
+              0.020000001127182865,
+              0.0122359980679647
+            ],
+            "ul": [
+              0.00459624272466747,
+              0.0038567329879819526
+            ],
+            "lu": [
+              0.004596247533407243,
+              0.003856736243936655
+            ],
+            "ll": [
+              0.019999985747701617,
+              0.010975164881521246
+            ]
+          },
+          "y_sets": {
+            "primary": {
+              "uu": [
+                0.020000001127182865,
+                0.0122359980679647
+              ],
+              "ul": [
+                0.00459624272466747,
+                0.0038567329879819526
+              ],
+              "lu": [
+                0.004596247533407243,
+                0.003856736243936655
+              ],
+              "ll": [
+                0.019999985747701617,
+                0.010975164881521246
+              ]
+            },
+            "halved": {
+              "uu": [
+                0.019999998425400307,
+                0.012236007488558824
+              ],
+              "ul": [
+                0.00459625092056991,
+                0.0038567967299264786
+              ],
+              "lu": [
+                0.004596240566338576,
+                0.003856751671521004
+              ],
+              "ll": [
+                0.020000029617580496,
+                0.010975185543521145
+              ]
+            },
+            "extended": {
+              "uu": [
+                0.01999996546549002,
+                0.012236024349979491
+              ],
+              "ul": [
+                0.004596196798058793,
+                0.003856716448335953
+              ],
+              "lu": [
+                0.0045962610990916385,
+                0.003856727860901646
+              ],
+              "ll": [
+                0.020000047898703067,
+                0.010975176860850143
+              ]
+            },
+            "refined": {
+              "uu": [
+                0.020000002038683164,
+                0.012224597730352836
+              ],
+              "ul": [
+                0.0045962544708275386,
+                0.0038567287127305653
+              ],
+              "lu": [
+                0.00459626570574774,
+                0.003856729512752594
+              ],
+              "ll": [
+                0.01999999864784956,
+                0.010966906235324328
+              ]
+            }
+          },
+          "kappa": 0.263002358493579,
+          "kappa_uncertainty": 0.000499719935018869,
+          "scalar_phase_spread": 0.526004716987158,
+          "checks": {
+            "halving": {
+              "rel_change": 2.7410397273996305e-06,
+              "tol": 0.01,
+              "pass": true
+            },
+            "window": {
+              "rel_change": 2.6995939491218066e-06,
+              "tol": 0.005,
+              "pass": true
+            },
+            "timestep": {
+              "rel_change": 0.00048623595095239046,
+              "tol": 0.005,
+              "pass": true
+            },
+            "conditioning": {
+              "cond_max_over_sets": 1.0000036722238235,
+              "tol": 10.0,
+              "pass": true
+            },
+            "response_to_baseline": {
+              "min_ratio": 23.32223905127943,
+              "tol": 10.0,
+              "pass": true
+            }
+          },
+          "numerics_pass": true,
+          "classification": "MATRIX_REQUIRED",
+          "classification_reasons": [
+            "kappa 0.263 - uncertainty 0.0005 > 0.05: conjugate image coupling is significant; a sideband-coupled 2x2 admittance is required"
+          ],
+          "phasors": {
+            "Vu1": [
+              0.0006840400000000002,
+              -0.0018793850000000006
+            ],
+            "Iu1": [
+              4.267690200000001e-05,
+              -1.8825490000000004e-05
+            ],
+            "Vu2": [
+              0.0006840400000000002,
+              -0.0018793850000000006
+            ],
+            "Iu2": [
+              3.067700200000001e-05,
+              -3.9610090000000015e-05
+            ],
+            "Vl1": [
+              0.0018793850000000006,
+              -0.0006840400000000002
+            ],
+            "Il1": [
+              4.099084991694101e-05,
+              1.8222050530875006e-05
+            ],
+            "Vl2": [
+              -0.0018793850000000006,
+              0.0006840400000000002
+            ],
+            "Il2": [
+              -4.9199400083059016e-05,
+              4.330510530875001e-06
+            ]
+          }
+        }
+      }
+    },
+    "dut": {
+      "y": {
+        "uu": [
+          0.031063163337435605,
+          0.02400709972172285
+        ],
+        "ul": [
+          5.4153293711412355e-06,
+          1.3604108360644782e-05
+        ],
+        "lu": [
+          4.4779296812422696e-06,
+          1.2026415747228749e-05
+        ],
+        "ll": [
+          0.02917912098302096,
+          0.023914148089601867
+        ]
+      },
+      "y_sets": {
+        "primary": {
+          "uu": [
+            0.031063163337435605,
+            0.02400709972172285
+          ],
+          "ul": [
+            5.4153293711412355e-06,
+            1.3604108360644782e-05
+          ],
+          "lu": [
+            4.4779296812422696e-06,
+            1.2026415747228749e-05
+          ],
+          "ll": [
+            0.02917912098302096,
+            0.023914148089601867
+          ]
+        },
+        "halved": {
+          "uu": [
+            0.031063123908638548,
+            0.024007143738085577
+          ],
+          "ul": [
+            5.49536381483257e-06,
+            1.3632534203637507e-05
+          ],
+          "lu": [
+            4.545628060236987e-06,
+            1.2070289054370388e-05
+          ],
+          "ll": [
+            0.029179026073664644,
+            0.02391421852407763
+          ]
+        },
+        "extended": {
+          "uu": [
+            0.03106322245191898,
+            0.02400714376869526
+          ],
+          "ul": [
+            5.472711430632167e-06,
+            1.3599910609946054e-05
+          ],
+          "lu": [
+            4.534571641618509e-06,
+            1.202951414399244e-05
+          ],
+          "ll": [
+            0.02917912109378353,
+            0.023914303210359908
+          ]
+        },
+        "refined": {
+          "uu": [
+            0.031047356450676668,
+            0.02400595598406915
+          ],
+          "ul": [
+            5.460812495888572e-06,
+            1.3596828669461507e-05
+          ],
+          "lu": [
+            4.420699610268435e-06,
+            1.1963988556787807e-05
+          ],
+          "ll": [
+            0.029166185473479187,
+            0.02391307487736339
+          ]
+        }
+      },
+      "kappa": 0.0003729682197816911,
+      "kappa_uncertainty": 0.0004200789064314107,
+      "scalar_phase_spread": 0.0007696686422589237,
+      "checks": {
+        "halving": {
+          "rel_change": 3.010519757164502e-06,
+          "tol": 0.01,
+          "pass": true
+        },
+        "window": {
+          "rel_change": 3.95122663792825e-06,
+          "tol": 0.005,
+          "pass": true
+        },
+        "timestep": {
+          "rel_change": 0.0004036845868081623,
+          "tol": 0.005,
+          "pass": true
+        },
+        "conditioning": {
+          "cond_max_over_sets": 1.0318204925191525,
+          "tol": 10.0,
+          "pass": true
+        },
+        "response_to_baseline": {
+          "min_ratio": 22476.711436335587,
+          "tol": 10.0,
+          "pass": true
+        }
+      },
+      "numerics_pass": true,
+      "classification": "SCALAR_ADEQUATE",
+      "classification_reasons": [
+        "kappa 0.000373 + uncertainty 0.00042 < 0.05: a scalar sideband admittance describes the port at this point"
+      ],
+      "phasors": {
+        "Vu1": [
+          -6.401198814000002e-05,
+          -0.0007061994358500002
+        ],
+        "Iu1": [
+          1.4960989762800004e-05,
+          -2.3463761283000007e-05
+        ],
+        "Vu2": [
+          -6.400448814000003e-05,
+          -0.0007058194358500003
+        ],
+        "Iu2": [
+          1.4960889762800006e-05,
+          -2.3471311283000006e-05
+        ],
+        "Vl1": [
+          0.0005088627208250002,
+          -0.0005256745225000001
+        ],
+        "Il1": [
+          2.7410445583500012e-05,
+          -3.1673095500000007e-06
+        ],
+        "Vl2": [
+          -0.0005086122791750001,
+          0.0005254554775000002
+        ],
+        "Il2": [
+          -2.7415454416500008e-05,
+          3.1716904500000008e-06
+        ]
+      }
+    },
+    "status": "SCALAR_ADEQUATE",
+    "reasons": [
+      "kappa 0.000373 + uncertainty 0.00042 < 0.05: a scalar sideband admittance describes the port at this point"
+    ]
+  },
+  "references": {
+    "method": "ngspice User's Manual v46 (https://ngspice.sourceforge.io/docs/ngspice-46-manual.pdf, sha256 b5bc7c4f3aac00e670b01b1d1ab64ec87055a491014af1de828764bf98faf766), chapter 15 'Transient analysis' (.tran) and chapter 13 'Measurements' (.meas INTEG); sideband-coupled (conversion-matrix) port model as in pumped.py; probe marks are the evidence",
+    "dr_0004": "spec/decision-records/0004-lna-mixer-interface-convention.md (proposed; row 5 under Option B needs an LO-on mixer RF-port impedance method; falsifier 3)"
+  },
+  "probe_logs": "sim/mixer-pumped-rf-admittance/probe-logs/20261010-142503-1aaad2c/",
+  "environment": {
+    "host": "loom-worker-2",
+    "platform": "Linux-7.0.0-1014-aws-x86_64-with-glibc2.39",
+    "python": "3.12.3",
+    "git": {
+      "commit": "1aaad2c970e0e3a66dcd2919d3d0f92a1a42b9de",
+      "dirty": false
+    },
+    "placeholder_sha256": "e2cd2af3fd9aa34b9c36dde453c7919abbec69fe9f675f1848657a5a85c7a74d",
+    "pdk_artifact_sha256": "2ca42a292eeef18dc0da32004bb2cfa66dfead21c73b4f77d4609d60dadeabf1",
+    "ngspice": {
+      "path": "/home/ubuntu/.local/bin/ngspice",
+      "version": "ngspice-46 : Circuit level simulation program",
+      "major": 46,
+      "sha256": "c874869b16dc8a31cfa9d37d2b90a2a9e0e5b996f8e2535db89eb82855072931"
+    },
+    "pdk": {
+      "path": "/home/ubuntu/share/pdk/ihp-sg13g2",
+      "fetched_version": "0.3.0",
+      "model_lib": "/home/ubuntu/share/pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerHBT.lib",
+      "section": "hbt_typ",
+      "sha256": {
+        "cornerHBT.lib": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+        "sg13g2_hbt_mod.lib": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+      },
+      "device": "npn13G2 (subckt) -> npn13G2_NX_vbic, VBIC level=9, Nx=4 in the placeholder"
+    },
+    "pdk_integrity": {
+      "gate": "sim/harness/pdkartifact.py verify(require_ngspice=True)",
+      "ok": true,
+      "problems": [],
+      "notes": [
+        "install marker '0.3.0' recorded as provenance (not an integrity check)",
+        "IHP model closure (4 files) matches the pin at 5cccb161f749 (https://github.com/IHP-GmbH/IHP-Open-PDK)"
+      ]
+    },
+    "ngspice_exit": 0
+  }
+}

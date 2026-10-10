@@ -1,0 +1,1069 @@
+* mixer-pumped-rf-admittance (issue #111) -- ONE nominal point:
+* hbt_typ / 27 C / VDD = 2.50 V. Template: run_probe.py substitutes the model
+* library path, the placeholder path, the two control fragments and the
+* generated run blocks (the brace tokens below), then runs the result ONCE with
+* `ngspice -b`. Single local process; no grid, no sweep, no loop outside the
+* ngspice control language's own sequential runs.
+*
+* What this measures: the LO-on (pumped) small-signal RF-port admittance of the
+* exploratory placeholder mixer, restricted to the wanted (f_u = 19.45 GHz) and
+* image (f_l = 17.45 GHz) sidebands, as a 2x2 conjugate-coupled matrix, plus two
+* known-answer fixtures that see the same perturbation parameters in the same
+* runs. Deterministic input admittance only: nothing here is a noise figure,
+* and nothing here is a row-5 compliance measurement.
+*
+* DUT: the placeholder mixer fragment included VERBATIM (one npn13G2, Nx=4;
+* RF + LO summed at the base). Its own RF tones are zeroed (alterparam vrf=0),
+* so its RF source resistor Rrf (z0 = 50 ohm, rfsrc -> prf) is a 50 ohm
+* termination of the RF port. LO drive vlo = 0.08 V EMF is the placeholder's
+* own value: a PROBE SETTING, not a qualified drive (issue #68).
+*
+* Port reference plane: node prf (the placeholder's RF port), looking into its
+* 1 pF coupling capacitor Cin_rf towards the base. The perturbation is a Norton
+* current per sideband (J = E/z0, E = {apu}, {apl}) injected into prf through a
+* 0 V ammeter, in parallel with Rrf: identical to driving the port from a
+* Thevenin EMF E through the placeholder's own 50 ohm, so the termination the
+* mixer sees at every frequency is unchanged. Port current, positive INTO the
+* mixer:  I = i(vpsense) + (v(rfsrc) - v(prf)) / 50.
+*
+* Projections: .meas INTEG (trapezoid) of v*cos / v*sin at f_u and f_l over the
+* retained window [80, 120] ns and the extended window [80, 160] ns. Every tone
+* is an integer multiple of 25 MHz, so each window holds an integer number of
+* periods of f_u, f_l and f_LO and the projections are orthogonal.
+.param apu=0 apl=0 phu=20 phl=70
+
+* ---- DUT: the placeholder, included verbatim, and its Norton perturbation ----
+.lib "/home/ubuntu/share/pdk/ihp-sg13g2/libs.tech/ngspice/models/cornerHBT.lib" hbt_typ
+.temp 27
+.param vdd_val=2.5
+.include "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-111/sim/mixer-conversion-iip3/testbench/mixer_ce_placeholder.spice"
+Ipu 0 pj DC 0 SIN(0 {apu/z0} 19.45e9 0 0 {phu})
+Ipl 0 pj DC 0 SIN(0 {apl/z0} 17.45e9 0 0 {phl})
+Vpsense pj prf DC 0
+
+
+* ---- known-answer control fixtures (disjoint circuits) ----
+* ---- inlined from sim/mixer-pumped-rf-admittance/controls/rc_known_answer.spice ----
+* Known-answer control 1: a PASSIVE series RC port (linear, time-invariant).
+* Driven exactly like the DUT port: a Norton perturbation current J = E/z0 per
+* tone (E = {apu}, {apl}) injected through a 0 V ammeter into the port node, in
+* parallel with the fixture's own z0 = 50 ohm source resistor to a 0 V node.
+*   I_port = i(vksense) + (v(krs) - v(kp)) / 50     (positive into the RC)
+* Closed form (pumped.rc_expected):
+*   Y_uu = 1/(R + 1/(j w_u C)),  Y_ll = 1/(R + 1/(j w_l C)),  Y_ul = Y_lu = 0
+* with R = 25 ohm, C = 1 pF. An LTI port has no conjugate (image) coupling, so the
+* cross terms are a numerical null and the fixture must classify SCALAR_ADEQUATE.
+Iku 0 kj DC 0 SIN(0 {apu/50} 19.45e9 0 0 {phu})
+Ikl 0 kj DC 0 SIN(0 {apl/50} 17.45e9 0 0 {phl})
+Vksense kj kp DC 0
+Rks kp krs 50
+Vkrs krs 0 DC 0
+Ck kp kx 1p
+Rk kx 0 25
+* ---- end inlined control ----
+
+* ---- inlined from sim/mixer-pumped-rf-admittance/controls/modulated_known_answer.spice ----
+* Known-answer control 2: an IDEAL periodically modulated port (linear,
+* periodically time-varying, memoryless conductance plus a shunt capacitor).
+*   i(t) = (g0 + 2 g2 cos(2 w_LO t + th)) v(t) + Cm dv/dt + ib sin(w_u t + phb)
+* Driven by an IDEAL voltage source (both sideband tones in series) through a
+* 0 V ammeter, so the port voltage is exactly the applied tones and the closed
+* form is exact (no other mixing frequency reaches the port voltage):
+*   Y_uu = g0 + j w_u Cm,  Y_ll = g0 + j w_l Cm,  Y_ul = Y_lu = g2 e^{j th}
+* (pumped.md_expected; g0 = 20 mS, Cm = 0.1 pF, g2 = 6 mS, th = 40 deg). The
+* modulation at 2 f_LO maps f_u onto the conjugated image f_l and back, so
+* |Y_ul|/|Y_uu| ~ 0.26: the fixture must classify MATRIX_REQUIRED, and a scalar
+* extraction (sabotage omit_image) must fail it. The ib term is an LO-only
+* (perturbation-independent) current at f_u that baseline subtraction must
+* remove (sabotage no_baseline must fail). I_port = i(vmsense), positive into
+* the modulated element.
+.param mg0=0.02 mg2=0.006 mth=40 mib=1e-6 mphb=10
+Vmu mu 0 DC 0 SIN(0 {apu} 19.45e9 0 0 {phu})
+Vml mv mu DC 0 SIN(0 {apl} 17.45e9 0 0 {phl})
+Vmsense mv mp DC 0
+Bmd mp 0 I = ({mg0} + 2*{mg2}*cos(2*2*pi*18.45e9*time + {mth}*pi/180))*V(mp) + {mib}*sin(2*pi*19.45e9*time + {mphb}*pi/180)
+Cmd mp 0 0.1p
+* ---- end inlined control ----
+
+
+.options savecurrents=0
+.control
+set noaskquit
+set filetype=ascii
+echo "MARK ngspice_banner_follows"
+version -s
+let wu = 2*pi*19.45e9
+let wl = 2*pi*17.45e9
+
+* ---- run base: amplitude=0 phu=20 phl=70 tmax=1e-12 ----
+alterparam apu=0
+alterparam apl=0
+alterparam phu=20
+alterparam phl=70
+alterparam vrf=0
+reset
+tran 1e-12 1.6e-07 0 1e-12
+let npts = length(time)
+echo "MARK R_base_points=$&npts"
+let pc = v(kp)*cos(wu*time)
+let ps = v(kp)*sin(wu*time)
+meas tran rc_v_base_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_v_base_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_v_base_w_u_c=$&rc_v_base_w_u_c rc_v_base_w_u_s=$&rc_v_base_w_u_s"
+meas tran rc_v_base_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran rc_v_base_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK rc_v_base_x_u_c=$&rc_v_base_x_u_c rc_v_base_x_u_s=$&rc_v_base_x_u_s"
+let pc = v(kp)*cos(wl*time)
+let ps = v(kp)*sin(wl*time)
+meas tran rc_v_base_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_v_base_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_v_base_w_l_c=$&rc_v_base_w_l_c rc_v_base_w_l_s=$&rc_v_base_w_l_s"
+meas tran rc_v_base_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran rc_v_base_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK rc_v_base_x_l_c=$&rc_v_base_x_l_c rc_v_base_x_l_s=$&rc_v_base_x_l_s"
+let pc = i(vksense)*cos(wu*time)
+let ps = i(vksense)*sin(wu*time)
+meas tran rc_i_base_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_i_base_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_i_base_w_u_c=$&rc_i_base_w_u_c rc_i_base_w_u_s=$&rc_i_base_w_u_s"
+meas tran rc_i_base_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran rc_i_base_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK rc_i_base_x_u_c=$&rc_i_base_x_u_c rc_i_base_x_u_s=$&rc_i_base_x_u_s"
+let pc = i(vksense)*cos(wl*time)
+let ps = i(vksense)*sin(wl*time)
+meas tran rc_i_base_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_i_base_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_i_base_w_l_c=$&rc_i_base_w_l_c rc_i_base_w_l_s=$&rc_i_base_w_l_s"
+meas tran rc_i_base_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran rc_i_base_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK rc_i_base_x_l_c=$&rc_i_base_x_l_c rc_i_base_x_l_s=$&rc_i_base_x_l_s"
+let pc = v(krs)*cos(wu*time)
+let ps = v(krs)*sin(wu*time)
+meas tran rc_t_base_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_t_base_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_t_base_w_u_c=$&rc_t_base_w_u_c rc_t_base_w_u_s=$&rc_t_base_w_u_s"
+meas tran rc_t_base_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran rc_t_base_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK rc_t_base_x_u_c=$&rc_t_base_x_u_c rc_t_base_x_u_s=$&rc_t_base_x_u_s"
+let pc = v(krs)*cos(wl*time)
+let ps = v(krs)*sin(wl*time)
+meas tran rc_t_base_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_t_base_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_t_base_w_l_c=$&rc_t_base_w_l_c rc_t_base_w_l_s=$&rc_t_base_w_l_s"
+meas tran rc_t_base_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran rc_t_base_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK rc_t_base_x_l_c=$&rc_t_base_x_l_c rc_t_base_x_l_s=$&rc_t_base_x_l_s"
+let pc = v(mp)*cos(wu*time)
+let ps = v(mp)*sin(wu*time)
+meas tran md_v_base_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran md_v_base_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK md_v_base_w_u_c=$&md_v_base_w_u_c md_v_base_w_u_s=$&md_v_base_w_u_s"
+meas tran md_v_base_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran md_v_base_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK md_v_base_x_u_c=$&md_v_base_x_u_c md_v_base_x_u_s=$&md_v_base_x_u_s"
+let pc = v(mp)*cos(wl*time)
+let ps = v(mp)*sin(wl*time)
+meas tran md_v_base_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran md_v_base_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK md_v_base_w_l_c=$&md_v_base_w_l_c md_v_base_w_l_s=$&md_v_base_w_l_s"
+meas tran md_v_base_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran md_v_base_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK md_v_base_x_l_c=$&md_v_base_x_l_c md_v_base_x_l_s=$&md_v_base_x_l_s"
+let pc = i(vmsense)*cos(wu*time)
+let ps = i(vmsense)*sin(wu*time)
+meas tran md_i_base_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran md_i_base_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK md_i_base_w_u_c=$&md_i_base_w_u_c md_i_base_w_u_s=$&md_i_base_w_u_s"
+meas tran md_i_base_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran md_i_base_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK md_i_base_x_u_c=$&md_i_base_x_u_c md_i_base_x_u_s=$&md_i_base_x_u_s"
+let pc = i(vmsense)*cos(wl*time)
+let ps = i(vmsense)*sin(wl*time)
+meas tran md_i_base_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran md_i_base_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK md_i_base_w_l_c=$&md_i_base_w_l_c md_i_base_w_l_s=$&md_i_base_w_l_s"
+meas tran md_i_base_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran md_i_base_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK md_i_base_x_l_c=$&md_i_base_x_l_c md_i_base_x_l_s=$&md_i_base_x_l_s"
+let pc = v(prf)*cos(wu*time)
+let ps = v(prf)*sin(wu*time)
+meas tran dut_v_base_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_v_base_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_v_base_w_u_c=$&dut_v_base_w_u_c dut_v_base_w_u_s=$&dut_v_base_w_u_s"
+meas tran dut_v_base_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran dut_v_base_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK dut_v_base_x_u_c=$&dut_v_base_x_u_c dut_v_base_x_u_s=$&dut_v_base_x_u_s"
+let pc = v(prf)*cos(wl*time)
+let ps = v(prf)*sin(wl*time)
+meas tran dut_v_base_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_v_base_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_v_base_w_l_c=$&dut_v_base_w_l_c dut_v_base_w_l_s=$&dut_v_base_w_l_s"
+meas tran dut_v_base_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran dut_v_base_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK dut_v_base_x_l_c=$&dut_v_base_x_l_c dut_v_base_x_l_s=$&dut_v_base_x_l_s"
+let pc = i(vpsense)*cos(wu*time)
+let ps = i(vpsense)*sin(wu*time)
+meas tran dut_i_base_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_i_base_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_i_base_w_u_c=$&dut_i_base_w_u_c dut_i_base_w_u_s=$&dut_i_base_w_u_s"
+meas tran dut_i_base_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran dut_i_base_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK dut_i_base_x_u_c=$&dut_i_base_x_u_c dut_i_base_x_u_s=$&dut_i_base_x_u_s"
+let pc = i(vpsense)*cos(wl*time)
+let ps = i(vpsense)*sin(wl*time)
+meas tran dut_i_base_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_i_base_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_i_base_w_l_c=$&dut_i_base_w_l_c dut_i_base_w_l_s=$&dut_i_base_w_l_s"
+meas tran dut_i_base_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran dut_i_base_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK dut_i_base_x_l_c=$&dut_i_base_x_l_c dut_i_base_x_l_s=$&dut_i_base_x_l_s"
+let pc = v(rfsrc)*cos(wu*time)
+let ps = v(rfsrc)*sin(wu*time)
+meas tran dut_t_base_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_t_base_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_t_base_w_u_c=$&dut_t_base_w_u_c dut_t_base_w_u_s=$&dut_t_base_w_u_s"
+meas tran dut_t_base_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran dut_t_base_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK dut_t_base_x_u_c=$&dut_t_base_x_u_c dut_t_base_x_u_s=$&dut_t_base_x_u_s"
+let pc = v(rfsrc)*cos(wl*time)
+let ps = v(rfsrc)*sin(wl*time)
+meas tran dut_t_base_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_t_base_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_t_base_w_l_c=$&dut_t_base_w_l_c dut_t_base_w_l_s=$&dut_t_base_w_l_s"
+meas tran dut_t_base_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran dut_t_base_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK dut_t_base_x_l_c=$&dut_t_base_x_l_c dut_t_base_x_l_s=$&dut_t_base_x_l_s"
+
+* ---- run p1: amplitude=0.002 phu=20 phl=70 tmax=1e-12 ----
+alterparam apu=0.002
+alterparam apl=0.002
+alterparam phu=20
+alterparam phl=70
+alterparam vrf=0
+reset
+tran 1e-12 1.6e-07 0 1e-12
+let npts = length(time)
+echo "MARK R_p1_points=$&npts"
+let pc = v(kp)*cos(wu*time)
+let ps = v(kp)*sin(wu*time)
+meas tran rc_v_p1_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_v_p1_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_v_p1_w_u_c=$&rc_v_p1_w_u_c rc_v_p1_w_u_s=$&rc_v_p1_w_u_s"
+meas tran rc_v_p1_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran rc_v_p1_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK rc_v_p1_x_u_c=$&rc_v_p1_x_u_c rc_v_p1_x_u_s=$&rc_v_p1_x_u_s"
+let pc = v(kp)*cos(wl*time)
+let ps = v(kp)*sin(wl*time)
+meas tran rc_v_p1_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_v_p1_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_v_p1_w_l_c=$&rc_v_p1_w_l_c rc_v_p1_w_l_s=$&rc_v_p1_w_l_s"
+meas tran rc_v_p1_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran rc_v_p1_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK rc_v_p1_x_l_c=$&rc_v_p1_x_l_c rc_v_p1_x_l_s=$&rc_v_p1_x_l_s"
+let pc = i(vksense)*cos(wu*time)
+let ps = i(vksense)*sin(wu*time)
+meas tran rc_i_p1_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_i_p1_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_i_p1_w_u_c=$&rc_i_p1_w_u_c rc_i_p1_w_u_s=$&rc_i_p1_w_u_s"
+meas tran rc_i_p1_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran rc_i_p1_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK rc_i_p1_x_u_c=$&rc_i_p1_x_u_c rc_i_p1_x_u_s=$&rc_i_p1_x_u_s"
+let pc = i(vksense)*cos(wl*time)
+let ps = i(vksense)*sin(wl*time)
+meas tran rc_i_p1_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_i_p1_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_i_p1_w_l_c=$&rc_i_p1_w_l_c rc_i_p1_w_l_s=$&rc_i_p1_w_l_s"
+meas tran rc_i_p1_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran rc_i_p1_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK rc_i_p1_x_l_c=$&rc_i_p1_x_l_c rc_i_p1_x_l_s=$&rc_i_p1_x_l_s"
+let pc = v(krs)*cos(wu*time)
+let ps = v(krs)*sin(wu*time)
+meas tran rc_t_p1_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_t_p1_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_t_p1_w_u_c=$&rc_t_p1_w_u_c rc_t_p1_w_u_s=$&rc_t_p1_w_u_s"
+meas tran rc_t_p1_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran rc_t_p1_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK rc_t_p1_x_u_c=$&rc_t_p1_x_u_c rc_t_p1_x_u_s=$&rc_t_p1_x_u_s"
+let pc = v(krs)*cos(wl*time)
+let ps = v(krs)*sin(wl*time)
+meas tran rc_t_p1_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_t_p1_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_t_p1_w_l_c=$&rc_t_p1_w_l_c rc_t_p1_w_l_s=$&rc_t_p1_w_l_s"
+meas tran rc_t_p1_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran rc_t_p1_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK rc_t_p1_x_l_c=$&rc_t_p1_x_l_c rc_t_p1_x_l_s=$&rc_t_p1_x_l_s"
+let pc = v(mp)*cos(wu*time)
+let ps = v(mp)*sin(wu*time)
+meas tran md_v_p1_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran md_v_p1_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK md_v_p1_w_u_c=$&md_v_p1_w_u_c md_v_p1_w_u_s=$&md_v_p1_w_u_s"
+meas tran md_v_p1_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran md_v_p1_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK md_v_p1_x_u_c=$&md_v_p1_x_u_c md_v_p1_x_u_s=$&md_v_p1_x_u_s"
+let pc = v(mp)*cos(wl*time)
+let ps = v(mp)*sin(wl*time)
+meas tran md_v_p1_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran md_v_p1_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK md_v_p1_w_l_c=$&md_v_p1_w_l_c md_v_p1_w_l_s=$&md_v_p1_w_l_s"
+meas tran md_v_p1_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran md_v_p1_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK md_v_p1_x_l_c=$&md_v_p1_x_l_c md_v_p1_x_l_s=$&md_v_p1_x_l_s"
+let pc = i(vmsense)*cos(wu*time)
+let ps = i(vmsense)*sin(wu*time)
+meas tran md_i_p1_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran md_i_p1_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK md_i_p1_w_u_c=$&md_i_p1_w_u_c md_i_p1_w_u_s=$&md_i_p1_w_u_s"
+meas tran md_i_p1_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran md_i_p1_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK md_i_p1_x_u_c=$&md_i_p1_x_u_c md_i_p1_x_u_s=$&md_i_p1_x_u_s"
+let pc = i(vmsense)*cos(wl*time)
+let ps = i(vmsense)*sin(wl*time)
+meas tran md_i_p1_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran md_i_p1_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK md_i_p1_w_l_c=$&md_i_p1_w_l_c md_i_p1_w_l_s=$&md_i_p1_w_l_s"
+meas tran md_i_p1_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran md_i_p1_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK md_i_p1_x_l_c=$&md_i_p1_x_l_c md_i_p1_x_l_s=$&md_i_p1_x_l_s"
+let pc = v(prf)*cos(wu*time)
+let ps = v(prf)*sin(wu*time)
+meas tran dut_v_p1_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_v_p1_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_v_p1_w_u_c=$&dut_v_p1_w_u_c dut_v_p1_w_u_s=$&dut_v_p1_w_u_s"
+meas tran dut_v_p1_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran dut_v_p1_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK dut_v_p1_x_u_c=$&dut_v_p1_x_u_c dut_v_p1_x_u_s=$&dut_v_p1_x_u_s"
+let pc = v(prf)*cos(wl*time)
+let ps = v(prf)*sin(wl*time)
+meas tran dut_v_p1_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_v_p1_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_v_p1_w_l_c=$&dut_v_p1_w_l_c dut_v_p1_w_l_s=$&dut_v_p1_w_l_s"
+meas tran dut_v_p1_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran dut_v_p1_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK dut_v_p1_x_l_c=$&dut_v_p1_x_l_c dut_v_p1_x_l_s=$&dut_v_p1_x_l_s"
+let pc = i(vpsense)*cos(wu*time)
+let ps = i(vpsense)*sin(wu*time)
+meas tran dut_i_p1_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_i_p1_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_i_p1_w_u_c=$&dut_i_p1_w_u_c dut_i_p1_w_u_s=$&dut_i_p1_w_u_s"
+meas tran dut_i_p1_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran dut_i_p1_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK dut_i_p1_x_u_c=$&dut_i_p1_x_u_c dut_i_p1_x_u_s=$&dut_i_p1_x_u_s"
+let pc = i(vpsense)*cos(wl*time)
+let ps = i(vpsense)*sin(wl*time)
+meas tran dut_i_p1_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_i_p1_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_i_p1_w_l_c=$&dut_i_p1_w_l_c dut_i_p1_w_l_s=$&dut_i_p1_w_l_s"
+meas tran dut_i_p1_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran dut_i_p1_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK dut_i_p1_x_l_c=$&dut_i_p1_x_l_c dut_i_p1_x_l_s=$&dut_i_p1_x_l_s"
+let pc = v(rfsrc)*cos(wu*time)
+let ps = v(rfsrc)*sin(wu*time)
+meas tran dut_t_p1_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_t_p1_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_t_p1_w_u_c=$&dut_t_p1_w_u_c dut_t_p1_w_u_s=$&dut_t_p1_w_u_s"
+meas tran dut_t_p1_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran dut_t_p1_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK dut_t_p1_x_u_c=$&dut_t_p1_x_u_c dut_t_p1_x_u_s=$&dut_t_p1_x_u_s"
+let pc = v(rfsrc)*cos(wl*time)
+let ps = v(rfsrc)*sin(wl*time)
+meas tran dut_t_p1_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_t_p1_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_t_p1_w_l_c=$&dut_t_p1_w_l_c dut_t_p1_w_l_s=$&dut_t_p1_w_l_s"
+meas tran dut_t_p1_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran dut_t_p1_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK dut_t_p1_x_l_c=$&dut_t_p1_x_l_c dut_t_p1_x_l_s=$&dut_t_p1_x_l_s"
+
+* ---- run p2: amplitude=0.002 phu=20 phl=250 tmax=1e-12 ----
+alterparam apu=0.002
+alterparam apl=0.002
+alterparam phu=20
+alterparam phl=250
+alterparam vrf=0
+reset
+tran 1e-12 1.6e-07 0 1e-12
+let npts = length(time)
+echo "MARK R_p2_points=$&npts"
+let pc = v(kp)*cos(wu*time)
+let ps = v(kp)*sin(wu*time)
+meas tran rc_v_p2_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_v_p2_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_v_p2_w_u_c=$&rc_v_p2_w_u_c rc_v_p2_w_u_s=$&rc_v_p2_w_u_s"
+meas tran rc_v_p2_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran rc_v_p2_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK rc_v_p2_x_u_c=$&rc_v_p2_x_u_c rc_v_p2_x_u_s=$&rc_v_p2_x_u_s"
+let pc = v(kp)*cos(wl*time)
+let ps = v(kp)*sin(wl*time)
+meas tran rc_v_p2_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_v_p2_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_v_p2_w_l_c=$&rc_v_p2_w_l_c rc_v_p2_w_l_s=$&rc_v_p2_w_l_s"
+meas tran rc_v_p2_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran rc_v_p2_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK rc_v_p2_x_l_c=$&rc_v_p2_x_l_c rc_v_p2_x_l_s=$&rc_v_p2_x_l_s"
+let pc = i(vksense)*cos(wu*time)
+let ps = i(vksense)*sin(wu*time)
+meas tran rc_i_p2_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_i_p2_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_i_p2_w_u_c=$&rc_i_p2_w_u_c rc_i_p2_w_u_s=$&rc_i_p2_w_u_s"
+meas tran rc_i_p2_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran rc_i_p2_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK rc_i_p2_x_u_c=$&rc_i_p2_x_u_c rc_i_p2_x_u_s=$&rc_i_p2_x_u_s"
+let pc = i(vksense)*cos(wl*time)
+let ps = i(vksense)*sin(wl*time)
+meas tran rc_i_p2_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_i_p2_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_i_p2_w_l_c=$&rc_i_p2_w_l_c rc_i_p2_w_l_s=$&rc_i_p2_w_l_s"
+meas tran rc_i_p2_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran rc_i_p2_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK rc_i_p2_x_l_c=$&rc_i_p2_x_l_c rc_i_p2_x_l_s=$&rc_i_p2_x_l_s"
+let pc = v(krs)*cos(wu*time)
+let ps = v(krs)*sin(wu*time)
+meas tran rc_t_p2_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_t_p2_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_t_p2_w_u_c=$&rc_t_p2_w_u_c rc_t_p2_w_u_s=$&rc_t_p2_w_u_s"
+meas tran rc_t_p2_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran rc_t_p2_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK rc_t_p2_x_u_c=$&rc_t_p2_x_u_c rc_t_p2_x_u_s=$&rc_t_p2_x_u_s"
+let pc = v(krs)*cos(wl*time)
+let ps = v(krs)*sin(wl*time)
+meas tran rc_t_p2_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_t_p2_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_t_p2_w_l_c=$&rc_t_p2_w_l_c rc_t_p2_w_l_s=$&rc_t_p2_w_l_s"
+meas tran rc_t_p2_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran rc_t_p2_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK rc_t_p2_x_l_c=$&rc_t_p2_x_l_c rc_t_p2_x_l_s=$&rc_t_p2_x_l_s"
+let pc = v(mp)*cos(wu*time)
+let ps = v(mp)*sin(wu*time)
+meas tran md_v_p2_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran md_v_p2_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK md_v_p2_w_u_c=$&md_v_p2_w_u_c md_v_p2_w_u_s=$&md_v_p2_w_u_s"
+meas tran md_v_p2_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran md_v_p2_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK md_v_p2_x_u_c=$&md_v_p2_x_u_c md_v_p2_x_u_s=$&md_v_p2_x_u_s"
+let pc = v(mp)*cos(wl*time)
+let ps = v(mp)*sin(wl*time)
+meas tran md_v_p2_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran md_v_p2_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK md_v_p2_w_l_c=$&md_v_p2_w_l_c md_v_p2_w_l_s=$&md_v_p2_w_l_s"
+meas tran md_v_p2_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran md_v_p2_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK md_v_p2_x_l_c=$&md_v_p2_x_l_c md_v_p2_x_l_s=$&md_v_p2_x_l_s"
+let pc = i(vmsense)*cos(wu*time)
+let ps = i(vmsense)*sin(wu*time)
+meas tran md_i_p2_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran md_i_p2_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK md_i_p2_w_u_c=$&md_i_p2_w_u_c md_i_p2_w_u_s=$&md_i_p2_w_u_s"
+meas tran md_i_p2_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran md_i_p2_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK md_i_p2_x_u_c=$&md_i_p2_x_u_c md_i_p2_x_u_s=$&md_i_p2_x_u_s"
+let pc = i(vmsense)*cos(wl*time)
+let ps = i(vmsense)*sin(wl*time)
+meas tran md_i_p2_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran md_i_p2_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK md_i_p2_w_l_c=$&md_i_p2_w_l_c md_i_p2_w_l_s=$&md_i_p2_w_l_s"
+meas tran md_i_p2_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran md_i_p2_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK md_i_p2_x_l_c=$&md_i_p2_x_l_c md_i_p2_x_l_s=$&md_i_p2_x_l_s"
+let pc = v(prf)*cos(wu*time)
+let ps = v(prf)*sin(wu*time)
+meas tran dut_v_p2_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_v_p2_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_v_p2_w_u_c=$&dut_v_p2_w_u_c dut_v_p2_w_u_s=$&dut_v_p2_w_u_s"
+meas tran dut_v_p2_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran dut_v_p2_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK dut_v_p2_x_u_c=$&dut_v_p2_x_u_c dut_v_p2_x_u_s=$&dut_v_p2_x_u_s"
+let pc = v(prf)*cos(wl*time)
+let ps = v(prf)*sin(wl*time)
+meas tran dut_v_p2_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_v_p2_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_v_p2_w_l_c=$&dut_v_p2_w_l_c dut_v_p2_w_l_s=$&dut_v_p2_w_l_s"
+meas tran dut_v_p2_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran dut_v_p2_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK dut_v_p2_x_l_c=$&dut_v_p2_x_l_c dut_v_p2_x_l_s=$&dut_v_p2_x_l_s"
+let pc = i(vpsense)*cos(wu*time)
+let ps = i(vpsense)*sin(wu*time)
+meas tran dut_i_p2_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_i_p2_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_i_p2_w_u_c=$&dut_i_p2_w_u_c dut_i_p2_w_u_s=$&dut_i_p2_w_u_s"
+meas tran dut_i_p2_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran dut_i_p2_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK dut_i_p2_x_u_c=$&dut_i_p2_x_u_c dut_i_p2_x_u_s=$&dut_i_p2_x_u_s"
+let pc = i(vpsense)*cos(wl*time)
+let ps = i(vpsense)*sin(wl*time)
+meas tran dut_i_p2_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_i_p2_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_i_p2_w_l_c=$&dut_i_p2_w_l_c dut_i_p2_w_l_s=$&dut_i_p2_w_l_s"
+meas tran dut_i_p2_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran dut_i_p2_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK dut_i_p2_x_l_c=$&dut_i_p2_x_l_c dut_i_p2_x_l_s=$&dut_i_p2_x_l_s"
+let pc = v(rfsrc)*cos(wu*time)
+let ps = v(rfsrc)*sin(wu*time)
+meas tran dut_t_p2_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_t_p2_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_t_p2_w_u_c=$&dut_t_p2_w_u_c dut_t_p2_w_u_s=$&dut_t_p2_w_u_s"
+meas tran dut_t_p2_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran dut_t_p2_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK dut_t_p2_x_u_c=$&dut_t_p2_x_u_c dut_t_p2_x_u_s=$&dut_t_p2_x_u_s"
+let pc = v(rfsrc)*cos(wl*time)
+let ps = v(rfsrc)*sin(wl*time)
+meas tran dut_t_p2_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_t_p2_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_t_p2_w_l_c=$&dut_t_p2_w_l_c dut_t_p2_w_l_s=$&dut_t_p2_w_l_s"
+meas tran dut_t_p2_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran dut_t_p2_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK dut_t_p2_x_l_c=$&dut_t_p2_x_l_c dut_t_p2_x_l_s=$&dut_t_p2_x_l_s"
+
+* ---- run p1h: amplitude=0.001 phu=20 phl=70 tmax=1e-12 ----
+alterparam apu=0.001
+alterparam apl=0.001
+alterparam phu=20
+alterparam phl=70
+alterparam vrf=0
+reset
+tran 1e-12 1.6e-07 0 1e-12
+let npts = length(time)
+echo "MARK R_p1h_points=$&npts"
+let pc = v(kp)*cos(wu*time)
+let ps = v(kp)*sin(wu*time)
+meas tran rc_v_p1h_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_v_p1h_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_v_p1h_w_u_c=$&rc_v_p1h_w_u_c rc_v_p1h_w_u_s=$&rc_v_p1h_w_u_s"
+meas tran rc_v_p1h_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran rc_v_p1h_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK rc_v_p1h_x_u_c=$&rc_v_p1h_x_u_c rc_v_p1h_x_u_s=$&rc_v_p1h_x_u_s"
+let pc = v(kp)*cos(wl*time)
+let ps = v(kp)*sin(wl*time)
+meas tran rc_v_p1h_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_v_p1h_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_v_p1h_w_l_c=$&rc_v_p1h_w_l_c rc_v_p1h_w_l_s=$&rc_v_p1h_w_l_s"
+meas tran rc_v_p1h_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran rc_v_p1h_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK rc_v_p1h_x_l_c=$&rc_v_p1h_x_l_c rc_v_p1h_x_l_s=$&rc_v_p1h_x_l_s"
+let pc = i(vksense)*cos(wu*time)
+let ps = i(vksense)*sin(wu*time)
+meas tran rc_i_p1h_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_i_p1h_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_i_p1h_w_u_c=$&rc_i_p1h_w_u_c rc_i_p1h_w_u_s=$&rc_i_p1h_w_u_s"
+meas tran rc_i_p1h_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran rc_i_p1h_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK rc_i_p1h_x_u_c=$&rc_i_p1h_x_u_c rc_i_p1h_x_u_s=$&rc_i_p1h_x_u_s"
+let pc = i(vksense)*cos(wl*time)
+let ps = i(vksense)*sin(wl*time)
+meas tran rc_i_p1h_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_i_p1h_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_i_p1h_w_l_c=$&rc_i_p1h_w_l_c rc_i_p1h_w_l_s=$&rc_i_p1h_w_l_s"
+meas tran rc_i_p1h_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran rc_i_p1h_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK rc_i_p1h_x_l_c=$&rc_i_p1h_x_l_c rc_i_p1h_x_l_s=$&rc_i_p1h_x_l_s"
+let pc = v(krs)*cos(wu*time)
+let ps = v(krs)*sin(wu*time)
+meas tran rc_t_p1h_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_t_p1h_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_t_p1h_w_u_c=$&rc_t_p1h_w_u_c rc_t_p1h_w_u_s=$&rc_t_p1h_w_u_s"
+meas tran rc_t_p1h_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran rc_t_p1h_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK rc_t_p1h_x_u_c=$&rc_t_p1h_x_u_c rc_t_p1h_x_u_s=$&rc_t_p1h_x_u_s"
+let pc = v(krs)*cos(wl*time)
+let ps = v(krs)*sin(wl*time)
+meas tran rc_t_p1h_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_t_p1h_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_t_p1h_w_l_c=$&rc_t_p1h_w_l_c rc_t_p1h_w_l_s=$&rc_t_p1h_w_l_s"
+meas tran rc_t_p1h_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran rc_t_p1h_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK rc_t_p1h_x_l_c=$&rc_t_p1h_x_l_c rc_t_p1h_x_l_s=$&rc_t_p1h_x_l_s"
+let pc = v(mp)*cos(wu*time)
+let ps = v(mp)*sin(wu*time)
+meas tran md_v_p1h_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran md_v_p1h_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK md_v_p1h_w_u_c=$&md_v_p1h_w_u_c md_v_p1h_w_u_s=$&md_v_p1h_w_u_s"
+meas tran md_v_p1h_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran md_v_p1h_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK md_v_p1h_x_u_c=$&md_v_p1h_x_u_c md_v_p1h_x_u_s=$&md_v_p1h_x_u_s"
+let pc = v(mp)*cos(wl*time)
+let ps = v(mp)*sin(wl*time)
+meas tran md_v_p1h_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran md_v_p1h_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK md_v_p1h_w_l_c=$&md_v_p1h_w_l_c md_v_p1h_w_l_s=$&md_v_p1h_w_l_s"
+meas tran md_v_p1h_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran md_v_p1h_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK md_v_p1h_x_l_c=$&md_v_p1h_x_l_c md_v_p1h_x_l_s=$&md_v_p1h_x_l_s"
+let pc = i(vmsense)*cos(wu*time)
+let ps = i(vmsense)*sin(wu*time)
+meas tran md_i_p1h_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran md_i_p1h_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK md_i_p1h_w_u_c=$&md_i_p1h_w_u_c md_i_p1h_w_u_s=$&md_i_p1h_w_u_s"
+meas tran md_i_p1h_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran md_i_p1h_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK md_i_p1h_x_u_c=$&md_i_p1h_x_u_c md_i_p1h_x_u_s=$&md_i_p1h_x_u_s"
+let pc = i(vmsense)*cos(wl*time)
+let ps = i(vmsense)*sin(wl*time)
+meas tran md_i_p1h_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran md_i_p1h_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK md_i_p1h_w_l_c=$&md_i_p1h_w_l_c md_i_p1h_w_l_s=$&md_i_p1h_w_l_s"
+meas tran md_i_p1h_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran md_i_p1h_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK md_i_p1h_x_l_c=$&md_i_p1h_x_l_c md_i_p1h_x_l_s=$&md_i_p1h_x_l_s"
+let pc = v(prf)*cos(wu*time)
+let ps = v(prf)*sin(wu*time)
+meas tran dut_v_p1h_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_v_p1h_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_v_p1h_w_u_c=$&dut_v_p1h_w_u_c dut_v_p1h_w_u_s=$&dut_v_p1h_w_u_s"
+meas tran dut_v_p1h_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran dut_v_p1h_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK dut_v_p1h_x_u_c=$&dut_v_p1h_x_u_c dut_v_p1h_x_u_s=$&dut_v_p1h_x_u_s"
+let pc = v(prf)*cos(wl*time)
+let ps = v(prf)*sin(wl*time)
+meas tran dut_v_p1h_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_v_p1h_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_v_p1h_w_l_c=$&dut_v_p1h_w_l_c dut_v_p1h_w_l_s=$&dut_v_p1h_w_l_s"
+meas tran dut_v_p1h_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran dut_v_p1h_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK dut_v_p1h_x_l_c=$&dut_v_p1h_x_l_c dut_v_p1h_x_l_s=$&dut_v_p1h_x_l_s"
+let pc = i(vpsense)*cos(wu*time)
+let ps = i(vpsense)*sin(wu*time)
+meas tran dut_i_p1h_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_i_p1h_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_i_p1h_w_u_c=$&dut_i_p1h_w_u_c dut_i_p1h_w_u_s=$&dut_i_p1h_w_u_s"
+meas tran dut_i_p1h_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran dut_i_p1h_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK dut_i_p1h_x_u_c=$&dut_i_p1h_x_u_c dut_i_p1h_x_u_s=$&dut_i_p1h_x_u_s"
+let pc = i(vpsense)*cos(wl*time)
+let ps = i(vpsense)*sin(wl*time)
+meas tran dut_i_p1h_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_i_p1h_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_i_p1h_w_l_c=$&dut_i_p1h_w_l_c dut_i_p1h_w_l_s=$&dut_i_p1h_w_l_s"
+meas tran dut_i_p1h_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran dut_i_p1h_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK dut_i_p1h_x_l_c=$&dut_i_p1h_x_l_c dut_i_p1h_x_l_s=$&dut_i_p1h_x_l_s"
+let pc = v(rfsrc)*cos(wu*time)
+let ps = v(rfsrc)*sin(wu*time)
+meas tran dut_t_p1h_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_t_p1h_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_t_p1h_w_u_c=$&dut_t_p1h_w_u_c dut_t_p1h_w_u_s=$&dut_t_p1h_w_u_s"
+meas tran dut_t_p1h_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran dut_t_p1h_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK dut_t_p1h_x_u_c=$&dut_t_p1h_x_u_c dut_t_p1h_x_u_s=$&dut_t_p1h_x_u_s"
+let pc = v(rfsrc)*cos(wl*time)
+let ps = v(rfsrc)*sin(wl*time)
+meas tran dut_t_p1h_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_t_p1h_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_t_p1h_w_l_c=$&dut_t_p1h_w_l_c dut_t_p1h_w_l_s=$&dut_t_p1h_w_l_s"
+meas tran dut_t_p1h_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran dut_t_p1h_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK dut_t_p1h_x_l_c=$&dut_t_p1h_x_l_c dut_t_p1h_x_l_s=$&dut_t_p1h_x_l_s"
+
+* ---- run p2h: amplitude=0.001 phu=20 phl=250 tmax=1e-12 ----
+alterparam apu=0.001
+alterparam apl=0.001
+alterparam phu=20
+alterparam phl=250
+alterparam vrf=0
+reset
+tran 1e-12 1.6e-07 0 1e-12
+let npts = length(time)
+echo "MARK R_p2h_points=$&npts"
+let pc = v(kp)*cos(wu*time)
+let ps = v(kp)*sin(wu*time)
+meas tran rc_v_p2h_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_v_p2h_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_v_p2h_w_u_c=$&rc_v_p2h_w_u_c rc_v_p2h_w_u_s=$&rc_v_p2h_w_u_s"
+meas tran rc_v_p2h_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran rc_v_p2h_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK rc_v_p2h_x_u_c=$&rc_v_p2h_x_u_c rc_v_p2h_x_u_s=$&rc_v_p2h_x_u_s"
+let pc = v(kp)*cos(wl*time)
+let ps = v(kp)*sin(wl*time)
+meas tran rc_v_p2h_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_v_p2h_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_v_p2h_w_l_c=$&rc_v_p2h_w_l_c rc_v_p2h_w_l_s=$&rc_v_p2h_w_l_s"
+meas tran rc_v_p2h_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran rc_v_p2h_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK rc_v_p2h_x_l_c=$&rc_v_p2h_x_l_c rc_v_p2h_x_l_s=$&rc_v_p2h_x_l_s"
+let pc = i(vksense)*cos(wu*time)
+let ps = i(vksense)*sin(wu*time)
+meas tran rc_i_p2h_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_i_p2h_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_i_p2h_w_u_c=$&rc_i_p2h_w_u_c rc_i_p2h_w_u_s=$&rc_i_p2h_w_u_s"
+meas tran rc_i_p2h_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran rc_i_p2h_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK rc_i_p2h_x_u_c=$&rc_i_p2h_x_u_c rc_i_p2h_x_u_s=$&rc_i_p2h_x_u_s"
+let pc = i(vksense)*cos(wl*time)
+let ps = i(vksense)*sin(wl*time)
+meas tran rc_i_p2h_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_i_p2h_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_i_p2h_w_l_c=$&rc_i_p2h_w_l_c rc_i_p2h_w_l_s=$&rc_i_p2h_w_l_s"
+meas tran rc_i_p2h_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran rc_i_p2h_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK rc_i_p2h_x_l_c=$&rc_i_p2h_x_l_c rc_i_p2h_x_l_s=$&rc_i_p2h_x_l_s"
+let pc = v(krs)*cos(wu*time)
+let ps = v(krs)*sin(wu*time)
+meas tran rc_t_p2h_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_t_p2h_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_t_p2h_w_u_c=$&rc_t_p2h_w_u_c rc_t_p2h_w_u_s=$&rc_t_p2h_w_u_s"
+meas tran rc_t_p2h_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran rc_t_p2h_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK rc_t_p2h_x_u_c=$&rc_t_p2h_x_u_c rc_t_p2h_x_u_s=$&rc_t_p2h_x_u_s"
+let pc = v(krs)*cos(wl*time)
+let ps = v(krs)*sin(wl*time)
+meas tran rc_t_p2h_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_t_p2h_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_t_p2h_w_l_c=$&rc_t_p2h_w_l_c rc_t_p2h_w_l_s=$&rc_t_p2h_w_l_s"
+meas tran rc_t_p2h_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran rc_t_p2h_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK rc_t_p2h_x_l_c=$&rc_t_p2h_x_l_c rc_t_p2h_x_l_s=$&rc_t_p2h_x_l_s"
+let pc = v(mp)*cos(wu*time)
+let ps = v(mp)*sin(wu*time)
+meas tran md_v_p2h_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran md_v_p2h_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK md_v_p2h_w_u_c=$&md_v_p2h_w_u_c md_v_p2h_w_u_s=$&md_v_p2h_w_u_s"
+meas tran md_v_p2h_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran md_v_p2h_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK md_v_p2h_x_u_c=$&md_v_p2h_x_u_c md_v_p2h_x_u_s=$&md_v_p2h_x_u_s"
+let pc = v(mp)*cos(wl*time)
+let ps = v(mp)*sin(wl*time)
+meas tran md_v_p2h_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran md_v_p2h_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK md_v_p2h_w_l_c=$&md_v_p2h_w_l_c md_v_p2h_w_l_s=$&md_v_p2h_w_l_s"
+meas tran md_v_p2h_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran md_v_p2h_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK md_v_p2h_x_l_c=$&md_v_p2h_x_l_c md_v_p2h_x_l_s=$&md_v_p2h_x_l_s"
+let pc = i(vmsense)*cos(wu*time)
+let ps = i(vmsense)*sin(wu*time)
+meas tran md_i_p2h_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran md_i_p2h_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK md_i_p2h_w_u_c=$&md_i_p2h_w_u_c md_i_p2h_w_u_s=$&md_i_p2h_w_u_s"
+meas tran md_i_p2h_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran md_i_p2h_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK md_i_p2h_x_u_c=$&md_i_p2h_x_u_c md_i_p2h_x_u_s=$&md_i_p2h_x_u_s"
+let pc = i(vmsense)*cos(wl*time)
+let ps = i(vmsense)*sin(wl*time)
+meas tran md_i_p2h_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran md_i_p2h_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK md_i_p2h_w_l_c=$&md_i_p2h_w_l_c md_i_p2h_w_l_s=$&md_i_p2h_w_l_s"
+meas tran md_i_p2h_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran md_i_p2h_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK md_i_p2h_x_l_c=$&md_i_p2h_x_l_c md_i_p2h_x_l_s=$&md_i_p2h_x_l_s"
+let pc = v(prf)*cos(wu*time)
+let ps = v(prf)*sin(wu*time)
+meas tran dut_v_p2h_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_v_p2h_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_v_p2h_w_u_c=$&dut_v_p2h_w_u_c dut_v_p2h_w_u_s=$&dut_v_p2h_w_u_s"
+meas tran dut_v_p2h_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran dut_v_p2h_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK dut_v_p2h_x_u_c=$&dut_v_p2h_x_u_c dut_v_p2h_x_u_s=$&dut_v_p2h_x_u_s"
+let pc = v(prf)*cos(wl*time)
+let ps = v(prf)*sin(wl*time)
+meas tran dut_v_p2h_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_v_p2h_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_v_p2h_w_l_c=$&dut_v_p2h_w_l_c dut_v_p2h_w_l_s=$&dut_v_p2h_w_l_s"
+meas tran dut_v_p2h_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran dut_v_p2h_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK dut_v_p2h_x_l_c=$&dut_v_p2h_x_l_c dut_v_p2h_x_l_s=$&dut_v_p2h_x_l_s"
+let pc = i(vpsense)*cos(wu*time)
+let ps = i(vpsense)*sin(wu*time)
+meas tran dut_i_p2h_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_i_p2h_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_i_p2h_w_u_c=$&dut_i_p2h_w_u_c dut_i_p2h_w_u_s=$&dut_i_p2h_w_u_s"
+meas tran dut_i_p2h_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran dut_i_p2h_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK dut_i_p2h_x_u_c=$&dut_i_p2h_x_u_c dut_i_p2h_x_u_s=$&dut_i_p2h_x_u_s"
+let pc = i(vpsense)*cos(wl*time)
+let ps = i(vpsense)*sin(wl*time)
+meas tran dut_i_p2h_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_i_p2h_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_i_p2h_w_l_c=$&dut_i_p2h_w_l_c dut_i_p2h_w_l_s=$&dut_i_p2h_w_l_s"
+meas tran dut_i_p2h_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran dut_i_p2h_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK dut_i_p2h_x_l_c=$&dut_i_p2h_x_l_c dut_i_p2h_x_l_s=$&dut_i_p2h_x_l_s"
+let pc = v(rfsrc)*cos(wu*time)
+let ps = v(rfsrc)*sin(wu*time)
+meas tran dut_t_p2h_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_t_p2h_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_t_p2h_w_u_c=$&dut_t_p2h_w_u_c dut_t_p2h_w_u_s=$&dut_t_p2h_w_u_s"
+meas tran dut_t_p2h_x_u_c INTEG pc from=8e-08 to=1.6e-07
+meas tran dut_t_p2h_x_u_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK dut_t_p2h_x_u_c=$&dut_t_p2h_x_u_c dut_t_p2h_x_u_s=$&dut_t_p2h_x_u_s"
+let pc = v(rfsrc)*cos(wl*time)
+let ps = v(rfsrc)*sin(wl*time)
+meas tran dut_t_p2h_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_t_p2h_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_t_p2h_w_l_c=$&dut_t_p2h_w_l_c dut_t_p2h_w_l_s=$&dut_t_p2h_w_l_s"
+meas tran dut_t_p2h_x_l_c INTEG pc from=8e-08 to=1.6e-07
+meas tran dut_t_p2h_x_l_s INTEG ps from=8e-08 to=1.6e-07
+echo "MARK dut_t_p2h_x_l_c=$&dut_t_p2h_x_l_c dut_t_p2h_x_l_s=$&dut_t_p2h_x_l_s"
+
+* ---- run base_r: amplitude=0 phu=20 phl=70 tmax=5e-13 ----
+alterparam apu=0
+alterparam apl=0
+alterparam phu=20
+alterparam phl=70
+alterparam vrf=0
+reset
+tran 5e-13 1.2e-07 0 5e-13
+let npts = length(time)
+echo "MARK R_base_r_points=$&npts"
+let pc = v(kp)*cos(wu*time)
+let ps = v(kp)*sin(wu*time)
+meas tran rc_v_base_r_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_v_base_r_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_v_base_r_w_u_c=$&rc_v_base_r_w_u_c rc_v_base_r_w_u_s=$&rc_v_base_r_w_u_s"
+let pc = v(kp)*cos(wl*time)
+let ps = v(kp)*sin(wl*time)
+meas tran rc_v_base_r_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_v_base_r_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_v_base_r_w_l_c=$&rc_v_base_r_w_l_c rc_v_base_r_w_l_s=$&rc_v_base_r_w_l_s"
+let pc = i(vksense)*cos(wu*time)
+let ps = i(vksense)*sin(wu*time)
+meas tran rc_i_base_r_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_i_base_r_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_i_base_r_w_u_c=$&rc_i_base_r_w_u_c rc_i_base_r_w_u_s=$&rc_i_base_r_w_u_s"
+let pc = i(vksense)*cos(wl*time)
+let ps = i(vksense)*sin(wl*time)
+meas tran rc_i_base_r_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_i_base_r_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_i_base_r_w_l_c=$&rc_i_base_r_w_l_c rc_i_base_r_w_l_s=$&rc_i_base_r_w_l_s"
+let pc = v(krs)*cos(wu*time)
+let ps = v(krs)*sin(wu*time)
+meas tran rc_t_base_r_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_t_base_r_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_t_base_r_w_u_c=$&rc_t_base_r_w_u_c rc_t_base_r_w_u_s=$&rc_t_base_r_w_u_s"
+let pc = v(krs)*cos(wl*time)
+let ps = v(krs)*sin(wl*time)
+meas tran rc_t_base_r_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_t_base_r_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_t_base_r_w_l_c=$&rc_t_base_r_w_l_c rc_t_base_r_w_l_s=$&rc_t_base_r_w_l_s"
+let pc = v(mp)*cos(wu*time)
+let ps = v(mp)*sin(wu*time)
+meas tran md_v_base_r_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran md_v_base_r_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK md_v_base_r_w_u_c=$&md_v_base_r_w_u_c md_v_base_r_w_u_s=$&md_v_base_r_w_u_s"
+let pc = v(mp)*cos(wl*time)
+let ps = v(mp)*sin(wl*time)
+meas tran md_v_base_r_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran md_v_base_r_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK md_v_base_r_w_l_c=$&md_v_base_r_w_l_c md_v_base_r_w_l_s=$&md_v_base_r_w_l_s"
+let pc = i(vmsense)*cos(wu*time)
+let ps = i(vmsense)*sin(wu*time)
+meas tran md_i_base_r_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran md_i_base_r_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK md_i_base_r_w_u_c=$&md_i_base_r_w_u_c md_i_base_r_w_u_s=$&md_i_base_r_w_u_s"
+let pc = i(vmsense)*cos(wl*time)
+let ps = i(vmsense)*sin(wl*time)
+meas tran md_i_base_r_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran md_i_base_r_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK md_i_base_r_w_l_c=$&md_i_base_r_w_l_c md_i_base_r_w_l_s=$&md_i_base_r_w_l_s"
+let pc = v(prf)*cos(wu*time)
+let ps = v(prf)*sin(wu*time)
+meas tran dut_v_base_r_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_v_base_r_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_v_base_r_w_u_c=$&dut_v_base_r_w_u_c dut_v_base_r_w_u_s=$&dut_v_base_r_w_u_s"
+let pc = v(prf)*cos(wl*time)
+let ps = v(prf)*sin(wl*time)
+meas tran dut_v_base_r_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_v_base_r_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_v_base_r_w_l_c=$&dut_v_base_r_w_l_c dut_v_base_r_w_l_s=$&dut_v_base_r_w_l_s"
+let pc = i(vpsense)*cos(wu*time)
+let ps = i(vpsense)*sin(wu*time)
+meas tran dut_i_base_r_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_i_base_r_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_i_base_r_w_u_c=$&dut_i_base_r_w_u_c dut_i_base_r_w_u_s=$&dut_i_base_r_w_u_s"
+let pc = i(vpsense)*cos(wl*time)
+let ps = i(vpsense)*sin(wl*time)
+meas tran dut_i_base_r_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_i_base_r_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_i_base_r_w_l_c=$&dut_i_base_r_w_l_c dut_i_base_r_w_l_s=$&dut_i_base_r_w_l_s"
+let pc = v(rfsrc)*cos(wu*time)
+let ps = v(rfsrc)*sin(wu*time)
+meas tran dut_t_base_r_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_t_base_r_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_t_base_r_w_u_c=$&dut_t_base_r_w_u_c dut_t_base_r_w_u_s=$&dut_t_base_r_w_u_s"
+let pc = v(rfsrc)*cos(wl*time)
+let ps = v(rfsrc)*sin(wl*time)
+meas tran dut_t_base_r_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_t_base_r_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_t_base_r_w_l_c=$&dut_t_base_r_w_l_c dut_t_base_r_w_l_s=$&dut_t_base_r_w_l_s"
+
+* ---- run p1_r: amplitude=0.002 phu=20 phl=70 tmax=5e-13 ----
+alterparam apu=0.002
+alterparam apl=0.002
+alterparam phu=20
+alterparam phl=70
+alterparam vrf=0
+reset
+tran 5e-13 1.2e-07 0 5e-13
+let npts = length(time)
+echo "MARK R_p1_r_points=$&npts"
+let pc = v(kp)*cos(wu*time)
+let ps = v(kp)*sin(wu*time)
+meas tran rc_v_p1_r_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_v_p1_r_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_v_p1_r_w_u_c=$&rc_v_p1_r_w_u_c rc_v_p1_r_w_u_s=$&rc_v_p1_r_w_u_s"
+let pc = v(kp)*cos(wl*time)
+let ps = v(kp)*sin(wl*time)
+meas tran rc_v_p1_r_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_v_p1_r_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_v_p1_r_w_l_c=$&rc_v_p1_r_w_l_c rc_v_p1_r_w_l_s=$&rc_v_p1_r_w_l_s"
+let pc = i(vksense)*cos(wu*time)
+let ps = i(vksense)*sin(wu*time)
+meas tran rc_i_p1_r_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_i_p1_r_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_i_p1_r_w_u_c=$&rc_i_p1_r_w_u_c rc_i_p1_r_w_u_s=$&rc_i_p1_r_w_u_s"
+let pc = i(vksense)*cos(wl*time)
+let ps = i(vksense)*sin(wl*time)
+meas tran rc_i_p1_r_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_i_p1_r_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_i_p1_r_w_l_c=$&rc_i_p1_r_w_l_c rc_i_p1_r_w_l_s=$&rc_i_p1_r_w_l_s"
+let pc = v(krs)*cos(wu*time)
+let ps = v(krs)*sin(wu*time)
+meas tran rc_t_p1_r_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_t_p1_r_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_t_p1_r_w_u_c=$&rc_t_p1_r_w_u_c rc_t_p1_r_w_u_s=$&rc_t_p1_r_w_u_s"
+let pc = v(krs)*cos(wl*time)
+let ps = v(krs)*sin(wl*time)
+meas tran rc_t_p1_r_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_t_p1_r_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_t_p1_r_w_l_c=$&rc_t_p1_r_w_l_c rc_t_p1_r_w_l_s=$&rc_t_p1_r_w_l_s"
+let pc = v(mp)*cos(wu*time)
+let ps = v(mp)*sin(wu*time)
+meas tran md_v_p1_r_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran md_v_p1_r_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK md_v_p1_r_w_u_c=$&md_v_p1_r_w_u_c md_v_p1_r_w_u_s=$&md_v_p1_r_w_u_s"
+let pc = v(mp)*cos(wl*time)
+let ps = v(mp)*sin(wl*time)
+meas tran md_v_p1_r_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran md_v_p1_r_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK md_v_p1_r_w_l_c=$&md_v_p1_r_w_l_c md_v_p1_r_w_l_s=$&md_v_p1_r_w_l_s"
+let pc = i(vmsense)*cos(wu*time)
+let ps = i(vmsense)*sin(wu*time)
+meas tran md_i_p1_r_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran md_i_p1_r_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK md_i_p1_r_w_u_c=$&md_i_p1_r_w_u_c md_i_p1_r_w_u_s=$&md_i_p1_r_w_u_s"
+let pc = i(vmsense)*cos(wl*time)
+let ps = i(vmsense)*sin(wl*time)
+meas tran md_i_p1_r_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran md_i_p1_r_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK md_i_p1_r_w_l_c=$&md_i_p1_r_w_l_c md_i_p1_r_w_l_s=$&md_i_p1_r_w_l_s"
+let pc = v(prf)*cos(wu*time)
+let ps = v(prf)*sin(wu*time)
+meas tran dut_v_p1_r_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_v_p1_r_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_v_p1_r_w_u_c=$&dut_v_p1_r_w_u_c dut_v_p1_r_w_u_s=$&dut_v_p1_r_w_u_s"
+let pc = v(prf)*cos(wl*time)
+let ps = v(prf)*sin(wl*time)
+meas tran dut_v_p1_r_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_v_p1_r_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_v_p1_r_w_l_c=$&dut_v_p1_r_w_l_c dut_v_p1_r_w_l_s=$&dut_v_p1_r_w_l_s"
+let pc = i(vpsense)*cos(wu*time)
+let ps = i(vpsense)*sin(wu*time)
+meas tran dut_i_p1_r_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_i_p1_r_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_i_p1_r_w_u_c=$&dut_i_p1_r_w_u_c dut_i_p1_r_w_u_s=$&dut_i_p1_r_w_u_s"
+let pc = i(vpsense)*cos(wl*time)
+let ps = i(vpsense)*sin(wl*time)
+meas tran dut_i_p1_r_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_i_p1_r_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_i_p1_r_w_l_c=$&dut_i_p1_r_w_l_c dut_i_p1_r_w_l_s=$&dut_i_p1_r_w_l_s"
+let pc = v(rfsrc)*cos(wu*time)
+let ps = v(rfsrc)*sin(wu*time)
+meas tran dut_t_p1_r_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_t_p1_r_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_t_p1_r_w_u_c=$&dut_t_p1_r_w_u_c dut_t_p1_r_w_u_s=$&dut_t_p1_r_w_u_s"
+let pc = v(rfsrc)*cos(wl*time)
+let ps = v(rfsrc)*sin(wl*time)
+meas tran dut_t_p1_r_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_t_p1_r_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_t_p1_r_w_l_c=$&dut_t_p1_r_w_l_c dut_t_p1_r_w_l_s=$&dut_t_p1_r_w_l_s"
+
+* ---- run p2_r: amplitude=0.002 phu=20 phl=250 tmax=5e-13 ----
+alterparam apu=0.002
+alterparam apl=0.002
+alterparam phu=20
+alterparam phl=250
+alterparam vrf=0
+reset
+tran 5e-13 1.2e-07 0 5e-13
+let npts = length(time)
+echo "MARK R_p2_r_points=$&npts"
+let pc = v(kp)*cos(wu*time)
+let ps = v(kp)*sin(wu*time)
+meas tran rc_v_p2_r_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_v_p2_r_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_v_p2_r_w_u_c=$&rc_v_p2_r_w_u_c rc_v_p2_r_w_u_s=$&rc_v_p2_r_w_u_s"
+let pc = v(kp)*cos(wl*time)
+let ps = v(kp)*sin(wl*time)
+meas tran rc_v_p2_r_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_v_p2_r_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_v_p2_r_w_l_c=$&rc_v_p2_r_w_l_c rc_v_p2_r_w_l_s=$&rc_v_p2_r_w_l_s"
+let pc = i(vksense)*cos(wu*time)
+let ps = i(vksense)*sin(wu*time)
+meas tran rc_i_p2_r_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_i_p2_r_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_i_p2_r_w_u_c=$&rc_i_p2_r_w_u_c rc_i_p2_r_w_u_s=$&rc_i_p2_r_w_u_s"
+let pc = i(vksense)*cos(wl*time)
+let ps = i(vksense)*sin(wl*time)
+meas tran rc_i_p2_r_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_i_p2_r_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_i_p2_r_w_l_c=$&rc_i_p2_r_w_l_c rc_i_p2_r_w_l_s=$&rc_i_p2_r_w_l_s"
+let pc = v(krs)*cos(wu*time)
+let ps = v(krs)*sin(wu*time)
+meas tran rc_t_p2_r_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_t_p2_r_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_t_p2_r_w_u_c=$&rc_t_p2_r_w_u_c rc_t_p2_r_w_u_s=$&rc_t_p2_r_w_u_s"
+let pc = v(krs)*cos(wl*time)
+let ps = v(krs)*sin(wl*time)
+meas tran rc_t_p2_r_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran rc_t_p2_r_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK rc_t_p2_r_w_l_c=$&rc_t_p2_r_w_l_c rc_t_p2_r_w_l_s=$&rc_t_p2_r_w_l_s"
+let pc = v(mp)*cos(wu*time)
+let ps = v(mp)*sin(wu*time)
+meas tran md_v_p2_r_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran md_v_p2_r_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK md_v_p2_r_w_u_c=$&md_v_p2_r_w_u_c md_v_p2_r_w_u_s=$&md_v_p2_r_w_u_s"
+let pc = v(mp)*cos(wl*time)
+let ps = v(mp)*sin(wl*time)
+meas tran md_v_p2_r_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran md_v_p2_r_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK md_v_p2_r_w_l_c=$&md_v_p2_r_w_l_c md_v_p2_r_w_l_s=$&md_v_p2_r_w_l_s"
+let pc = i(vmsense)*cos(wu*time)
+let ps = i(vmsense)*sin(wu*time)
+meas tran md_i_p2_r_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran md_i_p2_r_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK md_i_p2_r_w_u_c=$&md_i_p2_r_w_u_c md_i_p2_r_w_u_s=$&md_i_p2_r_w_u_s"
+let pc = i(vmsense)*cos(wl*time)
+let ps = i(vmsense)*sin(wl*time)
+meas tran md_i_p2_r_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran md_i_p2_r_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK md_i_p2_r_w_l_c=$&md_i_p2_r_w_l_c md_i_p2_r_w_l_s=$&md_i_p2_r_w_l_s"
+let pc = v(prf)*cos(wu*time)
+let ps = v(prf)*sin(wu*time)
+meas tran dut_v_p2_r_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_v_p2_r_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_v_p2_r_w_u_c=$&dut_v_p2_r_w_u_c dut_v_p2_r_w_u_s=$&dut_v_p2_r_w_u_s"
+let pc = v(prf)*cos(wl*time)
+let ps = v(prf)*sin(wl*time)
+meas tran dut_v_p2_r_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_v_p2_r_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_v_p2_r_w_l_c=$&dut_v_p2_r_w_l_c dut_v_p2_r_w_l_s=$&dut_v_p2_r_w_l_s"
+let pc = i(vpsense)*cos(wu*time)
+let ps = i(vpsense)*sin(wu*time)
+meas tran dut_i_p2_r_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_i_p2_r_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_i_p2_r_w_u_c=$&dut_i_p2_r_w_u_c dut_i_p2_r_w_u_s=$&dut_i_p2_r_w_u_s"
+let pc = i(vpsense)*cos(wl*time)
+let ps = i(vpsense)*sin(wl*time)
+meas tran dut_i_p2_r_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_i_p2_r_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_i_p2_r_w_l_c=$&dut_i_p2_r_w_l_c dut_i_p2_r_w_l_s=$&dut_i_p2_r_w_l_s"
+let pc = v(rfsrc)*cos(wu*time)
+let ps = v(rfsrc)*sin(wu*time)
+meas tran dut_t_p2_r_w_u_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_t_p2_r_w_u_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_t_p2_r_w_u_c=$&dut_t_p2_r_w_u_c dut_t_p2_r_w_u_s=$&dut_t_p2_r_w_u_s"
+let pc = v(rfsrc)*cos(wl*time)
+let ps = v(rfsrc)*sin(wl*time)
+meas tran dut_t_p2_r_w_l_c INTEG pc from=8e-08 to=1.2e-07
+meas tran dut_t_p2_r_w_l_s INTEG ps from=8e-08 to=1.2e-07
+echo "MARK dut_t_p2_r_w_l_c=$&dut_t_p2_r_w_l_c dut_t_p2_r_w_l_s=$&dut_t_p2_r_w_l_s"
+
+echo "MARK done"
+quit
+.endc
+.end
