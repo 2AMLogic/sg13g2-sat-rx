@@ -36,7 +36,6 @@ from __future__ import annotations
 import csv  # noqa: F401  (kept for sidecar tables)
 import datetime as _dt
 import gzip
-import hashlib
 import json
 import math
 import shlex
@@ -53,6 +52,7 @@ sys.path.insert(0, str(SIM_DIR))
 sys.path.insert(0, str(BENCH_DIR))
 
 import mixfeas as mf  # noqa: E402
+from harness import klt_driver  # noqa: E402
 from harness.report import RecordExists, allocate_record_id, git_provenance  # noqa: E402
 
 TB_DIR = BENCH_DIR / "testbench"
@@ -155,24 +155,11 @@ def klt_body(study, tb_options: list[str], cand: mf.Candidate, vdd: float, runs:
 
 def klt_request(body_name: str, corners: list[str], temps: list[float], backend: str, timeout_s: int,
                 runner_version_check: str = "", stage_models: bool = True) -> dict:
-    """One klt sim request. klt's own trailing analysis is a 2 ps transient
-    whose only purpose is a sentinel ``.meas`` of the rail, so klt grades
-    every corner on a real value; the body's own deck does the study."""
-    req = {
-        "netlist": body_name,
-        "backend": backend,
-        "models": {"pdk": "ihp-sg13g2", "lib": "libs.tech/ngspice/models/cornerHBT.lib"},
-        "corners": {"process": list(corners), "temperature_c": list(temps)},
-        "analysis": {"kind": "tran", "args": "1p 2p"},
-        "measurements": [{"name": "sentinel_rail_v", "spice": ".meas tran sentinel_rail_v FIND v(vdd) AT=2p",
-                          "unit": "V"}],
-        "options": {"timeout_s": timeout_s, "keep_artifacts": True},
-    }
-    if stage_models:
-        req["options"]["stage_model_inputs"] = True
-    if backend == "batch" and runner_version_check:
-        req["batch"] = {"runner_version_check": runner_version_check}
-    return req
+    """One klt sim request (corners are process-section names here)."""
+    return klt_driver.klt_request(
+        body_name, corners, temps, backend, timeout_s,
+        sentinel_name="sentinel_rail_v", sentinel_node="v(vdd)",
+        stage_models=stage_models, runner_version_check=runner_version_check)
 
 
 @dataclass
@@ -375,18 +362,11 @@ def not_applicable_cells(study, cand: mf.Candidate, matrices: tuple[str, ...], r
 # ---------------------------------------------------------------------------
 
 
-def _sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+_sha256 = klt_driver.sha256_file
 
 
 def pdk_provenance(pdk) -> dict:
-    models_dir = pdk.model_lib.parent
-    prov = {"variant_path": str(pdk.path), "fetched_version_file": None,
-            "model_sha256": {n: _sha256(models_dir / n) for n in MODEL_FILES if (models_dir / n).is_file()}}
-    fv = pdk.path / ".fetched-version"
-    if fv.is_file():
-        prov["fetched_version_file"] = fv.read_text().strip()
-    return prov
+    return klt_driver.pdk_provenance(pdk, MODEL_FILES)
 
 
 @dataclass
