@@ -5,7 +5,7 @@
   "tier": null,
   "t1_item_count": 11,
   "build_t1_item_count": 11,
-  "t1_met_count": 1,
+  "t1_met_count": 2,
   "source_doc": "signoff/design-evidence-tiers.md",
   "source_doc_content_hash": "sha256:c7a1e7e10627fae396007e0ff951734f37d95028b8f49f2e21e802e9f552f318",
   "build": {
@@ -153,10 +153,26 @@
       "partition": null,
       "text": "a README stating what the block is, its spec table, and how to reproduce every result; a license; CI that at minimum keeps the harness and evidence formats valid.",
       "notes": [],
-      "status": "unmet",
-      "reason": "no_evidence",
+      "status": "met",
+      "reason": null,
       "graded_by_build": true,
-      "citation": null
+      "citation": {
+        "file": "signoff/evidence/item10-repo-hygiene.json",
+        "command": null,
+        "kind": "generic",
+        "check_status": "pass",
+        "content_hash": "sha256:c4102f5ffede0ce56c824dbc840037e6ee0ce28dfefd6aee7ca7d01abc2ec981",
+        "input_verified": true,
+        "exit_status": 0,
+        "artifact_binding": {
+          "t1_item": 10,
+          "path": ".github/workflows/ci.yml",
+          "content_hash": "sha256:c4102f5ffede0ce56c824dbc840037e6ee0ce28dfefd6aee7ca7d01abc2ec981",
+          "input_verified": true,
+          "summary": "Repo hygiene: README (with a Reproduce section linking sim/README.md), LICENSE and spec/target-spec.md are present; CI (.github/workflows/ci.yml) runs the evidence-format check and the harness smoke test. Presence/invocation checks only; they do not judge the content's quality.",
+          "source": "signoff/make_item10_evidence.py"
+        }
+      }
     },
     {
       "tier": "T1",

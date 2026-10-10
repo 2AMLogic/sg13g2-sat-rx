@@ -20,11 +20,11 @@ re-run by CI on every push (`.github/workflows/signoff.yml`).
 ```
 block: sg13g2-sat-rx  kind: analog
 tier: none
-T1: 1/11 items met
+T1: 2/11 items met
 ```
 
-**Item 1 (Design sources) is `met`; items 2-11 are `unmet` with `reason:
-"no_evidence"`.** Item 1 cites `evidence/item1-design-sources.json`, an
+**Items 1 (Design sources) and 10 (Repo hygiene) are `met`; items 2-9 and 11 are
+`unmet` with `reason: "no_evidence"`.** Item 1 cites `evidence/item1-design-sources.json`, an
 artifact-anchored `generic` attestation (issue #28): it declares `t1_item: 1`,
 binds the derived netlist `design/netlist/lna_stage1.spice` by path and content
 hash, lists the xschem sources (`design/lna_stage1.sch`, `.sym`) with their
@@ -34,7 +34,19 @@ with `python3 signoff/make_item1_evidence.py` (it prints the manifest entry to
 paste, including the pinned `content_hash`) whenever the schematic or netlist
 changes; a stale pin renders `stale_evidence`, never a false pass. The graded
 `met` is "the item is bound to an audited artifact", not a judgment that the
-design is any good. Everything else is the correct, honest result for a block
+design is any good. Item 10 cites `evidence/item10-repo-hygiene.json` (issue #71), a `generic`
+attestation that is `pass` only if `README.md`, `LICENSE` and
+`spec/target-spec.md` exist, the README's Reproduce section links
+`sim/README.md` and names `sim/characterize.sh`, and the non-comment lines of
+`.github/workflows/ci.yml` invoke `check_evidence_formats.py` and
+`sim/characterize.sh smoke`. It binds the CI workflow by content hash;
+regenerate with `python3 signoff/make_item10_evidence.py` (exits non-zero if
+any check fails, e.g. LICENSE removed). These are presence/invocation checks,
+not a quality judgment. **Item 9 (Testbenches shipped) is deliberately not
+attested**: no honest checkable invariant exists yet (one bench has no
+documented invocation, and older records name the PDK as `unknown` rather than
+pinning it), so the gap was filed as klayout-tools#3018 instead of attested
+loosely. The remainder is the correct, honest result for a block
 whose layout and verification evidence has not started. The per-item *human*
 context stays in the gap-to-T1 tracker
 ([#4](https://github.com/2AMLogic/sg13g2-sat-rx/issues/4)); this report carries

@@ -5,6 +5,10 @@
     "1": {
       "file": "signoff/evidence/item1-design-sources.json",
       "content_hash": "sha256:ad4fe1be5754f21fc4b2dd67863234858dc399e2a8232d3b20cf530014b8c447"
+    },
+    "10": {
+      "file": "signoff/evidence/item10-repo-hygiene.json",
+      "content_hash": "sha256:c4102f5ffede0ce56c824dbc840037e6ee0ce28dfefd6aee7ca7d01abc2ec981"
     }
   }
 }
