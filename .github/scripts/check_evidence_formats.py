@@ -948,6 +948,34 @@ def check_passive_p1(problems: Problems, root: Path, exp_dir: Path) -> None:
             problems.add(rel(root, exp_dir / sub), f"{sub}/ is not part of the passive-p1 evidence layout")
 
 
+def check_probe_log_package(problems, root, exp_dir, rid, rec, md, where_js, where_md, claimed_logs):
+    """Shared probe-log package contract; returns the package path, or None if the directory is missing."""
+    declared = rec.get("probe_logs")
+    expected = f"sim/{exp_dir.name}/probe-logs/{rid}/"
+    if declared != expected:
+        problems.add(where_js, f"JSON probe_logs {declared!r} must be {expected!r}")
+    logs = exp_dir / "probe-logs" / rid
+    claimed_logs.add(rid)
+    if f"probe-logs/{rid}/" not in md:
+        problems.add(where_md, f"Markdown does not reference its probe-logs/{rid}/ package")
+    if not logs.is_dir():
+        problems.add(where_js, f"declared probe-log package {rel(root, logs)}/ does not exist")
+        return None
+    # stderr may legitimately be empty
+    present = {p.name for p in logs.iterdir() if p.is_file()}
+    for name in MIXER_PROBE_FILES:
+        if name not in present:
+            problems.add(rel(root, logs), f"probe-log package is missing {name}")
+        elif name != "stderr.txt" and (logs / name).stat().st_size == 0:
+            problems.add(rel(root, logs / name), "probe-log file is empty")
+    for name in sorted(present - set(MIXER_PROBE_FILES)):
+        problems.add(rel(root, logs / name), "unexpected file in a probe-log package")
+    for p in logs.iterdir():
+        if p.is_dir():
+            problems.add(rel(root, p), "unexpected directory in a probe-log package")
+    return logs
+
+
 def check_mixer_record(problems: Problems, root: Path, exp_dir: Path, stem: str, files: dict[str, Path],
                        claimed_logs: set[str]) -> None:
     md_path, js_path = files.get("md"), files.get("json")
@@ -1016,28 +1044,9 @@ def check_mixer_record(problems: Problems, root: Path, exp_dir: Path, stem: str,
     if not isinstance(rec.get("inventory"), dict):
         problems.add(where_js, "JSON 'inventory' is missing")
 
-    declared = rec.get("probe_logs")
-    expected = f"sim/{exp_dir.name}/probe-logs/{rid}/"
-    if declared != expected:
-        problems.add(where_js, f"JSON probe_logs {declared!r} must be {expected!r}")
-    logs = exp_dir / "probe-logs" / rid
-    claimed_logs.add(rid)
-    if f"probe-logs/{rid}/" not in md:
-        problems.add(where_md, f"Markdown does not reference its probe-logs/{rid}/ package")
-    if not logs.is_dir():
-        problems.add(where_js, f"declared probe-log package {rel(root, logs)}/ does not exist")
+    logs = check_probe_log_package(problems, root, exp_dir, rid, rec, md, where_js, where_md, claimed_logs)
+    if logs is None:
         return
-    present = {p.name for p in logs.iterdir() if p.is_file()}
-    for name in MIXER_PROBE_FILES:
-        if name not in present:
-            problems.add(rel(root, logs), f"probe-log package is missing {name}")
-        elif name != "stderr.txt" and (logs / name).stat().st_size == 0:
-            problems.add(rel(root, logs / name), "probe-log file is empty")  # stderr may legitimately be empty
-    for name in sorted(present - set(MIXER_PROBE_FILES)):
-        problems.add(rel(root, logs / name), "unexpected file in a probe-log package")
-    for p in logs.iterdir():
-        if p.is_dir():
-            problems.add(rel(root, p), "unexpected directory in a probe-log package")
     inv_path = logs / "inventory.json"
     if inv_path.is_file():
         inv = load_json_object(problems, root, inv_path)
@@ -1194,28 +1203,9 @@ def check_cm_record(problems: Problems, root: Path, exp_dir: Path, stem: str, fi
         problems.add(where_md, "Markdown '## Provenance' does not carry the JSON environment.git.commit")
     matrix = check_cm_matrix(problems, where_js, status, rec)
 
-    declared = rec.get("probe_logs")
-    expected = f"sim/{exp_dir.name}/probe-logs/{rid}/"
-    if declared != expected:
-        problems.add(where_js, f"JSON probe_logs {declared!r} must be {expected!r}")
-    logs = exp_dir / "probe-logs" / rid
-    claimed_logs.add(rid)
-    if f"probe-logs/{rid}/" not in md:
-        problems.add(where_md, f"Markdown does not reference its probe-logs/{rid}/ package")
-    if not logs.is_dir():
-        problems.add(where_js, f"declared probe-log package {rel(root, logs)}/ does not exist")
+    logs = check_probe_log_package(problems, root, exp_dir, rid, rec, md, where_js, where_md, claimed_logs)
+    if logs is None:
         return
-    present = {p.name for p in logs.iterdir() if p.is_file()}
-    for name in MIXER_PROBE_FILES:
-        if name not in present:
-            problems.add(rel(root, logs), f"probe-log package is missing {name}")
-        elif name != "stderr.txt" and (logs / name).stat().st_size == 0:
-            problems.add(rel(root, logs / name), "probe-log file is empty")
-    for name in sorted(present - set(MIXER_PROBE_FILES)):
-        problems.add(rel(root, logs / name), "unexpected file in a probe-log package")
-    for p in logs.iterdir():
-        if p.is_dir():
-            problems.add(rel(root, p), "unexpected directory in a probe-log package")
     inv_path = logs / "inventory.json"
     if inv_path.is_file():
         inv = load_json_object(problems, root, inv_path)
