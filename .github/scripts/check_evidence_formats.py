@@ -120,6 +120,7 @@ from __future__ import annotations
 import argparse
 import csv
 import gzip
+import hashlib
 import io
 import json
 import os
@@ -132,6 +133,7 @@ RECORD_ID_RE = re.compile(r"^\d{8}-\d{6}-[0-9a-f]{7,40}$")
 RECORD_ID_PREFIX_RE = re.compile(r"^(\d{8}-\d{6}-[0-9a-f]{7,40})")
 PROTECTED_RE = re.compile(r"^sim/[^/]+/(records|corners|netlist-snapshots|probe-logs|solver-artifacts)/")
 NATIVE_STATUSES = ("pass", "fail", "error")
+NATIVE_SNAPSHOT_NOTE = b"* This is a verbatim copy taken at record time. Do not edit."
 NATIVE_SECTIONS = ("Evidence", "Result", "Summary", "Environment")
 KABAND_SECTIONS = ("Grid", "Provenance", "Data quality", "Limitations", "Sidecars")
 KABAND_SIDECAR_SUFFIXES = ("-points.csv.gz", "-cells.csv", "-best.csv")
@@ -356,14 +358,51 @@ def check_native_record(problems: Problems, root: Path, exp_dir: Path, md: Path)
     if not snap.is_file():
         problems.add(where, f"missing netlist snapshot {rel(root, snap)}")
     else:
-        head = snap.read_text(encoding="utf-8", errors="replace")
-        if not head.startswith(f"* Frozen netlist snapshot for record {rid}"):
-            problems.add(rel(root, snap), f"snapshot header does not name record {rid}")
-        if not re.search(r"^\* sha256\s*: [0-9a-f]{64}$", head, re.MULTILINE):
-            problems.add(rel(root, snap), "snapshot is missing its '* sha256 :' provenance line")
+        check_native_snapshot(problems, rel(root, snap), snap.read_bytes(), rid)
     extra_snap_dir = exp_dir / "netlist-snapshots" / rid
     if extra_snap_dir.exists():
         problems.add(rel(root, extra_snap_dir), "directory-style snapshot in a harness-native bench")
+
+
+def check_native_snapshot(problems: Problems, where: str, data: bytes, rid: str) -> None:
+    """Verify a harness-native frozen netlist snapshot (issue #93).
+
+    Writer convention (sim/harness/report.py ``write_netlist_snapshot``): exactly
+    three header lines, each terminated by ``\\n``::
+
+        * Frozen netlist snapshot for record <rid>
+        * sha256     : <hex digest of the payload bytes>
+        * This is a verbatim copy taken at record time. Do not edit.
+
+    followed immediately by the verbatim DUT bytes. The payload is everything
+    after the third newline, so comment lines inside it that look like
+    metadata are payload, not provenance. The digest is recomputed over those
+    bytes; the current DUT is never consulted.
+    """
+    parts = data.split(b"\n", 3)
+    if len(parts) < 4:
+        problems.add(where, "snapshot is truncated: it lacks the three-line provenance header")
+        return
+    first, digest_line, note, payload = parts
+    if first.decode("utf-8", "replace") != f"* Frozen netlist snapshot for record {rid}":
+        problems.add(where, f"snapshot header does not name record {rid}")
+    m = re.fullmatch(rb"\* sha256\s*: ([0-9a-f]{64})", digest_line)
+    if not m:
+        problems.add(where, "snapshot is missing its '* sha256 :' provenance line "
+                     "(must be the second line)")
+        return
+    if note != NATIVE_SNAPSHOT_NOTE:
+        problems.add(where, "snapshot third header line is not the writer's "
+                     "'* This is a verbatim copy ...' note")
+    # Ambiguity: a second provenance header inside the header region is
+    # impossible by construction; one at the start of the payload would be a
+    # duplicated header, which the writer never emits.
+    if re.match(rb"\* (Frozen netlist snapshot for record|sha256\s*:)", payload):
+        problems.add(where, "snapshot has a duplicate provenance header at the start of its payload")
+    actual = hashlib.sha256(payload).hexdigest()
+    declared = m.group(1).decode()
+    if actual != declared:
+        problems.add(where, f"snapshot payload sha256 {actual} does not match declared {declared}")
 
 
 # ---------------------------------------------------------------------------
