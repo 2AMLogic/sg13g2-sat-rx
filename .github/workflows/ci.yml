@@ -45,6 +45,8 @@ jobs:
         run: python -m pytest sim/mixer-nf-method/tests/test_nfmethod.py -v
       - name: mixer-cm-interface-probe closed-form control / sabotage / status tests (no simulator; interface feasibility only)
         run: python -m pytest sim/mixer-cm-interface-probe/tests -q
+      - name: mixer-pumped-rf-admittance extraction / known-answer / sabotage / classification tests (no simulator; method feasibility only)
+        run: python -m pytest sim/mixer-pumped-rf-admittance/tests -q
 
   evidence-formats:
     name: evidence formats + append-only history
@@ -227,6 +229,15 @@ jobs:
       # under a temp dir only, and records nothing: not evidence, not METHOD_VALIDATION.
       - name: Mixer CM-probe control + sabotages on pinned ngspice (records nothing)
         run: python3 sim/mixer-cm-interface-probe/ci_assert.py
+
+      # mixer-pumped-rf-admittance (issue #111): ONE controls-only ngspice run (passive
+      # RC + ideal modulated known answers, no DUT, no PDK models, ~20 s), then the
+      # positive controls and the current_sign / omit_image / no_baseline extraction
+      # sabotages are evaluated on that log. Asserts structured results (pinned
+      # executable ran, controls pass, every sabotage fails an expected measured
+      # check). Temp dir only; records nothing; says nothing about the DUT or row 5.
+      - name: Mixer pumped RF-admittance controls + sabotages on pinned ngspice (records nothing)
+        run: python3 sim/mixer-pumped-rf-admittance/ci_assert.py
 
       - name: No evidence record or tracked file was created or changed
         run: |

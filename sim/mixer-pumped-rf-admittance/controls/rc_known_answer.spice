@@ -1,0 +1,16 @@
+* Known-answer control 1: a PASSIVE series RC port (linear, time-invariant).
+* Driven exactly like the DUT port: a Norton perturbation current J = E/z0 per
+* tone (E = {apu}, {apl}) injected through a 0 V ammeter into the port node, in
+* parallel with the fixture's own z0 = 50 ohm source resistor to a 0 V node.
+*   I_port = i(vksense) + (v(krs) - v(kp)) / 50     (positive into the RC)
+* Closed form (pumped.rc_expected):
+*   Y_uu = 1/(R + 1/(j w_u C)),  Y_ll = 1/(R + 1/(j w_l C)),  Y_ul = Y_lu = 0
+* with R = 25 ohm, C = 1 pF. An LTI port has no conjugate (image) coupling, so the
+* cross terms are a numerical null and the fixture must classify SCALAR_ADEQUATE.
+Iku 0 kj DC 0 SIN(0 {apu/50} 19.45e9 0 0 {phu})
+Ikl 0 kj DC 0 SIN(0 {apl/50} 17.45e9 0 0 {phl})
+Vksense kj kp DC 0
+Rks kp krs 50
+Vkrs krs 0 DC 0
+Ck kp kx 1p
+Rk kx 0 25

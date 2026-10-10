@@ -1,0 +1,26 @@
+{
+  "schema": "mixer-pumped-rf-admittance-thresholds/1",
+  "declared": "Issue #111. Written and committed before any DUT (placeholder) run of this probe; only the passive RC and ideal modulated known-answer fixtures had been simulated when these values were fixed. A record carries the sha256 of this file and the commit that last touched it. Changing a value after a DUT result needs a later record that says why; it is never done to make a result pass.",
+  "values": {
+    "control_mag_rel_tol": 0.005,
+    "control_phase_tol_deg": 0.3,
+    "control_null_rel_tol": 0.005,
+    "cond_max": 10.0,
+    "halving_rel_tol": 0.01,
+    "window_rel_tol": 0.005,
+    "timestep_rel_tol": 0.005,
+    "response_to_baseline_min": 10.0,
+    "kappa_scalar_max": 0.05
+  },
+  "justification": {
+    "control_mag_rel_tol": "Known-answer magnitude error per admittance element. The smallest sabotage signature is the omitted-image-coupling error on the modulated fixture, |Y_ul|/|Y_uu| ~ 0.26; 0.005 is ~50x below it, so a sabotage cannot pass, and it is above the expected trapezoid-projection floor at >= 50 time points per RF period with every tone on an integer number of periods of the window. If the floor is worse the method fails qualification; the tolerance is not widened.",
+    "control_phase_tol_deg": "Known-answer phase error per element; 0.3 deg is the phase equivalent of ~0.005 relative error, ~600x below the 180 deg wrong-current-sign signature.",
+    "control_null_rel_tol": "Cross-sideband term of the LTI passive RC fixture, which has no conjugate coupling: |Y_ul|/|Y_uu| and |Y_lu|/|Y_ll| must read below 0.005, 10x below kappa_scalar_max, so a numerical floor cannot be mistaken for coupling.",
+    "cond_max": "2-norm condition number of the 2x2 port-voltage matrix of the two perturbation phases. Above 10 the solve amplifies measurement error by more than an order of magnitude and the two phases are not independent enough to separate Y_uu from Y_ul; the extraction is then inconclusive, not scalar.",
+    "halving_rel_tol": "Small-signal check. Max over the four elements of |Y(a) - Y(a/2)| / max(|Y_uu|, |Y_ll|). A weakly nonlinear response moves with amplitude; 1% keeps the amplitude dependence 5x below kappa_scalar_max, so the scalar/matrix decision is not an artefact of the perturbation level.",
+    "window_rel_tol": "Settling/leakage check. Same metric between the 40 ns retained window [80, 120] ns and the extended 80 ns window [80, 160] ns of the same runs; 0.5% is 10x below kappa_scalar_max.",
+    "timestep_rel_tol": "Integration check. Same metric between max step 1 ps and 0.5 ps (window [80, 120] ns); 0.5% is 10x below kappa_scalar_max.",
+    "response_to_baseline_min": "Weak-response check. For every fixture/sideband/run, the perturbation response (run minus LO-only baseline) of port voltage and port current must be >= 10x the baseline's own projection at that frequency, so a 1% baseline drift stays below 0.1% of the response.",
+    "kappa_scalar_max": "Scalar adequacy bound on kappa = max(|Y_ul|/|Y_uu|, |Y_lu|/|Y_ll|): the fraction of a sideband's port current the other sideband's voltage contributes at equal sideband voltage magnitudes. For a port near match, an unmodelled admittance fraction eps moves the reflection coefficient by about eps/2, so 0.05 moves |Gamma| by ~0.025, i.e. under 1 dB at a -10 dB return loss (the form of target-spec row 5's 50-ohm alternative; no spec value is used or changed here). Classification uses a dead-band: SCALAR_ADEQUATE needs kappa + u < 0.05, MATRIX_REQUIRED needs kappa - u > 0.05, anything between is INCONCLUSIVE, where u is the worst convergence change rescaled to the smaller diagonal."
+  }
+}
