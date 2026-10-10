@@ -56,10 +56,29 @@ def _bench_test_files():
     return sorted(found)
 
 
+_PYTEST_CMD = re.compile(r"^(?:-\s+)?(?:run:\s*)?(?:python3?\s+-m\s+)?pytest(?:\s+(?P<args>.*))?$")
+
+
+def _pytest_args(wf):
+    """Argument tokens of executable pytest commands only (plain string tokens, no YAML
+    parse): a line counts when, after an optional `- ` / `run:` prefix, the command itself
+    is `pytest` or `python[3] -m pytest`. YAML comment lines, trailing ` #` comments,
+    `name:` descriptions and `pip install pytest` never count as coverage."""
+    args = set()
+    for ln in wf.splitlines():
+        cmd = re.split(r"\s#", ln.strip(), maxsplit=1)[0].strip()
+        if cmd.startswith("#"):
+            continue
+        m = _PYTEST_CMD.match(cmd)
+        if m and m.group("args"):
+            args.update(tok.rstrip("/") for tok in m.group("args").split())
+    return args
+
+
 def _not_run_by(wf, files):
     """Files whose own path, or one of whose parent directories, is not an argument of
-    any `pytest` line in the workflow text (plain string tokens, no YAML parse)."""
-    args = {tok.rstrip("/") for ln in wf.splitlines() if "pytest" in ln for tok in ln.split()}
+    any executable `pytest` command in the workflow text."""
+    args = _pytest_args(wf)
     def covered(f):
         parts = f.split("/")
         return any("/".join(parts[:i]) in args for i in range(1, len(parts) + 1))
@@ -88,3 +107,23 @@ def test_every_bench_tests_file_is_run_by_ci():
     assert _not_run_by(wf, [sibling]) == [sibling]
     # A prefix-sharing directory is not covered by a string-prefix accident.
     assert _not_run_by(wf, ["sim/harness/tests2/test_x.py"]) == ["sim/harness/tests2/test_x.py"]
+
+    # Negative control 3: commenting out a real pytest step leaves its files uncovered.
+    commented = "\n".join(
+        re.sub(r"^(\s*)", r"\1# ", ln) if gone in ln else ln for ln in wf.splitlines()
+    )
+    assert commented != wf
+    assert _not_run_by(commented, files) == [f for f in files if f.startswith(gone + "/")]
+    # Negative control 4: comment-only, trailing-comment, description and install lines
+    # are not executable pytest commands.
+    new = ["sim/new-bench/tests/test_new.py"]
+    for text in (
+        "# run: python -m pytest sim/new-bench/tests -q",
+        "        run: echo skip  # python -m pytest sim/new-bench/tests -q",
+        "      - name: Run pytest on sim/new-bench/tests",
+        "        run: pip install pytest sim/new-bench/tests",
+    ):
+        assert _not_run_by(text, new) == new, text
+    # Positive control: the same command, uncommented, does cover it.
+    assert _not_run_by("        run: python -m pytest sim/new-bench/tests -q", new) == []
+    assert _not_run_by("          python3 -m pytest sim/new-bench/tests  # bench", new) == []
