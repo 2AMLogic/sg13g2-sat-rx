@@ -37,6 +37,7 @@ sys.path.insert(0, str(SIM_DIR))
 sys.path.insert(0, str(BENCH_DIR))
 
 import lna_nf  # noqa: E402
+import stage1_tables  # noqa: E402
 from harness import evidence as evidence_mod  # noqa: E402
 from harness.corners import CORNERS, PvtPoint, build_grid, resolve_corners, supply_points  # noqa: E402
 from harness.pdk import PdkConfigError, PdkNotFound, find_pdk  # noqa: E402
@@ -217,11 +218,29 @@ def ingest(tb, reports, args) -> int:
     client_v = (client.stdout or client.stderr).strip()
     engines = sorted({str(m["environment"].get("engine_version")) for m in klt_meta})
     notes = list(tb.evidence.notes)
-    notes.append(
-        "CORRECTION RECORD (issue #22): this record supersedes "
-        f"{args.supersedes or '(none)'} and is a FRESH simulation of the full 27-point HBT x T x V "
-        "grid with the corrected NF method (noiseless Rs1, analytic F = 1 + inoise^2/(4 k 300.15 K Z0)); "
-        "it is not a reprocessing of the old logs. The old record is untouched.")
+    nf_exprs = {n: e for n, e in tb.measure.items() if n.startswith("nf_db_")}
+    for n, e in nf_exprs.items():
+        if "300.15" not in e or not e.startswith("10*log10(1+"):
+            raise SystemExit(f"error: tb.json {n} is not the corrected (issue #22) NF expression: {e}")
+    if args.supersedes:
+        notes.append(
+            "CORRECTION RECORD (issue #22): this record supersedes "
+            f"{args.supersedes} and is a FRESH simulation of the full 27-point HBT x T x V "
+            "grid with the corrected NF method (noiseless Rs1, analytic F = 1 + inoise^2/(4 k 300.15 K Z0)); "
+            "it is not a reprocessing of the old logs. The old record is untouched.")
+    else:
+        notes.append(
+            "NEW-DESIGN RECORD (issue #28): this record supersedes NOTHING. The earlier lna-sparam-nf records "
+            "(20260912-034726-9204518, 20261009-134024-57e1898) measure a different circuit (the unmatched "
+            "single-CE placeholder, testbench/lna_ce_placeholder.spice) and stay valid as placeholder-methodology "
+            "evidence; this record measures the xschem-derived design/lna_stage1 netlist. tb.json is re-pointed at "
+            "that netlist by this record's commit; the old records are untouched.")
+        notes.append(
+            "NF expression used (post-#22, corrected): "
+            + "; ".join(f"{n} = `{e}`" for n, e in sorted(nf_exprs.items()))
+            + f". Introduced by commit aef3a6c (issue #22, record 20261009-134024-57e1898) and unchanged here "
+            f"(checked at ingest: every nf_db_* expression starts `10*log10(1+` and carries T0 = 300.15 K). "
+            f"This record was minted at git {git.get('commit', git.get('short', '?'))}.")
     if comparison:
         w, t = comparison["worst"], comparison["tolerances"]
         notes.append(
@@ -269,6 +288,13 @@ def ingest(tb, reports, args) -> int:
         extensions=extensions)
     write_netlist_snapshot(tb, tb.experiment_dir, record_id)
     path = write_record(record, tb.experiment_dir)
+    if all(f"{d}_vce" in next(iter(results.values())).measurements for d in ("q1", "q2", "qr")):
+        meas = {cid: r.measurements for cid, r in results.items()}
+        extra = stage1_tables.render(
+            meas, texts, {cid: r.point.vdd for cid, r in results.items()},
+            {cid: (r.point.corner.name, r.point.temp_c) for cid, r in results.items()})
+        with path.open("a") as fh:
+            fh.write(extra)
     print(f"wrote {path}")
     return 0 if record["status"] == "pass" else 1
 

@@ -4,8 +4,19 @@
   "kind": "analog",
   "tier": null,
   "t1_item_count": 11,
-  "t1_met_count": 0,
+  "build_t1_item_count": 11,
+  "t1_met_count": 1,
   "source_doc": "signoff/design-evidence-tiers.md",
+  "source_doc_content_hash": "sha256:c7a1e7e10627fae396007e0ff951734f37d95028b8f49f2e21e802e9f552f318",
+  "build": {
+    "version": "0.7.0",
+    "package_version": "0.7.0",
+    "git_commit": "0e2362bda7309829398a35d54efaa989d5806065",
+    "git_tag": "v0.7.0",
+    "dirty": false,
+    "is_release": true,
+    "grading_ruleset_id": "sha256:eb8d2ba54d1700c78f1139ac111aee598fd7bc48688ab9654fca22995b6ac25e"
+  },
   "items": [
     {
       "tier": "T1",
@@ -14,9 +25,26 @@
       "partition": null,
       "text": "committed schematic sources (or generator) plus the netlist derived from them, regenerated on design change.",
       "notes": [],
-      "status": "unmet",
-      "reason": "no_evidence",
-      "citation": null
+      "status": "met",
+      "reason": null,
+      "graded_by_build": true,
+      "citation": {
+        "file": "signoff/evidence/item1-design-sources.json",
+        "command": null,
+        "kind": "generic",
+        "check_status": "pass",
+        "content_hash": "sha256:ad4fe1be5754f21fc4b2dd67863234858dc399e2a8232d3b20cf530014b8c447",
+        "input_verified": true,
+        "exit_status": 0,
+        "artifact_binding": {
+          "t1_item": 1,
+          "path": "design/netlist/lna_stage1.spice",
+          "content_hash": "sha256:ad4fe1be5754f21fc4b2dd67863234858dc399e2a8232d3b20cf530014b8c447",
+          "input_verified": true,
+          "summary": "Committed xschem schematic sources and the SPICE netlist derived from them (klt netlist --block via design/export_netlist.sh); the committed netlist matches what the sources export now.",
+          "source": "design/export_netlist.sh --check"
+        }
+      }
     },
     {
       "tier": "T1",
@@ -27,6 +55,7 @@
       "notes": [],
       "status": "unmet",
       "reason": "no_evidence",
+      "graded_by_build": true,
       "citation": null
     },
     {
@@ -38,6 +67,7 @@
       "notes": [],
       "status": "unmet",
       "reason": "no_evidence",
+      "graded_by_build": true,
       "citation": null
     },
     {
@@ -49,6 +79,7 @@
       "notes": [],
       "status": "unmet",
       "reason": "no_evidence",
+      "graded_by_build": true,
       "citation": null
     },
     {
@@ -62,6 +93,7 @@
       ],
       "status": "unmet",
       "reason": "no_evidence",
+      "graded_by_build": true,
       "citation": null
     },
     {
@@ -73,6 +105,7 @@
       "notes": [],
       "status": "unmet",
       "reason": "no_evidence",
+      "graded_by_build": true,
       "citation": null
     },
     {
@@ -86,6 +119,7 @@
       ],
       "status": "unmet",
       "reason": "no_evidence",
+      "graded_by_build": true,
       "citation": null
     },
     {
@@ -97,6 +131,7 @@
       "notes": [],
       "status": "unmet",
       "reason": "no_evidence",
+      "graded_by_build": true,
       "citation": null
     },
     {
@@ -108,6 +143,7 @@
       "notes": [],
       "status": "unmet",
       "reason": "no_evidence",
+      "graded_by_build": true,
       "citation": null
     },
     {
@@ -119,6 +155,7 @@
       "notes": [],
       "status": "unmet",
       "reason": "no_evidence",
+      "graded_by_build": true,
       "citation": null
     },
     {
@@ -132,6 +169,7 @@
       ],
       "status": "unmet",
       "reason": "no_evidence",
+      "graded_by_build": true,
       "citation": null
     },
     {
