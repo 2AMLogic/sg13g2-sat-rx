@@ -1,0 +1,79 @@
+* Candidate "folded_single_balanced": single-balanced mixer with a FOLDED
+*
+* SIZING FOLLOW-UP #61 -- sizing A (2 mA LO-pair sink). Declared in tb.json BEFORE collection and not
+* tuned afterwards. Reason (from the first record, 20261010-010744-a10c193): the
+* LO pair's retained V_BE fell below the card's 0.65 V floor from -9 dBm while the
+* gain was still rising. The V_BE trough is roughly (V_BE,on - swing), so the
+* lever kept inside the declared sweep and limits is the on-state current
+* density. Here: LO-pair sink 2 mA (was 1 mA), peak <= 2 mA per switching
+* device (card limit 3 mA); RL = 400 ohm keeps the ~0.4 V average drop of the
+* original; lo_dc = 1.72 V (was 1.70 V) keeps the common emitter near the
+* original ~0.85 V. Q1 branch (1 mA, R1 = 1 kohm) and the IF network are
+* unchanged. Hand estimates, NOT results. Only the .param line and the bias
+* differ from cand_folded_single_balanced.spice.
+* (capacitively coupled) RF transconductor.
+*
+* DEVICE-LEVEL TOPOLOGY STUDY, NOT A DESIGN (issue #35). One fixed,
+* documented sizing/bias choice; no optimizer. Ideal baluns, ideal R/C and
+* ideal bias sources only; no inductor. Prepended by ports_common.spice.
+*
+* Why this is the headroom alternative: the RF device Q1 and the LO
+* switching pair Q2/Q3 do NOT share one DC current path. Q1 runs from its
+* own collector resistor R1 to vdd; its RF collector current is folded into
+* the switching pair's common emitter node xe through an ideal 2 pF
+* coupling capacitor (4 ohm at 20 GHz; 2 pF rather than larger keeps the
+* R1*C settling constant near 2 ns when LO drive shifts xe's DC level).
+* Each DC path therefore stacks only one device level above an ideal
+* current sink, instead of the Gilbert's two.
+* Cost: single-balanced, so the LO is NOT cancelled at the IF output (the
+* tail current is switched at flo) and RF feedthrough is not cancelled
+* either; only RF-to-IF of the switching pair is balanced.
+*
+* Sizing (all devices npn13G2 Nx=1, card limit Ic < 3 mA):
+*   Q1:   base DC-coupled to the 50 ohm RF port, rf_dc = 1.10 V (ideal bias
+*         tee in the RF source leg); emitter on an ideal 1 mA sink bypassed
+*         by an ideal 10 pF capacitor; R1 = 1 kohm to vdd
+*         -> V_CE(Q1) ~ vdd - 1.0 - 0.2..0.3 V.
+*   Q2/Q3: bases at lo_dc = 1.70 V; common emitter xe on an ideal 1 mA sink
+*         -> xe ~0.80-0.92 V over T.
+*   RL = 800 ohm per output node (0.5 mA average each -> vdd - 0.4 V),
+*   Cout = 0.5 pF per output node to ground (the IF network every
+*         candidate uses).
+* Total rail current 2 mA, the same as the Gilbert candidate, so DC power
+* is compared at equal current.
+*
+* Ports (see ports_common.spice):
+*   RF: rf_port DC-coupled to Q1's base, rf_dc = 1.10 V.
+*   LO: lo_p/lo_n drive Q2/Q3's bases directly; lo_dc = 1.70 V.
+*   IF: ideal balun n=2 directly across out_p/out_n (200 ohm diff <->
+*       50 ohm SE) -> if_out (Rif = 50 ohm), centre tap fs_ifct FLOATING
+*       (no DC block; see the Gilbert fragment for the DC-differential
+*       caveat).
+*
+* Every HBT collector is fed through a 0 V sense source vic_<dev>; device
+* list declared in tb.json "study.candidates" (checked by mixfeas).
+
+.param fs_i1=1m fs_ilo=2m fs_r1=1k fs_rl=400 fs_ce=10p fs_cf=2p
+.param fs_cout=0.5p
+
+* ---- folded RF transconductor --------------------------------------------------
+vic_q1 c1r c_q1 0
+Xq1 c_q1 rf_port e_q1 0 npn13G2 Nx=1
+Ifs_e1 e_q1 0 DC {fs_i1}
+Cfs_e1 e_q1 0 {fs_ce}
+Rfs_r1 vdd c1r {fs_r1}
+Cfs_fold c1r xe {fs_cf}
+
+* ---- LO switching pair -------------------------------------------------------------
+vic_q2 out_p c_q2 0
+Xq2 c_q2 lo_p xe 0 npn13G2 Nx=1
+vic_q3 out_n c_q3 0
+Xq3 c_q3 lo_n xe 0 npn13G2 Nx=1
+Ifs_lo xe 0 DC {fs_ilo}
+
+* ---- loads, IF filter, output balun -----------------------------------------
+Rfs_lp vdd out_p {fs_rl}
+Rfs_ln vdd out_n {fs_rl}
+Cfs_op out_p 0 {fs_cout}
+Cfs_on out_n 0 {fs_cout}
+Xfs_ifbal if_out out_p out_n fs_ifct mf_balun n=2

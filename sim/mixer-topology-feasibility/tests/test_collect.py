@@ -208,7 +208,7 @@ def test_dry_run_writes_first_stage_only(study, tmp_path, monkeypatch):
     work = tmp_path / "w"
     work.mkdir()
     assert collect.run_collection(study, ["reltol=1e-5"], work, args(dry_run=True)) is None
-    assert len(list(work.glob("request_lo_select__*.json"))) == 3
+    assert len(list(work.glob("request_lo_select__*.json"))) == len(study.candidates)
     assert not list(work.glob("request_main__*"))
 
 
@@ -226,8 +226,8 @@ def test_full_synthetic_collection_passes_the_gate_and_selects(study, tmp_path, 
         assert sel["status"] == "selected" and sel["drive_dbm"] == -6.0
         assert all(f["status"] == "ok" for f in col.iip3[cand.name].values())
         assert all(abs(f["iip3_dbm"] - -5.0) < 0.6 for f in col.iip3[cand.name].values())
-    # 3 candidates x (1 lo_select + 1 iip3 + 3 main + 3 leakage) requests
-    assert len(fake.submitted) == 3 * 8
+    # every candidate x (1 lo_select + 1 iip3 + 3 main + 3 leakage) requests
+    assert len(fake.submitted) == len(study.candidates) * 8
     concl = mf.conclude(study, collect.per_candidate(study, col))
     assert concl["recommendation"]["draw_first"] in {c.name for c in study.candidates if c.role == "candidate"}
     seeds = {c["seed"] for c in col.cells if c["matrix"] == "leakage"}
@@ -336,7 +336,7 @@ def test_nothing_selectable_still_yields_a_complete_honest_record(study, tmp_pat
     col, fake = collect_with(study, tmp_path, monkeypatch,
                              gain_fn=lambda c, p, t, r: -12.0 + 0.75 * (r.vlo_dbm + 30.0)
                              + PROCESS_OFFSET_DB[p])
-    assert {s.matrix for s in fake.submitted} == {"lo_select"} and len(fake.submitted) == 3
+    assert {s.matrix for s in fake.submitted} == {"lo_select"} and len(fake.submitted) == len(study.candidates)
     assert all(s["status"] == "no acceptable drive in declared sweep" for s in col.selections.values())
     assert mf.validate_collection(study, col.cells) == []
     concl = mf.conclude(study, collect.per_candidate(study, col))
@@ -390,14 +390,15 @@ def test_provenance_cannot_claim_off_host_or_multi_unit_when_none_ran(study, tmp
     assert {m["backend"] for m in col.klt_meta} == {"local"} and {m["units"] for m in col.klt_meta} == {1}
     exe = collect.execution_provenance(col.klt_meta, col.cells)
     assert exe["off_host_requests"] == [] and exe["multi_unit_requests"] == [] and not exe["fleet_exercised"]
-    assert exe["not_simulated_cells"] == {"main": 243, "leakage": 243, "iip3": 117}
+    nc = len(study.candidates)
+    assert exe["not_simulated_cells"] == {"main": 81 * nc, "leakage": 81 * nc, "iip3": 39 * nc}
     md = _render(study, col)
     prov = _line(md, "- **Data provenance**: ")
     for forbidden in ("ran off-host", "off-host `klt sim`", "backend `batch`", "multi-unit requests"):
         assert forbidden not in prov
     assert "on this host only" in prov and "No multi-unit request was submitted" in prov
     assert "batch path was NOT exercised against the real fleet" in prov
-    assert "main 243, leakage 243, iip3 117" in prov and "No stage-2 request was submitted" in prov
+    assert f"main {81 * nc}, leakage {81 * nc}, iip3 {39 * nc}" in prov and "No stage-2 request was submitted" in prov
     assert "cross-check is local-vs-local" in _line(md, "- **Simulator**: ")
 
 
@@ -405,10 +406,11 @@ def test_provenance_states_off_host_only_when_a_batch_request_ran(study, tmp_pat
     col, _ = collect_with(study, tmp_path, monkeypatch)
     exe = collect.execution_provenance(col.klt_meta, col.cells)
     assert exe["fleet_exercised"] and exe["backends"] == ["batch", "local"]
-    # 3 candidates x (3 main + 3 leakage) multi-unit requests went to batch
-    assert len(exe["off_host_requests"]) == len(exe["multi_unit_requests"]) == 18
+    # every candidate x (3 main + 3 leakage) multi-unit requests went to batch
+    nreq = 6 * len(study.candidates)
+    assert len(exe["off_host_requests"]) == len(exe["multi_unit_requests"]) == nreq
     prov = _line(_render(study, col), "- **Data provenance**: ")
-    assert "18 ran off-host (backend(s) `batch`)" in prov and "NOT exercised" not in prov
+    assert f"{nreq} ran off-host (backend(s) `batch`)" in prov and "NOT exercised" not in prov
     assert "Not simulated" not in prov
 
 

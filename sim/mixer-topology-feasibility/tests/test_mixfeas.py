@@ -101,8 +101,10 @@ def test_declared_cell_counts(study):
     by = {}
     for c in cells:
         by[c["matrix"]] = by.get(c["matrix"], 0) + 1
-    # 3 topologies x (3 corners x 3 T x 3 V x 3 bands) etc.
-    assert by == {"main": 243, "leakage": 243, "lo_select": 3 * 3 * 13 * 2, "iip3": 3 * 3 * 13}
+    # N topologies x (3 corners x 3 T x 3 V x 3 bands) etc. (7 since the #61 sizing follow-up)
+    n = len(study.candidates)
+    assert n == 7
+    assert by == {"main": 81 * n, "leakage": 81 * n, "lo_select": n * 3 * 13 * 2, "iip3": n * 3 * 13}
     assert len({c["id"] for c in cells}) == len(cells)
 
 
@@ -595,16 +597,19 @@ def test_conclusion_never_recommends_floor_and_respects_stress(study):
     for c in per["placeholder_floor"]["main_cells"]:
         c["gain_db"] = 30.0
     out = mf.conclude(study, per)
-    assert out["recommendation"]["draw_first"] in ("gilbert_stacked", "folded_single_balanced")
+    assert out["recommendation"]["draw_first"] in {c.name for c in study.candidates if c.role == "candidate"}
     # one stress-rejected cell removes a candidate from feasibility
-    g = per["gilbert_stacked"]["main_cells"]
-    g[0] = dict(g[0], status="rejected_stress")
-    f = per["folded_single_balanced"]["main_cells"]
-    f[0] = dict(f[0], status="rejected_stress")
+    for cand in study.candidates:
+        if cand.role == "candidate":
+            mc = per[cand.name]["main_cells"]
+            mc[0] = dict(mc[0], status="rejected_stress")
     out = mf.conclude(study, per)
     assert out["verdicts"]["gilbert_stacked"]["verdict"] == "infeasible at the declared sizing"
     assert out["recommendation"]["draw_first"] is None
     # no acceptable drive / inconclusive are explicit verdicts, not forced choices
+    for cand in study.candidates:
+        if cand.role == "candidate":
+            per[cand.name]["lo_selection"] = {"status": "no acceptable drive in declared sweep", "reason": "x"}
     per["gilbert_stacked"]["lo_selection"] = {"status": "inconclusive", "reason": "missing"}
     per["folded_single_balanced"]["lo_selection"] = {"status": "no acceptable drive in declared sweep",
                                                      "reason": "x"}

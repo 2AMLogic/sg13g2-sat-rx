@@ -10,7 +10,7 @@ candidate uses ideal baluns, ideal R/C and ideal bias sources. Each has one
 fixed, documented sizing. There is no matching network, no inductor and no
 layout. Nothing here claims any spec row is met.
 
-## Status: parts 1 and 2 landed; first record says "no acceptable drive"
+## Status: parts 1 and 2 landed; no acceptable drive at any declared sizing (records 20261010-010744-a10c193, 20261010-025859-2113f00)
 
 Part 1 (PR #44) delivered the fixtures, the study declaration, the
 extraction, LO-selection, IIP3, stress and acceptance-gate logic
@@ -64,6 +64,63 @@ recorded per request (`collect.execution_provenance`), not written by hand, and
 a test fails if a record claims an off-host or multi-unit run that its requests
 do not show. The batch stage-2 path has still not run against the real fleet.
 That has to wait for a sizing that selects a drive (sizing follow-up #61).
+
+## Sizing follow-up (issue #61): still no acceptable drive
+
+Four alternative fixed sizings of the two balanced topologies were declared in
+`testbench/tb.json` (`study.candidates`, rationale in `_notes` and in each
+fragment header) in this directory's git history before any collection, and the original
+three candidates stay in the study unchanged. The lever is on-state current
+density (it raises V_BE,on so the off-going device's V_BE trough stays higher),
+with the load resistor and LO base bias moved to keep the original ~0.4 V
+average load drop and emitter-node level:
+
+| name | tail / LO-pair sink | RL | LO bias |
+|---|---|---|---|
+| `gilbert_stacked_a` | 3 mA | 270 ohm | 1.88 V |
+| `gilbert_stacked_b` | 4.5 mA | 180 ohm | 1.90 V |
+| `folded_single_balanced_a` | 2 mA | 400 ohm | 1.72 V |
+| `folded_single_balanced_b` | 2.7 mA | 300 ohm | 1.74 V |
+
+Result (`records/20261010-025859-2113f00.md`, append-only; the first record is
+untouched): **all seven topologies, original and new, return `no acceptable
+drive in declared sweep`.** The V_BE trough does rise with current (first
+rejected drive at LO -9 dBm: 0.565 V original, 0.592 V Gilbert A, 0.626 V
+Gilbert B, 0.616 V folded A) but not past the 0.65 V floor, and the higher
+currents run into the upper edge of the same window (folded B is rejected from
+-12 dBm on V_BE > 0.96 V; Gilbert A/B exceed 0.96 V at +6 dBm). At every
+sizing the gain is still rising 1-4 dB at the last stress-valid point, so the
+plateau rule cannot start. The bounds, plateau rule and stress limits were not
+touched. Main, leakage and IIP3 cells are `not_applicable_no_drive`; the
+recommendation is **none**.
+
+Reading: the card's V_BE window (0.65-0.96 V, 0.31 V wide) is narrower than the
+swing a plateau-level LO drive needs at the 100 ohm differential port. Closing
+that gap needs a rule or window decision, not another bias: see the
+decision-record proposal routed from #61 (it changes nothing here).
+
+Follow-up findings from running it for real:
+
+- **Batch stage 1 on the fleet.** All seven single-unit LO-selection requests
+  of the record ran on the Spot fleet (`--single-unit-backend batch`, new in
+  `run.py collect`; default stays `local`) with `--no-stage-models
+  --runner-version-check warn`. Without those flags the first submit is refused
+  by the version check (runner klt 0.5.0 vs client 0.7.0, reported in each
+  report's `environment.remote`). One earlier submit hit `batch_no_capacity`
+  and was simply retried; it never fell back to local.
+- **ngspice skew between hosts.** This worker has ngspice-42; the fleet and the
+  host that produced the first record have ngspice-46. Under 42 the placeholder
+  floor's weak-drive RF -66 dBm runs fail the extraction-floor check (numerical
+  noise bins ~1000x larger), so a purely local stage 1 does not complete; the
+  six real candidates gave the same no-drive outcome under 42 (local attempt,
+  not recorded). The fleet (46) runs are what the record uses. The local
+  cross-check, run on ngspice-42, differs from the fleet by up to 1.41e-2 dB
+  (folded candidates, 0 dBm trial drive), so the 1e-3 dB cross-check tolerance
+  was overridden for this record with `--crosscheck-tol-db 0.05` (printed in
+  the record; far below the 0.2 dB convergence tolerance). The default is
+  unchanged.
+- **The multi-unit stage-2 path (243-cell main/leakage, IIP3) is still not
+  exercised against the real fleet**, because nothing selected a drive.
 
 ## Candidates
 
