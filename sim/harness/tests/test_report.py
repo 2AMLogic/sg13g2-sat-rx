@@ -356,3 +356,23 @@ def test_markerless_unknown_install_still_passes_checker_with_verified_identity(
         (logs / f"{p.corner_id}.log").write_text("log\n")
     assert "install marker: unknown" in (exp / "records" / f"{rec['record_id']}.md").read_text()
     assert chk.check_format(tmp_path).items == []
+
+
+def test_offhost_identity_renders_what_was_verified_and_passes_checker(tmp_path):
+    """Off-host identity (issue #103 P1): the artifact line names the jobs whose
+    staged model inputs were hash-verified and does NOT claim the runner's
+    install was checked "before the run"; the evidence checker still accepts it."""
+    spec = importlib.util.spec_from_file_location("check_evidence_formats", CHECKER)
+    chk = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(chk)
+    exp, tb, pts, rec = build_synthetic_record(tmp_path)
+    off = {**ART, "verified_scope": "offhost-job-model-inputs", "files_verified": 4,
+           "jobs": [{"report": "report_2.50v.json", "job_id": "klt-sim-j1", "runner_klt_version": "0.7.0"}]}
+    rec["environment"]["pdk_artifact"] = off
+    md = R.render_markdown(rec)
+    line = next(l for l in md.splitlines() if l.startswith("- PDK artifact:"))
+    assert "staged to off-host klt job(s) `klt-sim-j1`" in line
+    assert "the runner's own install was not hashed" in line and "before the run" not in line
+    assert chk.PDK_ARTIFACT_RE.search(md)
+    local = R.render_markdown(build_synthetic_record(tmp_path / "b")[3])
+    assert "hash-verified in the simulating install before the run" in local

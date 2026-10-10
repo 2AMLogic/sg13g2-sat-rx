@@ -58,6 +58,10 @@ Since #103 the harness records the hash-verified artifact identity (upstream
 commit, manifest digest, verification result) on a `- PDK artifact:` line,
 separate from the install marker, and refuses to record without it; no record
 has been taken with it yet, so this is a capability, not an attestation.
+For off-host (`klt sim` batch) results the identity is bound from the klt
+reports' staged model inputs, not the ingesting host's install; current klt
+reports cannot prove the runner's model closure (2AMLogic/klayout-tools#3071),
+so `sim/lna-sparam-nf/run.py ingest` refuses to record them for now.
 Item 9 can honestly be attested once a later record of each harness-native
 bench carries a pinned PDK revision (fix `Pdk.version` to read `.fetched-version`
 or have `report.py` print the `pdk-artifact.json` commit, then re-run the bench),

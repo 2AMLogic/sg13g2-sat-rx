@@ -577,7 +577,13 @@ def render_markdown(record: dict) -> str:
          f"{art.get('upstream_repo') or 'unknown repo'} "
          f"{art.get('upstream_tag') or ''} commit `{art['upstream_commit']}`; "
          f"{art['manifest']} sha256 `{art['manifest_sha256']}`; "
-         f"{art.get('files_verified')} model files hash-verified before the run"),
+         f"{art.get('files_verified')} model files hash-verified "
+         + (("as the model inputs staged to off-host klt job(s) "
+             + ", ".join(f"`{j.get('job_id')}`" for j in art.get("jobs") or [])
+             + " (klt staged_model_inputs; runner klt build == client build); the runner's own "
+             "install was not hashed")
+            if art.get("verified_scope") == "offhost-job-model-inputs"
+            else "in the simulating install before the run")),
         f"- Python: {env['python']} on {env['platform']}",
         f"- git: {env['git'].get('short')} on {env['git'].get('branch')}"
         + (" (dirty)" if env["git"].get("dirty") else ""),

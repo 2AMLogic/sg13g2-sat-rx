@@ -215,6 +215,139 @@ def validate_identity(identity: object) -> dict:
     return identity
 
 
+def verify_job_models(env: object, sim_dir: Path) -> Report:
+    """Check the MODEL CLOSURE AN OFF-HOST ``klt sim`` JOB USED against the pin.
+
+    ``env`` is the ``environment`` block of one ``klt sim`` JSON report. This
+    is deliberately independent of whatever install the ingesting host has:
+    a local install that matches the pin says nothing about the models the
+    runner simulated with. What the report can prove, and what is required:
+
+    - ``environment.remote.runner_compatibility == "match"``: the runner ran
+      the client's own klt build. Any other value means the runner "may have
+      ignored" request options, including ``options.stage_model_inputs``,
+      and then simulated with its image-baked models, which no hash in the
+      report covers.
+    - ``environment.staged_model_inputs``: one entry per model file shipped
+      to the worker. Each entry's digest must be a pinned file hash -- the
+      entry's ``sha256`` for a file staged byte-for-byte, its
+      ``source_sha256`` for a file whose include paths staging rewrote (the
+      ``sha256`` of rewritten bytes cannot equal the pin). A rewritten entry
+      without ``source_sha256`` is NOT evidence.
+    - Every pinned file is accounted for, and nothing unpinned was staged.
+
+    ``environment.models_lib_sha256`` is NOT runner evidence: klt computes it
+    on the submitting client from the client's own resolution of
+    ``models.lib``, and it covers the top-level library only. It is checked
+    for consistency (a mismatch fails) but never establishes a match.
+    """
+    rep = Report()
+    try:
+        m = load_manifest(sim_dir)
+    except ArtifactManifestError as exc:
+        rep.fail(str(exc))
+        return rep
+    pinned: dict[str, str] = m["files"]
+    by_digest = {digest: rel for rel, digest in pinned.items()}
+    if not isinstance(env, dict):
+        rep.fail("report has no environment block; the models that produced it are unknown")
+        return rep
+
+    remote = env.get("remote")
+    if not isinstance(remote, dict):
+        rep.fail("report has no environment.remote: not an off-host job report (local runs are "
+                 "recorded by `harness.cli run`, which hashes the install it simulates with)")
+    elif remote.get("runner_compatibility") != "match":
+        rep.fail(f"runner_compatibility is {remote.get('runner_compatibility')!r} (runner klt "
+                 f"{remote.get('runner_klt_version')} vs client {remote.get('client_klt_version')}): "
+                 "the runner may have ignored options.stage_model_inputs and simulated with its "
+                 "image-baked models, which no hash in the report covers")
+
+    want_lib = pinned.get(m.get("model_lib", ""))
+    lib_sha = env.get("models_lib_sha256")
+    if lib_sha is not None and want_lib and lib_sha != want_lib:
+        rep.fail(f"submitting client resolved model_lib with sha256 {lib_sha}, pinned {want_lib}")
+
+    assets = env.get("staged_model_inputs")
+    if not isinstance(assets, list) or not assets:
+        rep.fail("report has no environment.staged_model_inputs: no hash of the model bytes the "
+                 "runner read (environment.models_lib_sha256 is the submitting client's top-level "
+                 "library only, not runner evidence)")
+        return rep
+    seen: set[str] = set()
+    for asset in assets:
+        if not isinstance(asset, dict):
+            rep.fail(f"malformed staged_model_inputs entry: {asset!r}")
+            continue
+        name = asset.get("name")
+        if asset.get("rewritten"):
+            digest = asset.get("source_sha256")
+            if not isinstance(digest, str) or not _SHA256_RE.match(digest):
+                rep.fail(f"staged model {name!r} was rewritten by staging and the report carries only "
+                         "the rewritten bytes' sha256 (no source_sha256), so it cannot be compared "
+                         "with the pin")
+                continue
+        else:
+            digest = asset.get("sha256")
+        rel = by_digest.get(digest) if isinstance(digest, str) else None
+        if rel is None:
+            rep.fail(f"staged model {name!r} (sha256 {digest}) is not a pinned file of {MANIFEST_FILENAME}")
+            continue
+        seen.add(rel)
+    for rel in sorted(set(pinned) - seen):
+        rep.fail(f"pinned model file {rel} is not among the job's staged model inputs")
+    return rep
+
+
+def offhost_identity(jobs: list[tuple[str, object]], sim_dir: Path) -> dict:
+    """Verified artifact identity for results produced OFF-HOST, or raise.
+
+    ``jobs`` is ``[(label, report_environment), ...]``, one per ``klt sim``
+    report. Every job must pass :func:`verify_job_models`; otherwise
+    :class:`ArtifactNotVerified` lists every problem. The identity has the
+    same required fields as :func:`verified_identity` but says what was
+    actually verified (``verified_scope``): the model inputs the jobs
+    received, not the ingesting host's install and not the runner's own
+    filesystem.
+    """
+    problems: list[str] = []
+    if not jobs:
+        problems.append("no klt job reports to verify")
+    for label, env in jobs:
+        rep = verify_job_models(env, sim_dir)
+        problems += [f"{label}: {p}" for p in rep.problems]
+    if problems:
+        raise ArtifactNotVerified("\n".join(f"FAIL: {p}" for p in problems) + OFFHOST_REFUSAL)
+    m = load_manifest(sim_dir)
+    up = m["upstream"]
+    return {
+        "status": "verified",
+        "verified_scope": "offhost-job-model-inputs",
+        "upstream_repo": up.get("repo", ""),
+        "upstream_tag": up.get("tag", ""),
+        "upstream_commit": up["commit"],
+        "manifest": f"sim/{MANIFEST_FILENAME}",
+        "manifest_sha256": sha256_file(sim_dir / MANIFEST_FILENAME),
+        "files_verified": len(m["files"]),
+        "jobs": [
+            {"report": label, "job_id": ((env.get("remote") or {}).get("job_id")),
+             "runner_klt_version": ((env.get("remote") or {}).get("runner_klt_version"))}
+            for label, env in jobs
+        ],
+        "method": "every pinned model file matched by sha256 among each off-host job's klt "
+                  "environment.staged_model_inputs (source_sha256 for rewritten files), runner klt "
+                  "build == client build (harness/pdkartifact.py verify_job_models); the runner's "
+                  "own install was not hashed",
+    }
+
+
+OFFHOST_REFUSAL = (
+    "\nNothing was recorded: the klt reports do not prove that the models which produced these "
+    "results are the pinned artifact (sim/pdk-artifact.json). A matching install on the ingesting "
+    "host is not evidence about an off-host runner."
+)
+
+
 REFUSAL = (
     "\nNothing was simulated: the installed IHP models are not the pinned artifact "
     "(sim/pdk-artifact.json). See sim/README.md 'IHP model artifact' to reinstall the "
