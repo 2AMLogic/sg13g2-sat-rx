@@ -1,5 +1,10 @@
 {
   "block": "sg13g2-sat-rx",
   "kind": "analog",
-  "evidence": {}
+  "evidence": {
+    "1": {
+      "file": "signoff/evidence/item1-design-sources.json",
+      "content_hash": "sha256:ad4fe1be5754f21fc4b2dd67863234858dc399e2a8232d3b20cf530014b8c447"
+    }
+  }
 }

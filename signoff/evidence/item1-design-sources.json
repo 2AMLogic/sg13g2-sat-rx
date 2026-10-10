@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "kind": "generic",
+  "status": "pass",
+  "t1_item": 1,
+  "summary": "Committed xschem schematic sources and the SPICE netlist derived from them (klt netlist --block via design/export_netlist.sh); the committed netlist matches what the sources export now.",
+  "source": "design/export_netlist.sh --check",
+  "metrics": {
+    "sources": {
+      "design/lna_stage1.sch": "sha256:e676f996a5ab0139630c880892cf87a93d919e6bf0ee40dc8a36584b96a98744",
+      "design/lna_stage1.sym": "sha256:e3b79cbadcebb818effa6afd04e178a0f6e84e07292f2c0d17791f097333af70"
+    },
+    "netlist": "design/netlist/lna_stage1.spice",
+    "check_output": "export_netlist: committed netlist matches the xschem sources"
+  },
+  "provenance": {
+    "input": {
+      "path": "design/netlist/lna_stage1.spice",
+      "content_hash": "sha256:ad4fe1be5754f21fc4b2dd67863234858dc399e2a8232d3b20cf530014b8c447"
+    }
+  }
+}

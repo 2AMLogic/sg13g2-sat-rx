@@ -20,25 +20,43 @@ re-run by CI on every push (`.github/workflows/signoff.yml`).
 ```
 block: sg13g2-sat-rx  kind: analog
 tier: none
-T1: 0/11 items met
+T1: 1/11 items met
 ```
 
-**All eleven T1 items are `unmet` with `reason: "no_evidence"`** — this is the
-correct, honest result for a block whose design and layout work has not
-started (nothing is drawn, no DRC/LVS/sim envelope exists to cite). Per the
-issue that added this manifest (#10), an all-`unmet` manifest is a correct
-result: it is the machine-readable statement of the gap, worth more than a
-prose checklist nobody re-reads. The per-item *human* context — which
-blockers are live, which upstream obstacles are permanent — stays in the
-gap-to-T1 tracker (#4); this report carries the machine verdict, and the two
-never disagree because the tracker points here instead of keeping its own
-checkbox list.
+**Item 1 (Design sources) is `met`; items 2-11 are `unmet` with `reason:
+"no_evidence"`.** Item 1 cites `evidence/item1-design-sources.json`, an
+artifact-anchored `generic` attestation (issue #28): it declares `t1_item: 1`,
+binds the derived netlist `design/netlist/lna_stage1.spice` by path and content
+hash, lists the xschem sources (`design/lna_stage1.sch`, `.sym`) with their
+hashes in `metrics`, and is `pass` only if `design/export_netlist.sh --check`
+says the committed netlist is what those sources export now. Regenerate it
+with `python3 signoff/make_item1_evidence.py` (it prints the manifest entry to
+paste, including the pinned `content_hash`) whenever the schematic or netlist
+changes; a stale pin renders `stale_evidence`, never a false pass. The graded
+`met` is "the item is bound to an audited artifact", not a judgment that the
+design is any good. Everything else is the correct, honest result for a block
+whose layout and verification evidence has not started. The per-item *human*
+context stays in the gap-to-T1 tracker
+([#4](https://github.com/2AMLogic/sg13g2-sat-rx/issues/4)); this report carries
+the machine verdict.
 
 `klt signoff` exit codes for `--manifest` mode: `0` = every rendered T1 item
 met (tier T1), `3` = report rendered successfully with at least one unmet
 item (this block's expected exit today), `1`/`2` = the manifest, a cited
 evidence file, or the tiers doc could not be read/parsed. Exit `3` is a
 rendered, usable report — not an error.
+
+**Grader pin: `klayout-tools==0.7.0`** (`.github/workflows/signoff.yml`),
+raised from 0.5.0 in the same change that cited item 1: klt 0.5.0 has no
+artifact-anchored generic evidence and renders such a citation
+`unmet`/`wrong_kind`, so the pin had to move for the item-1 citation to grade.
+Regenerate the report with the pinned release, not a dev build (a dev build
+writes its commit into the report's `build` block and would not compare equal
+to CI's re-grade). A throwaway venv does it without touching host tools:
+`uv venv /tmp/klt070 && uv pip install --python /tmp/klt070/bin/python
+klayout-tools==0.7.0 && /tmp/klt070/bin/klt signoff ...` (checked: `uvx --from
+klayout-tools==0.7.0` resolved to the host's already-installed dev build, whose
+`build` block differs).
 
 ## Regenerating the verdict of record
 

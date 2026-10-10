@@ -4,7 +4,7 @@ First xschem schematic in this repo: **one npn13G2 cascode LNA stage with ideal
 behavioral matching**. It is a *device-feasibility* design, not a spec-compliant
 LNA: row 2 assumes two stages, and nothing here claims any `spec/target-spec.md`
 row met. The evidence for this circuit is the lna-sparam-nf record
-`sim/lna-sparam-nf/records/20261010-012035-93c3472.md` (27-point HBT x T x V
+`sim/lna-sparam-nf/records/20261010-012923-6cad7fc.md` (27-point HBT x T x V
 grid on the off-host batch fleet, plus the per-device operating-point table and
 the k / |Delta| / mu sweep).
 
