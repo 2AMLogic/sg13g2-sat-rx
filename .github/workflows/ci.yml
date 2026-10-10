@@ -39,6 +39,8 @@ jobs:
         run: python -m pytest sim/lna-sparam-nf/tests -q
       - name: mixer-topology-feasibility extraction / selection / gate tests
         run: python -m pytest sim/mixer-topology-feasibility/tests -q
+      - name: lna-match-tradeoff family / extraction / bound / shortlist / gate / collection tests (closed-form fake klt)
+        run: python -m pytest sim/lna-match-tradeoff/tests -q
       - name: mixer-nf-method analytic tests (PSD/Parseval, SSB/image accounting, status gates; methodology only, no simulator)
         run: python -m pytest sim/mixer-nf-method/tests/test_nfmethod.py -v
 
@@ -193,6 +195,14 @@ jobs:
 
       - name: Mixer-topology selftest (analytic IIP3, process sensitivity, sabotage, mismatch seeds, invalid measurements; records nothing)
         run: python3 sim/mixer-topology-feasibility/run.py selftest
+
+      # lna-match-tradeoff (issue #74): local single-point controls only (pad
+      # closed form at 27 / -40 C, baseline reproduction against the
+      # lna-sparam-nf record, bound model check, alterparam cross-check, op
+      # invariance, process sensitivity). Records nothing; the PVT campaign
+      # stays on the batch fleet.
+      - name: LNA match-tradeoff smoke (pinned models; records nothing)
+        run: python3 sim/lna-match-tradeoff/run.py smoke
 
       - name: No evidence record or tracked file was created or changed
         run: |

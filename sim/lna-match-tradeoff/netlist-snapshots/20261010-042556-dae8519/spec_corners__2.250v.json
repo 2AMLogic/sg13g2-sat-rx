@@ -1,0 +1,30 @@
+{
+  "key": "corners__2.250v",
+  "phase": "corners",
+  "vdd": 2.25,
+  "processes": [
+    "hbt_typ",
+    "hbt_bcs",
+    "hbt_wcs"
+  ],
+  "temps": [
+    -40.0,
+    27.0,
+    125.0
+  ],
+  "networks": [
+    "baseline",
+    "optr10a180_b",
+    "pmr03a225_a",
+    "seg0250_a",
+    "probe_thru",
+    "probe_r50a000_b",
+    "probe_r50a045_b",
+    "probe_r50a090_a",
+    "probe_r50a135_a",
+    "probe_r50a180_a",
+    "probe_r50a225_a",
+    "probe_r50a270_b",
+    "probe_r50a315_b"
+  ]
+}
