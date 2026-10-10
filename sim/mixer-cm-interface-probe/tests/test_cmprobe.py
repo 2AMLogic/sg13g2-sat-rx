@@ -124,6 +124,9 @@ class MatrixAndStatus(unittest.TestCase):
     def test_unsettled_orbit_is_unknown(self):
         m, _ = matrix(mk={"settled": False})
         self.assertEqual(m["lo_period_trajectory"]["state"], "unknown")
+        self.assertEqual(m["wanted_sideband_transfer"]["state"], "unknown")
+        self.assertEqual(m["image_sideband_transfer"]["state"], "unknown")
+        self.assertIn("not settled", m["wanted_sideband_transfer"]["note"])
 
     def test_periodic_noise_commands_present_leaves_noise_unresolved(self):
         m, _ = matrix(pss_missing=False, pnoise_missing=False)

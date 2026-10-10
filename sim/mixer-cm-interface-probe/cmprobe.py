@@ -272,7 +272,7 @@ def build_matrix(parsed: dict, references: dict) -> dict:
     """The five-interface matrix. Pure function of the parsed log + reference text.
 
     A transfer interface is ``demonstrated`` ONLY when the known-answer control
-    passes AND the DUT response is linear/superposable; a failing control leaves
+    passes AND the DUT response is linear/superposable AND the LO orbit is settled; a failing control leaves
     it ``unknown`` (never ``unsupported``: a broken probe is not an absent
     capability).
     """
@@ -297,8 +297,11 @@ def build_matrix(parsed: dict, references: dict) -> dict:
     }
     lin_ok = dut["linearity_err"] <= DUT_LINEARITY_TOL and dut["superposition_err"] <= DUT_SUPERPOSITION_TOL
     for key, g in (("wanted_sideband_transfer", dut["gw"]), ("image_sideband_transfer", dut["gi"])):
-        ok = ctl_ok and lin_ok
-        why = ("control failed" if not ctl_ok else "DUT response not linear/superposable at the probe amplitude")
+        ok = ctl_ok and lin_ok and traj_ok
+        why = ("control failed" if not ctl_ok else
+               "DUT response not linear/superposable at the probe amplitude" if not lin_ok else
+               "LO orbit not settled: finite-window linearity does not establish transfer "
+               "about a settled periodic operating trajectory")
         matrix[key] = {
             "state": "demonstrated" if ok else "unknown",
             "basis": "probe",
