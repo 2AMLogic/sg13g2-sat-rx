@@ -15,11 +15,34 @@ The declaration is `STUDY.md` (rationale) plus `testbench/study.json`
 (machine-readable: grids, thresholds, tolerances, shortlist rule, the frozen
 candidate list, the nominal derivation). It was committed before any record.
 
-## Status
+## Status: one record, no tested input match meets the joint screen
 
-Declared, with tooling and tests landed. The collection record and its
-reading are added by later commits, under `records/` and
+Record: `records/20261010-042556-dae8519.md`. Reading:
 `design/lna_match_tradeoff.md`.
+
+**Screen.** All 51 declared networks ran at the nominal point, as one
+local single-unit `klt sim`.
+
+**Corner campaign.** The shortlist (the baseline plus the lowest-NF,
+best-S11 and lowest-S11-with-NF<=2.5 candidates) plus 9 probes ran at all
+27 PVT points on the batch fleet. The jobs were `klt-sim-ae96e48753bb`,
+`klt-sim-3f9d98f926a0` and `klt-sim-f5d0a72c5d2b`. The runner was klt 0.5.0
+against client 0.7.0, so the run used `--runner-version-check warn` and
+`--no-stage-models`, the known skew documented in
+`../mixer-topology-feasibility/README.md`. The fleet's models_lib_sha256
+equals this host's, and the fleet-vs-local nominal cross-check is exact.
+
+**Findings.**
+
+- No L-section reaches S11 <= -10 dB. The best is -6.0 dB at nominal.
+- The network-independent bound shows that at 8 of 18 in-rail points
+  (every 125 C point, and hbt_wcs/27 C) no lossless input network can meet
+  NF <= 2.5 dB with S11 <= -10 dB.
+- At hbt_wcs/125 C the core's own Fmin exceeds 2.5 dB at the top of the
+  band.
+
+**Next decision.** It is a core change, not a network change, and it is
+filed as #79.
 
 ## Files
 
