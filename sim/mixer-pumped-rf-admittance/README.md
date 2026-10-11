@@ -111,12 +111,50 @@ python3 sim/mixer-pumped-rf-admittance/run_probe.py --no-write            # cont
 python3 sim/mixer-pumped-rf-admittance/run_probe.py                       # appends a record (+ probe-logs/<id>/)
 python3 sim/mixer-pumped-rf-admittance/run_probe.py --reparse probe-logs/<id>                      # re-derive, no simulator
 python3 sim/mixer-pumped-rf-admittance/run_probe.py --reparse probe-logs/<id> --sabotage omit_image # controls must FAIL
+python3 sim/mixer-pumped-rf-admittance/run_probe.py --reparse <dir> --declaration <thresholds file> # unrecorded log only
 ```
 
 The executable must be the pinned ngspice major in `sim/pdk-artifact.json`, and the
 `pdkartifact` model-integrity gate runs before the simulator; otherwise a
 `CAPABILITY_UNAVAILABLE` record carries no result. `--allow-unpinned` explores on another
 binary and never writes a record.
+
+## Replay contract (`--reparse`)
+
+Replay re-derives a frozen log without a simulator, judged by **the declaration that judged
+it**, never by whatever `thresholds.json` says today (issue
+[#129](https://github.com/2AMLogic/sg13g2-sat-rx/issues/129)). A later, justified change to
+`thresholds.json` therefore cannot change what an older log means; it needs its own record.
+
+- **Recorded log** (`probe-logs/<id>/`). The run id is the directory name. Replay resolves
+  exactly one `records/<id>-<STATUS>.json` and evaluates with that record's stored
+  `thresholds` (the same values `.github/scripts/check_evidence_formats.py` checks the
+  record against). Before evaluating it checks the run identity and the record/package
+  relationship: `record_id` equals `<id>`, the JSON `status` equals the file-name status and
+  `classification`, the status carries a probe result (not `CAPABILITY_UNAVAILABLE`),
+  `probe_logs` is `sim/mixer-pumped-rf-admittance/probe-logs/<id>/`, and the directory given
+  is that package (not a copy elsewhere). The thresholds must be exactly the nine declared
+  keys as positive finite numbers, and `thresholds_provenance` must be present.
+- **Report.** The output's `replay` object names the mode, run id, log directory, record,
+  and the declaration used (its source, file, sha256 and declaring commit, from the record's
+  `thresholds_provenance`) with the threshold values. For a recorded log,
+  `classification_check` compares the recomputed classification with the stored one.
+- **Disagreement fails.** If the recomputed classification differs from the stored one, the
+  replay prints both and exits **3**.
+- **Unrecorded (exploratory) log** (for example a `--no-write` work directory). There is no
+  historical declaration, so `--declaration <file>` (thresholds.json format; its `values`
+  must be exactly the nine keys) is **required**; the current `thresholds.json` is never
+  borrowed silently, though it may be passed explicitly. The report names the file and its
+  sha256. `--declaration` is refused for a recorded log: its stored declaration is
+  authoritative.
+- **Sabotage.** `--sabotage` on a replay evaluates with the same resolved declaration (the
+  record's, or the explicit one) and reports it; no classification comparison is made, since
+  the sabotage changes the extraction on purpose.
+- **Refusals** exit **1** with a `replay refused:` message and print no result: a missing log
+  directory or `stdout.txt`/`stderr.txt`; an unrecorded log without `--declaration`; more
+  than one record for the run id (ambiguous); any identity or package mismatch above;
+  malformed record or declaration JSON; missing, extra, non-numeric or non-positive
+  thresholds.
 
 ## Method
 
