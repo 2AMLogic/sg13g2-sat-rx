@@ -28,8 +28,14 @@ SG13G2_REQUIRE_NGSPICE=1 sim/characterize.sh smoke      # hbt_typ only, writes n
 SG13G2_REQUIRE_NGSPICE=1 sim/characterize.sh selftest   # negative controls
 ```
 
-Full 27-point campaign (workstation only; the transient grid is a local
-`ngspice -b` loop, so do not run it on a shared dispatch host):
+Full 27-point campaign. A multi-point `harness.cli run` submits the grid as
+`klt sim` requests to the batch fleet by default (one request per supply,
+all process x temperature corners in each), so it is safe on a shared
+dispatch host; a failed submit records nothing and never falls back to a
+local loop. `--backend local` runs the old sequential `ngspice -b` loop
+(workstation only). The FFT-bin metrics depend on the ngspice FFT build: the
+fleet's ngspice-46 does not zero-pad, this host's does. Do not compare records
+across the two until issue #135 is resolved.
 
 ```
 (cd sim && python3 -m harness.cli run mixer-conversion-iip3 --corners hbt)

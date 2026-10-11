@@ -18,8 +18,9 @@
 #       The hbt_typ process corner only, writing NO evidence: for the two
 #       harness-native benches that is hbt_typ x 3 temperatures x 3 supplies
 #       (9 small points each -- harness.cli has no temperature/supply subset
-#       flag); for the Ka-band bench one PVT point (hbt_typ / 27 C / nominal
-#       supply) on its reduced bias sweep. Seconds, not minutes -- proof that
+#       flag -- run sequentially with --backend local, as hosted CI has no
+#       batch credentials); for the Ka-band bench one PVT point (hbt_typ /
+#       27 C / nominal supply) on its reduced bias sweep. Seconds, not minutes -- proof that
 #       the whole command surface runs from a clean checkout AND produces its
 #       measurements (see "smoke failure semantics" below).
 #
@@ -28,12 +29,14 @@
 #       hbt_wcs x (-40, 27, 125) C x (2.25, 2.50, 2.75) V = 27 points per
 #       bench. Mints a new, dated, append-only record per bench under
 #       sim/<experiment>/records/ -- a genuinely new record, never an
-#       overwrite of one already committed. The two harness-native benches run
-#       their 27 points as a LOCAL sequential ngspice loop (workstation only; on a
-#       shared dispatch host use sim/lna-sparam-nf/run.py characterize, which
-#       submits to the batch fleet). The Ka-band bench submits its
-#       grid as `klt sim` requests (backend from $KABAND_BACKEND, default
-#       "batch"; see its README.md "Running the full grid").
+#       overwrite of one already committed. The two harness-native benches
+#       submit their 27 points as `klt sim` requests through
+#       `harness.cli run --backend` (backend from $HARNESS_BACKEND, default
+#       "batch"; "local" is a sequential ngspice loop on this host --
+#       workstation only). The Ka-band bench likewise submits its grid as
+#       `klt sim` requests (backend from $KABAND_BACKEND, default "batch";
+#       see its README.md "Running the full grid"). A failed submit fails the
+#       campaign; it never falls back to a local grid.
 #
 #   sim/characterize.sh selftest
 #       The negative controls: `harness.cli selftest` for the two
@@ -41,7 +44,8 @@
 #       docstring), and run.py selftest for the Ka-band bench (source-noise
 #       normalization probe, process sensitivity, sabotage collapse, and a
 #       deliberately invalid deck that must be rejected) on its REDUCED bias
-#       sweep.
+#       sweep. `harness.cli selftest` is local-only (a sabotaged corner set
+#       has no klt sim form), sequential by default.
 #
 # lna-sparam-nf is a schematic-backed first-stage feasibility circuit with IDEAL
 # lossless matching; mixer-conversion-iip3 is a PLACEHOLDER circuit. Each
@@ -101,7 +105,7 @@ for exp in "${HARNESS_EXPERIMENTS[@]}"; do
       # sensitivity check (the single process corner). Every other failure --
       # violated bound, stuck swept temperature/supply axis, missing
       # measurement, simulator error -- is the harness's own non-zero exit.
-      python3 -m harness.cli run "${exp}" --corners hbt_typ --no-write --smoke-subset
+      python3 -m harness.cli run "${exp}" --corners hbt_typ --no-write --smoke-subset --backend local
       status=$?
       if [ "${status}" -ne 0 ]; then
         echo "--- ${exp}: smoke FAILED (exit ${status}) ---" >&2
@@ -112,7 +116,7 @@ for exp in "${HARNESS_EXPERIMENTS[@]}"; do
     characterize)
       # No --claim: harness.cli records the bench own tb.json claim (LNA:
       # ideal-matching feasibility; mixer: PLACEHOLDER disclaimer).
-      python3 -m harness.cli run "${exp}" --corners hbt
+      python3 -m harness.cli run "${exp}" --corners hbt --backend "${HARNESS_BACKEND:-batch}"
       ;;
     selftest)
       python3 -m harness.cli selftest "${exp}" --corners hbt

@@ -92,6 +92,25 @@ python3 -m harness.cli run <experiment-slug> --corners mos
 python3 -m harness.cli selftest <experiment-slug>
 ```
 
+### Where `run` simulates (`--backend`)
+
+`run` picks an execution backend from the size of the grid (issue #134):
+
+| Points | Default | What happens |
+|---|---|---|
+| more than one | `batch` | `klt_driver.run_grid_klt` writes one `klt sim` body + request per supply value (per supply x temperature if the deck reads `temp_c`), every process x temperature corner in each, with `options.stage_model_inputs`. The requests are submitted with `klt sim --backend batch`; the returned per-corner logs are parsed into the same `PointResult`s and written to `corners/<record-id>/<corner-id>.log`. |
+| exactly one | `local` | `runner.run_grid` runs one `ngspice -b` on this host (a debug probe). |
+
+- `--backend local` forces the local path for any grid. `--jobs`/`--num-threads` apply to the local path only, and a multi-point local grid refuses `--jobs` above 2.
+- A request that returns no usable report (klt exit 1/2, missing credentials, ...) stops the run with exit 1: nothing is recorded and nothing is re-run locally. Bodies, requests and any reports stay under `<workdir>/klt-<timestamp>/`.
+- A point the reports do not cover, a corner klt graded `error`, a missing log, or a missing measurement is an explicit `error`/`failed` point, so the record's status is `error`. It is never dropped.
+- An evidence-writing batch run takes its PDK artifact identity from the reports (`pdkartifact.offhost_identity`: staged model hashes and runner/client klt match). If that check fails, exit 3 before any log is copied. The local install is still verified before anything is submitted.
+- The record keeps the existing schema. `environment.execution` holds the backend and each request's remote job id, status, engine and runner klt version, and the Markdown Environment section shows them on a `- Execution:` line. The `ngspice` field names the off-host engine (`ngspice-46 via klt sim batch (recording host: ...)`).
+- Corners must each select exactly one `.lib` section, and no two corners may share a section. A `--sabotage` set fails this check, so run it with `--backend local`. `selftest` is local-only.
+- `--runner-version-check warn` passes klt's runner/client skew policy through to the requests. A skewed runner then runs the grid, but `offhost_identity` refuses to record its results, so use it only with `--no-write` (method checks).
+- `--no-stage-models` (requires `--no-write`) leaves the models out of the requests, so the runner uses its own image's models. A skewed runner that ignores `stage_model_inputs` needs it (klayout-tools#2877, #2901). Those models are not hashed, so the run is a method check only.
+- `--klt-cmd` picks the klt client (e.g. `uvx --from klayout-tools==X.Y.Z klt`). `--timeout-s` is the per-corner timeout (default 1800 s for klt, 300 s local).
+
 `harness/` needs no third-party dependencies — everything above is Python
 standard library, so it runs the same way in a fresh agent container as on a
 developer box, once `sim/pdk.json` points it at an installed PDK and

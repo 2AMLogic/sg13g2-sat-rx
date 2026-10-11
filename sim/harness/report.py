@@ -266,6 +266,7 @@ def environment(
     git: dict | None = None,
     toolchain: dict | None = None,
     pdk_artifact: dict | None = None,
+    execution: dict | None = None,
 ) -> dict:
     """Reproducibility provenance for the record.
 
@@ -279,6 +280,12 @@ def environment(
     artifact identity is refused (``ArtifactNotVerified``). ``pdk`` keeps the
     separate, best-effort installation version (``unknown`` on markerless
     installs); the two are never merged.
+
+    ``execution`` (issue #134) says where the points were simulated:
+    ``{"backend": "local"}`` for this host's own ``ngspice -b`` loop, or the
+    ``klt sim`` backend with each remote job id (see
+    ``klt_driver.KltGridResult.execution``). It is an added key of this
+    existing section; records written before it simply lack it (= local).
     """
     pdk_artifact = validate_identity(pdk_artifact)
     try:
@@ -297,6 +304,7 @@ def environment(
         "pdk_artifact": dict(pdk_artifact),
         "git": git if git is not None else git_provenance(repo_root),
         "toolchain": toolchain or {},
+        "execution": execution or {"backend": "local"},
     }
 
 
@@ -398,6 +406,7 @@ def build_record(
     allow_unswept_axes: bool = False,
     toolchain: dict | None = None,
     pdk_artifact: dict | None = None,
+    execution: dict | None = None,
 ) -> dict:
     measure_names = list(tb.measure)
     summary = summarize(results, measure_names)
@@ -437,7 +446,7 @@ def build_record(
         "subset_reason": subset_reason,
         "matrix": matrix_conformance(tb, points),
         "testbench": tb.provenance(),
-        "environment": environment(pdk, ngspice, repo_root, git, toolchain, pdk_artifact),
+        "environment": environment(pdk, ngspice, repo_root, git, toolchain, pdk_artifact, execution),
         "evidence": extensions.as_dict(),
         "grid": {
             "corners": corners,
@@ -584,6 +593,7 @@ def render_markdown(record: dict) -> str:
              "install was not hashed")
             if art.get("verified_scope") == "offhost-job-model-inputs"
             else "in the simulating install before the run")),
+        _execution_line(env.get("execution")),
         f"- Python: {env['python']} on {env['platform']}",
         f"- git: {env['git'].get('short')} on {env['git'].get('branch')}"
         + (" (dirty)" if env["git"].get("dirty") else ""),
@@ -594,6 +604,23 @@ def render_markdown(record: dict) -> str:
         lines.append(f"- Toolchain pins: **{state}**")
     lines.append("")
     return "\n".join(lines)
+
+
+def _execution_line(execution: dict | None) -> str:
+    """``- Execution:`` line: local ngspice loop, or klt sim backend + job ids."""
+    execution = execution or {"backend": "local"}
+    backend = execution.get("backend", "local")
+    if execution.get("via") != "klt sim":
+        return f"- Execution: backend `{backend}` (`ngspice -b` per point on the recording host)"
+    jobs = execution.get("jobs") or []
+    listed = "; ".join(
+        f"{j.get('supply_v'):.2f} V"
+        + (f"/{j.get('temp_c'):g} C" if j.get("temp_c") is not None else "")
+        + f": job `{j.get('job_id')}` status {j.get('status')}, engine ngspice-{j.get('engine_version')}, "
+        f"runner klt {j.get('runner_klt_version')} ({j.get('runner_compatibility')})"
+        for j in jobs)
+    return (f"- Execution: backend `{backend}` via klt sim (client `{execution.get('klt_client')}`), "
+            f"{len(jobs)} request(s): {listed}")
 
 
 def write_record(record: dict, experiment_dir: Path) -> Path:
