@@ -25,7 +25,7 @@ _None._
 
 Issues currently being built (`loom:building`).
 
-- **#121**: sim: qualify collector-current diagnostics for nonlinear LNA fits
+- **#132**: sim: refine headroom shortlist (C08/C05) - convergence, two-tone IIP3, gain/NF/stability vs baseline
 
 ## PRs Awaiting Review
 
@@ -45,10 +45,14 @@ Issues carrying `loom:curated`.
 
 - **#38**: Auditor Capability Request: Python runtime for local harness smoke validation *(curated)*
 - **#79**: design: choose the first-stage core change that lets NF and input match close together *(curated)*
+- **#132**: sim: refine headroom shortlist (C08/C05) - convergence, two-tone IIP3, gain/NF/stability vs baseline *(curated)*
+- **#135**: mixer-conversion-iip3: FFT-bin metrics depend on the ngspice FFT build (local zero-padded vs batch unpadded) *(curated)*
 
 ## Proposed (Architect / Hermit)
 
-- **#123**: sim: map cascode bias and output-load headroom before a stress-valid P1dB claim *(architect)*
+- **#149**: harness: reject non-finite and malformed numeric grading bounds *(architect)*
+- **#150**: harness: reject artifact filename collisions before PVT dispatch *(architect)*
+- **#144**: Consolidate duplicated provenance helpers in mixer probe drivers into the harness *(hermit)*
 
 ## Epics
 
@@ -64,7 +68,7 @@ _None._
 | In Progress (`loom:building`) | 1 |
 | PRs awaiting review | 0 |
 | Approved PRs awaiting merge | 0 |
-| Curated | 2 |
-| Architect / Hermit proposals | 1 |
+| Curated | 4 |
+| Architect / Hermit proposals | 3 |
 | Active epics | 0 |
 <!-- guide:plan-body:end -->

@@ -2,6 +2,35 @@
 
 Chronological record of merged pull requests and closed issues, maintained by the Loom Guide role.
 
+### 2026-10-11
+
+- **PR #151**: harness: freeze the testbench manifest next to each record's DUT snapshot
+- **PR #148**: ci: bound every workflow job with timeout-minutes
+- **PR #147**: fix: reject duplicate PVT identities in klt batch report collection
+- **PR #146**: sim(passive-p1): make the pipeline control immune to same-second record ids (#97)
+- **PR #145**: docs: reproduce guard classification of inert source and executed cleanup
+- **PR #142**: harness: local grading requires clean execution and finite values (#138)
+- **PR #137**: ingest: validate stage1 tables before publishing record (#130)
+- **PR #136**: harness: route multi-point grids through klt sim batch (#134)
+- **PR #133**: sim(lna-headroom): cascode bias/load headroom screening, stage 1 (#123)
+- **PR #131**: sim(mixer-pumped-rf-admittance): replay frozen logs with their recorded thresholds
+- **PR #128**: sim: qualify collector-current diagnostics for nonlinear LNA fits (plan v2)
+- **Issue #143** (closed): ci: bound every workflow job with timeout-minutes and guard it in test_ci_pins
+- **Issue #141** (closed): harness: freeze native testbench manifests with each evidence record
+- **Issue #140** (closed): docs: reproduce guard classification of inert source and executed cleanup
+- **Issue #139** (closed): harness: reject duplicate PVT identities in batch reports
+- **Issue #138** (closed): harness: reject failed local simulator runs with complete measurements
+- **Issue #134** (closed): harness: route multi-point grids through klt sim batch instead of a local ngspice loop
+- **Issue #130** (closed): sim: preflight LNA stability tables before publishing evidence
+- **Issue #129** (closed): sim: replay pumped-admittance logs with their recorded thresholds
+- **Issue #123** (closed): sim: map cascode bias and output-load headroom before a stress-valid P1dB claim
+- **Issue #121** (closed): sim: qualify collector-current diagnostics for nonlinear LNA fits
+- **Issue #120** (closed): Auditor guard review: retain scoped stash protection
+- **Issue #106** (closed): passive-p1 pipeline control flakes: same-second record-id collision on rerun
+- **Issue #100** (closed): Flaky: passive-p1 controls.py 'pipeline' control failed once in CI (rerun_digest_equal=false)
+- **Issue #97** (closed): ci: passive-p1 synthetic pipeline control is intermittently failing (rerun_digest_equal false)
+- **Issue #91** (closed): Auditor: keep git clean -fd guarded against uncommitted loss
+
 ### 2026-10-10
 
 - **PR #118**: ci: guard that every sim bench tests file is run by ci.yml
