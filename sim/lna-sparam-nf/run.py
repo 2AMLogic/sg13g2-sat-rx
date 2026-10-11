@@ -322,6 +322,23 @@ def ingest(tb, reports, args, verified=None) -> int:
         extra=dict(tb.evidence.extra), notes=notes)
     extensions.validate()
 
+    # Supplemental stage1 tables: rendered and validated in memory BEFORE any
+    # permanent write (issue #130), so a measurement package without a usable
+    # printed sweep, or whose sweep disagrees with the bench scalars, leaves no
+    # record, corner directory or snapshot behind. Exit 4 = invalid package
+    # (distinct from 1 = status/grid failure and 3 = provenance refusal).
+    extra = ""
+    if all(f"{d}_vce" in next(iter(results.values())).measurements for d in ("q1", "q2", "qr")):
+        try:
+            extra = stage1_tables.render(
+                {cid: r.measurements for cid, r in results.items()}, texts,
+                {cid: r.point.vdd for cid, r in results.items()},
+                {cid: (r.point.corner.name, r.point.temp_c) for cid, r in results.items()})
+        except ValueError as exc:
+            print(f"error: invalid stage1 measurement package: {exc}", file=sys.stderr)
+            print("ingest: NO record, corner logs or snapshot written", file=sys.stderr)
+            return 4
+
     record_id = allocate_record_id(REPO_ROOT, tb.experiment_dir / "records", started, git)
     log_dir = tb.experiment_dir / "corners" / record_id
     if log_dir.exists():
@@ -339,11 +356,7 @@ def ingest(tb, reports, args, verified=None) -> int:
         extensions=extensions, pdk_artifact=pdk_artifact)
     write_netlist_snapshot(tb, tb.experiment_dir, record_id)
     path = write_record(record, tb.experiment_dir)
-    if all(f"{d}_vce" in next(iter(results.values())).measurements for d in ("q1", "q2", "qr")):
-        meas = {cid: r.measurements for cid, r in results.items()}
-        extra = stage1_tables.render(
-            meas, texts, {cid: r.point.vdd for cid, r in results.items()},
-            {cid: (r.point.corner.name, r.point.temp_c) for cid, r in results.items()})
+    if extra:
         with path.open("a") as fh:
             fh.write(extra)
     print(f"wrote {path}")

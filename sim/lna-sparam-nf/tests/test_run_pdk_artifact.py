@@ -239,9 +239,10 @@ class _TbIn:
         return getattr(self._tb, name)
 
 
-def _write_reports(tmp_path, tb, env_for):
+def _write_reports(tmp_path, tb, env_for, log_text=None):
     """One klt report per supply, 9 corners each, logs with every measurement."""
-    log_text = "\n".join(f"m_{n} = 1.0" for n in tb.measure) + "\n"
+    if log_text is None:
+        log_text = "\n".join(f"m_{n} = 1.0" for n in tb.measure) + "\n"
     reports = []
     for vdd in supply_points(tb.nominal_supply_v, tb.supply_tolerance):
         tag = f"{vdd:.2f}v"
@@ -344,3 +345,85 @@ def test_characterize_refuses_unstaged_submission(monkeypatch):
     monkeypatch.setattr(run, "_pdk", _boom)
     monkeypatch.setattr(run.subprocess, "run", _boom)
     assert run.main(["characterize", "--no-stage-models"]) == 3
+
+
+# --- stage1 tables are validated before anything is published (issue #130) ---
+
+def _stage1_log(tb, *, markers=True, unstable=False, sw_kmin_scale=1.0):
+    """A corner log whose scalars agree with its printed 3-point sweep."""
+    ks, ds, mus = ([5.0, 3.0, 2.0], [0.5, 0.6, 0.7], [1.5, 1.2, 1.1])
+    if unstable:
+        ks[1], ds[1] = 0.8, 1.2
+    vals = {n: 1.0 for n in tb.measure}
+    vals.update({f"{d}_vce": 1.0 for d in ("q1", "q2", "qr")})
+    vals.update({f"{d}_vbe": 0.8 for d in ("q1", "q2", "qr")})
+    vals.update({f"{d}_icfrac": 0.5 for d in ("q1", "q2", "qr")})
+    vals.update({f"{d}_ft": 100.0 for d in ("q1", "q2", "qr")})
+    for s in ("lo", "mid", "hi"):
+        vals.update({f"k_{s}": 5.0, f"d_{s}": 0.5})
+    nunst = sum(1 for k, d in zip(ks, ds) if k <= 1.0 or d >= 1.0)
+    vals.update({"sw_n": 3.0, "sw_kmin": min(ks) * sw_kmin_scale, "sw_dmax": max(ds),
+                 "sw_mumin": min(mus), "sw_nunst": float(nunst)})
+    if unstable:
+        vals["k_mid"] = 0.8
+        vals["sw_fkmin_ghz"] = 1.0
+    lines = [f"m_{n} = {vals[n]!r}" for n in tb.measure]
+    if markers:
+        lines.append("SWEEP_BEGIN")
+        lines.append("Index frequency wf wk wd wmu")
+        for i, (k, d, mu) in enumerate(zip(ks, ds, mus)):
+            f = 1e9 * 10 ** (i / 100)
+            lines.append(f"{i}\t{f:.10e}\t{f:.10e}\t{k:.10e}\t{d:.10e}\t{mu:.10e}\t")
+        lines.append("SWEEP_END")
+    return "\n".join(lines) + "\n"
+
+
+def _ingest_real(tb, tmp_path, log_text):
+    reports = _write_reports(tmp_path, tb, lambda tag: _good_env(f"klt-sim-{tag}"), log_text)
+    return run.ingest(tb, reports, _args())
+
+
+def _nothing_published(tb):
+    assert list((tb.experiment_dir / "records").iterdir()) == []
+    assert not (tb.experiment_dir / "corners").exists()
+    assert not (tb.experiment_dir / "snapshots").exists()
+
+
+@pytest.mark.parametrize("case", ["missing_markers", "scalar_disagreement"])
+def test_invalid_stage1_package_publishes_nothing(local_install_matches, tmp_path, capsys, case):
+    tb = local_install_matches
+    log = (_stage1_log(tb, markers=False) if case == "missing_markers"
+           else _stage1_log(tb, sw_kmin_scale=1.5))
+    rc = _ingest_real(tb, tmp_path, log)
+    assert rc == 4 and rc not in (1, 3)
+    err = capsys.readouterr().err
+    assert "invalid stage1 measurement package" in err and "NO record" in err
+    if case == "missing_markers":
+        assert "SWEEP_BEGIN" in err
+    else:
+        assert "disagree" in err
+    _nothing_published(tb)
+
+
+@pytest.mark.parametrize("unstable", [False, True])
+def test_valid_stage1_package_keeps_tables(local_install_matches, monkeypatch, tmp_path, unstable):
+    tb = local_install_matches
+
+    class _Pdk:
+        def provenance(self):
+            return {"pdk": "fake"}
+
+    monkeypatch.setattr(run, "_pdk", lambda: _Pdk())
+    rc = _ingest_real(tb, tmp_path, _stage1_log(tb, unstable=unstable))
+    assert rc in (0, 1)  # status verdict is independent of the tables
+    (rec,) = (tb.experiment_dir / "records").glob("*.md")
+    text = rec.read_text()
+    assert "## Operating points per device and grid cell" in text
+    assert "## Stability: k, |Delta|, mu" in text
+    assert "### Sweep statistics cross-check" in text
+    assert text.index("## How to read this record") > text.index("Status")
+    if unstable:
+        assert "POTENTIALLY UNSTABLE" in text and "Cells labelled POTENTIALLY UNSTABLE: **27 of 27**" in text
+    else:
+        assert "Cells labelled POTENTIALLY UNSTABLE: **0 of 27**" in text
+    assert len(list((tb.experiment_dir / "corners" / rec.stem).glob("*.log"))) == 27
