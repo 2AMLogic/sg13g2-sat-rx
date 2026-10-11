@@ -154,6 +154,41 @@ def test_pdk_info_shape_is_byte_compatible(tmp_path, monkeypatch):
                               "sg13g2_hbt_mod.lib": hashlib.sha256(hbt_mod.read_bytes()).hexdigest()}
 
 
+def test_pdk_info_fetched_version_read_is_frozen(tmp_path, monkeypatch):
+    """The probe read stays byte-compatible with the pre-#155 records.
+
+    Two deliberate divergences from ``Pdk.version`` are pinned: the parent
+    dir's marker wins over the variant dir's, and an absent marker reports
+    the literal ``"unknown"`` even when a ``SOURCES`` file could supply a
+    value. Delegating to ``Pdk.version`` would silently change what existing
+    append-only records recorded.
+    """
+    pdk_root = tmp_path / "pdk"
+    models = pdk_root / "libs" / "models"
+    models.mkdir(parents=True)
+    corner = models / "cornerHBT.lib"
+    corner.write_text("* corner")
+    (models / "sg13g2_hbt_mod.lib").write_text("* hbt")
+
+    class FakePdk:
+        path = pdk_root
+        model_lib = corner
+
+    monkeypatch.setattr(sys.modules["harness.pdk"], "find_pdk", lambda sim_dir: FakePdk())
+
+    # Marker present in BOTH the parent dir and the variant dir: parent wins.
+    (tmp_path / ".fetched-version").write_text("parent-marker\n")
+    (pdk_root / ".fetched-version").write_text("variant-marker\n")
+    assert provenance.pdk_info(tmp_path)["fetched_version"] == "parent-marker"
+
+    # Marker absent everywhere but SOURCES exists: literal "unknown", never
+    # the SOURCES value (that fallback belongs to Pdk.version, not records).
+    (tmp_path / ".fetched-version").unlink()
+    (pdk_root / ".fetched-version").unlink()
+    (pdk_root / "SOURCES").write_text("sources-line\n")
+    assert provenance.pdk_info(tmp_path)["fetched_version"] == "unknown"
+
+
 def test_pinned_major_reads_the_artifact_manifest(tmp_path):
     artifact = tmp_path / "pdk-artifact.json"
     artifact.write_text('{"ngspice": {"major": 46}}')

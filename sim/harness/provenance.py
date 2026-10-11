@@ -14,7 +14,10 @@ their output shape is frozen -- a record's ``git`` is exactly
 ``<YYYYMMDD>-<HHMMSS>-<short-git-sha>``. Existing keys are never renamed or
 reformatted; the id-minting collision checks (records glob, extra log
 directories) keep the probe semantics of ``report.allocate_record_id``, which
-only guards the harness's own ``records/`` Markdown path.
+only guards the harness's own ``records/`` Markdown path. ``pdk_info``'s
+``fetched_version`` deliberately keeps the pre-#155 probe read (parent-dir
+marker, then variant-dir marker, then ``"unknown"`` -- no ``SOURCES``
+fallback) rather than ``Pdk.version``; see its docstring.
 """
 
 from __future__ import annotations
@@ -72,6 +75,20 @@ def ngspice_info(exe: str) -> dict:
 
 
 def pdk_info(sim_dir: Path) -> dict:
+    """PDK identity block for probe records (frozen shape, frozen version read).
+
+    ``fetched_version`` keeps the probe drivers' pre-#155 read -- the install
+    marker looked up in the *parent* of the variant dir first, then the
+    variant dir itself, else the literal ``"unknown"``. It deliberately does
+    NOT delegate to ``Pdk.version``: that centralized reader only looks in
+    the variant dir and additionally falls back to a ``SOURCES`` first line,
+    so delegating would silently change ``fetched_version`` values recorded
+    into append-only records for installs where the marker sits at the
+    parent (volare/ciel layouts) or is absent while ``SOURCES`` exists.
+    Byte-compatibility with the existing records wins; harness consumers
+    that want the richer resolution use ``Pdk.version`` directly. Pinned by
+    ``test_pdk_info_fetched_version_read_is_frozen``.
+    """
     from harness.pdk import find_pdk  # noqa: WPS433 (kept function-local like the drivers')
     p = find_pdk(sim_dir)
     fv = p.path.parent / ".fetched-version"
