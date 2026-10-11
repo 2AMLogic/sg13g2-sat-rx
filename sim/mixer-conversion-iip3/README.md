@@ -38,8 +38,19 @@ build -- the fleet's ngspice-46 does not zero-pad a non-power-of-two `fft`
 input, this host's builds do -- so the 20260912 record (old 8001-sample
 window) is not comparable across the two backends. Since issue #135 the
 window is exactly 65536 = 2^16 samples over an exactly-80-ns DFT record, so
-both builds run the identical transform and records are backend-independent;
-see this experiment's tb.json evidence notes.
+both builds run the identical transform. pfund_dbm, conversion gain and
+lo_rf_leak_dbm then agree across backends within 0.002 dB. pim3_dbm and
+iip3_dbm do NOT agree (5.1 / 2.6 dB): they sit on the transient sampler's
+floor and are not a device IM3/IIP3. See this experiment's tb.json evidence
+notes.
+
+Single local point (debug probe, allowed on a dispatch host):
+
+```
+(cd sim && python3 -m harness.cli run mixer-conversion-iip3 --backend local \
+   --corners hbt_typ --temperatures 27 --supplies 2.5 \
+   --subset-reason "..." [--supersedes <record-id> ...])
+```
 
 ```
 (cd sim && python3 -m harness.cli run mixer-conversion-iip3 --corners hbt)

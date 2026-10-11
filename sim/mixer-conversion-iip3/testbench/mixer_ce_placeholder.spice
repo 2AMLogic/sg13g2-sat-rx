@@ -64,11 +64,18 @@
 *
 * Floor caveat (visible only now that leakage is gone): at this drive
 * (vrf=10 mV) the IM3 product sits BELOW what this sampling/FFT path resolves
-* -- pim3_dbm falls monotonically as the record is refined (8192 samples:
-* -104.7 dBm; 16384: -117.4; 32768: -124.2; 65536: -142.6 at
-* hbt_typ/27C/2.50V) instead of converging -- so pim3_dbm/iip3_dbm here
-* validate the extraction mechanics and their cross-backend reproducibility,
-* not a device IM3/IIP3; see this experiment's tb.json evidence notes.
+* -- along the SAMPLE-COUNT axis (same 80 ns window, finer tstep, default
+* tolerances) pim3_dbm falls monotonically instead of converging, at
+* hbt_typ/27C/2.50V: 8192 samples: -104.7 dBm; 16384: -117.4; 32768: -124.2
+* (producing ngspice build of these three rungs not recorded); 65536: -142.6
+* on the batch fleet's ngspice-46, -137.45 on this host's ngspice-42. Along
+* the separate TOLERANCE axis (65536 samples fixed, local ngspice-42),
+* tightening reltol to 1e-6 moved it UP, -137 -> -130 dBm. Opposite signs on
+* different axes: a resolved IM3 product would be stable along both, and
+* this read is stable along neither. So pim3_dbm/iip3_dbm here are NOT a
+* device IM3/IIP3 and do not reproduce across backends (only pfund_dbm,
+* conversion gain and lo_rf_leak_dbm do); see this experiment's tb.json
+* evidence notes.
 *
 * LO-to-RF leakage: read from the SAME transient's FFT of v(prf) (the RF
 * port node, i.e. the side of the RF source resistor facing the DUT) at the

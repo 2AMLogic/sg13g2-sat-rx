@@ -101,3 +101,38 @@ def test_clean_run_publishes_record_with_both_frozen_artifacts(staged):
     assert (snaps / f"{rid}.spice").is_file()
     assert f"**Manifest**: `netlist-snapshots/{rid}.tb.json`" in md
     assert tb.manifest_sha256 in md
+
+
+def test_select_axis_keeps_declared_levels_and_refuses_new_ones():
+    assert cli.select_axis([-40.0, 27.0, 125.0], "", "temperatures") == [-40.0, 27.0, 125.0]
+    assert cli.select_axis([-40.0, 27.0, 125.0], "27", "temperatures") == [27.0]
+    assert cli.select_axis([2.25, 2.5, 2.75], "2.50,2.5", "supplies") == [2.5]
+    with pytest.raises(ValueError, match="not one of"):
+        cli.select_axis([2.25, 2.5, 2.75], "2.6", "supplies")
+    with pytest.raises(ValueError, match="not a number"):
+        cli.select_axis([27.0], "warm", "temperatures")
+
+
+def test_subset_write_run_requires_reason(staged, capsys):
+    exp, _tb = staged
+    rc = cli.main(["run", str(exp), "--backend", "local", "--corners", "hbt_typ",
+                   "--temperatures", "27", "--supplies", "1.2"])
+    assert rc == 2
+    assert "--subset-reason" in capsys.readouterr().err
+    assert not (exp / "records").exists()
+
+
+def test_single_point_subset_record_carries_justification(staged):
+    exp, _tb = staged
+    rc = cli.main(["run", str(exp), "--backend", "local", "--corners", "hbt_typ",
+                   "--temperatures", "27", "--supplies", "1.2",
+                   "--subset-reason", "one local debug point"])
+    records = list((exp / "records").glob("*.md"))
+    assert len(records) == 1
+    md = records[0].read_text()
+    assert "  - Temperature: 27 C" in md and "  - Supply: 1.20 V" in md
+    assert "1 point grid (subset of" in md
+    assert "Justification: one local debug point" in md
+    logs = list((exp / "corners" / records[0].stem).glob("*.log"))
+    assert [p.name for p in logs] == ["hbt_typ_27c_1.20v.log"]
+    assert rc in (0, 1)  # status is the checks' verdict; the record is written either way
