@@ -98,6 +98,23 @@ sim/pdk.json; local wins on every key).
 """
 
 
+MARKER_FILENAME = ".fetched-version"
+
+
+def read_install_marker(root: Path) -> str:
+    """First line of ``<root>/.fetched-version``, stripped; ``""`` if absent or blank.
+
+    The single parser of the install marker (``Pdk.version`` and
+    ``pdkartifact.verify`` both use it).
+    """
+    marker = Path(root) / MARKER_FILENAME
+    if marker.is_file():
+        lines = marker.read_text().strip().splitlines()
+        if lines:
+            return lines[0].strip()
+    return ""
+
+
 class PdkConfigError(RuntimeError):
     """``sim/pdk.json`` is missing a key this module cannot proceed without."""
 
@@ -129,7 +146,14 @@ class Pdk:
 
     @property
     def version(self) -> str:
-        """Best-effort install revision, if the PDK records one in SOURCES."""
+        """Best-effort install revision.
+
+        Order: the install's ``.fetched-version`` marker (IHP-Open-PDK), then
+        the first line of a ``SOURCES`` file, then ``"unknown"``.
+        """
+        marker = read_install_marker(self.path)
+        if marker:
+            return marker
         sources = self.path / "SOURCES"
         if sources.is_file():
             text = sources.read_text().strip()

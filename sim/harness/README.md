@@ -77,7 +77,9 @@ This core deliberately does not know:
 - `sim/pdk.local.json` — optional, git-ignored, same shape, overrides
   `pdk.json` per-machine.
 - `sim/toolchain.json` — optional. `{"pdk_version": "...",
-  "ngspice_min_major": N, "python_min": "3.11"}`. Absent means "nothing
+  "ngspice_min_major": N, "python_min": "3.11"}`. `pdk_version` is compared
+  exactly against `Pdk.version`: the install's `.fetched-version` first line,
+  else the first line of `SOURCES`, else `unknown` (a drift when a pin is set). Absent means "nothing
   pinned" (reported, not a failure).
 - `sim/<experiment-slug>/testbench/tb.json` — one per experiment. See
   `testbench.py`'s module docstring for the manifest schema.

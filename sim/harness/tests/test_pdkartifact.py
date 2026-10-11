@@ -148,3 +148,38 @@ def test_no_identity_for_tampered_or_missing_models_or_manifest(env):
     (sim / "pdk-artifact.json").unlink()
     with pytest.raises(pdkartifact.ArtifactNotVerified):
         pdkartifact.verified_identity(pdk, sim)
+
+
+def _bare_pdk(root):
+    return Pdk(name="x", path=root, variant="v", source="test", model_lib_rel="m.lib")
+
+
+def test_version_reads_marker_only(tmp_path):
+    (tmp_path / ".fetched-version").write_text("0.3.0\nextra\n")
+    assert _bare_pdk(tmp_path).version == "0.3.0"
+
+
+def test_version_neither_is_unknown(tmp_path):
+    assert _bare_pdk(tmp_path).version == "unknown"
+    (tmp_path / ".fetched-version").write_text("  \n")
+    assert _bare_pdk(tmp_path).version == "unknown"
+
+
+def test_version_sources_fallback_and_marker_precedence(tmp_path):
+    (tmp_path / "SOURCES").write_text("src-rev\nmore\n")
+    assert _bare_pdk(tmp_path).version == "src-rev"
+    (tmp_path / ".fetched-version").write_text("0.3.0\n")
+    assert _bare_pdk(tmp_path).version == "0.3.0"
+
+
+def test_pin_equal_to_marker_is_no_drift_and_unknown_is(tmp_path):
+    from harness import toolchain
+
+    (tmp_path / ".fetched-version").write_text("9.9\n")
+    pins = {"pdk_version": "9.9"}
+    ok = toolchain.check(_bare_pdk(tmp_path).version, "", "", pins=pins)
+    assert not [d for d in ok if d.tool == "pdk"]
+    bare = tmp_path / "bare"
+    bare.mkdir()
+    bad = toolchain.check(_bare_pdk(bare).version, "", "", pins=pins)
+    assert [d for d in bad if d.tool == "pdk"]
