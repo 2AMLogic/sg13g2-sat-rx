@@ -35,6 +35,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -193,6 +194,56 @@ def _require(manifest: dict, key: str, path: Path):
     return manifest[key]
 
 
+def _finite_limit(value, where: str) -> float:
+    """Return ``value`` if it is a finite real number, else raise ValueError.
+
+    Rejects bool (an ``int`` subclass), strings, None-like junk, NaN and
+    +/-inf (including JSON overflow literals such as ``1e999``): a NaN limit
+    makes every ordered comparison false and would silently disable the bound.
+    """
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"{where}: limit must be a finite number, got {value!r}")
+    try:
+        finite = math.isfinite(value)
+    except OverflowError:
+        finite = False
+    if not finite:
+        raise ValueError(f"{where}: limit must be a finite number, got {value!r}")
+    return value
+
+
+def validate_check_limits(name: str, spec: dict, where: str = "") -> None:
+    """Validate the numeric limits of one ``checks`` entry (fail closed).
+
+    Shared by manifest loading and direct grading callers
+    (``report.evaluate_checks``). ``min``/``max`` stay optional.
+    """
+    prefix = f"{where}: " if where else ""
+    for key in ("min", "max", "max_spread_pct", "min_spread_pct"):
+        if key in spec and spec[key] is not None:
+            _finite_limit(spec[key], f"{prefix}check {name!r} key {key!r}")
+    low, high = spec.get("min"), spec.get("max")
+    if low is not None and high is not None and low > high:
+        raise ValueError(
+            f"{prefix}check {name!r}: min ({low!r}) is greater than max ({high!r})"
+        )
+    for key in ("max_spread_pct", "min_spread_pct"):
+        if spec.get(key) is not None and spec[key] < 0:
+            raise ValueError(f"{prefix}check {name!r} key {key!r}: spread percentage must be >= 0, got {spec[key]!r}")
+    for axis_key in ("min_spread_pct_by_axis", "max_spread_pct_by_axis"):
+        axes = spec.get(axis_key)
+        if not axes:
+            continue
+        if not isinstance(axes, dict):
+            raise ValueError(f"{prefix}check {name!r}: {axis_key} must be an object")
+        for axis, limit in axes.items():
+            _finite_limit(limit, f"{prefix}check {name!r} {axis_key}[{axis!r}]")
+            if limit < 0:
+                raise ValueError(
+                    f"{prefix}check {name!r} {axis_key}[{axis!r}]: spread percentage must be >= 0, got {limit!r}"
+                )
+
+
 def _validate_checks(checks: dict[str, dict], measure: dict[str, str], path: Path) -> None:
     for name, spec in checks.items():
         if name not in measure:
@@ -220,6 +271,7 @@ def _validate_checks(checks: dict[str, dict], measure: dict[str, str], path: Pat
                     f"{path}: check {name!r}: unknown axis/axes {', '.join(unknown_axes)} in "
                     f"{axis_key}; known: {', '.join(AXES)}"
                 )
+        validate_check_limits(name, spec, str(path))
 
 
 def load(directory: str | Path) -> Testbench:

@@ -152,3 +152,44 @@ def test_working_input_drift_detects_vanished_inputs(tmp_path):
     tb = T.load(exp)
     (exp / "testbench" / "dut.spice").unlink()
     assert "no longer readable" in tb.working_input_drift()
+
+
+def write_raw_manifest(tmp_path, checks_literal):
+    tbdir = tmp_path / "exp" / "testbench"
+    tbdir.mkdir(parents=True)
+    (tbdir / "dut.spice").write_text("R1 a b 1k\n")
+    (tbdir / "tb.json").write_text(
+        '{"name": "t", "netlist": "dut.spice", "measure": {"m1": "1"}, "checks": ' + checks_literal + "}"
+    )
+    return tmp_path / "exp"
+
+
+@pytest.mark.parametrize("literal", [
+    '{"m1": {"min": NaN}}',
+    '{"m1": {"max": Infinity}}',
+    '{"m1": {"min": -Infinity}}',
+    '{"m1": {"max": 1e999}}',
+    '{"m1": {"max_spread_pct": 1e999}}',
+    '{"m1": {"min": true}}',
+    '{"m1": {"max": "5"}}',
+    '{"m1": {"max_spread_pct": false}}',
+    '{"m1": {"min": 5, "max": 1}}',
+    '{"m1": {"max_spread_pct": -1}}',
+    '{"m1": {"min_spread_pct": -0.5}}',
+    '{"m1": {"max_spread_pct_by_axis": {"supply": NaN}}}',
+    '{"m1": {"min_spread_pct_by_axis": {"process": "1"}}}',
+    '{"m1": {"max_spread_pct_by_axis": {"temperature": 1e999}}}',
+    '{"m1": {"min_spread_pct_by_axis": {"supply": true}}}',
+    '{"m1": {"max_spread_pct_by_axis": {"supply": -2}}}',
+])
+def test_bad_numeric_limits_rejected_at_load(tmp_path, literal):
+    with pytest.raises(ValueError, match="m1"):
+        T.load(write_raw_manifest(tmp_path, literal))
+
+
+def test_valid_numeric_limits_still_load(tmp_path):
+    tb = T.load(write_raw_manifest(
+        tmp_path, '{"m1": {"min": -1, "max": 2.5, "max_spread_pct": 0, "min_spread_pct_by_axis": {"supply": 1}}}'
+    ))
+    assert tb.checks["m1"]["max"] == 2.5
+    T.load(make_bench(tmp_path / "x", {"checks": {"m1": {"min": 3, "max": 3}}}))
