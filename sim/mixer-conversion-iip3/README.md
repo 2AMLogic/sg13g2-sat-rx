@@ -33,9 +33,13 @@ Full 27-point campaign. A multi-point `harness.cli run` submits the grid as
 all process x temperature corners in each), so it is safe on a shared
 dispatch host; a failed submit records nothing and never falls back to a
 local loop. `--backend local` runs the old sequential `ngspice -b` loop
-(workstation only). The FFT-bin metrics depend on the ngspice FFT build: the
-fleet's ngspice-46 does not zero-pad, this host's does. Do not compare records
-across the two until issue #135 is resolved.
+(workstation only). The FFT-bin metrics USED to depend on the ngspice FFT
+build -- the fleet's ngspice-46 does not zero-pad a non-power-of-two `fft`
+input, this host's builds do -- so the 20260912 record (old 8001-sample
+window) is not comparable across the two backends. Since issue #135 the
+window is exactly 65536 = 2^16 samples over an exactly-80-ns DFT record, so
+both builds run the identical transform and records are backend-independent;
+see this experiment's tb.json evidence notes.
 
 ```
 (cd sim && python3 -m harness.cli run mixer-conversion-iip3 --corners hbt)
