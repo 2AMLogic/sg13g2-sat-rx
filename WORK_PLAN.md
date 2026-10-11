@@ -25,7 +25,6 @@ _None._
 
 Issues currently being built (`loom:building`).
 
-- **#103**: sim: carry verified PDK artifact identity into native evidence provenance
 - **#121**: sim: qualify collector-current diagnostics for nonlinear LNA fits
 
 ## PRs Awaiting Review
@@ -38,13 +37,14 @@ _None._
 
 PRs that passed review and are queued for Champion auto-merge (`loom:pr`).
 
-- **#118**: ci: guard that every sim bench tests file is run by ci.yml
+_None._
 
 ## Proposed
 
 Issues carrying `loom:curated`.
 
 - **#38**: Auditor Capability Request: Python runtime for local harness smoke validation *(curated)*
+- **#79**: design: choose the first-stage core change that lets NF and input match close together *(curated)*
 
 ## Proposed (Architect / Hermit)
 
@@ -61,10 +61,10 @@ _None._
 | Operator merge-risk holds | 0 |
 | Operator priority | 0 |
 | Ready (`loom:issue`) | 0 |
-| In Progress (`loom:building`) | 2 |
+| In Progress (`loom:building`) | 1 |
 | PRs awaiting review | 0 |
-| Approved PRs awaiting merge | 1 |
-| Curated | 1 |
+| Approved PRs awaiting merge | 0 |
+| Curated | 2 |
 | Architect / Hermit proposals | 1 |
 | Active epics | 0 |
 <!-- guide:plan-body:end -->

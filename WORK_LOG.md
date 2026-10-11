@@ -4,6 +4,11 @@ Chronological record of merged pull requests and closed issues, maintained by th
 
 ### 2026-10-10
 
+- **PR #118**: ci: guard that every sim bench tests file is run by ci.yml
+- **PR #126**: sim: carry verified PDK artifact identity into native evidence provenance
+- **Issue #117** (closed): ci: guard that every sim bench tests directory is run by ci.yml
+- **Issue #103** (closed): sim: carry verified PDK artifact identity into native evidence provenance
+- **Issue #90** (closed): Auditor: guard rejects worktree writes with unresolved variables
 - **PR #124**: sim: run reduced lna-linearity cubic control on pinned ngspice in CI
 - **PR #119**: sim: qualify LNA two-tone IIP3 and single-tone input P1dB; nominal lna_stage1 record (#57)
 - **PR #116**: feat: add pumped mixer RF-port admittance method probe (scalar vs 2x2)
