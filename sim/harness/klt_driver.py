@@ -35,6 +35,7 @@ from pathlib import Path
 from typing import Callable, Iterable
 
 from . import pdkartifact
+from .corners import require_unique_corner_ids
 from .pdk import PdkConfigError, PdkNotFound, find_pdk
 
 
@@ -291,6 +292,9 @@ def build_jobs(tb, pdk, points, workdir: Path, backend: str, timeout_s: int,
                runner_version_check: str = "", stage_models: bool = True) -> list[KltJob]:
     """Write one body + request per supply (per supply x temperature when the
     deck reads ``temp_c``). Returns the jobs; submits nothing."""
+    # Artifact-identity gate (issue #150): before any body/request/report
+    # file is written, let alone submitted -- see corners.require_unique_corner_ids.
+    require_unique_corner_ids(points)
     by_section = klt_process_names(points)
     sections = list(by_section)
     per_temp = deck_reads_temp_c(tb)

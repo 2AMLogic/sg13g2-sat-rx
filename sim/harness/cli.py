@@ -34,7 +34,14 @@ from pathlib import Path
 
 from . import HARNESS_VERSION
 from . import toolchain as toolchain_mod
-from .corners import build_grid, resolve_corners, sabotage, supply_points
+from .corners import (
+    CornerIdCollision,
+    build_grid,
+    require_unique_corner_ids,
+    resolve_corners,
+    sabotage,
+    supply_points,
+)
 from . import klt_driver
 from . import pdkartifact
 from .pdk import Pdk, PdkConfigError, PdkNotFound, find_pdk
@@ -189,6 +196,16 @@ def cmd_run(args: argparse.Namespace) -> int:
     temperatures = tb.temperatures_c
     supplies = supply_points(tb.nominal_supply_v, tb.supply_tolerance)
     points = build_grid(corners, temperatures, supplies)
+
+    # Artifact-identity gate (issue #150): distinct points whose corner_id
+    # formats to the same string would overwrite each other's decks and logs.
+    # Refused before anything is allocated, written or submitted; the local
+    # and batch grid paths re-check so their direct callers are covered too.
+    try:
+        require_unique_corner_ids(points)
+    except CornerIdCollision as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
 
     backend = resolve_backend(args.backend, len(points))
     if backend != "local" and args.no_stage_models and not args.no_write:

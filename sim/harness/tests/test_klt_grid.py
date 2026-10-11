@@ -313,6 +313,47 @@ def test_submit_raises_on_klt_failure_and_accepts_exit_4_reports(tmp_path):
 
 
 # ---------------------------------------------------------------------------
+# artifact-identity gate: ambiguous grids are refused before dispatch (issue #150)
+# ---------------------------------------------------------------------------
+
+def _fine_grid(tb, supplies):
+    """Single-corner points at 27 C and fine supply values."""
+    return C.build_grid(C.resolve_corners(["hbt_typ"]), (27.0,), supplies)
+
+
+def test_supply_aliasing_grid_is_refused_before_any_request_or_submission(bench, pdk, tmp_path):
+    points = _fine_grid(bench, [2.501, 2.504])
+    assert points[0].corner_id == points[1].corner_id == "hbt_typ_27c_2.50v"
+    workdir = tmp_path / "w"
+
+    def no_submit(*a, **k):
+        raise AssertionError("an ambiguous grid reached klt submission")
+
+    with pytest.raises(C.CornerIdCollision, match="hbt_typ_27c_2.50v"):
+        kd.run_grid_klt(bench, pdk, points, workdir, submit_fn=no_submit)
+    assert not workdir.exists()  # no body, request or report was written either
+
+
+def test_fine_grid_with_distinct_formatted_ids_still_executes_on_batch(bench, pdk, tmp_path):
+    points = _fine_grid(bench, [2.504, 2.506])
+    assert [p.corner_id for p in points] == ["hbt_typ_27c_2.50v", "hbt_typ_27c_2.51v"]
+    grid = kd.run_grid_klt(bench, pdk, points, tmp_path / "w", submit_fn=fake_submit(bench))
+    assert [r.status for r in grid.results] == ["ok", "ok"]
+    assert [r.point.corner_id for r in grid.results] == [p.corner_id for p in points]
+
+
+def test_cli_refuses_a_supply_aliasing_grid_before_dispatch(run, bench):
+    bench.supply_tolerance = 0.0006  # rails 2.4985 / 2.5000 / 2.5015 V all format to 2.50
+    rc, calls, out = run("--corners", "hbt_typ", "--no-write")
+    assert rc == 2 and calls.local == 0 and calls.klt == []
+    assert "corner_id" in out.err and "hbt_typ_27c_2.50v" in out.err
+    assert "2.5015" in out.err and "2.4985" in out.err  # full point tuples in the error
+    assert not (bench.experiment_dir / "corners").exists()
+    assert not (bench.experiment_dir / "records").exists()
+    assert not list((bench.experiment_dir / "_build").glob("klt-*"))
+
+
+# ---------------------------------------------------------------------------
 # cli run: routing, provenance, refusals
 # ---------------------------------------------------------------------------
 

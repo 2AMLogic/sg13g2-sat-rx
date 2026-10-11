@@ -8,7 +8,9 @@ GENERIC CORE:
   single-corner smoke-test set (not a valid evidence matrix on its own).
 - :class:`Corner`, :class:`PvtPoint`, :func:`build_grid`, :func:`supply_points`,
   :func:`resolve_corners` -- the PVT-grid arithmetic itself (a corner ×
-  temperature × supply full factorial, in a stable order).
+  temperature × supply full factorial, in a stable order), plus
+  :func:`require_unique_corner_ids` -- the pre-execution gate that refuses a
+  grid whose points alias one artifact id (see its docstring).
 - :func:`sabotage` -- the harness's negative control: forces every corner's
   sections to typical so a corner-runner self-test can prove that switching
   corners actually changes what gets simulated, rather than silently
@@ -212,6 +214,50 @@ def build_grid(
             itertools.product(corners, temperatures, supplies)
         )
     ]
+
+
+class CornerIdCollision(ValueError):
+    """A submitted grid contains points that share one :attr:`PvtPoint.corner_id`.
+
+    The id names each point's deck and log artifacts, so aliased points would
+    overwrite each other's evidence. Raised before anything executes.
+    """
+
+
+def require_unique_corner_ids(points: list[PvtPoint]) -> None:
+    """Pre-execution artifact-identity gate: refuse an ambiguous PVT grid.
+
+    ``corner_id`` renders supply with two decimals and temperature with
+    ``%g``, so distinct legal grid values can alias to one artifact name:
+    2.501 V and 2.504 V both become ``_2.50v``; 27.00001 C and 27.00004 C
+    both ``27c``; a duplicated supply entry duplicates the whole id. Because
+    the id names the deck, the raw log and the evidence-log filename, aliased
+    points overwrite each other's artifacts (and concurrent local runs would
+    share one deck pathname). Every grid path -- local
+    (:func:`runner.run_grid`) and batch (:func:`klt_driver.build_jobs`) --
+    calls this before any directory, deck, request or permanent log is
+    written, and the CLI refuses an ambiguous grid before it allocates a
+    record id at all. Grids whose formatted ids are already distinct pass
+    unchanged -- including fine grids finer than the nominal rails; no
+    minimum spacing is imposed and the id format itself is preserved.
+    """
+    by_id: dict[str, list[PvtPoint]] = {}
+    for point in points:
+        by_id.setdefault(point.corner_id, []).append(point)
+    collisions = {cid: pts for cid, pts in by_id.items() if len(pts) > 1}
+    if not collisions:
+        return
+    detail = "; ".join(
+        f"{cid} <- " + " | ".join(
+            f"corner={p.corner.name} temp_c={p.temp_c!r} vdd={p.vdd!r}" for p in pts
+        )
+        for cid, pts in sorted(collisions.items())
+    )
+    n_points = sum(len(pts) for pts in collisions.values())
+    raise CornerIdCollision(
+        f"{n_points} grid point(s) resolve to an already-used corner_id and would "
+        f"overwrite each other's artifacts: {detail}"
+    )
 
 
 # ---------------------------------------------------------------------------

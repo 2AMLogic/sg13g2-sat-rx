@@ -66,3 +66,59 @@ def test_point_dict_carries_sections():
     p = C.build_grid(C.resolve_corners(["hbt_bcs"]), [27], [2.5])[0]
     d = p.as_dict()
     assert d["corner"] == "hbt_bcs" and d["corner_sections"] == ["hbt_bcs"] and d["corner_id"] == "hbt_bcs_27c_2.50v"
+
+
+# ---------------------------------------------------------------------------
+# artifact-identity uniqueness gate (issue #150)
+# ---------------------------------------------------------------------------
+
+def _points(corner_name="hbt_typ", temps=(27.0,), supplies=(2.5,)):
+    return C.build_grid(C.resolve_corners([corner_name]), temps, supplies)
+
+
+def test_fine_supply_grid_aliasing_one_id_is_rejected_with_both_tuples():
+    pts = _points(supplies=(2.501, 2.504))
+    assert pts[0].corner_id == pts[1].corner_id == "hbt_typ_27c_2.50v"
+    with pytest.raises(C.CornerIdCollision, match="hbt_typ_27c_2.50v") as excinfo:
+        C.require_unique_corner_ids(pts)
+    msg = str(excinfo.value)
+    assert "vdd=2.501" in msg and "vdd=2.504" in msg
+    assert "temp_c=27.0" in msg
+
+
+def test_temperature_display_precision_collapse_is_rejected():
+    pts = _points(temps=(27.00001, 27.00004))
+    assert pts[0].corner_id == pts[1].corner_id == "hbt_typ_27c_2.50v"
+    with pytest.raises(C.CornerIdCollision) as excinfo:
+        C.require_unique_corner_ids(pts)
+    msg = str(excinfo.value)
+    assert "temp_c=27.00001" in msg and "temp_c=27.00004" in msg
+
+
+def test_duplicate_point_entries_are_rejected():
+    grid = _points(supplies=(2.5, 2.5))
+    assert len(grid) == 2
+    with pytest.raises(C.CornerIdCollision, match="2 grid point"):
+        C.require_unique_corner_ids(grid)
+
+
+def test_colliding_grid_error_names_only_the_aliased_tuples():
+    pts = _points(temps=(27.00001, 27.00004, 30.0))
+    with pytest.raises(C.CornerIdCollision) as excinfo:
+        C.require_unique_corner_ids(pts)
+    msg = str(excinfo.value)
+    assert "temp_c=27.00001" in msg and "temp_c=27.00004" in msg
+    assert "temp_c=30.0" not in msg  # the compatible point is not implicated
+    assert "hbt_typ_30c_2.50v" not in msg
+
+
+def test_fine_grid_with_distinct_formatted_ids_passes():
+    pts = _points(supplies=(2.504, 2.506))
+    assert [p.corner_id for p in pts] == ["hbt_typ_27c_2.50v", "hbt_typ_27c_2.51v"]
+    C.require_unique_corner_ids(pts)  # must not raise: no minimum spacing is imposed
+
+
+def test_nominal_27_point_grid_passes_unchanged():
+    grid = C.build_grid(C.resolve_corners(["hbt"]), [-40, 27, 125], C.supply_points(2.5, 0.10))
+    C.require_unique_corner_ids(grid)  # must not raise
+    assert len(grid) == 27
