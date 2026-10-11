@@ -338,30 +338,66 @@ def collect(tb, points, jobs: list[KltJob], parse: Callable[[str], dict]) -> tup
     Every point gets a :class:`runner.PointResult` and a log text. A point
     the reports do not cover, a corner klt graded ``error``, a missing log,
     or a missing / non-finite measurement is an explicit ``error``/``failed``
-    result with a message -- never dropped."""
+    result with a message -- never dropped. A PVT identity the reports
+    return more than once -- inside one report, or across two jobs claiming
+    the same point -- is refused as ambiguous rather than graded, so entry
+    order can never change the verdict (issue #139). A returned corner whose
+    ``temperature_c`` does not parse as a finite number has no gradeable
+    identity at all: :class:`KltGridError` names the request and the
+    malformed identity before anything is published.
+    """
     from .runner import PointResult  # local import: runner has no klt dependency
 
     by_section = klt_process_names(points)
-    found: dict[str, tuple[KltJob, dict]] = {}
+    found: dict[str, list[tuple[KltJob, dict]]] = {}
+    stray: list[tuple[float, str]] = []  # (supply, identity) the requests never asked for
     for job in jobs:
         for corner in job.report.get("corners") or []:
+            if not isinstance(corner, dict):
+                raise KltGridError(
+                    f"{job.report_path.name} (request {job.key}) returned a corner entry that "
+                    f"is not an object ({corner!r}); its PVT identity cannot be graded")
             c = by_section.get(str(corner.get("process")))
             if c is None:
+                stray.append((job.supply_v,
+                              f"process {corner.get('process')!r} in {job.report_path.name}"))
                 continue
-            temp = float(corner.get("temperature_c"))
+            try:
+                temp = float(corner.get("temperature_c"))
+            except (TypeError, ValueError):
+                temp = math.nan
+            if not math.isfinite(temp):
+                raise KltGridError(
+                    f"{job.report_path.name} (request {job.key}) returned a corner with process "
+                    f"{c.name!r} whose temperature_c {corner.get('temperature_c')!r} is not a "
+                    f"finite number (supply {job.supply_v:.2f} V); its PVT identity cannot "
+                    "be graded")
             cid = f"{c.name}_{temp:g}c_{job.supply_v:.2f}v"
-            found[cid] = (job, corner)
+            found.setdefault(cid, []).append((job, corner))
 
     results, logs = [], {}
     for point in points:
         cid = point.corner_id
-        hit = found.get(cid)
-        if hit is None:
+        hits = found.get(cid)
+        if not hits:
             msg = "klt sim returned no result for this point"
+            stray_here = [what for supply, what in stray if supply == point.vdd]
+            if stray_here:
+                msg += ("; the reports also carried corners matching no requested process ("
+                        + ", ".join(stray_here[:3]) + ")")
             logs[cid] = f"KLT SIM: {msg}\n"
             results.append(PointResult(point=point, status="error", log=f"{cid}.log", message=msg))
             continue
-        job, corner = hit
+        if len(hits) > 1:
+            detail = "; ".join(f"{j.report_path.name} status {str(c.get('status'))!r}"
+                               for j, c in hits)
+            msg = (f"klt sim returned {len(hits)} corners for PVT identity {cid} ({detail}); "
+                   "the identity is repeated, so which entry is this point's result would "
+                   "be ambiguous -- refusing to grade it")
+            logs[cid] = f"KLT SIM: {msg}\n"
+            results.append(PointResult(point=point, status="error", log=f"{cid}.log", message=msg))
+            continue
+        job, corner = hits[0]
         seconds = float(corner.get("runtime_s") or 0.0)
         text = _corner_log(corner, job.report_path)
         diag = corner.get("diagnostics")
