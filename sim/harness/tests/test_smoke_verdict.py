@@ -69,6 +69,7 @@ def run_cli(monkeypatch, capsys):
         wrote = []
         monkeypatch.setattr(cli, "write_record", lambda *a, **k: wrote.append(1))
         monkeypatch.setattr(cli, "write_netlist_snapshot", lambda *a, **k: wrote.append(1))
+        monkeypatch.setattr(cli, "write_manifest_snapshot", lambda *a, **k: wrote.append(1))
         # sim/characterize.sh smoke runs the 9-point hbt_typ subset locally.
         rc = cli.main(["run", exp, "--corners", "hbt_typ", "--backend", "local", *flags])
         return rc, calls, wrote, capsys.readouterr()

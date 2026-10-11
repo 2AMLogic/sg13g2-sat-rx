@@ -276,6 +276,94 @@ def test_writers_are_append_only(tmp_path):
     assert md.read_bytes() == before
 
 
+def test_manifest_snapshot_is_verbatim_append_only_and_declared(tmp_path):
+    """The frozen manifest is the exact loaded ``tb.json`` bytes (no writer
+    header, so the declared digest covers the whole file), named by the
+    record's ``**Manifest**:`` line, and never rewritten."""
+    exp, tb, pts, rec = build_synthetic_record(tmp_path)
+    md = R.write_record(rec, exp)
+    R.write_netlist_snapshot(tb, exp, rec["record_id"])
+    snap = R.write_manifest_snapshot(tb, exp, rec["record_id"])
+    assert snap.read_bytes() == (tb.directory / T.MANIFEST_NAME).read_bytes()
+    assert f"**Manifest**: `netlist-snapshots/{rec['record_id']}.tb.json` sha256 `{tb.manifest_sha256}`" \
+        in md.read_text()
+    with pytest.raises(R.RecordExists):
+        R.write_manifest_snapshot(tb, exp, rec["record_id"])
+
+
+def test_manifest_snapshot_survives_a_later_working_edit(tmp_path):
+    """Editing the working manifest after the run changes neither the digest a
+    record declares nor the bytes its frozen package holds."""
+    exp, tb, pts, rec = build_synthetic_record(tmp_path)
+    digest = tb.manifest_sha256
+    (tb.directory / T.MANIFEST_NAME).write_text(
+        json.dumps({"netlist": "d.spice", "measure": {"gain": "tampered"}}))
+    assert tb.manifest_sha256 == digest
+    snap = R.write_manifest_snapshot(tb, exp, rec["record_id"])
+    assert json.loads(snap.read_text())["measure"] == {"gain": "1"}
+    md = R.write_record(rec, exp)
+    assert tb.manifest_sha256 in md.read_text()
+
+
+def test_checker_rejects_missing_altered_or_misnamed_frozen_manifest(tmp_path):
+    """Simulator-free negative controls on the frozen-manifest contract: a
+    record that declares the artifact must carry it, unaltered, under the
+    name it declares."""
+    spec = importlib.util.spec_from_file_location("check_evidence_formats", CHECKER)
+    chk = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(chk)
+
+    def frozen_bench(root):
+        exp, tb, pts, rec = build_synthetic_record(root)
+        R.write_record(rec, exp)
+        R.write_netlist_snapshot(tb, exp, rec["record_id"])
+        R.write_manifest_snapshot(tb, exp, rec["record_id"])
+        logs = exp / "corners" / rec["record_id"]
+        logs.mkdir(parents=True)
+        for p in pts:
+            (logs / f"{p.corner_id}.log").write_text("log\n")
+        return exp, tb, rec
+
+    rid = "20260101-000000-abc1234"
+    snap = tmp_path / "sim" / "synthetic-bench" / "netlist-snapshots" / f"{rid}.tb.json"
+    md = tmp_path / "sim" / "synthetic-bench" / "records" / f"{rid}.md"
+
+    exp, tb, rec = frozen_bench(tmp_path)
+    snap.unlink()  # missing
+    assert any("missing frozen testbench manifest" in m for m in chk.check_format(tmp_path).items)
+
+    exp, tb, rec = frozen_bench(tmp_path / "b")
+    snap_b = tmp_path / "b" / "sim" / "synthetic-bench" / "netlist-snapshots" / f"{rid}.tb.json"
+    snap_b.write_bytes(snap_b.read_bytes() + b" ")  # altered -> digest mismatch
+    assert any("does not match declared" in m for m in chk.check_format(tmp_path / "b").items)
+
+    exp, tb, rec = frozen_bench(tmp_path / "c")
+    md_c = tmp_path / "c" / "sim" / "synthetic-bench" / "records" / f"{rid}.md"
+    md_c.write_text(md_c.read_text().replace(f"{rid}.tb.json", "20200101-000000-0000000.tb.json"))
+    assert any("not this record's own frozen manifest" in m
+               for m in chk.check_format(tmp_path / "c").items)
+
+
+def test_legacy_record_without_manifest_line_still_passes_checker(tmp_path):
+    """Historical contract unchanged: a record without the ``**Manifest**:``
+    line requires (and gets) no frozen-manifest artifact."""
+    spec = importlib.util.spec_from_file_location("check_evidence_formats", CHECKER)
+    chk = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(chk)
+
+    exp, tb, pts, rec = build_synthetic_record(tmp_path)
+    R.write_record(rec, exp)
+    R.write_netlist_snapshot(tb, exp, rec["record_id"])
+    logs = exp / "corners" / rec["record_id"]
+    logs.mkdir(parents=True)
+    for p in pts:
+        (logs / f"{p.corner_id}.log").write_text("log\n")
+    md = exp / "records" / f"{rec['record_id']}.md"
+    md.write_text("\n".join(l for l in md.read_text().splitlines()
+                            if not l.startswith("**Manifest**:")) + "\n")
+    assert chk.check_format(tmp_path).items == []
+
+
 def test_rendered_harness_record_satisfies_the_evidence_format_checker(tmp_path):
     """Renderer and checker must agree: a record freshly produced by the
     harness, with its snapshot and one log per grid point, passes."""
@@ -286,6 +374,7 @@ def test_rendered_harness_record_satisfies_the_evidence_format_checker(tmp_path)
     exp, tb, pts, rec = build_synthetic_record(tmp_path)
     R.write_record(rec, exp)
     R.write_netlist_snapshot(tb, exp, rec["record_id"])
+    R.write_manifest_snapshot(tb, exp, rec["record_id"])
     logs = exp / "corners" / rec["record_id"]
     logs.mkdir(parents=True)
     for p in pts:
@@ -312,6 +401,7 @@ def test_rendered_subset_record_satisfies_the_evidence_format_checker(tmp_path):
     assert chk.declared_native_matrix(R.render_markdown(rec)) == (["hbt_typ"], [27.0], [2.5], 1, 1)
     R.write_record(rec, exp)
     R.write_netlist_snapshot(tb, exp, rec["record_id"])
+    R.write_manifest_snapshot(tb, exp, rec["record_id"])
     logs = exp / "corners" / rec["record_id"]
     logs.mkdir(parents=True)
     (logs / f"{pts[0].corner_id}.log").write_text("log\n")
@@ -350,6 +440,7 @@ def test_markerless_unknown_install_still_passes_checker_with_verified_identity(
     rec["environment"]["pdk"]["version"] = "unknown"
     R.write_record(rec, exp)
     R.write_netlist_snapshot(tb, exp, rec["record_id"])
+    R.write_manifest_snapshot(tb, exp, rec["record_id"])
     logs = exp / "corners" / rec["record_id"]
     logs.mkdir(parents=True)
     for p in pts:

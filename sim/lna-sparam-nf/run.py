@@ -23,6 +23,10 @@ It also refuses (exit 3, before a record id or any log is written) unless the
 klt reports themselves bind the simulation models to sim/pdk-artifact.json:
 see harness.pdkartifact.verify_job_models. The ingesting host's own install
 check is separate provenance and is never the record's artifact identity.
+And it refuses (exit 1, equally before anything is written) if the working
+testbench inputs changed after the run loaded them (issue #141): the record's
+frozen netlist + manifest snapshots must describe the state the numbers came
+from.
 """
 
 from __future__ import annotations
@@ -49,7 +53,8 @@ from harness.corners import CORNERS, PvtPoint, build_grid, resolve_corners, supp
 from harness import klt_driver  # noqa: E402
 from harness import pdkartifact  # noqa: E402
 from harness.report import (  # noqa: E402
-    RecordExists, allocate_record_id, build_record, git_provenance, write_netlist_snapshot,
+    RecordExists, allocate_record_id, build_record, git_provenance, write_manifest_snapshot,
+    write_netlist_snapshot,
     write_record,
 )
 from harness.runner import PointResult, ngspice_version  # noqa: E402
@@ -68,7 +73,7 @@ def klt_body(tb, vdd: float) -> str:
         f".param vdd_val={vdd!r}",
     ]
     lines += [f".param {k}={v}" for k, v in tb.params.items()]
-    lines += ["", tb.netlist.read_text(), "", ".control", "set numdgt=10", "set noaskquit"]
+    lines += ["", tb.netlist_data.decode("utf-8"), "", ".control", "set numdgt=10", "set noaskquit"]
     lines += [f"  {a}" for a in tb.analyses]
     lines += [f"  let m_{n} = {e}" for n, e in tb.measure.items()]
     lines += [f"  print m_{n}" for n in tb.measure]
@@ -187,6 +192,18 @@ def _offhost_artifact(loaded):
 
 
 def ingest(tb, reports, args, verified=None) -> int:
+    # Publication gate (issue #141): characterize loaded the testbench before
+    # the klt jobs ran and the frozen manifest snapshot must describe the
+    # state the numbers came from, so refuse if the working inputs moved
+    # meanwhile -- before a record id, log or snapshot is written. (A bare
+    # `ingest` reloads fresh, so its drift is empty by construction.)
+    drift = tb.working_input_drift()
+    if drift:
+        print(f"ingest: {drift}", file=sys.stderr)
+        print("refusing to record: restore the working testbench inputs (or re-run "
+              "characterize) so the frozen manifest snapshot describes the simulated state",
+              file=sys.stderr)
+        return 1
     # Ingest-host install: must itself be on the pin, but it is provenance of
     # THIS host only and never becomes the record's artifact identity.
     pdk, host_artifact = verified if verified is not None else _verified_pdk()
@@ -355,6 +372,7 @@ def ingest(tb, reports, args, verified=None) -> int:
         claim=args.claim or tb.claim, supersedes=args.supersedes or "", git=git,
         extensions=extensions, pdk_artifact=pdk_artifact)
     write_netlist_snapshot(tb, tb.experiment_dir, record_id)
+    write_manifest_snapshot(tb, tb.experiment_dir, record_id)
     path = write_record(record, tb.experiment_dir)
     if extra:
         with path.open("a") as fh:

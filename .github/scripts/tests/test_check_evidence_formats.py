@@ -279,6 +279,97 @@ def test_native_snapshot_malformed_digest(tree):
     assert_fails(tree, "missing its '* sha256 :' provenance line")
 
 
+# ---------------------------------------------------------------- frozen manifest (issue #141)
+
+
+def _freeze_manifest(tree, rid=NATIVE_ID, artifact: bytes | None = None):
+    """Turn the legacy native record into a frozen-manifest record: add the
+    ``**Manifest**:`` header line (where render_markdown puts it) and write
+    the frozen ``tb.json`` artifact it names. ``artifact`` substitutes other
+    bytes for the artifact while keeping the declared digest honest."""
+    import hashlib
+
+    exp = tree / "sim" / NATIVE
+    data = (exp / "testbench" / "tb.json").read_bytes() if artifact is None else artifact
+    digest = hashlib.sha256(data).hexdigest()
+    md = own(exp / "records" / f"{rid}.md")
+    lines = md.read_text().splitlines()
+    at = next(i for i, l in enumerate(lines) if l.startswith("**Wall time**"))
+    lines[at:at] = [f"**Manifest**: `netlist-snapshots/{rid}.tb.json` sha256 `{digest}`"]
+    md.write_text("\n".join(lines) + "\n")
+    snap = exp / "netlist-snapshots" / f"{rid}.tb.json"
+    snap.write_bytes(data)
+    return snap, md
+
+
+def test_native_legacy_record_carries_no_manifest_requirement(tree):
+    """Committed records predate the frozen manifest: without the
+    ``**Manifest**:`` line the checker requires (and looks for) no artifact --
+    historical run ids gain nothing from the new format."""
+    assert problems_of(tree) == []
+    assert not any("Manifest" in p for p in problems_of(tree))
+
+
+def test_native_frozen_manifest_record_passes(tree):
+    _freeze_manifest(tree)
+    assert problems_of(tree) == []
+
+
+def test_native_frozen_manifest_missing(tree):
+    _freeze_manifest(tree)
+    (tree / "sim" / NATIVE / "netlist-snapshots" / f"{NATIVE_ID}.tb.json").unlink()
+    assert_fails(tree, "missing frozen testbench manifest", f"{NATIVE_ID}.tb.json")
+
+
+def test_native_frozen_manifest_altered(tree):
+    snap, _ = _freeze_manifest(tree)
+    snap.write_bytes(snap.read_bytes().replace(b'"mag1": 1', b'"mag1": 2'))
+    assert_fails(tree, f"{NATIVE_ID}.tb.json", "does not match declared")
+
+
+def test_native_frozen_manifest_names_other_record(tree):
+    _, md = _freeze_manifest(tree)
+    md.write_text(md.read_text().replace(f"{NATIVE_ID}.tb.json", "20200101-000000-0000000.tb.json"))
+    assert_fails(tree, "'**Manifest**:' names", "not this record's own frozen manifest")
+
+
+def test_native_frozen_manifest_malformed_line(tree):
+    _, md = _freeze_manifest(tree)
+    import re
+
+    md.write_text(re.sub(r"^\*\*Manifest\*\*: .*$", "**Manifest**: tb.json",
+                         md.read_text(), flags=re.MULTILINE))
+    assert_fails(tree, "'**Manifest**:' must be")
+
+
+def test_native_frozen_manifest_bad_digest_form(tree):
+    import re
+
+    _, md = _freeze_manifest(tree)
+    md.write_text(re.sub(r"sha256 `[0-9a-f]{64}`", "sha256 `xyz`", md.read_text()))
+    assert_fails(tree, "'**Manifest**:' must be")
+
+
+def test_native_frozen_manifest_not_json(tree):
+    _freeze_manifest(tree, artifact=b"not json at all {")
+    assert_fails(tree, f"{NATIVE_ID}.tb.json", "not valid JSON")
+
+
+def test_native_frozen_manifest_not_an_object(tree):
+    import json as _json
+
+    _freeze_manifest(tree, artifact=_json.dumps(["a", "b"]).encode())
+    assert_fails(tree, f"{NATIVE_ID}.tb.json", "not a JSON object")
+
+
+def test_native_frozen_manifest_missing_required_key(tree):
+    import json as _json
+
+    _freeze_manifest(tree, artifact=_json.dumps({"netlist": "d.spice"}).encode())
+    assert_fails(tree, f"{NATIVE_ID}.tb.json", "missing required key 'measure'")
+
+
+
 def test_orphan_corner_directory(tree):
     (tree / "sim" / NATIVE / "corners" / "20300101-000000-aaaaaaa").mkdir()
     assert_fails(tree, "orphan evidence")

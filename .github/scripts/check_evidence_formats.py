@@ -20,6 +20,17 @@ reinterprets a historical scientific claim; corrections go in a later record):
        (subset of ..), M completed`` (an intentional subset, issue #81). Both
        wordings go through the same expansion and artifact checks.
 
+       A record that additionally carries a ``**Manifest**:`` header field is
+       a frozen-manifest record (issue #141): the line names
+       ``netlist-snapshots/<id>.tb.json`` -- the verbatim ``tb.json`` bytes
+       the run was configured by (analyses, measurement expressions, options,
+       parameters, checks, claim), written by sim/harness/report.py
+       ``write_manifest_snapshot`` -- and its sha256. The checker requires the
+       artifact, recomputes its digest against the declared one and sanity
+       checks the JSON; a line naming any other file or form is refused.
+       Records without the line are legacy and validate unchanged (no file is
+       expected for them), so historical run ids gain nothing.
+
    Ka-band (sim/hbt-kaband-characterization/report_kaband.py)
        records/<id>.md, corners/<id>/<corner_id>.log.gz (gzip),
        netlist-snapshots/<id>/{body,request,klt-report}_<supply>v.* (one set
@@ -406,6 +417,10 @@ def check_native_record(problems: Problems, root: Path, exp_dir: Path, md: Path)
     if extra_snap_dir.exists():
         problems.add(rel(root, extra_snap_dir), "directory-style snapshot in a harness-native bench")
 
+    manifest_line = header_field(text, "Manifest")
+    if manifest_line is not None:
+        check_native_manifest_snapshot(problems, root, exp_dir, rid, where, manifest_line)
+
 
 def check_native_snapshot(problems: Problems, where: str, data: bytes, rid: str) -> None:
     """Verify a harness-native frozen netlist snapshot (issue #93).
@@ -446,6 +461,59 @@ def check_native_snapshot(problems: Problems, where: str, data: bytes, rid: str)
     declared = m.group(1).decode()
     if actual != declared:
         problems.add(where, f"snapshot payload sha256 {actual} does not match declared {declared}")
+
+
+#: The ``**Manifest**:`` record line of a frozen-manifest record (issue #141):
+#: the frozen artifact path relative to the experiment directory and its
+#: sha256 over the whole file (the writer freezes the manifest verbatim, with
+#: no header of its own). This exact form is the format contract; a future
+#: revision must introduce a new discriminator rather than silently reuse it.
+NATIVE_MANIFEST_LINE_RE = re.compile(r"`netlist-snapshots/([^`]+)` sha256 `([0-9a-f]{64})`")
+
+
+def check_native_manifest_snapshot(
+    problems: Problems, root: Path, exp_dir: Path, rid: str, where: str, value: str
+) -> None:
+    """Verify the frozen testbench manifest a frozen-manifest record declares.
+
+    The record's ``**Manifest**:`` header field is the format discriminator:
+    its presence selects the frozen-manifest contract, its absence means a
+    legacy record that carries (and requires) no manifest artifact. Missing
+    (file absent), altered (digest mismatch) and mismatched (artifact naming
+    another record) manifests are all refused; the frozen JSON must still
+    carry the manifest loader's required keys so the package cannot silently
+    degrade into something no run could have been configured by.
+    """
+    m = NATIVE_MANIFEST_LINE_RE.fullmatch(value)
+    if not m:
+        problems.add(where, "'**Manifest**:' must be '`netlist-snapshots/<record-id>.tb.json` "
+                     "sha256 `<64-hex>`'")
+        return
+    name, declared = m.group(1), m.group(2)
+    if name != f"{rid}.tb.json":
+        problems.add(where, f"'**Manifest**:' names {name!r}, not this record's own frozen manifest")
+        return
+    path = exp_dir / "netlist-snapshots" / name
+    if not path.is_file():
+        problems.add(where, f"missing frozen testbench manifest {rel(root, path)}")
+        return
+    data = path.read_bytes()
+    actual = hashlib.sha256(data).hexdigest()
+    if actual != declared:
+        problems.add(rel(root, path),
+                     f"frozen manifest sha256 {actual} does not match declared {declared}")
+        return
+    try:
+        manifest = json.loads(data)
+    except (ValueError, UnicodeDecodeError) as exc:
+        problems.add(rel(root, path), f"frozen manifest is not valid JSON ({exc})")
+        return
+    if not isinstance(manifest, dict):
+        problems.add(rel(root, path), "frozen manifest is not a JSON object")
+        return
+    for key in ("netlist", "measure"):
+        if key not in manifest:
+            problems.add(rel(root, path), f"frozen manifest is missing required key {key!r}")
 
 
 # ---------------------------------------------------------------------------

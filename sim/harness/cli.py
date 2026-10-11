@@ -46,6 +46,7 @@ from .report import (
     evaluate_checks,
     git_provenance,
     summarize,
+    write_manifest_snapshot,
     write_netlist_snapshot,
     write_record,
 )
@@ -301,6 +302,18 @@ def cmd_run(args: argparse.Namespace) -> int:
         print("--no-write (or --sabotage): nothing recorded")
         return 1 if failures or n_ok != len(results) else 0
 
+    # Publication gate: the grid was simulated from the input state captured
+    # at load time. If the working manifest or fragment changed (or vanished)
+    # meanwhile, refuse to record at all rather than attach a later manifest
+    # -- or a mismatched frozen snapshot -- to earlier results.
+    drift = tb.working_input_drift()
+    if drift:
+        print(f"error: {drift}", file=sys.stderr)
+        print("refusing to record: the inputs these results were simulated from are no longer "
+              "the working ones; restore them (or start a fresh run) so the frozen manifest "
+              "snapshot describes the simulated state", file=sys.stderr)
+        return 1
+
     wall_seconds = (_dt.datetime.now(_dt.timezone.utc) - started).total_seconds()
     record = build_record(
         tb, pdk, points, results, record_ngspice, SIM_DIR.parent, record_id,
@@ -310,6 +323,7 @@ def cmd_run(args: argparse.Namespace) -> int:
     )
     try:
         write_netlist_snapshot(tb, tb.experiment_dir, record_id)
+        write_manifest_snapshot(tb, tb.experiment_dir, record_id)
         path = write_record(record, tb.experiment_dir)
     except RecordExists as exc:
         print(f"error: {exc}", file=sys.stderr)
