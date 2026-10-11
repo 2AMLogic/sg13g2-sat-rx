@@ -23,7 +23,6 @@ reports have passed the off-host model check.
 
 from __future__ import annotations
 
-import hashlib
 import json
 import math
 import re
@@ -37,6 +36,7 @@ from typing import Callable, Iterable
 from . import pdkartifact
 from .corners import require_unique_corner_ids
 from .pdk import PdkConfigError, PdkNotFound, find_pdk
+from .provenance import sha256_file
 
 
 def body_supply(body: Path) -> float:
@@ -45,10 +45,6 @@ def body_supply(body: Path) -> float:
         if line.startswith(".param vdd_val="):
             return float(line.split("=", 1)[1])
     raise SystemExit(f"error: no .param vdd_val in {body}")
-
-
-def sha256_file(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def find_pdk_or_exit(sim_dir: Path, *, require_artifact: bool = False):

@@ -22,13 +22,13 @@ stdlib only.
 
 from __future__ import annotations
 
-import hashlib
 import json
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
 from .pdk import MARKER_FILENAME, Pdk, read_install_marker
+from .provenance import sha256_file
 
 MANIFEST_FILENAME = "pdk-artifact.json"
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
@@ -77,14 +77,6 @@ def load_manifest(sim_dir: Path) -> dict:
         if not isinstance(digest, str) or not _SHA256_RE.match(digest):
             raise ArtifactManifestError(f"{path}: files[{rel!r}] is not a lowercase sha256")
     return m
-
-
-def sha256_file(path: Path) -> str:
-    h = hashlib.sha256()
-    with path.open("rb") as fh:
-        for chunk in iter(lambda: fh.read(1 << 20), b""):
-            h.update(chunk)
-    return h.hexdigest()
 
 
 def include_closure(model_lib: Path, root: Path) -> set[str]:

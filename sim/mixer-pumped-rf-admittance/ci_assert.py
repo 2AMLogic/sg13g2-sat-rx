@@ -72,7 +72,7 @@ def main(argv=None) -> int:
     ap.add_argument("--ngspice", default=os.environ.get("NGSPICE", "ngspice"))
     ap.add_argument("--timeout", type=int, default=900)
     args = ap.parse_args(argv)
-    pinned = R.pinned_major()
+    pinned = R.pinned_major(R.PDK_ARTIFACT)
     thr = P.load_thresholds()
     exe = shutil.which(args.ngspice)
     info = R.ngspice_info(exe) if exe else None

@@ -52,9 +52,7 @@ from __future__ import annotations
 
 import argparse
 import copy
-import json
 import os
-import re
 import shutil
 import subprocess
 import sys
@@ -68,6 +66,7 @@ sys.path.insert(0, str(BENCH_DIR))
 
 import analysis as A  # noqa: E402
 import linearity as L  # noqa: E402
+from harness.provenance import ngspice_info, pinned_major  # noqa: E402
 
 PLAN_PATH = BENCH_DIR / "testbench" / "plan.json"
 PDK_ARTIFACT = SIM_DIR / "pdk-artifact.json"
@@ -105,17 +104,6 @@ def compose_deck(red: dict) -> str:
     runs = A.runs_for_key(red, "control_two") + A.runs_for_key(red, "control_one")
     circuit = L.control_circuit(c["a1"], c["a3"]) + "\n" + L.options_line(red, "two")
     return L.body_for_runs("lna-linearity ci control (reduced cubic)", circuit, runs)
-
-
-def pinned_major() -> int:
-    return int(json.loads(PDK_ARTIFACT.read_text())["ngspice"]["major"])
-
-
-def ngspice_info(exe: str) -> dict:
-    out = subprocess.run([exe, "-v"], capture_output=True, text=True, check=False).stdout
-    line = next((ln.strip(" *") for ln in out.splitlines() if "ngspice-" in ln), "unknown")
-    m = re.search(r"ngspice-(\d+)", line)
-    return {"path": exe, "version": line.strip(), "major": int(m.group(1)) if m else None}
 
 
 def sabotage_amplitude(summaries: list[dict], scale: float) -> list[dict]:
@@ -177,7 +165,7 @@ def main(argv=None) -> int:
     ap.add_argument("--timeout", type=int, default=900)
     args = ap.parse_args(argv)
     red = reduced_plan()
-    pinned = pinned_major()
+    pinned = pinned_major(PDK_ARTIFACT)
     exe = shutil.which(args.ngspice)
     info = ngspice_info(exe) if exe else None
     log = ""
