@@ -26,7 +26,8 @@ python3 sim/lna-headroom/run.py verify             # re-derive every verdict fro
 `collect` needs the plan, bench and DUT committed (it refuses a dirty tree) and uses an explicit
 `--backend batch` for every request. A failed submit stops the collection, writes nothing and does
 not fall back to a local run. The two flags are the documented client/runner skew
-(`../lna-linearity/README.md`).
+(`../lna-linearity/README.md`). Caveat: the record's requests all carry `runner_compatibility: mismatch`
+(runner klt 0.5.0 vs client 0.7.0); see `design/lna_headroom_study.md`.
 
 ## Method
 

@@ -21,6 +21,9 @@ ohm), with the candidate table, gates, ranking and shortlist rules frozen in
 `sim/lna-headroom/testbench/plan.json` before collection. Each ran the baseline's single-tone sweep at the
 three placements on the Spot batch fleet (13 klt requests incl. the analytic cubic control, all `pass`).
 The committed DUT (C00) reproduced the historical stress cutoff exactly (0.00 mV, 0.000 dB deltas).
+Caveat: every request ran with `runner_compatibility: mismatch` (fleet runner klt 0.5.0 vs client 0.7.0,
+preserved in the record); the exact C00 reproduction and the passing cubic control show no visible effect,
+but the skew is not eliminated (tracked upstream, klayout-tools#2948).
 
 ## Findings (screening, base timing only)
 
