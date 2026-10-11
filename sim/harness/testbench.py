@@ -106,6 +106,15 @@ class Testbench:
     checks: dict[str, dict] = field(default_factory=dict)
     options: tuple[str, ...] = ()
     evidence: evidence_mod.BaseExtensions = field(default_factory=evidence_mod.BaseExtensions)
+    #: The exact ``tb.json`` bytes this Testbench was loaded from, captured
+    #: once at load time (:func:`load` always sets them; the defaults only
+    #: serve hand-built instances). Every digest, provenance block and frozen
+    #: manifest snapshot describes THESE bytes, so a later edit of the
+    #: working manifest can neither change a record's declared digest nor
+    #: what its frozen settings were.
+    manifest_bytes: bytes = field(default=b"", repr=False)
+    #: The netlist fragment bytes captured at the same moment (see above).
+    netlist_bytes: bytes = field(default=b"", repr=False)
 
     @property
     def experiment(self) -> str:
@@ -118,12 +127,49 @@ class Testbench:
         return self.directory.parent
 
     @property
+    def netlist_data(self) -> bytes:
+        """The netlist fragment bytes this Testbench was loaded with."""
+        if self.netlist_bytes:
+            return self.netlist_bytes
+        return self.netlist.read_bytes()
+
+    @property
+    def manifest_data(self) -> bytes:
+        """The ``tb.json`` bytes this Testbench was loaded with."""
+        if self.manifest_bytes:
+            return self.manifest_bytes
+        return (self.directory / MANIFEST_NAME).read_bytes()
+
+    @property
     def netlist_sha256(self) -> str:
-        return hashlib.sha256(self.netlist.read_bytes()).hexdigest()
+        return hashlib.sha256(self.netlist_data).hexdigest()
 
     @property
     def manifest_sha256(self) -> str:
-        return hashlib.sha256((self.directory / MANIFEST_NAME).read_bytes()).hexdigest()
+        return hashlib.sha256(self.manifest_data).hexdigest()
+
+    def working_input_drift(self) -> str:
+        """How the working testbench inputs have changed since load, or ``""``.
+
+        Publication gate: a grid is simulated from the state captured at load
+        time, so if the working manifest or fragment has changed (or
+        disappeared) since, the results must not be recorded at all -- a
+        frozen manifest snapshot taken afterwards would not describe the
+        state the numbers came from.
+        """
+        drift: list[str] = []
+        for label, path, captured in (
+            ("manifest", self.directory / MANIFEST_NAME, self.manifest_data),
+            ("netlist fragment", self.netlist, self.netlist_data),
+        ):
+            try:
+                changed = path.read_bytes() != captured
+                why = "changed" if changed else ""
+            except OSError:
+                why = "is no longer readable"
+            if why:
+                drift.append(f"working {label} {path} {why} since the run started")
+        return "; ".join(drift)
 
     def provenance(self) -> dict:
         return {
@@ -191,11 +237,16 @@ def load(directory: str | Path) -> Testbench:
     if not manifest_path.is_file():
         raise FileNotFoundError(f"no {MANIFEST_NAME} in {directory}")
 
-    manifest = json.loads(manifest_path.read_text())
+    # Capture the exact input bytes BEFORE parsing them: everything downstream
+    # (digests, provenance, the frozen manifest snapshot) describes this
+    # captured state, never a later re-read of the working files.
+    manifest_bytes = manifest_path.read_bytes()
+    manifest = json.loads(manifest_bytes)
 
     netlist = directory / _require(manifest, "netlist", manifest_path)
     if not netlist.is_file():
         raise FileNotFoundError(f"{manifest_path}: netlist {netlist} does not exist")
+    netlist_bytes = netlist.read_bytes()
 
     measure = dict(_require(manifest, "measure", manifest_path))
     if not measure:
@@ -245,6 +296,8 @@ def load(directory: str | Path) -> Testbench:
         checks=checks,
         options=tuple(manifest.get("options", ())),
         evidence=extensions,
+        manifest_bytes=manifest_bytes,
+        netlist_bytes=netlist_bytes,
     )
     validate_netlist(tb)
     return tb

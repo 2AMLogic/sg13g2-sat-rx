@@ -115,3 +115,40 @@ def test_discover_ignores_dirs_without_a_testbench(tmp_path):
     make_bench(tmp_path)
     (tmp_path / "other").mkdir()
     assert [p.name for p in T.discover(tmp_path)] == ["exp"]
+
+
+# ---------------------------------------------------------------- frozen inputs (issue #141)
+
+
+def test_digests_describe_load_time_bytes_not_a_later_edit(tmp_path):
+    exp = make_bench(tmp_path)
+    tb = T.load(exp)
+    netlist_sha, manifest_sha = tb.netlist_sha256, tb.manifest_sha256
+    (exp / "testbench" / "tb.json").write_text(json.dumps(
+        {"name": "t", "netlist": "dut.spice", "measure": {"m1": "999"}}))
+    (exp / "testbench" / "dut.spice").write_text("R1 a b 2k\n")
+    assert tb.manifest_sha256 == manifest_sha
+    assert tb.netlist_sha256 == netlist_sha
+    assert json.loads(tb.manifest_data)["measure"] == {"m1": "1"}
+    assert tb.netlist_data == b"R1 a b 1k\n"
+
+
+def test_working_input_drift_detects_manifest_and_fragment_changes(tmp_path):
+    exp = make_bench(tmp_path)
+    tb = T.load(exp)
+    assert tb.working_input_drift() == ""
+    (exp / "testbench" / "tb.json").write_text('{"netlist": "dut.spice", "measure": {"m1": "2"}}')
+    drift = tb.working_input_drift()
+    assert "manifest" in drift and "changed" in drift
+    (exp / "testbench" / "tb.json").write_text(json.dumps(
+        {"name": "t", "netlist": "dut.spice", "measure": {"m1": "1"}}))
+    assert tb.working_input_drift() == ""
+    (exp / "testbench" / "dut.spice").write_text("R1 a b 3k\n")
+    assert "netlist fragment" in tb.working_input_drift()
+
+
+def test_working_input_drift_detects_vanished_inputs(tmp_path):
+    exp = make_bench(tmp_path)
+    tb = T.load(exp)
+    (exp / "testbench" / "dut.spice").unlink()
+    assert "no longer readable" in tb.working_input_drift()

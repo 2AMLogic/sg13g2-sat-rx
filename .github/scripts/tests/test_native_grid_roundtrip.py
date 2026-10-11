@@ -79,7 +79,9 @@ def subset_grid():
 
 def write_artifacts(exp: Path, rec: dict, tb_points) -> Path:
     R.write_record(rec, exp)
-    R.write_netlist_snapshot(T.load(exp), exp, rec["record_id"])
+    tb = T.load(exp)
+    R.write_netlist_snapshot(tb, exp, rec["record_id"])
+    R.write_manifest_snapshot(tb, exp, rec["record_id"])
     logs = exp / "corners" / rec["record_id"]
     logs.mkdir(parents=True)
     for p in tb_points:

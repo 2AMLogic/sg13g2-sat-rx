@@ -24,7 +24,7 @@ re-derive it.
 | `testbench.py` | The `tb.json` manifest schema: netlist-fragment discipline (forbidden directives the harness owns), `checks` validation, `netlist_provenance` semantics. Fully generic already. |
 | `runner.py` | `compose_deck()` — assembles one complete ngspice deck from a testbench fragment, the resolved PDK's models, and one PVT point's corner sections. `run_point()` / `run_grid()` execute it and parse measurements. |
 | `evidence.py` | `BaseExtensions` — an open, unstructured evidence-record extension slot (`extra` dict + `notes`), so a fresh block has a working evidence path before it has ratified its own schema. |
-| `report.py` | Record-id minting (`<YYYYMMDD>-<HHMMSS>-<short-sha>`), grid summaries, per-axis sensitivity, spec-check evaluation, and an append-only Markdown writer. |
+| `report.py` | Record-id minting (`<YYYYMMDD>-<HHMMSS>-<short-sha>`), grid summaries, per-axis sensitivity, spec-check evaluation, frozen netlist + manifest snapshots, and an append-only Markdown writer. |
 | `cli.py` | `list` / `run` / `selftest` subcommands wiring the above together. |
 
 Every module's docstring opens with a `GENERIC CORE` paragraph (what it is
@@ -111,6 +111,41 @@ python3 -m harness.cli selftest <experiment-slug>
 - `--runner-version-check warn` passes klt's runner/client skew policy through to the requests. A skewed runner then runs the grid, but `offhost_identity` refuses to record its results, so use it only with `--no-write` (method checks).
 - `--no-stage-models` (requires `--no-write`) leaves the models out of the requests, so the runner uses its own image's models. A skewed runner that ignores `stage_model_inputs` needs it (klayout-tools#2877, #2901). Those models are not hashed, so the run is a method check only.
 - `--klt-cmd` picks the klt client (e.g. `uvx --from klayout-tools==X.Y.Z klt`). `--timeout-s` is the per-corner timeout (default 1800 s for klt, 300 s local).
+
+### Frozen inputs: what a record freezes and how to read it back
+
+An evidence-writing `run` freezes both of a record's inputs next to the
+record, under `sim/<experiment-slug>/netlist-snapshots/`:
+
+- `<record-id>.spice` — the DUT netlist fragment, verbatim (issue #93).
+- `<record-id>.tb.json` — the testbench manifest, byte-identical to the
+  `tb.json` the run was loaded from (issue #141): the analyses, measurement
+  expressions, simulator options, parameters, checks and claim the record's
+  numbers were produced *by*. The record's `**Manifest**:` header line names
+  this file and its SHA-256; records without that line are legacy and carry
+  no manifest artifact.
+
+To recover a historical run's settings, read the frozen package: verify
+`sha256(netlist-snapshots/<id>.tb.json)` against the digest declared on the
+record's `**Manifest**:` line, then read the JSON fields directly
+(`analyses`, `measure`, `params`, `options`, `checks`, `claim`, ...). Those
+fields are the complete deck inputs — re-deriving the ngspice deck from them
+is exactly what `runner.compose_deck()` does with a manifest's fields, so a
+later working-manifest edit can neither change the frozen package nor the
+interpretation of the record's settings. (This recovers the *inputs*; it is
+not a bitwise-numerical-replay promise — simulator version and PDK state are
+separately recorded in the record's Environment section.)
+
+Publication refuses (`exit 1`, nothing written) if the working manifest or
+netlist fragment changed — or vanished — between load and publication: the
+grid is simulated from the state captured at load, so a package frozen
+afterwards would not describe the state the numbers came from. The refusal
+also removes the run's own `corners/<record-id>/` log directory — minted by
+that run, never evidence — so a refused run leaves no orphan log package the
+evidence checker would flag. (`run.py` drivers that ingest klt reports
+published by an earlier `characterize` enforce the same rule at ingest by
+refusing unless each report's generated body deck still matches the reloaded
+testbench inputs.)
 
 `harness/` needs no third-party dependencies — everything above is Python
 standard library, so it runs the same way in a fresh agent container as on a

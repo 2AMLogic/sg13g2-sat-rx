@@ -506,7 +506,44 @@ def write_netlist_snapshot(tb: Testbench, experiment_dir: Path, record_id: str) 
             "",
         ]
     )
-    path.write_text(header + tb.netlist.read_text())
+    path.write_text(header + tb.netlist_data.decode("utf-8"))
+    return path
+
+
+#: Suffix of the frozen testbench manifest: the verbatim ``tb.json`` bytes a
+#: record's run was configured by, stored next to the frozen netlist snapshot.
+#: The ``**Manifest**:`` record line (see ``render_markdown``) names this
+#: artifact and its sha256; that line is the format discriminator between
+#: frozen-manifest records and legacy records without one.
+MANIFEST_SNAPSHOT_SUFFIX = ".tb.json"
+
+
+def manifest_snapshot_name(record_id: str) -> str:
+    """``<record-id>.tb.json`` -- the frozen manifest of one record."""
+    return f"{record_id}{MANIFEST_SNAPSHOT_SUFFIX}"
+
+
+def manifest_snapshot_path(experiment_dir: Path, record_id: str) -> Path:
+    return experiment_dir / SNAPSHOT_DIR / manifest_snapshot_name(record_id)
+
+
+def write_manifest_snapshot(tb: Testbench, experiment_dir: Path, record_id: str) -> Path:
+    """Freeze the testbench manifest for this record: the exact ``tb.json``
+    bytes the run was loaded with (analyses, measurement expressions, options,
+    parameters, checks, claim), so a later edit under ``testbench/`` can
+    neither change the frozen package nor the interpretation of a record's
+    settings.
+
+    Unlike the netlist snapshot this file carries no header of its own: it is
+    byte-identical to the manifest as loaded, so the digest the record
+    declares (``testbench.manifest_sha256``) covers the whole file and the
+    evidence checker recomputes it directly.
+    """
+    path = manifest_snapshot_path(experiment_dir, record_id)
+    if path.exists():
+        raise RecordExists(f"{path} already exists; append-only evidence is never rewritten")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(tb.manifest_data)
     return path
 
 
@@ -527,6 +564,12 @@ def render_markdown(record: dict) -> str:
         f"**Started (UTC)**: {record['started_utc']}",
         f"**Wall time**: {record['wall_seconds']}s",
     ]
+    manifest_digest = (record.get("testbench") or {}).get("manifest_sha256")
+    if manifest_digest:
+        lines.append(
+            f"**Manifest**: `{SNAPSHOT_DIR}/{manifest_snapshot_name(record['record_id'])}` "
+            f"sha256 `{manifest_digest}`"
+        )
     if record.get("supersedes"):
         lines.append(f"**Supersedes**: {record['supersedes']}")
     lines += ["", f"**Claim**: {record['claim'] or '(none stated)'}", ""]
