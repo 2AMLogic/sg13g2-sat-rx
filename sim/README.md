@@ -25,10 +25,10 @@ repo does not itself carry a `release_tag`/`tarball_sha256` pin the way
 own `environment.pdk` block is the self-describing provenance instead).
 
 The PDK's own version marker (`Pdk.version` in `sim/harness/pdk.py`) reads
-the SOURCES file convention some other PDK distributions use; IHP-Open-PDK
-ships `.fetched-version` instead, so every record's `environment.pdk.version`
-currently reads `"unknown"` — a known, documented gap in the generic core's
-version-detection convention for this specific PDK, not a broken install
+the install's `.fetched-version` first line (what IHP-Open-PDK ships), then a
+`SOURCES` file, then `"unknown"`. Records written before this change
+(#155) show `"unknown"` in `environment.pdk.version` because the reader
+only knew `SOURCES`; they are not edited. New records carry the marker value.
 (confirmed working: `sim/pdk.json`'s model_lib resolves and every bench below
 runs against real device data).
 

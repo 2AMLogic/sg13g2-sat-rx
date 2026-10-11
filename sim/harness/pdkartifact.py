@@ -27,11 +27,10 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .pdk import Pdk
+from .pdk import MARKER_FILENAME, Pdk, read_install_marker
 from .provenance import sha256_file
 
 MANIFEST_FILENAME = "pdk-artifact.json"
-MARKER_FILENAME = ".fetched-version"
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 # `.include file`, `.inc "file"`, `.lib "file" section` (a bare `.lib NAME` that
@@ -131,8 +130,7 @@ def verify(pdk: Pdk, sim_dir: Path, ngspice_banner: str | None = None,
     for rel in sorted(set(files) - closure):
         rep.fail(f"manifest lists {rel} but model_lib does not reach it (stale pin)")
 
-    marker_path = root / MARKER_FILENAME
-    marker = marker_path.read_text().strip() if marker_path.is_file() else ""
+    marker = read_install_marker(root)
     want_marker = m.get("install_marker", {}).get("value")
     if not marker:
         rep.notes.append(

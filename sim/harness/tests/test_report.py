@@ -179,8 +179,9 @@ def test_explicit_required_override_is_recorded(tmp_path):
 
 
 class FakePdk(Pdk):
-    """A Pdk with a stated revision: the real ``Pdk.version`` reads a SOURCES
-    file that the synthetic tree does not have and would print 'unknown', which
+    """A Pdk with a stated revision: the real ``Pdk.version`` reads the
+    install's ``.fetched-version`` (then SOURCES), which the synthetic tree does
+    not have, so it would print 'unknown', which
     the evidence checker rejects for any non-grandfathered record (#85)."""
 
     @property
