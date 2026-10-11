@@ -195,6 +195,35 @@ DEVICE_MONITORS = (
 DEVICE_NODES = ("xdut.c1", "xdut.e1", "xdut.oc", "xdut.b1", "xdut.b2")
 
 
+def current_cfg(plan_or_limits: dict | None) -> dict | None:
+    """The declared collector-current monitor (plan_version >= 2), or None.
+
+    Accepts the whole plan or its ``extraction.operating_limits`` block. A plan that does not
+    declare ``collector_current`` (the frozen voltage-only version 1) keeps its exact
+    semantics: no current is saved, requested or checked."""
+    if not plan_or_limits:
+        return None
+    lim = plan_or_limits.get("extraction", {}).get("operating_limits", plan_or_limits)
+    cfg = lim.get("collector_current")
+    return cfg if cfg and cfg.get("monitor") else None
+
+
+def current_monitors(plan: dict) -> tuple[tuple[str, str], ...]:
+    """(name, ngspice instance-parameter vector) per monitored device, e.g.
+    ('ic_q1', '@q.xdut.xq1.qnpn13g2[ic]'): the simulator's own collector-terminal current of
+    the model's inner BJT, no element added to the circuit."""
+    cfg = current_cfg(plan)
+    if not cfg:
+        return ()
+    return tuple((f"ic_{q}", f"@{d['instance']}[ic]") for q, d in cfg["devices"].items())
+
+
+def current_frac(cfg: dict, name: str, amps: float) -> float:
+    """Signed current normalised to the card box: I / (box_a_per_nx * Nx)."""
+    q = name.split("_")[1]
+    return amps / (cfg["box_a_per_nx"] * cfg["devices"][q]["nx"])
+
+
 def run_ids(kind: str, n: int) -> list[str]:
     return [f"{kind}{i:02d}" for i in range(n)]
 
@@ -228,7 +257,8 @@ def control_circuit(a1: float, a3: float) -> str:
 
 
 def run_block(rid: str, *, va1: float, va2: float, bins: dict[str, float], step_s: float,
-              discard_s: float, window_s: float, monitors: bool) -> list[str]:
+              discard_s: float, window_s: float, monitors: bool,
+              currents: tuple[tuple[str, str], ...] = ()) -> list[str]:
     """One transient + the coherent-bin sums of its retained window.
 
     ``tran`` starts at 0 (so klt's trailing sentinel measurement stays valid);
@@ -239,10 +269,13 @@ def run_block(rid: str, *, va1: float, va2: float, bins: dict[str, float], step_
     i1 = i0 + n - 1
     stop = discard_s + window_s
     vecs = "v(p2)" + (" " + " ".join(f"v({x})" for x in DEVICE_NODES) if monitors else "")
+    if currents:
+        vecs += " " + " ".join(vec for _, vec in currents)
     lines = [
         f"  alterparam va1 = {_g(va1)}",
         f"  alterparam va2 = {_g(va2)}",
         "  reset",
+    ] + ([f"  save all {' '.join(vec for _, vec in currents)}"] if currents else []) + [
         f"  tran {_g(step_s)} {_g(stop)} 0 {_g(step_s)}",
         f"  linearize {vecs}",
         f"  let tt = time[{i0},{i1}]",
@@ -260,10 +293,15 @@ def run_block(rid: str, *, va1: float, va2: float, bins: dict[str, float], step_
         for name, expr in DEVICE_MONITORS:
             e = re.sub(r"v\(([^)]*)\)", lambda m: f"v({m.group(1)})[{i0},{i1}]", expr)
             lines += [f"  let m_{rid}_{name}_max = maximum({e})", f"  let m_{rid}_{name}_min = minimum({e})"]
+        for name, vec in currents:
+            lines += [f"  let w_{rid}_{name} = {vec}[{i0},{i1}]",
+                      f"  let m_{rid}_{name}_max = maximum(w_{rid}_{name})",
+                      f"  let m_{rid}_{name}_min = minimum(w_{rid}_{name})"]
     names = [f"m_{rid}_n", f"m_{rid}_t0", f"m_{rid}_t1"]
     names += [f"m_{rid}_{b}_{q}" for b in bins for q in ("c", "s")]
     if monitors:
         names += [f"m_{rid}_{m}_{q}" for m, _ in DEVICE_MONITORS for q in ("max", "min")]
+        names += [f"m_{rid}_{m}_{q}" for m, _ in currents for q in ("max", "min")]
     for i in range(0, len(names), 6):
         lines.append("  print " + " ".join(names[i:i + 6]))
     return lines
@@ -283,7 +321,8 @@ def sweep_runs(plan: dict, pl: dict, kind: str, *, monitors: bool, variants=VARI
                         "vs_peak_v": vs, "va1": vs, "va2": vs if kind == "two" else 0.0,
                         "f1": fr["f1"] if kind == "two" else fr["f0"],
                         "f2": fr["f2"] if kind == "two" else fr["f0"],
-                        "bins": bins, "monitors": monitors, **tm})
+                        "bins": bins, "monitors": monitors,
+                        "currents": current_monitors(plan) if monitors else (), **tm})
     return out
 
 
@@ -309,7 +348,8 @@ def body_for_runs(title: str, circuit: str, runs: list[dict]) -> str:
         lines.append(f"  alterparam fq1 = {_g(r['f1'])}")
         lines.append(f"  alterparam fq2 = {_g(r['f2'])}")
         lines += run_block(r["id"], va1=r["va1"], va2=r["va2"], bins=r["bins"], step_s=r["step_s"],
-                           discard_s=r["settle_discard_s"], window_s=r["window_s"], monitors=r["monitors"])
+                           discard_s=r["settle_discard_s"], window_s=r["window_s"], monitors=r["monitors"],
+                           currents=tuple(r.get("currents") or ()))
     lines += ["  echo LNLIN_DONE", ".endc", ""]
     return "\n".join(lines)
 
@@ -371,6 +411,15 @@ def run_summary(vals: dict[str, float], run: dict, *, log_has_abort: bool = Fals
                     return None
                 lim[f"{name}_{q}"] = v
         out["excursion_v"] = lim
+    if run.get("currents"):
+        cur = {}
+        for name, _ in run["currents"]:
+            for q in ("max", "min"):
+                v = vals.get(f"m_{rid}_{name}_{q}")
+                if v is None or not math.isfinite(v):
+                    return None  # a missing / non-finite current diagnostic is a log-integrity problem
+                cur[f"{name}_{q}"] = v
+        out["current_a"] = cur
     return out
 
 
@@ -380,6 +429,8 @@ def points_from_summaries(summaries: list[dict], kind: str) -> list[dict]:
     for s in sorted((x for x in summaries if x["kind"] == kind), key=lambda x: x["pin_dbm"]):
         row = {"id": s["id"], "pin_dbm": s["pin_dbm"], "floor_dbm": s["floor_dbm"],
                "excursion_v": s.get("excursion_v")}
+        if s.get("current_a") is not None:  # plan_version >= 2 only: version-1 rows keep their exact shape
+            row["current_a"] = s["current_a"]
         if s["status"] != "ok":
             row["sim_failed"] = s["reason"]
             for k in (("p_f1_dbm", "p_f2_dbm", "p_im3l_dbm", "p_im3h_dbm") if kind == "two" else ("p_f0_dbm",)):
@@ -400,10 +451,65 @@ def points_from_summaries(summaries: list[dict], kind: str) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 
-def limit_violations(exc: dict | None, limits: dict) -> list[str]:
+def current_violations(cur: dict | None, limits: dict) -> list[str]:
+    """Collector-current rejections (plan_version >= 2 only).
+
+    * Diagnostics missing, incomplete or non-finite: ALWAYS a rejection (a point without them
+      cannot pass silently, whatever the applicability verdict).
+    * Signed maximum above ``box_a_per_nx * Nx``: a rejection only when the plan declares the
+      bound ``enforce`` (applicable to the instantaneous terminal current). Under the declared
+      'unresolved' applicability the extrema are published and flagged instead, see
+      :func:`current_validity`."""
+    cfg = current_cfg(limits)
+    if cfg is None:
+        return []
+    need = [f"ic_{q}_{m}" for q in cfg["devices"] for m in ("max", "min")]
+    if not isinstance(cur, dict) or not all(_finite(cur.get(k)) for k in need):
+        return ["collector-current diagnostics missing or non-finite"]
+    if not cfg.get("enforce"):
+        return []
+    out = []
+    for q in cfg["devices"]:
+        fr = current_frac(cfg, f"ic_{q}", cur[f"ic_{q}_max"])
+        if fr > cfg["max_frac"]:
+            out.append(f"{q} I_C peak {cur[f'ic_{q}_max'] * 1e3:.4f} mA = {fr:.3f} x box > {cfg['max_frac']} (card box)")
+    return out
+
+
+def current_validity(rows: list[dict], limits: dict) -> dict | None:
+    """What the collector-current diagnostics do and do not establish for one sweep.
+
+    ``complete_envelope`` is True only when the bound is declared applicable and enforced AND every
+    point carries finite diagnostics; under 'unresolved' applicability it is False by construction
+    and the per-device signed extrema (and normalised fractions) are published instead."""
+    cfg = current_cfg(limits)
+    if cfg is None:
+        return None
+    usable = [r for r in rows if not r.get("sim_failed")]
+    have = [r for r in usable if not current_violations(r.get("current_a"), {"collector_current": dict(cfg, enforce=False)})]
+    ext = {}
+    for q in cfg["devices"]:
+        mx = [(r["pin_dbm"], r["current_a"][f"ic_{q}_max"]) for r in have]
+        mn = [(r["pin_dbm"], r["current_a"][f"ic_{q}_min"]) for r in have]
+        if mx:
+            top = max(mx, key=lambda t: t[1])
+            low = min(mn, key=lambda t: t[1])
+            ext[q] = {"max_a": top[1], "max_at_pin_dbm": top[0], "max_frac_of_box": current_frac(cfg, f"ic_{q}", top[1]),
+                      "min_a": low[1], "min_at_pin_dbm": low[0], "min_frac_of_box": current_frac(cfg, f"ic_{q}", low[1])}
+    over = [r["pin_dbm"] for r in have
+            if any(current_frac(cfg, f"ic_{q}", r["current_a"][f"ic_{q}_max"]) > cfg["max_frac"] for q in cfg["devices"])]
+    complete = bool(cfg.get("enforce")) and len(have) == len(usable)
+    return {"applicability": cfg["applicability"], "enforced": bool(cfg.get("enforce")),
+            "status": "enforced" if cfg.get("enforce") else "unresolved",
+            "complete_envelope": complete, "points_with_diagnostics": len(have), "points_without_diagnostics": len(usable) - len(have),
+            "points_over_box_pin_dbm": over, "extrema": ext, "interpretation": cfg["interpretation"]}
+
+
+def limit_violations(exc: dict | None, limits: dict, cur: dict | None = None) -> list[str]:
     """Which declared operating limits a point's window excursions break.
     ``exc`` is None when the run did not monitor devices: that is reported as a
-    violation of 'monitored' (an unmonitored DUT point is never fitted through)."""
+    violation of 'monitored' (an unmonitored DUT point is never fitted through).
+    ``cur`` carries the collector-current extrema when the plan declares them."""
     if exc is None:
         return ["device excursions not monitored"]
     out = []
@@ -416,7 +522,7 @@ def limit_violations(exc: dict | None, limits: dict) -> list[str]:
             out.append(f"{q} V_BE peak {exc[f'vbe_{q}_max']:.4f} V > {limits['vbe_window_v'][1]} V (card box)")
         if exc[f"vbe_{q}_min"] < limits["vbe_window_v"][0]:
             out.append(f"{q} V_BE minimum {exc[f'vbe_{q}_min']:.4f} V < {limits['vbe_window_v'][0]} V (card box)")
-    return out
+    return out + current_violations(cur, limits)
 
 
 # ---------------------------------------------------------------------------
@@ -471,7 +577,7 @@ def point_status(r: dict, *, fund_key: str, im3_key: str | None, margin_db: floa
     if r[fund_key] < r["floor_dbm"] + margin_db:
         return "fundamental below numerical floor + margin"
     if enforce_limits and limits is not None:
-        v = limit_violations(r.get("excursion_v"), limits)
+        v = limit_violations(r.get("excursion_v"), limits, r.get("current_a"))
         if v:
             return "outside DUT operating limits: " + "; ".join(v)
     return None
