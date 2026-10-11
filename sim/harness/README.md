@@ -138,7 +138,13 @@ separately recorded in the record's Environment section.)
 Publication refuses (`exit 1`, nothing written) if the working manifest or
 netlist fragment changed — or vanished — between load and publication: the
 grid is simulated from the state captured at load, so a package frozen
-afterwards would not describe the state the numbers came from.
+afterwards would not describe the state the numbers came from. The refusal
+also removes the run's own `corners/<record-id>/` log directory — minted by
+that run, never evidence — so a refused run leaves no orphan log package the
+evidence checker would flag. (`run.py` drivers that ingest klt reports
+published by an earlier `characterize` enforce the same rule at ingest by
+refusing unless each report's generated body deck still matches the reloaded
+testbench inputs.)
 
 `harness/` needs no third-party dependencies — everything above is Python
 standard library, so it runs the same way in a fresh agent container as on a

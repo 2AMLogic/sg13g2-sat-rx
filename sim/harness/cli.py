@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as _dt
+import shutil
 import sys
 from pathlib import Path
 
@@ -312,6 +313,11 @@ def cmd_run(args: argparse.Namespace) -> int:
         print("refusing to record: the inputs these results were simulated from are no longer "
               "the working ones; restore them (or start a fresh run) so the frozen manifest "
               "snapshot describes the simulated state", file=sys.stderr)
+        # corners/<record-id>/ was minted by this run and holds only its
+        # per-point logs: on a refusal it was never evidence, and leaving it
+        # behind would publish an orphan log package the evidence checker
+        # flags. (The _scratch no-write path returns before this gate.)
+        shutil.rmtree(log_dir, ignore_errors=True)
         return 1
 
     wall_seconds = (_dt.datetime.now(_dt.timezone.utc) - started).total_seconds()

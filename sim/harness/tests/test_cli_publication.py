@@ -46,6 +46,13 @@ def staged(monkeypatch, tmp_path):
     monkeypatch.setattr(cli.pdkartifact, "verified_identity", lambda pdk, sim: ART)
 
     def fake_run_grid(tb, pdk, points, workdir, **k):
+        # Like runner.run_grid: one per-point log in log_dir (for a write run,
+        # corners/<record-id>/) while the grid runs, before the drift gate.
+        log_dir = k.get("log_dir")
+        if log_dir is not None:
+            log_dir.mkdir(parents=True, exist_ok=True)
+            for p in points:
+                (log_dir / f"{p.corner_id}.log").write_text("* fake corner log\n")
         return [PointResult(point=p, status="ok", measurements={"gain": 1.0})
                 for p in points]
 
@@ -62,6 +69,11 @@ def test_drifted_working_manifest_refuses_publication(staged, capsys):
     err = capsys.readouterr().err
     assert "refusing to record" in err and "working manifest" in err
     assert not (exp / "records").exists() and not (exp / "netlist-snapshots").exists()
+    # The per-point logs the grid wrote into corners/<record-id>/ are not
+    # evidence on a refusal: the run's own log directory is removed, so no
+    # orphan package is left for the evidence checker to flag.
+    corners = exp / "corners"
+    assert corners.is_dir() and not any(corners.iterdir())
 
 
 def test_drifted_netlist_fragment_refuses_publication(staged, capsys):
@@ -71,6 +83,8 @@ def test_drifted_netlist_fragment_refuses_publication(staged, capsys):
     assert rc == 1
     assert "netlist fragment" in capsys.readouterr().err
     assert not (exp / "records").exists() and not (exp / "netlist-snapshots").exists()
+    corners = exp / "corners"
+    assert corners.is_dir() and not any(corners.iterdir())
 
 
 def test_clean_run_publishes_record_with_both_frozen_artifacts(staged):

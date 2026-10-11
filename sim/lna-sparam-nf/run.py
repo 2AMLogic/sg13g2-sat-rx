@@ -26,7 +26,11 @@ check is separate provenance and is never the record's artifact identity.
 And it refuses (exit 1, equally before anything is written) if the working
 testbench inputs changed after the run loaded them (issue #141): the record's
 frozen netlist + manifest snapshots must describe the state the numbers came
-from.
+from. A bare `ingest` reloads fresh (its drift is empty by construction), so
+it additionally refuses unless every report's body deck is exactly what the
+reloaded testbench would generate -- decks written by an earlier `characterize`
+from a since-changed tb.json or netlist fragment must not have the ingest-time
+manifest attached to their results.
 """
 
 from __future__ import annotations
@@ -168,12 +172,23 @@ def cmd_characterize(args) -> int:
 _body_supply = klt_driver.body_supply
 
 
+def body_for(report_path: Path) -> Path:
+    """The generated body deck a klt report was simulated from: characterize
+    writes `body_<tag>.spice` beside every `report_<tag>.json`."""
+    return report_path.with_name(
+        report_path.name.replace("report_", "body_").replace(".json", ".spice"))
+
+
 def cmd_ingest(args) -> int:
     tb = load(BENCH_DIR)
     reports = []
     for path in args.reports:
         path = Path(path).resolve()
-        body = path.with_name(path.name.replace("report_", "body_").replace(".json", ".spice"))
+        body = body_for(path)
+        if not body.is_file():
+            print(f"ingest: {body} is missing; the inputs the reports were simulated from "
+                  "cannot be verified; NO record written", file=sys.stderr)
+            return 1
         reports.append((_body_supply(body), path))
     return ingest(tb, reports, args)
 
@@ -196,7 +211,8 @@ def ingest(tb, reports, args, verified=None) -> int:
     # the klt jobs ran and the frozen manifest snapshot must describe the
     # state the numbers came from, so refuse if the working inputs moved
     # meanwhile -- before a record id, log or snapshot is written. (A bare
-    # `ingest` reloads fresh, so its drift is empty by construction.)
+    # `ingest` reloads fresh, so its drift is empty by construction; the
+    # body-deck check below is what covers it.)
     drift = tb.working_input_drift()
     if drift:
         print(f"ingest: {drift}", file=sys.stderr)
@@ -204,6 +220,24 @@ def ingest(tb, reports, args, verified=None) -> int:
               "characterize) so the frozen manifest snapshot describes the simulated state",
               file=sys.stderr)
         return 1
+    # The bare-`ingest` half of the same gate (issue #141): its reports were
+    # simulated from body decks an earlier `characterize` wrote, so a fresh
+    # reload never shows drift -- but if tb.json or the netlist fragment
+    # changed in between, the decks no longer match what this load would
+    # generate, and the record would present the ingest-time manifest and
+    # netlist as the inputs the numbers came from. Refuse unless every
+    # report's body is exactly that deck.
+    for vdd, resp_path in reports:
+        body = body_for(resp_path)
+        if not body.is_file():
+            print(f"ingest: {body} is missing; the inputs the reports were simulated from "
+                  "cannot be verified; NO record written", file=sys.stderr)
+            return 1
+        if body.read_text() != klt_body(tb, vdd):
+            print(f"ingest: {body} was generated from different testbench inputs than the "
+                  "working ones (tb.json or the netlist fragment changed after characterize); "
+                  "re-run characterize; NO record written", file=sys.stderr)
+            return 1
     # Ingest-host install: must itself be on the pin, but it is provenance of
     # THIS host only and never becomes the record's artifact identity.
     pdk, host_artifact = verified if verified is not None else _verified_pdk()

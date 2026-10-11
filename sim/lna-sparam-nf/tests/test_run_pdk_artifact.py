@@ -60,7 +60,7 @@ def test_characterize_refuses_before_submitting_on_unverified_install(unverified
 def test_ingest_refuses_before_any_log_dir_on_unverified_install(unverified, tmp_path, capsys):
     report = tmp_path / "report_2.50v.json"
     report.write_text("{}")
-    (tmp_path / "body_2.50v.spice").write_text(".param vdd_val=2.5\n")
+    (tmp_path / "body_2.50v.spice").write_text(run.klt_body(load_tb(BENCH), 2.5))
     corners_before = sorted((BENCH / "corners").iterdir()) if (BENCH / "corners").exists() else []
     assert run.main(["ingest", str(report)]) == 3
     assert "NO record written" in capsys.readouterr().err
@@ -258,6 +258,9 @@ def _write_reports(tmp_path, tb, env_for, log_text=None):
         path = tmp_path / f"report_{tag}.json"
         path.write_text(json.dumps({"status": "ok", "corners": corners,
                                     "environment": env_for(tag)}))
+        # The body deck characterize writes beside every report; ingest's
+        # issue-#141 gate compares it against the reloaded testbench.
+        (tmp_path / f"body_{tag}.spice").write_text(run.klt_body(tb, vdd))
         reports.append((vdd, path))
     return reports
 
@@ -305,6 +308,52 @@ def test_ingest_refuses_unbound_runner_models_before_record_id(local_install_mat
     err = capsys.readouterr().err
     assert needle in err and "NO record written" in err
     assert not (tb.experiment_dir / "corners").exists()  # no log copied
+
+
+# --- issue #141, bare ingest: a later manifest may not be attached to results
+# --- simulated from decks an earlier characterize wrote from other inputs ---
+
+def test_ingest_refuses_body_deck_from_other_inputs(local_install_matches, monkeypatch, tmp_path,
+                                                    capsys):
+    tb = local_install_matches
+    monkeypatch.setattr(run, "allocate_record_id", _boom)
+    monkeypatch.setattr(run, "build_record", _boom)
+    monkeypatch.setattr(run, "write_record", _boom)
+    monkeypatch.setattr(run, "write_netlist_snapshot", _boom)
+    reports = _write_reports(tmp_path, tb, lambda tag: _good_env(f"klt-sim-{tag}"))
+    # The tb.json/fragment changed after the deck was written: the deck on
+    # disk is no longer what the reloaded testbench would generate.
+    stale = run.body_for(reports[0][1])
+    stale.write_text(run.klt_body(tb, reports[0][0]) + "* edited after characterize\n")
+    assert run.ingest(tb, reports, _args()) == 1
+    err = capsys.readouterr().err
+    assert stale.name in err and "different testbench inputs" in err
+    assert "NO record written" in err
+    _nothing_published(tb)
+
+
+def test_ingest_refuses_missing_body_deck(local_install_matches, monkeypatch, tmp_path, capsys):
+    tb = local_install_matches
+    monkeypatch.setattr(run, "allocate_record_id", _boom)
+    monkeypatch.setattr(run, "build_record", _boom)
+    monkeypatch.setattr(run, "write_record", _boom)
+    monkeypatch.setattr(run, "write_netlist_snapshot", _boom)
+    reports = _write_reports(tmp_path, tb, lambda tag: _good_env(f"klt-sim-{tag}"))
+    run.body_for(reports[-1][1]).unlink()
+    assert run.ingest(tb, reports, _args()) == 1
+    assert "NO record written" in capsys.readouterr().err
+    _nothing_published(tb)
+
+
+def test_cmd_ingest_refuses_missing_body_before_ingest(monkeypatch, tmp_path, capsys):
+    # CLI path: cmd_ingest refuses before _body_supply ever reads the deck
+    # (a missing file must not surface as a traceback) and before ingest runs.
+    monkeypatch.setattr(run, "ingest", _boom)
+    report = tmp_path / "report_2.50v.json"
+    report.write_text("{}")
+    assert run.main(["ingest", str(report)]) == 1
+    err = capsys.readouterr().err
+    assert "body_2.50v.spice is missing" in err and "NO record written" in err
 
 
 def test_ingest_binds_record_to_offhost_models_not_local_install(local_install_matches, monkeypatch,
