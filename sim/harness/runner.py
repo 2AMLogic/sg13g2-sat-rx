@@ -20,6 +20,7 @@ exists.
 
 from __future__ import annotations
 
+import math
 import re
 import shutil
 import subprocess
@@ -39,6 +40,17 @@ DEFAULT_TIMEOUT_S = 300
 # `print` output for a length-1 vector: "m_vout = 6.9043645202e-01"
 _MEAS_RE = re.compile(r"^\s*m_(\w+)\s*=\s*([-+]?[0-9.]+(?:[eE][-+]?[0-9]+)?)\s*$")
 _ERROR_RE = re.compile(r"^\s*(?:Error|ERROR|Fatal|fatal error|doAnalyses:)", re.MULTILINE)
+
+# Fatal simulator diagnostics that invalidate a point even when every
+# measurement printed (issue #138). Deliberately narrow: anchored at line start
+# and requiring the diagnostic punctuation, so informational lines such as
+# "Warning: ... error ...", "Note: ...", "No. of Data Rows", or a measurement
+# named m_error_rate never match.
+_FATAL_RE = re.compile(
+    r"^(?:Fatal\b[: ]|fatal error\b|Error:|ERROR:|doAnalyses:"
+    r"|.*\bsimulation (?:aborted|interrupted)\b)",
+    re.IGNORECASE,
+)
 
 ExtraSubckts = Callable[[Pdk], list[str]]
 
@@ -144,6 +156,8 @@ class PointResult:
     deck: str = ""
     log: str = ""
     message: str = ""
+    returncode: int | None = None                 # simulator exit status, when it ran
+    diagnostic: str = ""                          # first fatal simulator diagnostic line
 
     def as_dict(self) -> dict:
         record = self.point.as_dict()
@@ -160,19 +174,43 @@ class PointResult:
             record["missing_measurements"] = self.missing
         if self.message:
             record["message"] = self.message
+        if self.returncode is not None:
+            record["returncode"] = self.returncode
+        if self.diagnostic:
+            record["diagnostic"] = self.diagnostic
         return record
 
 
-def parse_measurements(text: str) -> dict[str, float]:
+def _scan_measurements(text: str) -> tuple[dict[str, float], list[str]]:
+    """Return (finite measurements, names whose printed value is non-finite)."""
     found: dict[str, float] = {}
+    nonfinite: list[str] = []
     for line in text.splitlines():
         match = _MEAS_RE.match(line)
         if match:
             try:
-                found[match.group(1)] = float(match.group(2))
+                value = float(match.group(2))
             except ValueError:  # pragma: no cover - regex already constrains this
                 continue
-    return found
+            if math.isfinite(value):
+                found[match.group(1)] = value
+            else:  # e.g. 1e999 overflows to inf
+                found.pop(match.group(1), None)
+                nonfinite.append(match.group(1))
+    return found, nonfinite
+
+
+def parse_measurements(text: str) -> dict[str, float]:
+    """Finite printed measurements only; non-finite values are never returned."""
+    return _scan_measurements(text)[0]
+
+
+def fatal_diagnostic(text: str) -> str:
+    """First line of ``text`` that is a recognised fatal simulator diagnostic."""
+    for line in text.splitlines():
+        if _FATAL_RE.match(line.strip()):
+            return line.strip()
+    return ""
 
 
 def run_point(
@@ -226,12 +264,36 @@ def run_point(
             deck=deck_path.name,
             log=log_path.name,
             message=f"ngspice timed out after {timeout_s}s",
+            diagnostic="timeout",
         )
     elapsed = time.monotonic() - started
     log_path.write_text(output)
 
-    measurements = parse_measurements(output)
+    measurements, nonfinite = _scan_measurements(output)
     missing = [name for name in tb.measure if name not in measurements]
+    diagnostic = fatal_diagnostic(output)
+    # Reported names that are non-finite stay out of `measurements`.
+    nonfinite = [n for n in nonfinite if n in tb.measure]
+
+    if not missing and (returncode != 0 or diagnostic or nonfinite):
+        reasons = []
+        if returncode != 0:
+            reasons.append(f"ngspice exit {returncode}")
+        if diagnostic:
+            reasons.append(f"fatal diagnostic: {diagnostic}")
+        if nonfinite:
+            reasons.append(f"non-finite measurement(s): {', '.join(sorted(set(nonfinite)))}")
+        return PointResult(
+            point=point,
+            status="failed",
+            measurements=measurements,
+            seconds=elapsed,
+            deck=deck_path.name,
+            log=log_path.name,
+            message="; ".join(reasons),
+            returncode=returncode,
+            diagnostic=diagnostic,
+        )
 
     if missing:
         errors = "; ".join(_ERROR_RE.findall(output)[:3])
@@ -246,7 +308,12 @@ def run_point(
             seconds=elapsed,
             deck=deck_path.name,
             log=log_path.name,
-            message=first_error or errors or f"ngspice exit {returncode}, no measurements parsed",
+            message=(
+                first_error or errors or f"ngspice exit {returncode}, no measurements parsed"
+            )
+            + (f"; non-finite measurement(s): {', '.join(sorted(set(nonfinite)))}" if nonfinite else ""),
+            returncode=returncode,
+            diagnostic=diagnostic,
         )
 
     return PointResult(
@@ -256,6 +323,7 @@ def run_point(
         seconds=elapsed,
         deck=deck_path.name,
         log=log_path.name,
+        returncode=returncode,
     )
 
 
