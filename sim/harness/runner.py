@@ -30,7 +30,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from collections.abc import Callable
 
-from .corners import PvtPoint
+from .corners import PvtPoint, require_unique_corner_ids
 from .pdk import Pdk
 from .testbench import Testbench
 
@@ -340,6 +340,10 @@ def run_grid(
     extra_subckts: ExtraSubckts | None = None,
 ) -> list[PointResult]:
     """Run every PVT point; results come back in grid order regardless of jobs."""
+    # Artifact-identity gate (issue #150): points whose corner_id formats to
+    # the same string would share one deck/log pathname and overwrite each
+    # other. Refused here, before any deck or log is written.
+    require_unique_corner_ids(points)
     results: list[PointResult | None] = [None] * len(points)
 
     def _one(index_point):

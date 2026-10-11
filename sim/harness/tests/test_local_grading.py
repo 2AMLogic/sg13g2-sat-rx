@@ -150,3 +150,25 @@ def test_failure_reaches_cli_smoke_exit_status(monkeypatch, capsys, tb, sim, tmp
                        "--no-write", "--smoke-subset"])
     assert rc_cli == 1
     assert "POINT FAILED" in capsys.readouterr().err
+
+
+# ---------------------------------------------------------------------------
+# artifact-identity gate (issue #150): the local grid path refuses ambiguity
+# ---------------------------------------------------------------------------
+
+def test_grid_with_aliasing_ids_is_refused_before_any_deck_or_subprocess(tb, sim, tmp_path):
+    points = C.build_grid(C.resolve_corners(["hbt_typ"]), (27.0,), [2.501, 2.504])
+    assert points[0].corner_id == points[1].corner_id == "hbt_typ_27c_2.50v"
+    sim(raises=AssertionError("ngspice must not run for an ambiguous grid"))
+    with pytest.raises(C.CornerIdCollision, match="hbt_typ_27c_2.50v"):
+        runner.run_grid(tb, None, points, tmp_path)
+    assert list(tmp_path.iterdir()) == []  # no deck or log written either
+
+
+def test_fine_grid_with_distinct_ids_runs_normally(tb, sim, tmp_path):
+    sim(_log(tb), rc=0)
+    points = C.build_grid(C.resolve_corners(["hbt_typ"]), (27.0,), [2.504, 2.506])
+    results = runner.run_grid(tb, None, points, tmp_path)
+    assert [r.status for r in results] == ["ok", "ok"]
+    assert sorted(p.name for p in tmp_path.glob("*.spice")) == \
+        ["hbt_typ_27c_2.50v.spice", "hbt_typ_27c_2.51v.spice"]
