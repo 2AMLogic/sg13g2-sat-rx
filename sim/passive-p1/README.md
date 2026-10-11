@@ -14,6 +14,7 @@ process/temperature corners are follow-on work.
 | Analysis chain (strict Touchstone parse, S→Z/Y, L/Q/SRF, ngspice two-port comparison, record/verdict) | implemented; controls pass (`records/*-CONTROLS-PASS.md`) |
 | Synthetic lossless-L known-answer, wrong-value, malformed-data controls | pass (the sabotage controls pass by being **rejected**) |
 | Pipeline plumbing on generated 2-π data (success / exceeded-limit / wrong-fit / unavailable / re-run digest) | pass, records labelled `SYNTHETIC-*`, kept out of `records/` |
+| Same-second record-id collision (`controls.py collision`, issue #97) | pass: a second record in the same UTC second, commit and status is refused (exit 4, "record id collision"), nothing is overwritten |
 | Geometry stage (PDK PCell → GDS, compared with pinned GDS) | ran on the authoring host: per-layer XOR area 0 for all four layers |
 | **openEMS stages (`em`, `convergence`)** | **`CAPABILITY_UNAVAILABLE`** on the authoring host — `openEMS` not on PATH, no openEMS python, `import CSXCAD` fails. See `records/*-CAPABILITY_UNAVAILABLE.md`. |
 | L/Q/SRF at 17.7 / 19.45 / 21.2 GHz, mesh and margin deltas, fit residuals | **not established** — no solver ran; no number from any other source is substituted |
@@ -205,6 +206,13 @@ Controls (no EM solver, a few seconds, one local `ngspice -b` per check):
 python3 sim/passive-p1/scripts/controls.py all [--write-record]      # needs ngspice, numpy, scipy (requirements-sim.txt)
 python3 sim/passive-p1/scripts/hash_inputs.py --check
 ```
+
+Record ids are `<UTC second>-<git short or nogit>-<status>`, one-second resolution.
+`make_record.py` never overwrites: a run whose id already exists exits 4 with
+"record id collision" and removes only the files it created. The `pipeline`
+control waits out the first record's second before its re-run; the `collision`
+control holds the clock inside one second and checks the refusal. The numerical
+digest covers status, metrics and comparison only, never the id or time.
 
 CI (job `sim-smoke`, pinned ngspice 46) runs `controls.py all` **without**
 `--write-record` after `pip install -r requirements-sim.txt` (numpy + scipy with

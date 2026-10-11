@@ -125,7 +125,7 @@
     {
       "path": "scripts/make_record.py",
       "role": "new",
-      "sha256": "24905e933e6bb10391243510ca7441c0b0b1e4c8962318ebbc11b2d73cfe54e7",
+      "sha256": "59d1f5e9f96ead46e21edca9d70f373fa9b2a84c36dce28444c55838ca99e565",
       "source_path": null,
       "source_sha256": null
     },
@@ -153,7 +153,7 @@
     {
       "path": "scripts/controls.py",
       "role": "new",
-      "sha256": "8394da3d8859cf06cccffab4dbb07026c06c5ed89f8b58dffd7eda0cdc652e57",
+      "sha256": "fada8a0c7afa73b48fdda7718d976800aac74a202ae5ab6cb9047e368eb9a946",
       "source_path": null,
       "source_sha256": null
     },
