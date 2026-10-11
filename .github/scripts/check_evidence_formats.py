@@ -164,7 +164,10 @@ reinterprets a historical scientific claim; corrections go in a later record):
    lexicographically newer ``*.md`` in the same bench's ``records/`` may mention
    the row (``row N``, ``rows A-B``, ``rows A, B and C``). A mention is not a
    claim; resolve a false positive by pointing ``latest_record`` at the newer
-   record. It records bookkeeping only and never changes a spec value.
+   record. Every row must also carry ``statistical`` (a JSON bool),
+   a non-blank ``statistical_rationale`` and, when ``statistical`` is true, a
+   non-blank ``statistical_card`` (absent on a false row); see DR-0007. It
+   records bookkeeping only and never changes a spec value.
 
 Exit status: 0 clean, 1 problems found, 2 usage/environment error.
 """
@@ -2840,6 +2843,18 @@ def check_row_coverage(root: Path) -> Problems:
             problems.add(where, f"status {e.get('status')!r} disagrees with the spec table ({status!r})")
         if e.get("bound_corner") != corner:
             problems.add(where, f"bound_corner {e.get('bound_corner')!r} disagrees with the spec table ({corner!r})")
+        stat = e.get("statistical")
+        if not isinstance(stat, bool):
+            problems.add(where, f"'statistical' must be a JSON bool (got {stat!r}); DR-0007")
+        rat = e.get("statistical_rationale")
+        if not (isinstance(rat, str) and rat.strip()):
+            problems.add(where, "'statistical_rationale' is required and must be a non-blank string")
+        card = e.get("statistical_card")
+        if stat is True and not (isinstance(card, str) and card.strip()):
+            problems.add(where, "statistical true: 'statistical_card' (PDK mismatch/stat model file name) is required")
+        if stat is False and "statistical_card" in e:
+            problems.add(where, "statistical false: 'statistical_card' must be absent (a card source is only "
+                         "meaningful on a row that needs Monte Carlo)")
         verdict = e.get("verdict")
         if verdict not in VERDICTS:
             problems.add(where, f"verdict {verdict!r} not one of {sorted(VERDICTS)}")

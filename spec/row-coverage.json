@@ -1,5 +1,5 @@
 {
-  "_comment": "Hand-maintained spec-row to bench/record coverage map (issue #50). Evidence-neutral: it never changes a spec value. Checked by .github/scripts/check_evidence_formats.py against the table in spec/target-spec.md. Verdicts: no_bench, placeholder_circuit, device_level_only, method_absent, measured_pass, measured_fail. A measured_* verdict may not cite a record whose Claim line says placeholder or device-level. A row moves off its current verdict only via a later record that says why.",
+  "_comment": "Hand-maintained spec-row to bench/record coverage map (issue #50). Evidence-neutral: it never changes a spec value. Checked by .github/scripts/check_evidence_formats.py against the table in spec/target-spec.md. Verdicts: no_bench, placeholder_circuit, device_level_only, method_absent, measured_pass, measured_fail. A measured_* verdict may not cite a record whose Claim line says placeholder or device-level. A row moves off its current verdict only via a later record that says why. Each row also carries 'statistical' (JSON bool: does the row need Monte Carlo evidence for T1 item 6), 'statistical_rationale' (non-blank one line) and, only when statistical is true, 'statistical_card' (PDK model file name(s), names only) per DR-0007. These fields never change a spec value or a verdict; a true row stays unmet for item 6 until a Monte Carlo record exists.",
   "rows": [
     {
       "row": 1,
@@ -8,7 +8,9 @@
       "bench": null,
       "latest_record": null,
       "verdict": "no_bench",
-      "blocked_by": "DR-0001 (still proposed); ITU-level edge check recorded in spec/literature-citations-2026-10-10.md Part 1 (source evidence only); target jurisdiction/service, sub-band scope and band selection undecided; passive feasibility gate open"
+      "blocked_by": "DR-0001 (still proposed); ITU-level edge check recorded in spec/literature-citations-2026-10-10.md Part 1 (source evidence only); target jurisdiction/service, sub-band scope and band selection undecided; passive feasibility gate open",
+      "statistical": false,
+      "statistical_rationale": "Band edges are a definition, not a measured figure; nothing random to sample."
     },
     {
       "row": 2,
@@ -16,7 +18,9 @@
       "bound_corner": "`hbt_wcs`, 125 °C, min supply (lowest `J_C`, lowest fT)",
       "bench": "sim/lna-sparam-nf",
       "latest_record": "sim/lna-sparam-nf/records/20261010-012923-6cad7fc.md",
-      "verdict": "placeholder_circuit"
+      "verdict": "placeholder_circuit",
+      "statistical": false,
+      "statistical_rationale": "Gain floor is bound by the process/temperature/supply worst-case corner (hbt_wcs); the corner bench suffices."
     },
     {
       "row": 3,
@@ -24,7 +28,9 @@
       "bound_corner": "`hbt_wcs`, 125 °C (device noise rises with T; worst self-heating)",
       "bench": "sim/lna-sparam-nf",
       "latest_record": "sim/lna-sparam-nf/records/20261010-012923-6cad7fc.md",
-      "verdict": "placeholder_circuit"
+      "verdict": "placeholder_circuit",
+      "statistical": false,
+      "statistical_rationale": "Noise figure is a deterministic small-signal noise analysis at the worst corner (hbt_wcs, 125 C); device mismatch does not enter a single-ended LNA NF."
     },
     {
       "row": 4,
@@ -32,7 +38,9 @@
       "bound_corner": "`cap_bcs`/`cap_wcs` × `res_*` extremes (L/C spread), temperature extremes",
       "bench": "sim/lna-sparam-nf",
       "latest_record": "sim/lna-sparam-nf/records/20261010-012923-6cad7fc.md",
-      "verdict": "placeholder_circuit"
+      "verdict": "placeholder_circuit",
+      "statistical": false,
+      "statistical_rationale": "S11 spread is bound by the cap/res process extremes (deterministic corners); inductors have no model, so a mismatch-driven spread is not the limiting mechanism and cannot be sampled."
     },
     {
       "row": 5,
@@ -40,7 +48,9 @@
       "bound_corner": "as row 4",
       "bench": "sim/lna-sparam-nf",
       "latest_record": "sim/lna-sparam-nf/records/20261010-012923-6cad7fc.md",
-      "verdict": "placeholder_circuit"
+      "verdict": "placeholder_circuit",
+      "statistical": false,
+      "statistical_rationale": "Same mechanism as row 4: bound by passive process extremes, a deterministic corner question."
     },
     {
       "row": 6,
@@ -48,7 +58,9 @@
       "bound_corner": "worst process × temp × supply combination; out-of-band as well as in-band",
       "bench": "sim/lna-sparam-nf",
       "latest_record": "sim/lna-sparam-nf/records/20261010-012923-6cad7fc.md",
-      "verdict": "placeholder_circuit"
+      "verdict": "placeholder_circuit",
+      "statistical": false,
+      "statistical_rationale": "k-factor is bound by the worst process x temperature x supply combination; a Monte Carlo would add confidence but cannot replace the corner, so the corner bench is the claim."
     },
     {
       "row": 7,
@@ -57,7 +69,9 @@
       "bench": "sim/lna-linearity",
       "latest_record": "sim/lna-linearity/records/20261010-174208-0f67eaf.md",
       "verdict": "placeholder_circuit",
-      "note": "Nominal-corner (hbt_typ, 27 C, 2.5 V) two-tone IIP3 of the ideal-matching placeholder at 17.9/18.0, 19.4/19.5 and 20.9/21.0 GHz: -13.29, -13.88 and -11.77 dBm (converged under timestep halving and window doubling; fitted over -56..-44 dBm per tone, extrapolated ~30 dB). Meets the unchanged -15 dBm target at that corner on that placeholder only; not measured compliance (ideal matching, one corner, draft band, row 17 limits break from about -43 dBm per tone)."
+      "note": "Nominal-corner (hbt_typ, 27 C, 2.5 V) two-tone IIP3 of the ideal-matching placeholder at 17.9/18.0, 19.4/19.5 and 20.9/21.0 GHz: -13.29, -13.88 and -11.77 dBm (converged under timestep halving and window doubling; fitted over -56..-44 dBm per tone, extrapolated ~30 dB). Meets the unchanged -15 dBm target at that corner on that placeholder only; not measured compliance (ideal matching, one corner, draft band, row 17 limits break from about -43 dBm per tone).",
+      "statistical": false,
+      "statistical_rationale": "Single-device nonlinearity figure at a fixed corner; the two-tone transient bench is deterministic."
     },
     {
       "row": 8,
@@ -66,7 +80,9 @@
       "bench": "sim/lna-linearity",
       "latest_record": "sim/lna-linearity/records/20261010-174208-0f67eaf.md",
       "verdict": "placeholder_circuit",
-      "note": "Input P1dB is NOT determined within the DUT operating limits: the instantaneous Q2 V_CE exceeds the 1.4 V row-17 limit from -36 dBm (low/mid) / -34 dBm (high) single-tone available power, well below the -25 dBm target, so only a lower bound (> -38 / -38 / -36 dBm) is recorded. The limit-ignoring reference (labelled NOT A RESULT in the record) crosses 1 dB at -16.1 and -17.5 dBm (low, mid) and above -16 dBm (high). Target unchanged; placeholder circuit, one corner."
+      "note": "Input P1dB is NOT determined within the DUT operating limits: the instantaneous Q2 V_CE exceeds the 1.4 V row-17 limit from -36 dBm (low/mid) / -34 dBm (high) single-tone available power, well below the -25 dBm target, so only a lower bound (> -38 / -38 / -36 dBm) is recorded. The limit-ignoring reference (labelled NOT A RESULT in the record) crosses 1 dB at -16.1 and -17.5 dBm (low, mid) and above -16 dBm (high). Target unchanged; placeholder circuit, one corner.",
+      "statistical": false,
+      "statistical_rationale": "Same as row 7: single-tone compression sweep at a fixed corner."
     },
     {
       "row": 9,
@@ -74,7 +90,9 @@
       "bound_corner": "`hbt_wcs`, 125 °C, min supply",
       "bench": "sim/mixer-conversion-iip3",
       "latest_record": "sim/mixer-conversion-iip3/records/20260912-034727-9204518.md",
-      "verdict": "placeholder_circuit"
+      "verdict": "placeholder_circuit",
+      "statistical": false,
+      "statistical_rationale": "Conversion gain is bound by the hbt_wcs/125 C/min-supply corner; balance mismatch perturbs it second-order only."
     },
     {
       "row": 10,
@@ -82,7 +100,9 @@
       "bound_corner": "`hbt_wcs`, 125 °C",
       "bench": "sim/mixer-nf-method",
       "latest_record": "sim/mixer-nf-method/records/20261009-181241-c40c552-MODEL_ABSENT.md",
-      "verdict": "method_absent"
+      "verdict": "method_absent",
+      "statistical": false,
+      "statistical_rationale": "Mixer SSB NF is a deterministic noise figure at the worst corner; the open question is the measurement method (issue #2), not randomness."
     },
     {
       "row": 11,
@@ -90,7 +110,9 @@
       "bound_corner": "`hbt_typ`, nominal",
       "bench": "sim/mixer-conversion-iip3",
       "latest_record": "sim/mixer-conversion-iip3/records/20260912-034727-9204518.md",
-      "verdict": "placeholder_circuit"
+      "verdict": "placeholder_circuit",
+      "statistical": false,
+      "statistical_rationale": "Fixed-corner two-tone linearity figure; deterministic bench."
     },
     {
       "row": 12,
@@ -99,7 +121,9 @@
       "bench": null,
       "latest_record": null,
       "verdict": "no_bench",
-      "blocked_by": "DR-0004 (interface convention); no cascade bench exists"
+      "blocked_by": "DR-0004 (interface convention); no cascade bench exists",
+      "statistical": false,
+      "statistical_rationale": "Cascade NF is a deterministic measurement on the cascade at the worst corner; no accuracy/offset/matching mechanism is stated for it."
     },
     {
       "row": 13,
@@ -108,7 +132,9 @@
       "bench": null,
       "latest_record": null,
       "verdict": "no_bench",
-      "blocked_by": "DR-0004 (interface convention); no cascade bench exists"
+      "blocked_by": "DR-0004 (interface convention); no cascade bench exists",
+      "statistical": false,
+      "statistical_rationale": "Cascade gain is a deterministic corner figure like rows 2 and 9."
     },
     {
       "row": 14,
@@ -117,7 +143,9 @@
       "bench": null,
       "latest_record": null,
       "verdict": "no_bench",
-      "blocked_by": "rows 1 and 16 (LO range is arithmetic on band and IF plan); no LO bench exists"
+      "blocked_by": "rows 1 and 16 (LO range is arithmetic on band and IF plan); no LO bench exists",
+      "statistical": false,
+      "statistical_rationale": "Frequency arithmetic from rows 1 and 16; nothing random to sample."
     },
     {
       "row": 15,
@@ -125,7 +153,10 @@
       "bound_corner": "`hbt_typ` and mismatch corners (leakage is a matching/symmetry effect, so `hbt_typ_mismatch` is in scope)",
       "bench": "sim/mixer-conversion-iip3",
       "latest_record": "sim/mixer-conversion-iip3/records/20260912-034727-9204518.md",
-      "verdict": "placeholder_circuit"
+      "verdict": "placeholder_circuit",
+      "statistical": true,
+      "statistical_rationale": "LO-to-RF/IF leakage is a matching/symmetry effect (target-spec.md row 15 and the mismatch corner axis); the typical-corner result is zero by symmetry, so only a mismatch/statistical run bounds it.",
+      "statistical_card": "sg13g2_hbt_mod_mismatch.lib; sg13g2_hbt_stat.lib"
     },
     {
       "row": 16,
@@ -134,7 +165,9 @@
       "bench": null,
       "latest_record": null,
       "verdict": "no_bench",
-      "blocked_by": "no IF-bandwidth bench exists; IF plan is DRAFT (DR-0002); 500 MHz is an unverified target with no single-channel source (spec/literature-citations-2026-10-10.md Part 2); operator channel plans not obtained; carrier/aggregation plan and flatness margin undecided"
+      "blocked_by": "no IF-bandwidth bench exists; IF plan is DRAFT (DR-0002); 500 MHz is an unverified target with no single-channel source (spec/literature-citations-2026-10-10.md Part 2); operator channel plans not obtained; carrier/aggregation plan and flatness margin undecided",
+      "statistical": false,
+      "statistical_rationale": "IF bandwidth is bound by the cap process corners (IF load RC); deterministic corner question."
     },
     {
       "row": 17,
@@ -143,7 +176,9 @@
       "bench": "sim/lna-sparam-nf",
       "latest_record": "sim/lna-sparam-nf/records/20261010-012923-6cad7fc.md",
       "verdict": "placeholder_circuit",
-      "blocked_by": "LNA stage 1 only, ideal matching: per-device V_CE/V_BE/I_C reported, 2.75 V cells labelled excursion, not claimed; mixer stress at an acceptable LO drive is missing (sim/mixer-topology-feasibility records 20261010-010744-a10c193 and 20261010-025859-2113f00 are device-level only, no acceptable drive at any declared sizing)"
+      "blocked_by": "LNA stage 1 only, ideal matching: per-device V_CE/V_BE/I_C reported, 2.75 V cells labelled excursion, not claimed; mixer stress at an acceptable LO drive is missing (sim/mixer-topology-feasibility records 20261010-010744-a10c193 and 20261010-025859-2113f00 are device-level only, no acceptable drive at any declared sizing)",
+      "statistical": false,
+      "statistical_rationale": "A rail and V_CE constraint checked by operating point; deterministic."
     },
     {
       "row": 18,
@@ -152,7 +187,9 @@
       "bench": "sim/lna-sparam-nf",
       "latest_record": "sim/lna-sparam-nf/records/20261010-012923-6cad7fc.md",
       "verdict": "placeholder_circuit",
-      "blocked_by": "LNA stage 1 supply power only (max 7.52 mW at hbt_bcs_125c_2.75v, an excursion cell); whole-chain LNA + mixer DC power is missing (sim/mixer-topology-feasibility 20261010-025859-2113f00 reports mixer-only rail power, not a cascade budget)"
+      "blocked_by": "LNA stage 1 supply power only (max 7.52 mW at hbt_bcs_125c_2.75v, an excursion cell); whole-chain LNA + mixer DC power is missing (sim/mixer-topology-feasibility 20261010-025859-2113f00 reports mixer-only rail power, not a cascade budget)",
+      "statistical": false,
+      "statistical_rationale": "DC power is bound by hbt_bcs at -40 C; a deterministic bias-network corner figure."
     },
     {
       "row": 19,
@@ -161,7 +198,9 @@
       "bench": null,
       "latest_record": null,
       "verdict": "no_bench",
-      "blocked_by": "open item 8: needs a first floorplan and klt economy; no layout exists"
+      "blocked_by": "open item 8: needs a first floorplan and klt economy; no layout exists",
+      "statistical": false,
+      "statistical_rationale": "Drawn bounding-box area measured by klt economy; deterministic."
     },
     {
       "row": 20,
@@ -170,7 +209,9 @@
       "bench": null,
       "latest_record": null,
       "verdict": "no_bench",
-      "blocked_by": "open item 8: needs klt economy evidence; no layout exists"
+      "blocked_by": "open item 8: needs klt economy evidence; no layout exists",
+      "statistical": false,
+      "statistical_rationale": "Layout-geometry composite measured by klt economy; deterministic."
     }
   ]
 }
