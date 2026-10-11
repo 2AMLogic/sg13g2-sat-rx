@@ -4,6 +4,12 @@ Chronological record of merged pull requests and closed issues, maintained by th
 
 ### 2026-10-11
 
+- **PR #160**: refactor: consolidate probe provenance helpers into harness.provenance
+- **Issue #144** (closed): Consolidate duplicated provenance helpers in mixer probe drivers into the harness
+- **PR #159**: spec: per-row statistical classification and DR-0007 (#156)
+- **Issue #156** (closed): spec: classify each target-spec row as statistical or deterministic for T1 item 6
+- **PR #158**: harness: Pdk.version reads the installed .fetched-version marker
+- **Issue #155** (closed): harness: report the installed PDK revision from .fetched-version instead of 'unknown'
 - **PR #154**: harness: refuse PVT grids whose points alias one artifact id, before dispatch
 - **PR #153**: harness: reject non-finite and malformed numeric grading bounds
 - **PR #151**: harness: freeze the testbench manifest next to each record's DUT snapshot
