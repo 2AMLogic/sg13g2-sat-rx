@@ -1,0 +1,3550 @@
+{
+  "record_id": "20261011-053527-d60e79a",
+  "status": "COLLECTED",
+  "stage": 1,
+  "started_utc": "2026-10-11T05:30:31.797523+00:00",
+  "spec_rows_claimed_met": [],
+  "plan": {
+    "file": "sim/lna-headroom/testbench/plan.json",
+    "sha256": "9c544529cddf93c083103b7992ab3fe4ea6c5572b80b2b8631202abb95360704",
+    "commit": "d60e79a4df65f7bffa465ffca5a6adc2e8b4e6c1",
+    "dirty": false
+  },
+  "dut": {
+    "file": "design/netlist/lna_stage1.spice",
+    "sha256": "ad4fe1be5754f21fc4b2dd67863234858dc399e2a8232d3b20cf530014b8c447"
+  },
+  "ngspice_control": {
+    "a1": 10.0,
+    "a3": -2000.0,
+    "kind": "one",
+    "pass": true,
+    "expected_dbm": -21.3966574,
+    "error_db": 0.00227046721,
+    "expected_gain_db": 13.9794001,
+    "gain_error_db": -0.0136335517,
+    "tol_db": 0.1,
+    "gain_tol_db": 0.05
+  },
+  "baseline_reproduction": {
+    "reproduced": true,
+    "record": "sim/lna-linearity/records/20261010-174208-0f67eaf",
+    "tolerances": {
+      "pin_tolerance_db": 2.0,
+      "vce_q2_peak_tol_v": 0.005,
+      "gain_tol_db": 0.05
+    },
+    "per_placement": {
+      "low": {
+        "historical_first_violation_pin_dbm": -36.0,
+        "first_violation_pin_dbm": -36.0,
+        "historical_identity": "q2 V_CE peak",
+        "identity": "q2 V_CE peak",
+        "max_vce_q2_peak_delta_v": 4.85500018e-09,
+        "max_delivered_power_delta_db": 4.98303514e-08,
+        "reproduced": true
+      },
+      "mid": {
+        "historical_first_violation_pin_dbm": -36.0,
+        "first_violation_pin_dbm": -36.0,
+        "historical_identity": "q2 V_CE peak",
+        "identity": "q2 V_CE peak",
+        "max_vce_q2_peak_delta_v": 4.73999995e-09,
+        "max_delivered_power_delta_db": 4.19371986e-08,
+        "reproduced": true
+      },
+      "high": {
+        "historical_first_violation_pin_dbm": -34.0,
+        "first_violation_pin_dbm": -34.0,
+        "historical_identity": "q2 V_CE peak",
+        "identity": "q2 V_CE peak",
+        "max_vce_q2_peak_delta_v": 4.68999994e-09,
+        "max_delivered_power_delta_db": 4.57015403e-08,
+        "reproduced": true
+      }
+    }
+  },
+  "candidates": {
+    "C00": {
+      "candidate": {
+        "id": "C00",
+        "r1b_ohm": 1500,
+        "r2b_ohm": 7000,
+        "rd_ohm": 465
+      },
+      "dc": {
+        "vc1_v": 1.24720023,
+        "vb2_v": 2.05643888,
+        "voc_v": 2.5,
+        "ve1_v": 0.00469338151,
+        "vce_q1_v": 1.24250684,
+        "vce_q2_v": 1.25279977,
+        "vbe_q2_v": 0.809238652,
+        "vbe_q1_v": 0.809304286,
+        "ic_q1_ma_from_re1": 1.5644605,
+        "idd_ma": 2.06656348
+      },
+      "placements": {
+        "low": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -38.0,
+            "bracket": null,
+            "reason": "sweep step at -36 dBm is rejected (outside DUT operating limits: q2 V_CE peak 1.4248 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 21.4834212,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -36.0,
+            "violations": [
+              "q2 V_CE peak 1.4248 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q2 V_CE peak",
+            "stress_free_pin_dbm": -38.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.0128203679,
+          "gap_to_row8_target_db": 13.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.636607525,
+                "min": -0.00163447634
+              },
+              "q2": {
+                "max": 0.800877178,
+                "min": -0.0152886568
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.27014349,
+            "-54": 1.27462715,
+            "-52": 1.28026915,
+            "-50": 1.28736615,
+            "-48": 1.2962902,
+            "-46": 1.30751634,
+            "-44": 1.32162668,
+            "-42": 1.33936528,
+            "-40": 1.36164364,
+            "-38": 1.38962514,
+            "-36": 1.42477117,
+            "-34": 1.4689506,
+            "-32": 1.52446798,
+            "-30": 1.59425955,
+            "-28": 1.68219636,
+            "-26": 1.79296311,
+            "-24": 1.93315057,
+            "-22": 2.11338412,
+            "-20": 2.3534719,
+            "-18": 2.68725453,
+            "-16": 3.11522145
+          }
+        },
+        "mid": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -38.0,
+            "bracket": null,
+            "reason": "sweep step at -36 dBm is rejected (outside DUT operating limits: q2 V_CE peak 1.4247 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 22.3462853,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -36.0,
+            "violations": [
+              "q2 V_CE peak 1.4247 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q2 V_CE peak",
+            "stress_free_pin_dbm": -38.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.0162382992,
+          "gap_to_row8_target_db": 13.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.678096829,
+                "min": -0.00190075494
+              },
+              "q2": {
+                "max": 0.727432771,
+                "min": -0.0112094177
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.27049221,
+            "-54": 1.27505575,
+            "-52": 1.28078963,
+            "-50": 1.28799262,
+            "-48": 1.29703355,
+            "-46": 1.30836855,
+            "-44": 1.32257839,
+            "-42": 1.34035619,
+            "-40": 1.3625687,
+            "-38": 1.39026481,
+            "-36": 1.42474259,
+            "-34": 1.46745553,
+            "-32": 1.52036021,
+            "-30": 1.58583928,
+            "-28": 1.66736365,
+            "-26": 1.77032644,
+            "-24": 1.90377739,
+            "-22": 2.08320741,
+            "-20": 2.31505024,
+            "-18": 2.59880046,
+            "-16": 2.93160919
+          }
+        },
+        "high": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -36.0,
+            "bracket": null,
+            "reason": "sweep step at -34 dBm is rejected (outside DUT operating limits: q2 V_CE peak 1.4096 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 20.2326577,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -34.0,
+            "violations": [
+              "q2 V_CE peak 1.4096 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q2 V_CE peak",
+            "stress_free_pin_dbm": -36.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.00479809949,
+          "gap_to_row8_target_db": 11.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.61640826,
+                "min": -0.00131592194
+              },
+              "q2": {
+                "max": 0.558686305,
+                "min": -0.00683544934
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.26572608,
+            "-54": 1.26906226,
+            "-52": 1.27325343,
+            "-50": 1.27851668,
+            "-48": 1.28512475,
+            "-46": 1.29340919,
+            "-44": 1.30378876,
+            "-42": 1.31677869,
+            "-40": 1.33300277,
+            "-38": 1.35324983,
+            "-36": 1.37839441,
+            "-34": 1.40955816,
+            "-32": 1.44802847,
+            "-30": 1.49521491,
+            "-28": 1.55317169,
+            "-26": 1.62504927,
+            "-24": 1.717537,
+            "-22": 1.84378722,
+            "-20": 2.02531591,
+            "-18": 2.25374431,
+            "-16": 2.51935097
+          }
+        }
+      },
+      "gates": {
+        "G_dc": true,
+        "G_gain": true,
+        "G_base": true,
+        "failed": [],
+        "gain_loss_db": {
+          "low": 0.0,
+          "mid": 0.0,
+          "high": 0.0
+        },
+        "dc_window_v": [
+          0.4,
+          1.37
+        ]
+      },
+      "metrics": {
+        "stress_free_pin_dbm": {
+          "low": -38.0,
+          "mid": -38.0,
+          "high": -36.0
+        },
+        "worst_stress_free_pin_dbm": -38.0,
+        "headroom_gain_db": 0.0,
+        "net_output_headroom_db": 0.0
+      }
+    },
+    "C01": {
+      "candidate": {
+        "id": "C01",
+        "r1b_ohm": 1500,
+        "r2b_ohm": 7000,
+        "rd_ohm": 300
+      },
+      "dc": {
+        "vc1_v": 1.24720023,
+        "vb2_v": 2.05643888,
+        "voc_v": 2.5,
+        "ve1_v": 0.00469338151,
+        "vce_q1_v": 1.24250684,
+        "vce_q2_v": 1.25279977,
+        "vbe_q2_v": 0.809238652,
+        "vbe_q1_v": 0.809304286,
+        "ic_q1_ma_from_re1": 1.5644605,
+        "idd_ma": 2.06656348
+      },
+      "placements": {
+        "low": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -36.0,
+            "bracket": null,
+            "reason": "sweep step at -34 dBm is rejected (outside DUT operating limits: q2 V_CE peak 1.4158 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 19.3871597,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -34.0,
+            "violations": [
+              "q2 V_CE peak 1.4158 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q2 V_CE peak",
+            "stress_free_pin_dbm": -36.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.0187927265,
+          "gap_to_row8_target_db": 11.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.639937945,
+                "min": -0.00143797963
+              },
+              "q2": {
+                "max": 0.739932957,
+                "min": -0.0107533213
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.26601841,
+            "-54": 1.2694307,
+            "-52": 1.27372224,
+            "-50": 1.27911676,
+            "-48": 1.28589634,
+            "-46": 1.29440328,
+            "-44": 1.30509823,
+            "-42": 1.3185068,
+            "-40": 1.33532497,
+            "-38": 1.35638714,
+            "-36": 1.38276544,
+            "-34": 1.41582718,
+            "-32": 1.4573009,
+            "-30": 1.50942227,
+            "-28": 1.57515534,
+            "-26": 1.65820655,
+            "-24": 1.76421812,
+            "-22": 1.90094408,
+            "-20": 2.08203171,
+            "-18": 2.32848438,
+            "-16": 2.66789237
+          }
+        },
+        "mid": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -36.0,
+            "bracket": null,
+            "reason": "sweep step at -34 dBm is rejected (outside DUT operating limits: q2 V_CE peak 1.4144 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 20.2220264,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -34.0,
+            "violations": [
+              "q2 V_CE peak 1.4144 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q2 V_CE peak",
+            "stress_free_pin_dbm": -36.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.0264536829,
+          "gap_to_row8_target_db": 11.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.698688312,
+                "min": -0.00184701905
+              },
+              "q2": {
+                "max": 0.717854547,
+                "min": -0.00928756453
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.26624187,
+            "-54": 1.26970522,
+            "-52": 1.27405509,
+            "-50": 1.27951488,
+            "-48": 1.28636257,
+            "-46": 1.29493937,
+            "-44": 1.30567845,
+            "-42": 1.31908986,
+            "-40": 1.33581418,
+            "-38": 1.35661064,
+            "-36": 1.38242273,
+            "-34": 1.41438349,
+            "-32": 1.45384363,
+            "-30": 1.50262477,
+            "-28": 1.56353708,
+            "-26": 1.64092688,
+            "-24": 1.74202696,
+            "-22": 1.87873143,
+            "-20": 2.06781415,
+            "-18": 2.31433023,
+            "-16": 2.62238957
+          }
+        },
+        "high": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -34.0,
+            "bracket": null,
+            "reason": "sweep step at -32 dBm is rejected (outside DUT operating limits: q2 V_CE peak 1.4045 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 18.3913543,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -32.0,
+            "violations": [
+              "q2 V_CE peak 1.4045 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q2 V_CE peak",
+            "stress_free_pin_dbm": -34.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.0108704926,
+          "gap_to_row8_target_db": 9.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.640422148,
+                "min": -0.0013786407
+              },
+              "q2": {
+                "max": 0.58403527,
+                "min": -0.00602754523
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.26294808,
+            "-54": 1.26556406,
+            "-52": 1.26884902,
+            "-50": 1.27297448,
+            "-48": 1.27814935,
+            "-46": 1.28463318,
+            "-44": 1.29274742,
+            "-42": 1.30288769,
+            "-40": 1.31553439,
+            "-38": 1.33126642,
+            "-36": 1.35077926,
+            "-34": 1.37485933,
+            "-32": 1.40448337,
+            "-30": 1.44078196,
+            "-28": 1.48518044,
+            "-26": 1.54047797,
+            "-24": 1.61238541,
+            "-22": 1.71190639,
+            "-20": 1.85636079,
+            "-18": 2.06465563,
+            "-16": 2.30874198
+          }
+        }
+      },
+      "gates": {
+        "G_dc": true,
+        "G_gain": true,
+        "G_base": true,
+        "failed": [],
+        "gain_loss_db": {
+          "low": 2.09626148,
+          "mid": 2.12425893,
+          "high": 1.84130344
+        },
+        "dc_window_v": [
+          0.4,
+          1.37
+        ]
+      },
+      "metrics": {
+        "stress_free_pin_dbm": {
+          "low": -36.0,
+          "mid": -36.0,
+          "high": -34.0
+        },
+        "worst_stress_free_pin_dbm": -36.0,
+        "headroom_gain_db": 2.0,
+        "net_output_headroom_db": -0.124258926
+      }
+    },
+    "C02": {
+      "candidate": {
+        "id": "C02",
+        "r1b_ohm": 1500,
+        "r2b_ohm": 7000,
+        "rd_ohm": 200
+      },
+      "dc": {
+        "vc1_v": 1.24720023,
+        "vb2_v": 2.05643888,
+        "voc_v": 2.5,
+        "ve1_v": 0.00469338151,
+        "vce_q1_v": 1.24250684,
+        "vce_q2_v": 1.25279977,
+        "vbe_q2_v": 0.809238652,
+        "vbe_q1_v": 0.809304286,
+        "ic_q1_ma_from_re1": 1.5644605,
+        "idd_ma": 2.06656348
+      },
+      "placements": {
+        "low": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -34.0,
+            "bracket": null,
+            "reason": "sweep step at -32 dBm is rejected (outside DUT operating limits: q2 V_CE peak 1.4001 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 17.0640839,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -32.0,
+            "violations": [
+              "q2 V_CE peak 1.4001 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q2 V_CE peak",
+            "stress_free_pin_dbm": -34.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.0282818733,
+          "gap_to_row8_target_db": 9.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.650983471,
+                "min": -0.00126445903
+              },
+              "q2": {
+                "max": 0.682173473,
+                "min": -0.00713325056
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.26248016,
+            "-54": 1.26497526,
+            "-52": 1.26811004,
+            "-50": 1.27204642,
+            "-48": 1.27698735,
+            "-46": 1.28318041,
+            "-44": 1.29094607,
+            "-42": 1.30065798,
+            "-40": 1.31280866,
+            "-38": 1.32797204,
+            "-36": 1.34689949,
+            "-34": 1.37053628,
+            "-32": 1.40008991,
+            "-30": 1.43722194,
+            "-28": 1.48420558,
+            "-26": 1.54409387,
+            "-24": 1.62107934,
+            "-22": 1.72155652,
+            "-20": 1.85522506,
+            "-18": 2.03545478,
+            "-16": 2.2831109
+          }
+        },
+        "mid": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -32.0,
+            "bracket": null,
+            "reason": "sweep step at -30 dBm is rejected (outside DUT operating limits: q2 V_CE peak 1.4327 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 17.9047748,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -30.0,
+            "violations": [
+              "q2 V_CE peak 1.4327 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q2 V_CE peak",
+            "stress_free_pin_dbm": -32.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.0652331876,
+          "gap_to_row8_target_db": 7.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.71894396,
+                "min": -0.00175542246
+              },
+              "q2": {
+                "max": 0.707642855,
+                "min": -0.00679403621
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.26265112,
+            "-54": 1.26518526,
+            "-52": 1.2683661,
+            "-50": 1.27235509,
+            "-48": 1.27735235,
+            "-46": 1.283603,
+            "-44": 1.29141494,
+            "-42": 1.30115023,
+            "-40": 1.31325216,
+            "-38": 1.32825971,
+            "-36": 1.34681072,
+            "-34": 1.36967401,
+            "-32": 1.3978307,
+            "-30": 1.43265857,
+            "-28": 1.47631745,
+            "-26": 1.53235585,
+            "-24": 1.60646616,
+            "-22": 1.70763506,
+            "-20": 1.84833852,
+            "-18": 2.04291489,
+            "-16": 2.29804267
+          }
+        },
+        "high": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -30.0,
+            "bracket": null,
+            "reason": "sweep step at -28 dBm is rejected (outside DUT operating limits: q2 V_CE peak 1.4241 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 16.2982992,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -28.0,
+            "violations": [
+              "q2 V_CE peak 1.4241 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q2 V_CE peak",
+            "stress_free_pin_dbm": -30.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.0318623009,
+          "gap_to_row8_target_db": 5.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.663610248,
+                "min": -0.00139849645
+              },
+              "q2": {
+                "max": 0.629699235,
+                "min": -0.00460128316
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.26043321,
+            "-54": 1.26239742,
+            "-52": 1.26486387,
+            "-50": 1.26795821,
+            "-48": 1.27184148,
+            "-46": 1.27669642,
+            "-44": 1.28276347,
+            "-42": 1.29033431,
+            "-40": 1.29975078,
+            "-38": 1.31142994,
+            "-36": 1.32586095,
+            "-34": 1.34358413,
+            "-32": 1.36530488,
+            "-30": 1.39175256,
+            "-28": 1.42411805,
+            "-26": 1.46470493,
+            "-24": 1.51833729,
+            "-22": 1.59382339,
+            "-20": 1.70454274,
+            "-18": 1.86614551,
+            "-16": 2.08609112
+          }
+        }
+      },
+      "gates": {
+        "G_dc": true,
+        "G_gain": true,
+        "G_base": true,
+        "failed": [],
+        "gain_loss_db": {
+          "low": 4.41933729,
+          "mid": 4.44151054,
+          "high": 3.93435848
+        },
+        "dc_window_v": [
+          0.4,
+          1.37
+        ]
+      },
+      "metrics": {
+        "stress_free_pin_dbm": {
+          "low": -34.0,
+          "mid": -32.0,
+          "high": -30.0
+        },
+        "worst_stress_free_pin_dbm": -34.0,
+        "headroom_gain_db": 4.0,
+        "net_output_headroom_db": -0.419337291
+      }
+    },
+    "C03": {
+      "candidate": {
+        "id": "C03",
+        "r1b_ohm": 1350,
+        "r2b_ohm": 7150,
+        "rd_ohm": 465
+      },
+      "dc": {
+        "vc1_v": 1.29121168,
+        "vb2_v": 2.10071134,
+        "voc_v": 2.5,
+        "ve1_v": 0.0047152131,
+        "vce_q1_v": 1.28649647,
+        "vce_q2_v": 1.20878832,
+        "vbe_q2_v": 0.809499652,
+        "vbe_q1_v": 0.809332229,
+        "ic_q1_ma_from_re1": 1.5717377,
+        "idd_ma": 2.07389183
+      },
+      "placements": {
+        "low": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -36.0,
+            "bracket": null,
+            "reason": "sweep step at -34 dBm is rejected (outside DUT operating limits: q2 V_CE peak 1.4257 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 21.5087436,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -34.0,
+            "violations": [
+              "q2 V_CE peak 1.4257 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q2 V_CE peak",
+            "stress_free_pin_dbm": -36.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.0198392736,
+          "gap_to_row8_target_db": 11.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.63802311,
+                "min": -0.00163254745
+              },
+              "q2": {
+                "max": 0.800038339,
+                "min": -0.0156206412
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.22618985,
+            "-54": 1.23068397,
+            "-52": 1.23634812,
+            "-50": 1.24346935,
+            "-48": 1.2524242,
+            "-46": 1.2636882,
+            "-44": 1.27784872,
+            "-42": 1.29564687,
+            "-40": 1.31800056,
+            "-38": 1.3460853,
+            "-36": 1.38135197,
+            "-34": 1.42569974,
+            "-32": 1.48142761,
+            "-30": 1.5515658,
+            "-28": 1.63987863,
+            "-26": 1.75115279,
+            "-24": 1.89208367,
+            "-22": 2.07344983,
+            "-20": 2.31607198,
+            "-18": 2.64907831,
+            "-16": 3.0875981
+          }
+        },
+        "mid": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -36.0,
+            "bracket": null,
+            "reason": "sweep step at -34 dBm is rejected (outside DUT operating limits: q2 V_CE peak 1.4247 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 22.3918023,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -34.0,
+            "violations": [
+              "q2 V_CE peak 1.4247 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q2 V_CE peak",
+            "stress_free_pin_dbm": -36.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.0247271634,
+          "gap_to_row8_target_db": 11.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.678648915,
+                "min": -0.00187816201
+              },
+              "q2": {
+                "max": 0.817996481,
+                "min": -0.0112659855
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.22658186,
+            "-54": 1.23117162,
+            "-52": 1.23693865,
+            "-50": 1.24418285,
+            "-48": 1.25327632,
+            "-46": 1.26467925,
+            "-44": 1.2789696,
+            "-42": 1.29684891,
+            "-40": 1.31919479,
+            "-38": 1.34706487,
+            "-36": 1.3817466,
+            "-34": 1.42472747,
+            "-32": 1.47796205,
+            "-30": 1.54387308,
+            "-28": 1.62593572,
+            "-26": 1.72957643,
+            "-24": 1.86385775,
+            "-22": 2.04422962,
+            "-20": 2.27042243,
+            "-18": 2.5475017,
+            "-16": 2.8825089
+          }
+        },
+        "high": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -34.0,
+            "bracket": null,
+            "reason": "sweep step at -32 dBm is rejected (outside DUT operating limits: q2 V_CE peak 1.4056 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 20.2948802,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -32.0,
+            "violations": [
+              "q2 V_CE peak 1.4056 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q2 V_CE peak",
+            "stress_free_pin_dbm": -34.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.00854328626,
+          "gap_to_row8_target_db": 9.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.614625607,
+                "min": -0.00128952981
+              },
+              "q2": {
+                "max": 0.55618355,
+                "min": -0.00659473434
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.22181455,
+            "-54": 1.22517519,
+            "-52": 1.22939921,
+            "-50": 1.23470361,
+            "-48": 1.2413618,
+            "-46": 1.24971005,
+            "-44": 1.2601716,
+            "-42": 1.27326304,
+            "-40": 1.28960661,
+            "-38": 1.31001471,
+            "-36": 1.33536057,
+            "-34": 1.36677343,
+            "-32": 1.40555527,
+            "-30": 1.45312024,
+            "-28": 1.51152412,
+            "-26": 1.58406597,
+            "-24": 1.67731895,
+            "-22": 1.80455578,
+            "-20": 1.9871423,
+            "-18": 2.20585251,
+            "-16": 2.4659776
+          }
+        }
+      },
+      "gates": {
+        "G_dc": true,
+        "G_gain": true,
+        "G_base": true,
+        "failed": [],
+        "gain_loss_db": {
+          "low": -0.0253224098,
+          "mid": -0.045516941,
+          "high": -0.0622224995
+        },
+        "dc_window_v": [
+          0.4,
+          1.37
+        ]
+      },
+      "metrics": {
+        "stress_free_pin_dbm": {
+          "low": -36.0,
+          "mid": -36.0,
+          "high": -34.0
+        },
+        "worst_stress_free_pin_dbm": -36.0,
+        "headroom_gain_db": 2.0,
+        "net_output_headroom_db": 2.02532241
+      }
+    },
+    "C04": {
+      "candidate": {
+        "id": "C04",
+        "r1b_ohm": 1350,
+        "r2b_ohm": 7150,
+        "rd_ohm": 300
+      },
+      "dc": {
+        "vc1_v": 1.29121168,
+        "vb2_v": 2.10071134,
+        "voc_v": 2.5,
+        "ve1_v": 0.0047152131,
+        "vce_q1_v": 1.28649647,
+        "vce_q2_v": 1.20878832,
+        "vbe_q2_v": 0.809499652,
+        "vbe_q1_v": 0.809332229,
+        "ic_q1_ma_from_re1": 1.5717377,
+        "idd_ma": 2.07389183
+      },
+      "placements": {
+        "low": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -34.0,
+            "bracket": null,
+            "reason": "sweep step at -32 dBm is rejected (outside DUT operating limits: q2 V_CE peak 1.4140 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 19.4108809,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -32.0,
+            "violations": [
+              "q2 V_CE peak 1.4140 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q2 V_CE peak",
+            "stress_free_pin_dbm": -34.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.0287424167,
+          "gap_to_row8_target_db": 9.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.640994547,
+                "min": -0.00143980741
+              },
+              "q2": {
+                "max": 0.740635167,
+                "min": -0.0107021668
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.22205011,
+            "-54": 1.22547404,
+            "-52": 1.22977968,
+            "-50": 1.2351922,
+            "-48": 1.24199353,
+            "-46": 1.25053375,
+            "-44": 1.26126177,
+            "-42": 1.27471468,
+            "-40": 1.29158778,
+            "-38": 1.31272781,
+            "-36": 1.3392078,
+            "-34": 1.37238653,
+            "-32": 1.41401025,
+            "-30": 1.4663505,
+            "-28": 1.53235161,
+            "-26": 1.61581185,
+            "-24": 1.72227677,
+            "-22": 1.85968859,
+            "-20": 2.04176579,
+            "-18": 2.29027431,
+            "-16": 2.62601299
+          }
+        },
+        "mid": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -34.0,
+            "bracket": null,
+            "reason": "sweep step at -32 dBm is rejected (outside DUT operating limits: q2 V_CE peak 1.4111 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 20.2666757,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -32.0,
+            "violations": [
+              "q2 V_CE peak 1.4111 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q2 V_CE peak",
+            "stress_free_pin_dbm": -34.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.0404634327,
+          "gap_to_row8_target_db": 9.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.698779133,
+                "min": -0.00183316525
+              },
+              "q2": {
+                "max": 0.714455043,
+                "min": -0.00912718845
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.22230736,
+            "-54": 1.2257906,
+            "-52": 1.23016587,
+            "-50": 1.23565732,
+            "-48": 1.24254462,
+            "-46": 1.25117021,
+            "-44": 1.26197335,
+            "-42": 1.27546375,
+            "-40": 1.29228945,
+            "-38": 1.31321581,
+            "-36": 1.33917958,
+            "-34": 1.37134268,
+            "-32": 1.41105019,
+            "-30": 1.46014885,
+            "-28": 1.52145999,
+            "-26": 1.59935811,
+            "-24": 1.70109126,
+            "-22": 1.83858057,
+            "-20": 2.02831666,
+            "-18": 2.27075717,
+            "-16": 2.57252992
+          }
+        },
+        "high": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -30.0,
+            "bracket": null,
+            "reason": "sweep step at -28 dBm is rejected (outside DUT operating limits: q2 V_CE peak 1.4431 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 18.4541757,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -28.0,
+            "violations": [
+              "q2 V_CE peak 1.4431 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q2 V_CE peak",
+            "stress_free_pin_dbm": -30.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.0275423465,
+          "gap_to_row8_target_db": 5.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.638603121,
+                "min": -0.00135734295
+              },
+              "q2": {
+                "max": 0.578024767,
+                "min": -0.00590093648
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.21901662,
+            "-54": 1.22165301,
+            "-52": 1.22496412,
+            "-50": 1.22912164,
+            "-48": 1.23433837,
+            "-46": 1.240871,
+            "-44": 1.24905101,
+            "-42": 1.25927278,
+            "-40": 1.27201918,
+            "-38": 1.28787793,
+            "-36": 1.30754428,
+            "-34": 1.33183071,
+            "-32": 1.36168688,
+            "-30": 1.39825956,
+            "-28": 1.44307057,
+            "-26": 1.49884541,
+            "-24": 1.57138861,
+            "-22": 1.6717284,
+            "-20": 1.81727879,
+            "-18": 2.02390956,
+            "-16": 2.26181608
+          }
+        }
+      },
+      "gates": {
+        "G_dc": true,
+        "G_gain": true,
+        "G_base": true,
+        "failed": [],
+        "gain_loss_db": {
+          "low": 2.07254031,
+          "mid": 2.07960966,
+          "high": 1.778482
+        },
+        "dc_window_v": [
+          0.4,
+          1.37
+        ]
+      },
+      "metrics": {
+        "stress_free_pin_dbm": {
+          "low": -34.0,
+          "mid": -34.0,
+          "high": -30.0
+        },
+        "worst_stress_free_pin_dbm": -34.0,
+        "headroom_gain_db": 4.0,
+        "net_output_headroom_db": 1.92039034
+      }
+    },
+    "C05": {
+      "candidate": {
+        "id": "C05",
+        "r1b_ohm": 1350,
+        "r2b_ohm": 7150,
+        "rd_ohm": 200
+      },
+      "dc": {
+        "vc1_v": 1.29121168,
+        "vb2_v": 2.10071134,
+        "voc_v": 2.5,
+        "ve1_v": 0.0047152131,
+        "vce_q1_v": 1.28649647,
+        "vce_q2_v": 1.20878832,
+        "vbe_q2_v": 0.809499652,
+        "vbe_q1_v": 0.809332229,
+        "ic_q1_ma_from_re1": 1.5717377,
+        "idd_ma": 2.07389183
+      },
+      "placements": {
+        "low": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -30.0,
+            "bracket": null,
+            "reason": "sweep step at -28 dBm is rejected (outside DUT operating limits: q2 V_CE peak 1.4411 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 17.0866648,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -28.0,
+            "violations": [
+              "q2 V_CE peak 1.4411 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q2 V_CE peak",
+            "stress_free_pin_dbm": -30.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.0697455851,
+          "gap_to_row8_target_db": 5.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.65004628,
+                "min": -0.00126087724
+              },
+              "q2": {
+                "max": 0.686626666,
+                "min": -0.00716704549
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.21850122,
+            "-54": 1.22100501,
+            "-52": 1.22415008,
+            "-50": 1.22810013,
+            "-48": 1.23305776,
+            "-46": 1.23927236,
+            "-44": 1.2470649,
+            "-42": 1.25681219,
+            "-40": 1.2690036,
+            "-38": 1.28422355,
+            "-36": 1.30322435,
+            "-34": 1.32694376,
+            "-32": 1.35661864,
+            "-30": 1.39390609,
+            "-28": 1.44107318,
+            "-26": 1.50120592,
+            "-24": 1.57852279,
+            "-22": 1.67941413,
+            "-20": 1.81358885,
+            "-18": 1.9946962,
+            "-16": 2.24435765
+          }
+        },
+        "mid": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -30.0,
+            "bracket": null,
+            "reason": "sweep step at -28 dBm is rejected (outside DUT operating limits: q2 V_CE peak 1.4337 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 17.9487214,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -28.0,
+            "violations": [
+              "q2 V_CE peak 1.4337 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q2 V_CE peak",
+            "stress_free_pin_dbm": -30.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.101097299,
+          "gap_to_row8_target_db": 5.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.71835938,
+                "min": -0.00174698578
+              },
+              "q2": {
+                "max": 0.706261397,
+                "min": -0.00675483482
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.2186971,
+            "-54": 1.22124648,
+            "-52": 1.22444625,
+            "-50": 1.22845853,
+            "-48": 1.23348511,
+            "-46": 1.23977299,
+            "-44": 1.24763196,
+            "-42": 1.25742669,
+            "-40": 1.26960005,
+            "-38": 1.28470213,
+            "-36": 1.30337033,
+            "-34": 1.3263784,
+            "-32": 1.35472125,
+            "-30": 1.38977508,
+            "-28": 1.43372574,
+            "-26": 1.49012434,
+            "-24": 1.56469482,
+            "-22": 1.66636057,
+            "-20": 1.80778508,
+            "-18": 2.00289601,
+            "-16": 2.25581451
+          }
+        },
+        "high": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -28.0,
+            "bracket": null,
+            "reason": "sweep step at -26 dBm is rejected (outside DUT operating limits: q2 V_CE peak 1.4225 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 16.3614161,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -26.0,
+            "violations": [
+              "q2 V_CE peak 1.4225 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q2 V_CE peak",
+            "stress_free_pin_dbm": -28.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.0457957363,
+          "gap_to_row8_target_db": 3.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.663667898,
+                "min": -0.00138154612
+              },
+              "q2": {
+                "max": 0.622023112,
+                "min": -0.00458115916
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.21648393,
+            "-54": 1.21846328,
+            "-52": 1.22095017,
+            "-50": 1.22406978,
+            "-48": 1.22798455,
+            "-46": 1.23287826,
+            "-44": 1.23899568,
+            "-42": 1.24662884,
+            "-40": 1.25612008,
+            "-38": 1.26789853,
+            "-36": 1.28244821,
+            "-34": 1.30031688,
+            "-32": 1.32221897,
+            "-30": 1.34890692,
+            "-28": 1.38155458,
+            "-26": 1.42250396,
+            "-24": 1.4766311,
+            "-22": 1.55276381,
+            "-20": 1.6643685,
+            "-18": 1.82710682,
+            "-16": 2.04384288
+          }
+        }
+      },
+      "gates": {
+        "G_dc": true,
+        "G_gain": true,
+        "G_base": true,
+        "failed": [],
+        "gain_loss_db": {
+          "low": 4.39675636,
+          "mid": 4.39756395,
+          "high": 3.87124156
+        },
+        "dc_window_v": [
+          0.4,
+          1.37
+        ]
+      },
+      "metrics": {
+        "stress_free_pin_dbm": {
+          "low": -30.0,
+          "mid": -30.0,
+          "high": -28.0
+        },
+        "worst_stress_free_pin_dbm": -30.0,
+        "headroom_gain_db": 8.0,
+        "net_output_headroom_db": 3.60243605
+      }
+    },
+    "C06": {
+      "candidate": {
+        "id": "C06",
+        "r1b_ohm": 1200,
+        "r2b_ohm": 7300,
+        "rd_ohm": 465
+      },
+      "dc": {
+        "vc1_v": 1.33521918,
+        "vb2_v": 2.14500804,
+        "voc_v": 2.5,
+        "ve1_v": 0.00474123215,
+        "vce_q1_v": 1.33047795,
+        "vce_q2_v": 1.16478082,
+        "vbe_q2_v": 0.809788858,
+        "vbe_q1_v": 0.809385821,
+        "ic_q1_ma_from_re1": 1.58041072,
+        "idd_ma": 2.08263155
+      },
+      "placements": {
+        "low": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -34.0,
+            "bracket": null,
+            "reason": "sweep step at -32 dBm is rejected (outside DUT operating limits: q2 V_CE peak 1.4386 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 21.5408965,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -32.0,
+            "violations": [
+              "q2 V_CE peak 1.4386 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q2 V_CE peak",
+            "stress_free_pin_dbm": -34.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.0287747989,
+          "gap_to_row8_target_db": 9.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.63891225,
+                "min": -0.00162861285
+              },
+              "q2": {
+                "max": 0.799708452,
+                "min": -0.0150880261
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.18224882,
+            "-54": 1.18677319,
+            "-52": 1.1924569,
+            "-50": 1.19960264,
+            "-48": 1.20859906,
+            "-46": 1.21991169,
+            "-44": 1.23413375,
+            "-42": 1.25200827,
+            "-40": 1.27446401,
+            "-38": 1.3026707,
+            "-36": 1.33809423,
+            "-34": 1.38264184,
+            "-32": 1.43862476,
+            "-30": 1.50910361,
+            "-28": 1.59787203,
+            "-26": 1.7097563,
+            "-24": 1.85145113,
+            "-22": 2.03416359,
+            "-20": 2.27950848,
+            "-18": 2.61375253,
+            "-16": 3.06858653
+          }
+        },
+        "mid": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -34.0,
+            "bracket": null,
+            "reason": "sweep step at -32 dBm is rejected (outside DUT operating limits: q2 V_CE peak 1.4358 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 22.4425763,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -32.0,
+            "violations": [
+              "q2 V_CE peak 1.4358 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q2 V_CE peak",
+            "stress_free_pin_dbm": -34.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.041311666,
+          "gap_to_row8_target_db": 9.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.679020873,
+                "min": -0.00185269105
+              },
+              "q2": {
+                "max": 0.714504097,
+                "min": -0.0105276141
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.18268803,
+            "-54": 1.18730736,
+            "-52": 1.19311097,
+            "-50": 1.20040276,
+            "-48": 1.20955447,
+            "-46": 1.22103088,
+            "-44": 1.23541499,
+            "-42": 1.25341289,
+            "-40": 1.27590495,
+            "-38": 1.30395958,
+            "-36": 1.33887614,
+            "-34": 1.38214563,
+            "-32": 1.43575353,
+            "-30": 1.50213724,
+            "-28": 1.58477734,
+            "-26": 1.68911914,
+            "-24": 1.82429892,
+            "-22": 2.00513087,
+            "-20": 2.22451779,
+            "-18": 2.49659106,
+            "-16": 2.80267561
+          }
+        },
+        "high": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -32.0,
+            "bracket": null,
+            "reason": "sweep step at -30 dBm is rejected (outside DUT operating limits: q2 V_CE peak 1.4112 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 20.3602119,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -30.0,
+            "violations": [
+              "q2 V_CE peak 1.4112 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q2 V_CE peak",
+            "stress_free_pin_dbm": -32.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.0139525514,
+          "gap_to_row8_target_db": 7.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.612559238,
+                "min": -0.00125993821
+              },
+              "q2": {
+                "max": 0.553008032,
+                "min": -0.00634766287
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.17791241,
+            "-54": 1.18130077,
+            "-52": 1.18555901,
+            "-50": 1.19090547,
+            "-48": 1.19761712,
+            "-46": 1.20603557,
+            "-44": 1.21658072,
+            "-42": 1.22978091,
+            "-40": 1.24626046,
+            "-38": 1.26683855,
+            "-36": 1.2923975,
+            "-34": 1.32407561,
+            "-32": 1.36315579,
+            "-30": 1.41115912,
+            "-28": 1.47005515,
+            "-26": 1.54323506,
+            "-24": 1.63725616,
+            "-22": 1.76550758,
+            "-20": 1.94792939,
+            "-18": 2.1564219,
+            "-16": 2.40875696
+          }
+        }
+      },
+      "gates": {
+        "G_dc": true,
+        "G_gain": true,
+        "G_base": true,
+        "failed": [],
+        "gain_loss_db": {
+          "low": -0.0574752858,
+          "mid": -0.0962909478,
+          "high": -0.127554236
+        },
+        "dc_window_v": [
+          0.4,
+          1.37
+        ]
+      },
+      "metrics": {
+        "stress_free_pin_dbm": {
+          "low": -34.0,
+          "mid": -34.0,
+          "high": -32.0
+        },
+        "worst_stress_free_pin_dbm": -34.0,
+        "headroom_gain_db": 4.0,
+        "net_output_headroom_db": 4.05747529
+      }
+    },
+    "C07": {
+      "candidate": {
+        "id": "C07",
+        "r1b_ohm": 1200,
+        "r2b_ohm": 7300,
+        "rd_ohm": 300
+      },
+      "dc": {
+        "vc1_v": 1.33521918,
+        "vb2_v": 2.14500804,
+        "voc_v": 2.5,
+        "ve1_v": 0.00474123215,
+        "vce_q1_v": 1.33047795,
+        "vce_q2_v": 1.16478082,
+        "vbe_q2_v": 0.809788858,
+        "vbe_q1_v": 0.809385821,
+        "ic_q1_ma_from_re1": 1.58041072,
+        "idd_ma": 2.08263155
+      },
+      "placements": {
+        "low": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -32.0,
+            "bracket": null,
+            "reason": "sweep step at -30 dBm is rejected (outside DUT operating limits: q2 V_CE peak 1.4235 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 19.4414042,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -30.0,
+            "violations": [
+              "q2 V_CE peak 1.4235 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q2 V_CE peak",
+            "stress_free_pin_dbm": -32.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.0437531219,
+          "gap_to_row8_target_db": 7.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.642585503,
+                "min": -0.0014417334
+              },
+              "q2": {
+                "max": 0.74032781,
+                "min": -0.0106259295
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.17809739,
+            "-54": 1.18153614,
+            "-52": 1.18585911,
+            "-50": 1.19129443,
+            "-48": 1.19812455,
+            "-46": 1.20669935,
+            "-44": 1.21747368,
+            "-42": 1.23098486,
+            "-40": 1.2479365,
+            "-38": 1.2691577,
+            "-36": 1.29576248,
+            "-34": 1.32908903,
+            "-32": 1.37089178,
+            "-30": 1.42350045,
+            "-28": 1.48980142,
+            "-26": 1.57373372,
+            "-24": 1.680671,
+            "-22": 1.8188548,
+            "-20": 2.00191256,
+            "-18": 2.2522877,
+            "-16": 2.58142451
+          }
+        },
+        "mid": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -32.0,
+            "bracket": null,
+            "reason": "sweep step at -30 dBm is rejected (outside DUT operating limits: q2 V_CE peak 1.4179 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 20.3166243,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -30.0,
+            "violations": [
+              "q2 V_CE peak 1.4179 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q2 V_CE peak",
+            "stress_free_pin_dbm": -32.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.0644776614,
+          "gap_to_row8_target_db": 7.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.699056443,
+                "min": -0.00181765335
+              },
+              "q2": {
+                "max": 0.710255414,
+                "min": -0.0089394344
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.17838696,
+            "-54": 1.18189305,
+            "-52": 1.18629607,
+            "-50": 1.19182331,
+            "-48": 1.1987562,
+            "-46": 1.20743754,
+            "-44": 1.21831205,
+            "-42": 1.23189266,
+            "-40": 1.2488289,
+            "-38": 1.26989652,
+            "-36": 1.29604509,
+            "-34": 1.32842576,
+            "-32": 1.36841017,
+            "-30": 1.41785708,
+            "-28": 1.47959631,
+            "-26": 1.55800825,
+            "-24": 1.66038424,
+            "-22": 1.79868972,
+            "-20": 1.98835495,
+            "-18": 2.22646448,
+            "-16": 2.5195572
+          }
+        },
+        "high": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -30.0,
+            "bracket": null,
+            "reason": "sweep step at -28 dBm is rejected (outside DUT operating limits: q2 V_CE peak 1.4011 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 18.520442,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -28.0,
+            "violations": [
+              "q2 V_CE peak 1.4011 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q2 V_CE peak",
+            "stress_free_pin_dbm": -30.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.0270507825,
+          "gap_to_row8_target_db": 5.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.636479408,
+                "min": -0.00133401951
+              },
+              "q2": {
+                "max": 0.57243126,
+                "min": -0.00576231449
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.17509481,
+            "-54": 1.1777527,
+            "-52": 1.18109215,
+            "-50": 1.18528538,
+            "-48": 1.19054474,
+            "-46": 1.19713319,
+            "-44": 1.20538149,
+            "-42": 1.2156877,
+            "-40": 1.22854341,
+            "-38": 1.24453725,
+            "-36": 1.26437323,
+            "-34": 1.2888628,
+            "-32": 1.31898892,
+            "-30": 1.35591484,
+            "-28": 1.40110116,
+            "-26": 1.45737646,
+            "-24": 1.53054257,
+            "-22": 1.63171949,
+            "-20": 1.77832179,
+            "-18": 1.98096323,
+            "-16": 2.21298608
+          }
+        }
+      },
+      "gates": {
+        "G_dc": true,
+        "G_gain": true,
+        "G_base": true,
+        "failed": [],
+        "gain_loss_db": {
+          "low": 2.04201702,
+          "mid": 2.029661,
+          "high": 1.71221567
+        },
+        "dc_window_v": [
+          0.4,
+          1.37
+        ]
+      },
+      "metrics": {
+        "stress_free_pin_dbm": {
+          "low": -32.0,
+          "mid": -32.0,
+          "high": -30.0
+        },
+        "worst_stress_free_pin_dbm": -32.0,
+        "headroom_gain_db": 6.0,
+        "net_output_headroom_db": 3.95798298
+      }
+    },
+    "C08": {
+      "candidate": {
+        "id": "C08",
+        "r1b_ohm": 1200,
+        "r2b_ohm": 7300,
+        "rd_ohm": 200
+      },
+      "dc": {
+        "vc1_v": 1.33521918,
+        "vb2_v": 2.14500804,
+        "voc_v": 2.5,
+        "ve1_v": 0.00474123215,
+        "vce_q1_v": 1.33047795,
+        "vce_q2_v": 1.16478082,
+        "vbe_q2_v": 0.809788858,
+        "vbe_q1_v": 0.809385821,
+        "ic_q1_ma_from_re1": 1.58041072,
+        "idd_ma": 2.08263155
+      },
+      "placements": {
+        "low": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -28.0,
+            "bracket": null,
+            "reason": "sweep step at -26 dBm is rejected (outside DUT operating limits: q2 V_CE peak 1.4585 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 17.1159641,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -26.0,
+            "violations": [
+              "q2 V_CE peak 1.4585 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q2 V_CE peak",
+            "stress_free_pin_dbm": -28.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.109877343,
+          "gap_to_row8_target_db": 3.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.649728921,
+                "min": -0.00126311997
+              },
+              "q2": {
+                "max": 0.690185686,
+                "min": -0.00719519724
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.17453485,
+            "-54": 1.17704935,
+            "-52": 1.18020319,
+            "-50": 1.18417496,
+            "-48": 1.18915449,
+            "-46": 1.1953965,
+            "-44": 1.20321938,
+            "-42": 1.2130134,
+            "-40": 1.22525634,
+            "-38": 1.24054757,
+            "-36": 1.25963492,
+            "-34": 1.28346874,
+            "-32": 1.31328153,
+            "-30": 1.35073912,
+            "-28": 1.39812647,
+            "-26": 1.45854272,
+            "-24": 1.536202,
+            "-22": 1.63754664,
+            "-20": 1.77225311,
+            "-18": 1.95413389,
+            "-16": 2.20537191
+          }
+        },
+        "mid": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -28.0,
+            "bracket": null,
+            "reason": "sweep step at -26 dBm is rejected (outside DUT operating limits: q2 V_CE peak 1.4481 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 17.9978706,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -26.0,
+            "violations": [
+              "q2 V_CE peak 1.4481 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q2 V_CE peak",
+            "stress_free_pin_dbm": -28.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.153979176,
+          "gap_to_row8_target_db": 3.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.718071224,
+                "min": -0.00173770847
+              },
+              "q2": {
+                "max": 0.704127896,
+                "min": -0.00673165516
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.17475494,
+            "-54": 1.17732134,
+            "-52": 1.1805418,
+            "-50": 1.18458101,
+            "-48": 1.18964192,
+            "-46": 1.19597137,
+            "-44": 1.20388368,
+            "-42": 1.21374358,
+            "-40": 1.22600244,
+            "-38": 1.24120791,
+            "-36": 1.26000726,
+            "-34": 1.28318048,
+            "-32": 1.31172537,
+            "-30": 1.34703459,
+            "-28": 1.39128589,
+            "-26": 1.44806782,
+            "-24": 1.52309305,
+            "-22": 1.62534071,
+            "-20": 1.76743334,
+            "-18": 1.96242496,
+            "-16": 2.21258162
+          }
+        },
+        "high": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -26.0,
+            "bracket": null,
+            "reason": "sweep step at -24 dBm is rejected (outside DUT operating limits: q2 V_CE peak 1.4350 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 16.4280594,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -24.0,
+            "violations": [
+              "q2 V_CE peak 1.4350 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q2 V_CE peak",
+            "stress_free_pin_dbm": -26.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.0588053435,
+          "gap_to_row8_target_db": 1.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.662735448,
+                "min": -0.00137039628
+              },
+              "q2": {
+                "max": 0.61383579,
+                "min": -0.00454469141
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.17254293,
+            "-54": 1.17453998,
+            "-52": 1.17704991,
+            "-50": 1.180195,
+            "-48": 1.18414316,
+            "-46": 1.18907982,
+            "-44": 1.19525162,
+            "-42": 1.2029493,
+            "-40": 1.21252595,
+            "-38": 1.22440511,
+            "-36": 1.23908513,
+            "-34": 1.25712714,
+            "-32": 1.27921222,
+            "-30": 1.30614536,
+            "-28": 1.33909885,
+            "-26": 1.38041839,
+            "-24": 1.43502343,
+            "-22": 1.51180436,
+            "-20": 1.62423677,
+            "-18": 1.78810728,
+            "-16": 2.00037879
+          }
+        }
+      },
+      "gates": {
+        "G_dc": true,
+        "G_gain": true,
+        "G_base": true,
+        "failed": [],
+        "gain_loss_db": {
+          "low": 4.36745714,
+          "mid": 4.34841474,
+          "high": 3.8045983
+        },
+        "dc_window_v": [
+          0.4,
+          1.37
+        ]
+      },
+      "metrics": {
+        "stress_free_pin_dbm": {
+          "low": -28.0,
+          "mid": -28.0,
+          "high": -26.0
+        },
+        "worst_stress_free_pin_dbm": -28.0,
+        "headroom_gain_db": 10.0,
+        "net_output_headroom_db": 5.63254286
+      }
+    },
+    "C09": {
+      "candidate": {
+        "id": "C09",
+        "r1b_ohm": 1050,
+        "r2b_ohm": 7450,
+        "rd_ohm": 465
+      },
+      "dc": {
+        "vc1_v": 1.37920874,
+        "vb2_v": 2.18932425,
+        "voc_v": 2.5,
+        "ve1_v": 0.00477284234,
+        "vce_q1_v": 1.3744359,
+        "vce_q2_v": 1.12079126,
+        "vbe_q2_v": 0.810115506,
+        "vbe_q1_v": 0.809473464,
+        "ic_q1_ma_from_re1": 1.59094745,
+        "idd_ma": 2.09325415
+      },
+      "placements": {
+        "low": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -36.0,
+            "bracket": null,
+            "reason": "sweep step at -34 dBm is rejected (outside DUT operating limits: q1 V_CE peak 1.4004 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 21.5822805,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -34.0,
+            "violations": [
+              "q1 V_CE peak 1.4004 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q1 V_CE peak",
+            "stress_free_pin_dbm": -36.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.0187332419,
+          "gap_to_row8_target_db": 11.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.640715926,
+                "min": -0.00162442089
+              },
+              "q2": {
+                "max": 0.811375799,
+                "min": -0.0153021112
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.13835796,
+            "-54": 1.14290129,
+            "-52": 1.14861433,
+            "-50": 1.15579936,
+            "-48": 1.16484433,
+            "-46": 1.17621687,
+            "-44": 1.19051412,
+            "-42": 1.20848947,
+            "-40": 1.23106567,
+            "-38": 1.25942346,
+            "-36": 1.29504651,
+            "-34": 1.33983941,
+            "-32": 1.39614617,
+            "-30": 1.467008,
+            "-28": 1.55626321,
+            "-26": 1.66888704,
+            "-24": 1.81164733,
+            "-22": 1.99559695,
+            "-20": 2.24268472,
+            "-18": 2.5803213,
+            "-16": 3.04017078
+          }
+        },
+        "mid": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -36.0,
+            "bracket": null,
+            "reason": "sweep step at -34 dBm is rejected (outside DUT operating limits: q1 V_CE peak 1.4024 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 22.5009687,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -34.0,
+            "violations": [
+              "q1 V_CE peak 1.4024 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q1 V_CE peak",
+            "stress_free_pin_dbm": -36.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.0240074767,
+          "gap_to_row8_target_db": 11.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.679381061,
+                "min": -0.00181924497
+              },
+              "q2": {
+                "max": 0.854276676,
+                "min": -0.0103259626
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.13883019,
+            "-54": 1.14348356,
+            "-52": 1.14933113,
+            "-50": 1.15667595,
+            "-48": 1.16588978,
+            "-46": 1.17745755,
+            "-44": 1.19194954,
+            "-42": 1.21008522,
+            "-40": 1.23274516,
+            "-38": 1.26101904,
+            "-36": 1.29619634,
+            "-34": 1.33981244,
+            "-32": 1.39383461,
+            "-30": 1.46074109,
+            "-28": 1.54400894,
+            "-26": 1.64911375,
+            "-24": 1.78526665,
+            "-22": 1.9651431,
+            "-20": 2.17750675,
+            "-18": 2.45431368,
+            "-16": 2.74590423
+          }
+        },
+        "high": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -34.0,
+            "bracket": null,
+            "reason": "sweep step at -32 dBm is rejected (outside DUT operating limits: q1 V_CE peak 1.4035 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 20.4306705,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -32.0,
+            "violations": [
+              "q1 V_CE peak 1.4035 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q1 V_CE peak",
+            "stress_free_pin_dbm": -34.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.00821079139,
+          "gap_to_row8_target_db": 9.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.610325498,
+                "min": -0.00122666322
+              },
+              "q2": {
+                "max": 0.549939444,
+                "min": -0.00608949567
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.13403825,
+            "-54": 1.13745658,
+            "-52": 1.14175172,
+            "-50": 1.14714655,
+            "-48": 1.15391842,
+            "-46": 1.16241056,
+            "-44": 1.17305122,
+            "-42": 1.18636768,
+            "-40": 1.20298751,
+            "-38": 1.22375798,
+            "-36": 1.249547,
+            "-34": 1.28151414,
+            "-32": 1.32096982,
+            "-30": 1.36940827,
+            "-28": 1.42883548,
+            "-26": 1.50267889,
+            "-24": 1.59747531,
+            "-22": 1.72670257,
+            "-20": 1.90650329,
+            "-18": 2.10560109,
+            "-16": 2.35473484
+          }
+        }
+      },
+      "gates": {
+        "G_dc": false,
+        "G_gain": true,
+        "G_base": true,
+        "failed": [
+          "G_dc"
+        ],
+        "gain_loss_db": {
+          "low": -0.0988593505,
+          "mid": -0.154683401,
+          "high": -0.198012769
+        },
+        "dc_window_v": [
+          0.4,
+          1.37
+        ]
+      },
+      "metrics": {
+        "stress_free_pin_dbm": {
+          "low": -36.0,
+          "mid": -36.0,
+          "high": -34.0
+        },
+        "worst_stress_free_pin_dbm": -36.0,
+        "headroom_gain_db": 2.0,
+        "net_output_headroom_db": 2.09885935
+      }
+    },
+    "C10": {
+      "candidate": {
+        "id": "C10",
+        "r1b_ohm": 1050,
+        "r2b_ohm": 7450,
+        "rd_ohm": 300
+      },
+      "dc": {
+        "vc1_v": 1.37920874,
+        "vb2_v": 2.18932425,
+        "voc_v": 2.5,
+        "ve1_v": 0.00477284234,
+        "vce_q1_v": 1.3744359,
+        "vce_q2_v": 1.12079126,
+        "vbe_q2_v": 0.810115506,
+        "vbe_q1_v": 0.809473464,
+        "ic_q1_ma_from_re1": 1.59094745,
+        "idd_ma": 2.09325415
+      },
+      "placements": {
+        "low": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -36.0,
+            "bracket": null,
+            "reason": "sweep step at -34 dBm is rejected (outside DUT operating limits: q1 V_CE peak 1.4003 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 19.4808543,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -34.0,
+            "violations": [
+              "q1 V_CE peak 1.4003 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q1 V_CE peak",
+            "stress_free_pin_dbm": -36.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.016986567,
+          "gap_to_row8_target_db": 11.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.644600963,
+                "min": -0.00144304597
+              },
+              "q2": {
+                "max": 0.739124175,
+                "min": -0.0105210533
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.1341788,
+            "-54": 1.13763551,
+            "-52": 1.14198143,
+            "-50": 1.14744589,
+            "-48": 1.15431298,
+            "-46": 1.16293447,
+            "-44": 1.1737662,
+            "-42": 1.18735038,
+            "-40": 1.20439496,
+            "-38": 1.22574036,
+            "-36": 1.25247937,
+            "-34": 1.2859945,
+            "-32": 1.32801679,
+            "-30": 1.38093438,
+            "-28": 1.44760628,
+            "-26": 1.53203454,
+            "-24": 1.63956378,
+            "-22": 1.7785653,
+            "-20": 1.96276933,
+            "-18": 2.21369539,
+            "-16": 2.53304276
+          }
+        },
+        "mid": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -36.0,
+            "bracket": null,
+            "reason": "sweep step at -34 dBm is rejected (outside DUT operating limits: q1 V_CE peak 1.4021 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 20.3740677,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -34.0,
+            "violations": [
+              "q1 V_CE peak 1.4021 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q1 V_CE peak",
+            "stress_free_pin_dbm": -36.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.02530382,
+          "gap_to_row8_target_db": 11.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.699487114,
+                "min": -0.00179872087
+              },
+              "q2": {
+                "max": 0.705040338,
+                "min": -0.00872697756
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.13449881,
+            "-54": 1.13803091,
+            "-52": 1.14246681,
+            "-50": 1.14803568,
+            "-48": 1.15501982,
+            "-46": 1.16376763,
+            "-44": 1.17472429,
+            "-42": 1.18840766,
+            "-40": 1.20547321,
+            "-38": 1.22670505,
+            "-36": 1.25305579,
+            "-34": 1.28569199,
+            "-32": 1.32599625,
+            "-30": 1.37582786,
+            "-28": 1.43803432,
+            "-26": 1.51703973,
+            "-24": 1.62007226,
+            "-22": 1.75925293,
+            "-20": 1.94760788,
+            "-18": 2.18012432,
+            "-16": 2.46268828
+          }
+        },
+        "high": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -34.0,
+            "bracket": null,
+            "reason": "sweep step at -32 dBm is rejected (outside DUT operating limits: q1 V_CE peak 1.4033 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 18.5917703,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -32.0,
+            "violations": [
+              "q1 V_CE peak 1.4033 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q1 V_CE peak",
+            "stress_free_pin_dbm": -34.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.0102528435,
+          "gap_to_row8_target_db": 9.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.634200362,
+                "min": -0.00130410581
+              },
+              "q2": {
+                "max": 0.56880348,
+                "min": -0.00559246182
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.13119839,
+            "-54": 1.13388111,
+            "-52": 1.13725152,
+            "-50": 1.14148259,
+            "-48": 1.1467901,
+            "-46": 1.15343985,
+            "-44": 1.16176246,
+            "-42": 1.1721639,
+            "-40": 1.18513501,
+            "-38": 1.20128045,
+            "-36": 1.2213022,
+            "-34": 1.24603105,
+            "-32": 1.27643689,
+            "-30": 1.31372107,
+            "-28": 1.3593302,
+            "-26": 1.41613069,
+            "-24": 1.48995358,
+            "-22": 1.59193793,
+            "-20": 1.73954763,
+            "-18": 1.93626954,
+            "-16": 2.16244336
+          }
+        }
+      },
+      "gates": {
+        "G_dc": false,
+        "G_gain": true,
+        "G_base": true,
+        "failed": [
+          "G_dc"
+        ],
+        "gain_loss_db": {
+          "low": 2.00256692,
+          "mid": 1.97221761,
+          "high": 1.64088744
+        },
+        "dc_window_v": [
+          0.4,
+          1.37
+        ]
+      },
+      "metrics": {
+        "stress_free_pin_dbm": {
+          "low": -36.0,
+          "mid": -36.0,
+          "high": -34.0
+        },
+        "worst_stress_free_pin_dbm": -36.0,
+        "headroom_gain_db": 2.0,
+        "net_output_headroom_db": -0.00256692328
+      }
+    },
+    "C11": {
+      "candidate": {
+        "id": "C11",
+        "r1b_ohm": 1050,
+        "r2b_ohm": 7450,
+        "rd_ohm": 200
+      },
+      "dc": {
+        "vc1_v": 1.37920874,
+        "vb2_v": 2.18932425,
+        "voc_v": 2.5,
+        "ve1_v": 0.00477284234,
+        "vce_q1_v": 1.3744359,
+        "vce_q2_v": 1.12079126,
+        "vbe_q2_v": 0.810115506,
+        "vbe_q1_v": 0.809473464,
+        "ic_q1_ma_from_re1": 1.59094745,
+        "idd_ma": 2.09325415
+      },
+      "placements": {
+        "low": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -36.0,
+            "bracket": null,
+            "reason": "sweep step at -34 dBm is rejected (outside DUT operating limits: q1 V_CE peak 1.4002 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 17.1541429,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -34.0,
+            "violations": [
+              "q1 V_CE peak 1.4002 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q1 V_CE peak",
+            "stress_free_pin_dbm": -36.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.0162000857,
+          "gap_to_row8_target_db": 11.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.650131519,
+                "min": -0.00126511503
+              },
+              "q2": {
+                "max": 0.692645339,
+                "min": -0.00721384068
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.1305984,
+            "-54": 1.13312623,
+            "-52": 1.13630254,
+            "-50": 1.14029119,
+            "-48": 1.14529802,
+            "-46": 1.15157406,
+            "-44": 1.15944299,
+            "-42": 1.16928915,
+            "-40": 1.18160172,
+            "-38": 1.19697941,
+            "-36": 1.21617769,
+            "-34": 1.24014415,
+            "-32": 1.27012366,
+            "-30": 1.30779318,
+            "-28": 1.35542951,
+            "-26": 1.41618617,
+            "-24": 1.49424004,
+            "-22": 1.59612258,
+            "-20": 1.73137832,
+            "-18": 1.91448851,
+            "-16": 2.16616342
+          }
+        },
+        "mid": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -36.0,
+            "bracket": null,
+            "reason": "sweep step at -34 dBm is rejected (outside DUT operating limits: q1 V_CE peak 1.4018 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 18.0545186,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -34.0,
+            "violations": [
+              "q1 V_CE peak 1.4018 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q1 V_CE peak",
+            "stress_free_pin_dbm": -36.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.0251488381,
+          "gap_to_row8_target_db": 11.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.718104873,
+                "min": -0.00172684654
+              },
+              "q2": {
+                "max": 0.700841239,
+                "min": -0.00663943721
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.13084173,
+            "-54": 1.13342753,
+            "-52": 1.13667253,
+            "-50": 1.1407429,
+            "-48": 1.14584262,
+            "-46": 1.15222137,
+            "-44": 1.16019502,
+            "-42": 1.17013242,
+            "-40": 1.18248747,
+            "-38": 1.19781425,
+            "-36": 1.21676446,
+            "-34": 1.2401271,
+            "-32": 1.26890238,
+            "-30": 1.30449497,
+            "-28": 1.34908807,
+            "-26": 1.40627336,
+            "-24": 1.48178339,
+            "-22": 1.58460614,
+            "-20": 1.72738913,
+            "-18": 1.92147658,
+            "-16": 2.16807171
+          }
+        },
+        "high": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -34.0,
+            "bracket": null,
+            "reason": "sweep step at -32 dBm is rejected (outside DUT operating limits: q1 V_CE peak 1.4031 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 16.4999621,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -32.0,
+            "violations": [
+              "q1 V_CE peak 1.4031 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q1 V_CE peak",
+            "stress_free_pin_dbm": -34.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.0117849889,
+          "gap_to_row8_target_db": 9.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.661124956,
+                "min": -0.00135114805
+              },
+              "q2": {
+                "max": 0.605149501,
+                "min": -0.00448665764
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.12862669,
+            "-54": 1.13064236,
+            "-52": 1.1331767,
+            "-50": 1.13635293,
+            "-48": 1.14033669,
+            "-46": 1.14532115,
+            "-44": 1.15154995,
+            "-42": 1.15932245,
+            "-40": 1.16899117,
+            "-38": 1.18098573,
+            "-36": 1.19580967,
+            "-34": 1.21402608,
+            "-32": 1.23633186,
+            "-30": 1.26353339,
+            "-28": 1.29681581,
+            "-26": 1.33852883,
+            "-24": 1.39361981,
+            "-22": 1.47105,
+            "-20": 1.58428544,
+            "-18": 1.74904745,
+            "-16": 1.95559108
+          }
+        }
+      },
+      "gates": {
+        "G_dc": false,
+        "G_gain": true,
+        "G_base": true,
+        "failed": [
+          "G_dc"
+        ],
+        "gain_loss_db": {
+          "low": 4.32927826,
+          "mid": 4.29176669,
+          "high": 3.73269555
+        },
+        "dc_window_v": [
+          0.4,
+          1.37
+        ]
+      },
+      "metrics": {
+        "stress_free_pin_dbm": {
+          "low": -36.0,
+          "mid": -36.0,
+          "high": -34.0
+        },
+        "worst_stress_free_pin_dbm": -36.0,
+        "headroom_gain_db": 2.0,
+        "net_output_headroom_db": -2.32927826
+      }
+    }
+  },
+  "ranking": {
+    "admitted": [
+      "C08",
+      "C05",
+      "C07",
+      "C06",
+      "C04",
+      "C02",
+      "C03",
+      "C01",
+      "C00"
+    ],
+    "shortlist": [
+      "C08",
+      "C05"
+    ],
+    "outcome_class": "headroom_improved_p1db_undetermined",
+    "not_ranked": {
+      "C09": [
+        "G_dc"
+      ],
+      "C10": [
+        "G_dc"
+      ],
+      "C11": [
+        "G_dc"
+      ]
+    }
+  },
+  "klt_requests": [
+    {
+      "key": "control",
+      "backend": "batch",
+      "status": "pass",
+      "engine": "ngspice",
+      "engine_version": "46",
+      "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+      "netlist_sha256": "939b5173200e067ce0122ea10f26c2e31fd59e46c4cec9d69ebff4b4a9ad1300",
+      "remote": {
+        "provider": "aws-batch-fleet",
+        "job_id": "klt-sim-50bb0d308fd9",
+        "bucket": "2am-batch-jobs-221082181346",
+        "region": "us-east-1",
+        "instance_id": "i-01769cbc8e0ae3a24",
+        "instance_type": "c7i.4xlarge",
+        "availability_zone": "us-east-1d",
+        "ami_id": "ami-0e40e3245f1923ac8",
+        "lifecycle": "spot",
+        "spot": true,
+        "state": "done",
+        "exit_code": "0",
+        "concurrency": "1",
+        "physical_cores": "8",
+        "elapsed_seconds": 17,
+        "runner_klt_version": "0.5.0",
+        "client_klt_version": "0.7.0+g0d0312b30708",
+        "runner_compatibility": "mismatch",
+        "runner_compatibility_warning": "the fleet runner ran klt 0.5.0 but the submitting client is 0.7.0+g0d0312b30708; request options the runner does not know may have been ignored -- update the runner image or use a compatible client"
+      },
+      "klt_version": "0.7.0+g0d0312b30708"
+    },
+    {
+      "key": "C00",
+      "backend": "batch",
+      "status": "pass",
+      "engine": "ngspice",
+      "engine_version": "46",
+      "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+      "netlist_sha256": "573b0a78477783c649432322b2fbe4175699418bfdda5a26d5ac18606ebd2f4f",
+      "remote": {
+        "provider": "aws-batch-fleet",
+        "job_id": "klt-sim-45eae3622cf7",
+        "bucket": "2am-batch-jobs-221082181346",
+        "region": "us-east-1",
+        "instance_id": "i-0f693907bee9e531c",
+        "instance_type": "m6i.4xlarge",
+        "availability_zone": "us-east-1b",
+        "ami_id": "ami-0e40e3245f1923ac8",
+        "lifecycle": "spot",
+        "spot": true,
+        "state": "done",
+        "exit_code": "0",
+        "concurrency": "1",
+        "physical_cores": "8",
+        "elapsed_seconds": 311,
+        "runner_klt_version": "0.5.0",
+        "client_klt_version": "0.7.0+g0d0312b30708",
+        "runner_compatibility": "mismatch",
+        "runner_compatibility_warning": "the fleet runner ran klt 0.5.0 but the submitting client is 0.7.0+g0d0312b30708; request options the runner does not know may have been ignored -- update the runner image or use a compatible client"
+      },
+      "klt_version": "0.7.0+g0d0312b30708"
+    },
+    {
+      "key": "C01",
+      "backend": "batch",
+      "status": "pass",
+      "engine": "ngspice",
+      "engine_version": "46",
+      "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+      "netlist_sha256": "564bfcce15fb388054485e85d060f2acf7204fc8c91fb886711abfa024876d2b",
+      "remote": {
+        "provider": "aws-batch-fleet",
+        "job_id": "klt-sim-beaadd3cc448",
+        "bucket": "2am-batch-jobs-221082181346",
+        "region": "us-east-1",
+        "instance_id": "i-06cda58a5394704c9",
+        "instance_type": "m6i.4xlarge",
+        "availability_zone": "us-east-1b",
+        "ami_id": "ami-0e40e3245f1923ac8",
+        "lifecycle": "spot",
+        "spot": true,
+        "state": "done",
+        "exit_code": "0",
+        "concurrency": "1",
+        "physical_cores": "8",
+        "elapsed_seconds": 300,
+        "runner_klt_version": "0.5.0",
+        "client_klt_version": "0.7.0+g0d0312b30708",
+        "runner_compatibility": "mismatch",
+        "runner_compatibility_warning": "the fleet runner ran klt 0.5.0 but the submitting client is 0.7.0+g0d0312b30708; request options the runner does not know may have been ignored -- update the runner image or use a compatible client"
+      },
+      "klt_version": "0.7.0+g0d0312b30708"
+    },
+    {
+      "key": "C02",
+      "backend": "batch",
+      "status": "pass",
+      "engine": "ngspice",
+      "engine_version": "46",
+      "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+      "netlist_sha256": "796c13ce5ba3eecfaf61cf3fc9d4a50aaa7449b978263cc756d6aec80659a10f",
+      "remote": {
+        "provider": "aws-batch-fleet",
+        "job_id": "klt-sim-e67ef1a939d7",
+        "bucket": "2am-batch-jobs-221082181346",
+        "region": "us-east-1",
+        "instance_id": "i-00dd63fd6c8d4acf9",
+        "instance_type": "c7i.4xlarge",
+        "availability_zone": "us-east-1d",
+        "ami_id": "ami-0e40e3245f1923ac8",
+        "lifecycle": "spot",
+        "spot": true,
+        "state": "done",
+        "exit_code": "0",
+        "concurrency": "1",
+        "physical_cores": "8",
+        "elapsed_seconds": 259,
+        "runner_klt_version": "0.5.0",
+        "client_klt_version": "0.7.0+g0d0312b30708",
+        "runner_compatibility": "mismatch",
+        "runner_compatibility_warning": "the fleet runner ran klt 0.5.0 but the submitting client is 0.7.0+g0d0312b30708; request options the runner does not know may have been ignored -- update the runner image or use a compatible client"
+      },
+      "klt_version": "0.7.0+g0d0312b30708"
+    },
+    {
+      "key": "C03",
+      "backend": "batch",
+      "status": "pass",
+      "engine": "ngspice",
+      "engine_version": "46",
+      "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+      "netlist_sha256": "3364ebbf4297fa9aebc39c2282ad85749a4d6f81ef054e485090be94418c13ae",
+      "remote": {
+        "provider": "aws-batch-fleet",
+        "job_id": "klt-sim-571aad36fe3a",
+        "bucket": "2am-batch-jobs-221082181346",
+        "region": "us-east-1",
+        "instance_id": "i-05eb082f7e221e740",
+        "instance_type": "c7i.4xlarge",
+        "availability_zone": "us-east-1c",
+        "ami_id": "ami-0e40e3245f1923ac8",
+        "lifecycle": "spot",
+        "spot": true,
+        "state": "done",
+        "exit_code": "0",
+        "concurrency": "1",
+        "physical_cores": "8",
+        "elapsed_seconds": 258,
+        "runner_klt_version": "0.5.0",
+        "client_klt_version": "0.7.0+g0d0312b30708",
+        "runner_compatibility": "mismatch",
+        "runner_compatibility_warning": "the fleet runner ran klt 0.5.0 but the submitting client is 0.7.0+g0d0312b30708; request options the runner does not know may have been ignored -- update the runner image or use a compatible client"
+      },
+      "klt_version": "0.7.0+g0d0312b30708"
+    },
+    {
+      "key": "C04",
+      "backend": "batch",
+      "status": "pass",
+      "engine": "ngspice",
+      "engine_version": "46",
+      "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+      "netlist_sha256": "7ff7fe03634229e6a18c185aac9039f8439a13e2b534f8ec1a2652900b8e8ff0",
+      "remote": {
+        "provider": "aws-batch-fleet",
+        "job_id": "klt-sim-0f99e84bf4d4",
+        "bucket": "2am-batch-jobs-221082181346",
+        "region": "us-east-1",
+        "instance_id": "i-02137d5efedf022cc",
+        "instance_type": "c7i.4xlarge",
+        "availability_zone": "us-east-1b",
+        "ami_id": "ami-0e40e3245f1923ac8",
+        "lifecycle": "spot",
+        "spot": true,
+        "state": "done",
+        "exit_code": "0",
+        "concurrency": "1",
+        "physical_cores": "8",
+        "elapsed_seconds": 259,
+        "runner_klt_version": "0.5.0",
+        "client_klt_version": "0.7.0+g0d0312b30708",
+        "runner_compatibility": "mismatch",
+        "runner_compatibility_warning": "the fleet runner ran klt 0.5.0 but the submitting client is 0.7.0+g0d0312b30708; request options the runner does not know may have been ignored -- update the runner image or use a compatible client"
+      },
+      "klt_version": "0.7.0+g0d0312b30708"
+    },
+    {
+      "key": "C05",
+      "backend": "batch",
+      "status": "pass",
+      "engine": "ngspice",
+      "engine_version": "46",
+      "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+      "netlist_sha256": "4566f601e1ac19050210700c52b0f55592c71dd1cccce339367860276ec97f09",
+      "remote": {
+        "provider": "aws-batch-fleet",
+        "job_id": "klt-sim-c7e9524ad03b",
+        "bucket": "2am-batch-jobs-221082181346",
+        "region": "us-east-1",
+        "instance_id": "i-0a43961a4eb669f7c",
+        "instance_type": "c7i.4xlarge",
+        "availability_zone": "us-east-1d",
+        "ami_id": "ami-0e40e3245f1923ac8",
+        "lifecycle": "spot",
+        "spot": true,
+        "state": "done",
+        "exit_code": "0",
+        "concurrency": "1",
+        "physical_cores": "8",
+        "elapsed_seconds": 239,
+        "runner_klt_version": "0.5.0",
+        "client_klt_version": "0.7.0+g0d0312b30708",
+        "runner_compatibility": "mismatch",
+        "runner_compatibility_warning": "the fleet runner ran klt 0.5.0 but the submitting client is 0.7.0+g0d0312b30708; request options the runner does not know may have been ignored -- update the runner image or use a compatible client"
+      },
+      "klt_version": "0.7.0+g0d0312b30708"
+    },
+    {
+      "key": "C06",
+      "backend": "batch",
+      "status": "pass",
+      "engine": "ngspice",
+      "engine_version": "46",
+      "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+      "netlist_sha256": "c70bd9d4ff733868f9ba0865a9ce9108449b0b4aa8e023ebd85599ea985fa456",
+      "remote": {
+        "provider": "aws-batch-fleet",
+        "job_id": "klt-sim-4ed4d50dfbd5",
+        "bucket": "2am-batch-jobs-221082181346",
+        "region": "us-east-1",
+        "instance_id": "i-0488b4d4ab1824452",
+        "instance_type": "c7i.4xlarge",
+        "availability_zone": "us-east-1b",
+        "ami_id": "ami-0e40e3245f1923ac8",
+        "lifecycle": "spot",
+        "spot": true,
+        "state": "done",
+        "exit_code": "0",
+        "concurrency": "1",
+        "physical_cores": "8",
+        "elapsed_seconds": 263,
+        "runner_klt_version": "0.5.0",
+        "client_klt_version": "0.7.0+g0d0312b30708",
+        "runner_compatibility": "mismatch",
+        "runner_compatibility_warning": "the fleet runner ran klt 0.5.0 but the submitting client is 0.7.0+g0d0312b30708; request options the runner does not know may have been ignored -- update the runner image or use a compatible client"
+      },
+      "klt_version": "0.7.0+g0d0312b30708"
+    },
+    {
+      "key": "C07",
+      "backend": "batch",
+      "status": "pass",
+      "engine": "ngspice",
+      "engine_version": "46",
+      "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+      "netlist_sha256": "77d4365b65819ee0246590c08822e763220b875f50133f4974a6dfab691b897c",
+      "remote": {
+        "provider": "aws-batch-fleet",
+        "job_id": "klt-sim-c18bb1d39a1b",
+        "bucket": "2am-batch-jobs-221082181346",
+        "region": "us-east-1",
+        "instance_id": "i-0481505c274bb8c4b",
+        "instance_type": "c7i.4xlarge",
+        "availability_zone": "us-east-1c",
+        "ami_id": "ami-0e40e3245f1923ac8",
+        "lifecycle": "spot",
+        "spot": true,
+        "state": "done",
+        "exit_code": "0",
+        "concurrency": "1",
+        "physical_cores": "8",
+        "elapsed_seconds": 285,
+        "runner_klt_version": "0.5.0",
+        "client_klt_version": "0.7.0+g0d0312b30708",
+        "runner_compatibility": "mismatch",
+        "runner_compatibility_warning": "the fleet runner ran klt 0.5.0 but the submitting client is 0.7.0+g0d0312b30708; request options the runner does not know may have been ignored -- update the runner image or use a compatible client"
+      },
+      "klt_version": "0.7.0+g0d0312b30708"
+    },
+    {
+      "key": "C08",
+      "backend": "batch",
+      "status": "pass",
+      "engine": "ngspice",
+      "engine_version": "46",
+      "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+      "netlist_sha256": "7cfbe508e8ae4c25fc1fbc4d4b82d199c20dcc3167b116942a6adf6214a08714",
+      "remote": {
+        "provider": "aws-batch-fleet",
+        "job_id": "klt-sim-204cfad1c69b",
+        "bucket": "2am-batch-jobs-221082181346",
+        "region": "us-east-1",
+        "instance_id": "i-038de4963be33704d",
+        "instance_type": "c7i.4xlarge",
+        "availability_zone": "us-east-1b",
+        "ami_id": "ami-0e40e3245f1923ac8",
+        "lifecycle": "spot",
+        "spot": true,
+        "state": "done",
+        "exit_code": "0",
+        "concurrency": "1",
+        "physical_cores": "8",
+        "elapsed_seconds": 237,
+        "runner_klt_version": "0.5.0",
+        "client_klt_version": "0.7.0+g0d0312b30708",
+        "runner_compatibility": "mismatch",
+        "runner_compatibility_warning": "the fleet runner ran klt 0.5.0 but the submitting client is 0.7.0+g0d0312b30708; request options the runner does not know may have been ignored -- update the runner image or use a compatible client"
+      },
+      "klt_version": "0.7.0+g0d0312b30708"
+    },
+    {
+      "key": "C09",
+      "backend": "batch",
+      "status": "pass",
+      "engine": "ngspice",
+      "engine_version": "46",
+      "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+      "netlist_sha256": "dcb7007bcaf75ba0e34b12ef980c9fb38f80a817cfc7ee5c0d8219516d2aebb7",
+      "remote": {
+        "provider": "aws-batch-fleet",
+        "job_id": "klt-sim-801a21273b88",
+        "bucket": "2am-batch-jobs-221082181346",
+        "region": "us-east-1",
+        "instance_id": "i-05541f1094784844a",
+        "instance_type": "c7i.4xlarge",
+        "availability_zone": "us-east-1d",
+        "ami_id": "ami-0e40e3245f1923ac8",
+        "lifecycle": "spot",
+        "spot": true,
+        "state": "done",
+        "exit_code": "0",
+        "concurrency": "1",
+        "physical_cores": "8",
+        "elapsed_seconds": 268,
+        "runner_klt_version": "0.5.0",
+        "client_klt_version": "0.7.0+g0d0312b30708",
+        "runner_compatibility": "mismatch",
+        "runner_compatibility_warning": "the fleet runner ran klt 0.5.0 but the submitting client is 0.7.0+g0d0312b30708; request options the runner does not know may have been ignored -- update the runner image or use a compatible client"
+      },
+      "klt_version": "0.7.0+g0d0312b30708"
+    },
+    {
+      "key": "C10",
+      "backend": "batch",
+      "status": "pass",
+      "engine": "ngspice",
+      "engine_version": "46",
+      "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+      "netlist_sha256": "9d43776d39839193619357d3bb630ac8c0623222b53f29dfe407b72e1c3f99e6",
+      "remote": {
+        "provider": "aws-batch-fleet",
+        "job_id": "klt-sim-a1b82ecb4502",
+        "bucket": "2am-batch-jobs-221082181346",
+        "region": "us-east-1",
+        "instance_id": "i-094a28d11e1b28369",
+        "instance_type": "c7i.4xlarge",
+        "availability_zone": "us-east-1a",
+        "ami_id": "ami-0e40e3245f1923ac8",
+        "lifecycle": "spot",
+        "spot": true,
+        "state": "done",
+        "exit_code": "0",
+        "concurrency": "1",
+        "physical_cores": "8",
+        "elapsed_seconds": 247,
+        "runner_klt_version": "0.5.0",
+        "client_klt_version": "0.7.0+g0d0312b30708",
+        "runner_compatibility": "mismatch",
+        "runner_compatibility_warning": "the fleet runner ran klt 0.5.0 but the submitting client is 0.7.0+g0d0312b30708; request options the runner does not know may have been ignored -- update the runner image or use a compatible client"
+      },
+      "klt_version": "0.7.0+g0d0312b30708"
+    },
+    {
+      "key": "C11",
+      "backend": "batch",
+      "status": "pass",
+      "engine": "ngspice",
+      "engine_version": "46",
+      "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+      "netlist_sha256": "045ac08cfc96fb3444e26332f85faabbb2c511316bc153d52aa31c8b4a152d6e",
+      "remote": {
+        "provider": "aws-batch-fleet",
+        "job_id": "klt-sim-109a4f145fcd",
+        "bucket": "2am-batch-jobs-221082181346",
+        "region": "us-east-1",
+        "instance_id": "i-0a1d505761bd2822c",
+        "instance_type": "c7i.4xlarge",
+        "availability_zone": "us-east-1c",
+        "ami_id": "ami-0e40e3245f1923ac8",
+        "lifecycle": "spot",
+        "spot": true,
+        "state": "done",
+        "exit_code": "0",
+        "concurrency": "1",
+        "physical_cores": "8",
+        "elapsed_seconds": 247,
+        "runner_klt_version": "0.5.0",
+        "client_klt_version": "0.7.0+g0d0312b30708",
+        "runner_compatibility": "mismatch",
+        "runner_compatibility_warning": "the fleet runner ran klt 0.5.0 but the submitting client is 0.7.0+g0d0312b30708; request options the runner does not know may have been ignored -- update the runner image or use a compatible client"
+      },
+      "klt_version": "0.7.0+g0d0312b30708"
+    }
+  ],
+  "sweeps_file": "20261011-053527-d60e79a-sweeps.json.gz",
+  "environment": {
+    "git": {
+      "commit": "d60e79a4df65f7bffa465ffca5a6adc2e8b4e6c1",
+      "short": "d60e79a",
+      "branch": "feature/issue-123",
+      "dirty": false
+    },
+    "klt_client": "klt 0.7.0+g0d0312b30708",
+    "pdk_artifact_sha256": "2ca42a292eeef18dc0da32004bb2cfa66dfead21c73b4f77d4609d60dadeabf1",
+    "pdk": {
+      "variant_path": "/home/ubuntu/share/pdk/ihp-sg13g2",
+      "fetched_version_file": "0.3.0",
+      "model_sha256": {
+        "cornerHBT.lib": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+        "sg13g2_hbt_mod.lib": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+      }
+    }
+  },
+  "plan_declaration": {
+    "name": "lna-headroom",
+    "issue": 123,
+    "plan_version": 1,
+    "scope": "NOMINAL-CORNER (hbt_typ, 27 C, 2.5 V) screening study of experimental bias / collector-load variants of the committed design/lna_stage1 cascode (IDEAL lossless L/C matching, placeholder circuit). It asks only whether the Q2 divider ratio and the collector damping resistor can buy output-swing headroom under the UNCHANGED ratified limits (row 17: V_CE <= 1.4 V) and the unchanged row 8 / row 7 targets. The production schematic is NOT changed; adoption would be a later reviewed change. Draft band (row 1) is not ratified; nothing here is compliance.",
+    "frozen_before_collection": "This file (candidate table, gates, ranking, shortlist and outcome rules) is committed before any collection; run.py refuses to collect with it dirty. No rule was tuned on candidate results.",
+    "linearity_plan": {
+      "file": "sim/lna-linearity/testbench/plan-v2.json",
+      "sha256": "26ad9db80f996405662eb0431911eb0a2970ebe405576b6ee6c2153f8257e195",
+      "reuses": "nominal corner, three placements, single-tone available-power convention, time grid, solver options (numerics.one), P1dB extractor, operating limits and the versioned collector-current diagnostics, unchanged",
+      "current_diagnostics": "plan-v2 policy kept as declared: applicability UNRESOLVED, complete_envelope false, over-box points listed not excluded, missing/non-finite diagnostics reject a point; no instantaneous current rating is invented and no complete operating envelope is claimed"
+    },
+    "dut": {
+      "netlist": "design/netlist/lna_stage1.spice",
+      "subckt": "lna_stage1",
+      "sha256": "ad4fe1be5754f21fc4b2dd67863234858dc399e2a8232d3b20cf530014b8c447",
+      "held_fixed": "Q1, Q2 (Nx=8 each), Re1, the whole input network (Cshunt, Lin, Cblk_in), Rref/Xqr/Rer/Rbias bias mirror, Lfeed, Cm, Cb2, supply 2.5 V",
+      "varied": "R1b and R2b (Q2 base divider) and Rd (collector damping resistor, in parallel with the ideal DC-short Lfeed), nothing else"
+    },
+    "candidates": {
+      "baseline_id": "C00",
+      "divider_rule": "R1b + R2b = 8.5 kohm in every candidate (the divider's total resistance, and so its loading by Q2's base current and the Cb2 time constant order, is held; only the ratio moves). Divider points chosen from a method-development DC .op (one local ngspice process, nominal corner): Vc1 = 1.247, 1.29, 1.335, 1.38 V for R2b = 7.0, 7.15, 7.3, 7.45 kohm; beyond ~7.5 kohm Q1's DC V_CE alone exceeds the 1.4 V limit, so the table stops there. Q1 + Q2 DC V_CE sum to ~2.5 V, so moving Vc1 can only trade Q2 headroom for Q1 headroom.",
+      "damping_rule": "Rd = 465 (committed), 300, 200 ohm: smaller Rd lowers the collector RF impedance (less gain, less swing per unit input). Larger Rd is excluded: it only increases swing.",
+      "table": [
+        {
+          "id": "C00",
+          "r1b_ohm": 1500,
+          "r2b_ohm": 7000,
+          "rd_ohm": 465
+        },
+        {
+          "id": "C01",
+          "r1b_ohm": 1500,
+          "r2b_ohm": 7000,
+          "rd_ohm": 300
+        },
+        {
+          "id": "C02",
+          "r1b_ohm": 1500,
+          "r2b_ohm": 7000,
+          "rd_ohm": 200
+        },
+        {
+          "id": "C03",
+          "r1b_ohm": 1350,
+          "r2b_ohm": 7150,
+          "rd_ohm": 465
+        },
+        {
+          "id": "C04",
+          "r1b_ohm": 1350,
+          "r2b_ohm": 7150,
+          "rd_ohm": 300
+        },
+        {
+          "id": "C05",
+          "r1b_ohm": 1350,
+          "r2b_ohm": 7150,
+          "rd_ohm": 200
+        },
+        {
+          "id": "C06",
+          "r1b_ohm": 1200,
+          "r2b_ohm": 7300,
+          "rd_ohm": 465
+        },
+        {
+          "id": "C07",
+          "r1b_ohm": 1200,
+          "r2b_ohm": 7300,
+          "rd_ohm": 300
+        },
+        {
+          "id": "C08",
+          "r1b_ohm": 1200,
+          "r2b_ohm": 7300,
+          "rd_ohm": 200
+        },
+        {
+          "id": "C09",
+          "r1b_ohm": 1050,
+          "r2b_ohm": 7450,
+          "rd_ohm": 465
+        },
+        {
+          "id": "C10",
+          "r1b_ohm": 1050,
+          "r2b_ohm": 7450,
+          "rd_ohm": 300
+        },
+        {
+          "id": "C11",
+          "r1b_ohm": 1050,
+          "r2b_ohm": 7450,
+          "rd_ohm": 200
+        }
+      ]
+    },
+    "baseline_reproduction": {
+      "record": "sim/lna-linearity/records/20261010-174208-0f67eaf",
+      "semantics": "historical plan_version 1 is voltage-only; C00 is re-run under the v2 diagnostics with enforce=false, which changes no admission decision for finite diagnostics, so the voltage-only first-violation outcome must reproduce",
+      "pin_tolerance_db": 2.0,
+      "vce_q2_peak_tol_v": 0.005,
+      "gain_tol_db": 0.05,
+      "rule": "per placement: first single-tone power breaking a limit within pin_tolerance_db (one 2 dB grid step) of the historical one with the same limit identity, and at every swept power Q2 V_CE peak within vce_q2_peak_tol_v and delivered power within gain_tol_db of the stored base sweep. Otherwise the study is invalid (status BASELINE_NOT_REPRODUCED) and no candidate is ranked."
+    },
+    "screening": {
+      "kind": "single-tone, base timing only (no timestep/window refinements at this stage), all three placements per candidate, one klt request per candidate (63 runs) plus one analytic-cubic control request",
+      "dc_block": "a DC .op at the head of each body records Vc1, Ve1, Vb1, Vb2, Voc and the supply current; DC V_CE(Q1) = Vc1 - Ve1, DC V_CE(Q2) = Voc - Vc1; Ic(Q1) ~ Ve1 / Re1 (Re1 = 3 ohm)"
+    },
+    "gates": {
+      "dc_vce_margin_v": 0.03,
+      "dc_rule": "G_dc: each of Q1, Q2 DC V_CE lies in [0.4, 1.4 - dc_vce_margin_v] V",
+      "gain_loss_max_db": 6.0,
+      "gain_rule": "G_gain: at EVERY placement the candidate's baseline gain is at least gain_loss_max_db below C00's baseline gain at that placement (a heavily attenuated candidate is not a solution to the receive-chain design)",
+      "baseline_rule": "G_base: a usable small-signal gain baseline exists at every placement",
+      "note": "a candidate failing a gate stays visible in every table with the failed gate named; it is excluded only from the ranking and shortlist"
+    },
+    "metrics": {
+      "stress_free_pin_dbm": "highest swept single-tone available power below the first limit violation (the last stress-valid point), per placement; a stress-valid P1dB, if any, is the fit_p1db 'ok' value",
+      "worst_placement": "minimum of stress_free_pin_dbm over the three placements",
+      "headroom_gain_db": "worst-placement stress_free_pin_dbm minus C00's",
+      "net_output_headroom_db": "headroom_gain_db plus (candidate baseline gain minus C00 baseline gain), minimised over placements: the change in stress-free OUTPUT power; <= 0 means the input-referred improvement is only the gain given away",
+      "limit_identity": "which device/limit breaks first (e.g. q2 V_CE peak, q1 V_CE peak, V_BE box), copied from the extractor's own messages"
+    },
+    "ranking": {
+      "among": "candidates passing G_dc, G_gain and G_base",
+      "order": [
+        "worst-placement stress_free_pin_dbm, descending",
+        "minimum placement baseline gain, descending",
+        "candidate id, ascending"
+      ],
+      "tie_tolerance_db": 0.0
+    },
+    "shortlist": {
+      "size": 2,
+      "admission": "a ranked candidate enters the shortlist only if headroom_gain_db >= min_headroom_gain_db AND net_output_headroom_db > 0",
+      "min_headroom_gain_db": 4.0,
+      "empty_means": "no candidate is refined; the screening outcome stands as the no-feasible-candidate result for this variant family",
+      "refinement_if_nonempty": "shortlisted candidates get the existing half-step / double-window controls on the single-tone sweep, a nominal two-tone IIP3 check and small-signal gain / NF / stability against C00 with the sim/lna-sparam-nf conventions, as a later record; none of that is claimed by the screening record"
+    },
+    "outcome_classes": {
+      "stress_valid_p1db_meets_row8": "a ranked candidate has an 'ok' P1dB at all three placements, each >= the unchanged -25 dBm target (converged only after refinement; screening alone says 'unrefined')",
+      "stress_valid_p1db_below_row8": "a ranked candidate has an 'ok' P1dB at all placements but below -25 dBm",
+      "headroom_improved_p1db_undetermined": "shortlist non-empty but no candidate has a stress-valid P1dB at all placements",
+      "no_feasible_candidate": "shortlist empty",
+      "rule": "the class is the best one attained by any ranked candidate in that order; every target and limit is the unchanged ratified value"
+    },
+    "targets": {
+      "p1db_dbm": -25.0,
+      "iip3_dbm": -15.0,
+      "vce_max_v": 1.4
+    }
+  }
+}
