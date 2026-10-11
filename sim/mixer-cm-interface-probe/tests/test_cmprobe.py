@@ -215,7 +215,7 @@ class IntegrityGate(unittest.TestCase):
             return __import__("subprocess").CompletedProcess(cmd, 0, fakelog.stdout(fakelog.marks()), "")
 
         self.integ = {"gate": "stub", "ok": True, "problems": [], "notes": ["models match"]}
-        major = R.pinned_major()
+        major = R.pinned_major(R.PDK_ARTIFACT)
         patches = [
             mock.patch.object(R, "RECORDS", self.tmp / "records"),
             mock.patch.object(R, "PROBE_LOGS", self.tmp / "probe-logs"),
@@ -223,12 +223,12 @@ class IntegrityGate(unittest.TestCase):
             mock.patch.object(R.shutil, "which", lambda name: "/x/ngspice"),
             mock.patch.object(R, "ngspice_info", lambda exe: {"path": exe, "version": f"ngspice-{major}",
                                                               "major": major, "sha256": self.SHA}),
-            mock.patch.object(R, "pdk_info", lambda: {
+            mock.patch.object(R, "pdk_info", lambda *a, **k: {
                 "path": "/pdk", "fetched_version": "0.3.0", "model_lib": "/pdk/m/cornerHBT.lib",
                 "section": "hbt_typ", "sha256": {"cornerHBT.lib": self.SHA, "sg13g2_hbt_mod.lib": self.SHA},
                 "device": "npn13G2"}),
             mock.patch.object(R, "pdk_integrity", lambda banner: dict(self.integ)),
-            mock.patch.object(R, "git_info", lambda: {"commit": "abcdef1" + "0" * 33, "dirty": False}),
+            mock.patch.object(R, "git_info", lambda *a, **k: {"commit": "abcdef1" + "0" * 33, "dirty": False}),
             mock.patch.object(R.subprocess, "run", fake_run),
         ]
         for p in patches:
