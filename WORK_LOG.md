@@ -4,6 +4,8 @@ Chronological record of merged pull requests and closed issues, maintained by th
 
 ### 2026-10-11
 
+- **PR #154**: harness: refuse PVT grids whose points alias one artifact id, before dispatch
+- **PR #153**: harness: reject non-finite and malformed numeric grading bounds
 - **PR #151**: harness: freeze the testbench manifest next to each record's DUT snapshot
 - **PR #148**: ci: bound every workflow job with timeout-minutes
 - **PR #147**: fix: reject duplicate PVT identities in klt batch report collection
@@ -15,6 +17,8 @@ Chronological record of merged pull requests and closed issues, maintained by th
 - **PR #133**: sim(lna-headroom): cascode bias/load headroom screening, stage 1 (#123)
 - **PR #131**: sim(mixer-pumped-rf-admittance): replay frozen logs with their recorded thresholds
 - **PR #128**: sim: qualify collector-current diagnostics for nonlinear LNA fits (plan v2)
+- **Issue #150** (closed): harness: reject artifact filename collisions before PVT dispatch
+- **Issue #149** (closed): harness: reject non-finite and malformed numeric grading bounds
 - **Issue #143** (closed): ci: bound every workflow job with timeout-minutes and guard it in test_ci_pins
 - **Issue #141** (closed): harness: freeze native testbench manifests with each evidence record
 - **Issue #140** (closed): docs: reproduce guard classification of inert source and executed cleanup
