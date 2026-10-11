@@ -22,6 +22,7 @@ jobs:
   harness-tests:
     name: harness + Ka-band unit tests (no PDK, no simulator)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -55,6 +56,7 @@ jobs:
   evidence-formats:
     name: evidence formats + append-only history
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:

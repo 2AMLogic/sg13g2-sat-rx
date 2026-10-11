@@ -14,6 +14,69 @@ def test_workflow_pins_match_manifest():
     assert re.search(r"NGSPICE_SHA256: (\w+)", wf).group(1) == m["ngspice"]["source_sha256"]
 
 
+def _job_blocks(wf):
+    """Job name -> that job's list of lines (plain-text split, no YAML parser:
+    under the top-level `jobs:` key a job is a key indented exactly two spaces,
+    and its block runs from that line to the next such key or a new top-level
+    key)."""
+    jobs = {}
+    name = None
+    block = []
+    in_jobs = False
+    for ln in wf.splitlines():
+        if not in_jobs:
+            if re.match(r"^jobs:\s*$", ln):
+                in_jobs = True
+            continue
+        m = re.match(r"^  ([A-Za-z0-9][A-Za-z0-9_-]*):", ln)
+        if m:
+            if name is not None:
+                jobs[name] = block
+            name = m.group(1)
+            block = [ln]
+        elif ln and not ln[0].isspace():
+            break
+        else:
+            block.append(ln)
+    if name is not None:
+        jobs[name] = block
+    return jobs
+
+
+def _jobs_without_timeout(wf):
+    return sorted(
+        name for name, block in _job_blocks(wf).items()
+        if not any(re.match(r"^    timeout-minutes:\s*\d+\s*$", ln) for ln in block)
+    )
+
+
+def test_every_workflow_job_declares_timeout_minutes():
+    """Issue #143: a job without `timeout-minutes` inherits GitHub's
+    360-minute default, so a hung pip install or a deadlocked pytest holds a
+    runner for six hours and the commit gets no verdict. Every job in ci.yml
+    and signoff.yml must declare its own bound."""
+    known_jobs = {
+        "ci.yml": {"harness-tests", "evidence-formats", "sim-smoke"},
+        "signoff.yml": {"tier-report"},
+    }
+    for wf_name, known in known_jobs.items():
+        wf = (REPO_ROOT / ".github" / "workflows" / wf_name).read_text()
+        jobs = _job_blocks(wf)
+        assert known <= set(jobs), (wf_name, sorted(jobs))  # parse not vacuous
+        missing = _jobs_without_timeout(wf)
+        assert not missing, f"{wf_name}: jobs without timeout-minutes: {', '.join(missing)}"
+
+    # Negative controls: removing sim-smoke's bound, or commenting it out,
+    # is reported.
+    wf = (REPO_ROOT / ".github" / "workflows" / "ci.yml").read_text()
+    for broken in (
+        wf.replace("    timeout-minutes: 45\n", ""),
+        wf.replace("    timeout-minutes: 45", "    # timeout-minutes: 45"),
+    ):
+        assert broken != wf
+        assert _jobs_without_timeout(broken) == ["sim-smoke"]
+
+
 def test_readme_build_recipe_matches_workflow():
     """sim/README.md states the same ngspice build deps and configure flags CI uses."""
     wf = (REPO_ROOT / ".github" / "workflows" / "ci.yml").read_text()

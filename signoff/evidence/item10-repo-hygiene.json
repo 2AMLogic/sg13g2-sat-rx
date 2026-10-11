@@ -17,7 +17,7 @@
       "readme:reproduce-names-characterize.sh": true
     },
     "files": {
-      "README.md": "sha256:b70c53cc94d31fd5979da0d6ee1cb16990510ec348f6843c6c2e5025e32007f8",
+      "README.md": "sha256:51ae1b3b9aa25f571e82a6e0855e1f286138bf15919a10bee09f54202a0c83f4",
       "LICENSE": "sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
       "spec/target-spec.md": "sha256:a561baf0ee9ad4a0bb696f8ecf4313e04506217fe5389cedc62954938a297c59"
     }
@@ -25,7 +25,7 @@
   "provenance": {
     "input": {
       "path": ".github/workflows/ci.yml",
-      "content_hash": "sha256:5edb025a4b29541e1ef6a18bcf950ff8f5acddacb4534ceeea829a008a189cfa"
+      "content_hash": "sha256:0c1dc18747f8b49a2d58ff62ba4864ae473a58473ff07aff310c47e1d71777ef"
     }
   }
 }
