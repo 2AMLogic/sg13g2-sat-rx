@@ -72,4 +72,9 @@ What this study adds, all declared in `testbench/plan.json` **before** collectio
 
 ## Status
 
-See `records/` for the evidence. If `records/` is absent, collection has not run yet.
+One record, stage 1 (screening): `records/20261011-053527-d60e79a.md`, all 13 klt requests on the batch
+fleet, control passing, baseline C00 reproducing the historical cutoff exactly. Outcome class
+`headroom_improved_p1db_undetermined`: the best candidate (C08) moves the first Q2 V_CE violation up by
+10 dB input-referred (5.6 dB net of 4.4 dB lost gain) but P1dB stays a one-sided bound 1-3 dB short of the
+unchanged -25 dBm target. Refinement of the shortlist (convergence controls, two-tone IIP3, gain/NF/stability
+vs C00) is **not done**; see `design/lna_headroom_study.md`.
