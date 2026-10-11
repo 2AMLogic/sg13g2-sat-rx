@@ -15,7 +15,8 @@ import pytest
 import headroom as H
 import linearity as L
 
-HP, LP = H.load_plans()
+HP_FULL, LP = H.load_plans()  # plan_version 2, with the frozen stage-2 refinement block
+HP = {k: v for k, v in HP_FULL.items() if k != "refinement"}  # the stage-1 view these tests qualify
 DUT = H.DUT_PATH.read_text()
 GOOD_DC = {"vc1": 1.2472, "ve1": 0.0047, "vb1": 0.814, "vb2": 2.056, "voc": 2.5, "idd": 0.002}
 
@@ -71,6 +72,7 @@ def all_texts(**per):
 
 
 def test_plan_is_coherent():
+    assert H.plan_problems(HP_FULL, LP, DUT) == []
     assert H.plan_problems(HP, LP, DUT) == []
 
 
