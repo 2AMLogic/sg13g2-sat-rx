@@ -47,7 +47,7 @@ from .evidence import BaseExtensions
 from .pdk import Pdk
 from .pdkartifact import validate_identity
 from .runner import PointResult
-from .testbench import AXES, Testbench
+from .testbench import AXES, Testbench, validate_check_limits
 
 #: Subdirectories of ``sim/<experiment-slug>/`` this module writes into.
 SNAPSHOT_DIR = "netlist-snapshots"
@@ -196,6 +196,8 @@ def evaluate_checks(
     """
     sensitivity = sensitivity or {}
     failures: list[dict] = []
+    for name, spec in checks.items():
+        validate_check_limits(name, spec)
     for name, spec in checks.items():
         low = spec.get("min")
         high = spec.get("max")

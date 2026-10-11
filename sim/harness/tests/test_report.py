@@ -467,3 +467,36 @@ def test_offhost_identity_renders_what_was_verified_and_passes_checker(tmp_path)
     assert chk.PDK_ARTIFACT_RE.search(md)
     local = R.render_markdown(build_synthetic_record(tmp_path / "b")[3])
     assert "hash-verified in the simulating install before the run" in local
+
+
+@pytest.mark.parametrize("spec", [
+    {"min": float("nan")},
+    {"max": float("nan")},
+    {"max": float("inf")},
+    {"min": True},
+    {"max": "5"},
+    {"min": 5, "max": 1},
+    {"max_spread_pct": float("nan")},
+    {"min_spread_pct": -1},
+    {"max_spread_pct_by_axis": {"supply": float("nan")}},
+    {"min_spread_pct_by_axis": {"supply": "1"}},
+])
+def test_evaluate_checks_rejects_malformed_limits(spec):
+    pts = grid()
+    res = results_for(pts, gain)
+    summ = R.summarize(res, ["gain"])
+    with pytest.raises(ValueError, match="gain"):
+        R.evaluate_checks({"gain": spec}, res, summ)
+
+
+def test_nan_bound_cannot_yield_empty_failure_list():
+    res = results_for(grid(), gain)
+    with pytest.raises(ValueError):
+        R.evaluate_checks({"gain": {"min": float("nan"), "max": 0}}, res, {})
+
+
+def test_finite_bounds_still_grade_points():
+    res = results_for(grid(), gain)
+    assert R.evaluate_checks({"gain": {"min": 0, "max": 100}}, res, {}) == []
+    fails = R.evaluate_checks({"gain": {"max": 5}}, res, {})
+    assert fails and all(f["kind"] == "max" for f in fails)
