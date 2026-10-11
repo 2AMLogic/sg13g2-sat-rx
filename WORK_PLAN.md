@@ -25,7 +25,7 @@ _None._
 
 Issues currently being built (`loom:building`).
 
-- **#132**: sim: refine headroom shortlist (C08/C05) - convergence, two-tone IIP3, gain/NF/stability vs baseline
+_None._
 
 ## PRs Awaiting Review
 
@@ -50,8 +50,8 @@ Issues carrying `loom:curated`.
 
 ## Proposed (Architect / Hermit)
 
-- **#149**: harness: reject non-finite and malformed numeric grading bounds *(architect)*
-- **#150**: harness: reject artifact filename collisions before PVT dispatch *(architect)*
+- **#155**: harness: report the installed PDK revision from .fetched-version instead of 'unknown' *(architect)*
+- **#156**: spec: classify each target-spec row as statistical or deterministic for T1 item 6 *(architect)*
 - **#144**: Consolidate duplicated provenance helpers in mixer probe drivers into the harness *(hermit)*
 
 ## Epics
@@ -65,7 +65,7 @@ _None._
 | Operator merge-risk holds | 0 |
 | Operator priority | 0 |
 | Ready (`loom:issue`) | 0 |
-| In Progress (`loom:building`) | 1 |
+| In Progress (`loom:building`) | 0 |
 | PRs awaiting review | 0 |
 | Approved PRs awaiting merge | 0 |
 | Curated | 4 |
