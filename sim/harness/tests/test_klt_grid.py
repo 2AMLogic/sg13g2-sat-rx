@@ -56,8 +56,12 @@ def _value(tb, name, process, temp, vdd):
         + temp / 100.0 + vdd
 
 
-def fake_submit(tb, *, drop=(), errored=(), nolog=(), nomeas=(), job_env=None):
-    """Stub for klt_driver.submit: one synthetic corner per (process, temp)."""
+def fake_submit(tb, *, drop=(), errored=(), nolog=(), nomeas=(), dup=(), job_env=None):
+    """Stub for klt_driver.submit: one synthetic corner per (process, temp).
+
+    ``dup`` repeats a corner's PVT identity with the opposite status just
+    before the real entry -- the error-then-pass order whose last-entry-wins
+    grading used to hide the failure (issue #139)."""
     def go(job, backend, klt_cmd="klt"):
         req = json.loads(job.request.read_text())
         assert backend == "batch" and req["backend"] == "batch"
@@ -79,6 +83,9 @@ def fake_submit(tb, *, drop=(), errored=(), nolog=(), nomeas=(), job_env=None):
                     corner["artifacts"]["log"] = str(log)
                 else:
                     corner["diagnostics"] = [{"code": "batch_job_failed"}]
+                if cid in dup:
+                    corners.append(dict(corner, status="error" if corner["status"] == "pass"
+                                        else "pass"))
                 corners.append(corner)
         env = {"engine": "ngspice", "engine_version": "46",
                "remote": {"job_id": f"job-{job.supply_v:.2f}", "provider": "aws-batch",
@@ -193,6 +200,89 @@ def test_incomplete_or_failed_remote_points_are_explicit(bench, pdk, tmp_path):
     assert by[ids[3]].status == "failed" and by[ids[3]].missing == [next(iter(bench.measure))]
     assert all(by[i].status == "ok" for i in ids[4:])
     assert grid.logs[ids[0]].startswith("KLT SIM:")  # every point still gets a log
+
+
+# ---------------------------------------------------------------------------
+# report identity uniqueness (issue #139)
+# ---------------------------------------------------------------------------
+
+def _one_point(corner="hbt_typ", temp=27.0, vdd=2.5):
+    return C.build_grid(C.resolve_corners([corner]), (temp,), (vdd,))[0]
+
+
+def _report_job(tmp_path, corners, *, supply=2.5, key="2.50v"):
+    """A KltJob carrying an already-written synthetic report (no submission)."""
+    return kd.KltJob(key=key, supply_v=supply, temp_c=None,
+                     request=tmp_path / f"request_{key}.json",
+                     body=tmp_path / f"body_{key}.spice",
+                     report_path=tmp_path / f"report_{key}.json",
+                     report={"corners": list(corners)})
+
+
+def _pass_corner(bench, tmp_path, process="hbt_typ", temp=27.0, name="log"):
+    log = tmp_path / f"{name}.log"
+    log.write_text("ngspice banner\n" + "".join(f"m_{n} = 1e0\n" for n in bench.measure))
+    return {"process": process, "temperature_c": temp, "runtime_s": 1.0,
+            "status": "pass", "artifacts": {"log": str(log)}}
+
+
+def test_duplicate_identities_are_an_ambiguous_error_in_either_order(bench, tmp_path):
+    """The verdict must not depend on entry order: error/pass, pass/error and
+    pass/pass are all refused instead of a first/last winner being picked."""
+    point = _one_point()
+    cid = point.corner_id
+    ok = _pass_corner(bench, tmp_path, name="ok")
+    errored = {"process": "hbt_typ", "temperature_c": 27.0, "status": "error",
+               "diagnostics": [{"code": "batch_job_failed"}]}
+    for twins in ([errored, ok], [ok, errored], [ok, dict(ok)]):
+        job = _report_job(tmp_path, twins)
+        results, logs = kd.collect(bench, [point], [job], lambda text: {})
+        (r,) = results
+        assert r.status == "error" and r.measurements == {}
+        assert cid in r.message and "ambiguous" in r.message
+        assert "2 corners" in r.message and "report_2.50v.json" in r.message
+        assert logs[cid].startswith("KLT SIM:")  # no winner's log is published either
+
+
+def test_two_jobs_claiming_one_identity_is_an_ambiguous_error(bench, tmp_path):
+    """Duplicates across jobs count too; the grid keeps its order and the
+    unique points keep their measurements alongside the refused one."""
+    points = [_one_point(), _one_point(corner="hbt_bcs")]
+    j1 = _report_job(tmp_path, [_pass_corner(bench, tmp_path, name="a"),
+                                _pass_corner(bench, tmp_path, process="hbt_bcs", name="b")])
+    j2 = _report_job(tmp_path, [_pass_corner(bench, tmp_path, name="c")], key="2.50v_again")
+    results, _ = kd.collect(bench, points, [j1, j2],
+                            lambda text: {n: 1.5 for n in bench.measure})
+    assert [r.point.corner_id for r in results] == [p.corner_id for p in points]
+    assert results[0].status == "error"
+    assert "report_2.50v.json" in results[0].message
+    assert "report_2.50v_again.json" in results[0].message
+    assert results[1].status == "ok"
+    assert results[1].measurements == {n: 1.5 for n in bench.measure}
+
+
+def test_malformed_identities_are_collection_errors_naming_the_request(bench, tmp_path):
+    point = _one_point()
+    for bad in (None, "hot", "nan", {"c": 27}):
+        job = _report_job(tmp_path, [{"process": "hbt_typ", "temperature_c": bad,
+                                      "status": "pass"}])
+        with pytest.raises(kd.KltGridError, match="report_2.50v.json.*hbt_typ.*finite number"):
+            kd.collect(bench, [point], [job], lambda text: {})
+    job = _report_job(tmp_path, ["hbt_typ"])
+    with pytest.raises(kd.KltGridError, match="not an object"):
+        kd.collect(bench, [point], [job], lambda text: {})
+
+
+def test_an_unknown_process_cannot_supply_a_requested_point_result(bench, tmp_path):
+    point = _one_point()
+    stray = _pass_corner(bench, tmp_path, name="stray")
+    stray["process"] = "hbt_nosuch"
+    job = _report_job(tmp_path, [stray])
+    results, logs = kd.collect(bench, [point], [job], lambda text: {})
+    (r,) = results
+    assert r.status == "error" and "no result" in r.message
+    assert "hbt_nosuch" in r.message and "report_2.50v.json" in r.message
+    assert logs[point.corner_id].startswith("KLT SIM:")
 
 
 def test_a_request_without_a_report_raises_and_never_falls_back(bench, pdk, tmp_path, monkeypatch):
@@ -338,6 +428,18 @@ def test_incomplete_batch_grid_is_an_error_record_not_a_pass(run, bench, monkeyp
     cid = _grid(bench)[0].corner_id
     rc, calls, out = run("--corners", "hbt", stub=fake_submit(bench, drop={cid}))
     assert rc == 1 and f"POINT ERROR: {cid}" in out.err
+    (record,) = (bench.experiment_dir / "records").glob("*.md")
+    assert "**Status**: error" in record.read_text()
+
+
+def test_an_ambiguous_collection_cannot_publish_a_passing_record(run, bench, monkeypatch):
+    """CLI regression for issue #139: a report repeating a point's identity
+    (error entry first, pass entry second -- the order that a last-wins
+    collector graded ``ok``) must not be able to produce a passing record."""
+    monkeypatch.setattr(cli.pdkartifact, "offhost_identity", lambda jobs, sim: IDENTITY)
+    cid = _grid(bench)[0].corner_id
+    rc, calls, out = run("--corners", "hbt", stub=fake_submit(bench, dup={cid}))
+    assert rc == 1 and f"POINT ERROR: {cid}" in out.err and "ambiguous" in out.err
     (record,) = (bench.experiment_dir / "records").glob("*.md")
     assert "**Status**: error" in record.read_text()
 
