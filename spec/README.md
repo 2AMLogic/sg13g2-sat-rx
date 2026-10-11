@@ -112,3 +112,9 @@ that sits downstream of ratification. T1 items 5 (full corner verification),
 **ratified** spec. Since DR-0003 they grade against **eleven binding target
 rows**; verdicts against the nine OPEN rows remain provisional by
 construction until each row's gate closes.
+
+T1 item 6 (statistical / Monte Carlo evidence) is scoped per row by
+[DR-0007](decision-records/0007-statistical-row-classification.md) (proposed):
+`spec/row-coverage.json` carries a `statistical` flag, rationale and card
+source on every row. Only row 15 is classed statistical; no Monte Carlo run
+exists yet.
