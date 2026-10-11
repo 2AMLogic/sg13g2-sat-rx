@@ -168,8 +168,9 @@ re-pointed at a real mixer schematic.
 
 | Command | Runs |
 |---|---|
-| `sim/characterize.sh smoke` / `selftest` | local `ngspice -b`, small (single corner or negative controls) |
-| `sim/characterize.sh characterize` — `lna-sparam-nf`, `mixer-conversion-iip3` | **local**: `harness.cli run`, a sequential 27-point `ngspice -b` loop. Workstation only; on a shared dispatch host use the LNA driver below instead |
+| `sim/characterize.sh smoke` / `selftest` | local `ngspice -b`, small (single corner or negative controls); smoke passes `--backend local` explicitly |
+| `sim/characterize.sh characterize` — `lna-sparam-nf`, `mixer-conversion-iip3` | `harness.cli run --backend "${HARNESS_BACKEND:-batch}"`: the 27 points go out as `klt sim` requests (one per supply) and the returned logs land in `corners/<record-id>/`. A failed submit records nothing and never falls back to a local loop. `HARNESS_BACKEND=local` is the old sequential `ngspice -b` loop (workstation only) |
+| `python3 -m harness.cli run <bench>` | more than one PVT point: `klt sim`, backend `batch` by default; exactly one point: local. `--backend local` forces a local run (`--jobs` at most 2 for a multi-point local grid) |
 | `sim/characterize.sh characterize` — `hbt-kaband-characterization` | `klt sim` requests, backend `$KABAND_BACKEND` (default `batch`) |
 | `python3 sim/lna-sparam-nf/run.py characterize` | `klt sim`, `--backend` default `batch` (use `--dry-run` to inspect the request) |
 | `python3 sim/mixer-topology-feasibility/run.py smoke` / `selftest` | local, no evidence written |
@@ -392,8 +393,9 @@ corner set explicitly:
 
 ```
 python3 -m harness.cli list
-python3 -m harness.cli run lna-sparam-nf --corners hbt   # local ngspice loop: workstation only; on a shared host use lna-sparam-nf/run.py
+python3 -m harness.cli run lna-sparam-nf --corners hbt   # 27 points -> klt sim batch (default for >1 point)
 python3 -m harness.cli run mixer-conversion-iip3 --corners hbt
+python3 -m harness.cli run mixer-conversion-iip3 --corners hbt --backend local   # workstation only: local ngspice loop
 python3 -m harness.cli selftest lna-sparam-nf --corners hbt
 python3 -m harness.cli selftest mixer-conversion-iip3 --corners hbt
 ```

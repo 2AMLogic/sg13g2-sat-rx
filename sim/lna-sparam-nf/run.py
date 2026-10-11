@@ -4,9 +4,10 @@
     python3 sim/lna-sparam-nf/run.py characterize --supersedes ID [--dry-run]
     python3 sim/lna-sparam-nf/run.py ingest REPORT.json [...] --supersedes ID
 
-`harness.cli run` simulates the 27-point grid as a LOCAL loop of `ngspice -b`
-processes. On a shared dispatch host that grid goes to the off-host batch
-fleet instead: this driver expresses it as `klt sim` requests (one per supply
+This driver predates `harness.cli run --backend batch` (issue #134), which now
+sends any multi-point harness grid to the batch fleet the same way; it is kept
+for this bench's correction/new-design notes and stage-1 tables. It expresses
+the 27-point grid as `klt sim` requests (one per supply
 value, 9 process x temperature corners each), then ingests the returned
 per-corner logs into an ordinary harness-native record (corners/<id>/*.log,
 netlist-snapshots/<id>.spice, records/<id>.md), exactly the layout
