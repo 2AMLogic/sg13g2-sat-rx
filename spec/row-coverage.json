@@ -89,7 +89,7 @@
       "status": "ratified-target",
       "bound_corner": "`hbt_wcs`, 125 °C, min supply",
       "bench": "sim/mixer-conversion-iip3",
-      "latest_record": "sim/mixer-conversion-iip3/records/20260912-034727-9204518.md",
+      "latest_record": "sim/mixer-conversion-iip3/records/20261011-225017-787dc96.md",
       "verdict": "placeholder_circuit",
       "statistical": false,
       "statistical_rationale": "Conversion gain is bound by the hbt_wcs/125 C/min-supply corner; balance mismatch perturbs it second-order only."
@@ -152,7 +152,7 @@
       "status": "open",
       "bound_corner": "`hbt_typ` and mismatch corners (leakage is a matching/symmetry effect, so `hbt_typ_mismatch` is in scope)",
       "bench": "sim/mixer-conversion-iip3",
-      "latest_record": "sim/mixer-conversion-iip3/records/20260912-034727-9204518.md",
+      "latest_record": "sim/mixer-conversion-iip3/records/20261011-225017-787dc96.md",
       "verdict": "placeholder_circuit",
       "statistical": true,
       "statistical_rationale": "LO-to-RF/IF leakage is a matching/symmetry effect (target-spec.md row 15 and the mismatch corner axis); the typical-corner result is zero by symmetry, so only a mismatch/statistical run bounds it.",
