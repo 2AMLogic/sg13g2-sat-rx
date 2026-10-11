@@ -14,7 +14,13 @@
   pipeline       post -> fit -> compare -> record on generated (clearly
                  labelled SYNTHETIC) lossy 2-pi data: success path, exceeded-
                  mesh-limit path, wrong-fit path, unavailable-tool path, and
-                 a re-run that must reproduce the numerical digest.
+                 a re-run that must reproduce the numerical digest (it waits
+                 out the first record's UTC second: ids are 1 s resolution).
+  collision      make_record.py with its clock held inside one second: the
+                 second record is refused ("record id collision", exit 4, no
+                 traceback), nothing is overwritten, only the refused run's
+                 own files are removed; a different status in the same second
+                 is a distinct id; the digest does not depend on the clock.
   all            run every group; with --write-record also write one
                  append-only controls record under records/.
 
@@ -31,6 +37,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 
 import numpy as np
 
@@ -199,6 +206,30 @@ def _pipeline_once(wd, **campaign_kw):
     return rc, r.stdout + r.stderr
 
 
+def _latest_record_second(recdir):
+    """UTC second (microseconds dropped) of the newest record in recdir."""
+    secs = []
+    for n in os.listdir(recdir):
+        if n.endswith(".json"):
+            u = json.load(open(os.path.join(recdir, n))).get("utc")
+            if u:
+                secs.append(datetime.datetime.fromisoformat(u).replace(microsecond=0))
+    return max(secs) if secs else None
+
+
+def _wait_past_second(sec, cap_s=5.0):
+    """Block until the UTC wall clock is in a later second than `sec`, so the
+    next record id (one-second resolution) cannot collide with that record.
+    Returns the seconds waited."""
+    t0 = time.monotonic()
+    while sec is not None and time.monotonic() - t0 < cap_s:
+        now = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0)
+        if now > sec:
+            break
+        time.sleep(0.05)
+    return time.monotonic() - t0
+
+
 def ctl_pipeline(tmp):
     res, ok = {}, True
     # 1. success path + re-run reproduces the digest, earlier record untouched
@@ -211,15 +242,24 @@ def ctl_pipeline(tmp):
     snap = {n: open(os.path.join(wd, "records", n)).read() for n in recs1}
     rc2 = {k: _run([os.path.join(HERE, s), "--dir", wd]).returncode
            for k, s in (("post", "postprocess_p1.py"), ("fit", "fit_p1.py"), ("compare", "compare_p1.py"))}
+    # The re-run must be a genuinely distinct record.  Ids have one-second
+    # resolution, and on a fast runner the re-run can land in the first
+    # record's second (issue #97); wait that second out instead of relaxing
+    # the exclusive create.  The same-second refusal is the `collision` control.
+    res["rerun_waited_s"] = round(_wait_past_second(_latest_record_second(os.path.join(wd, "records"))), 3)
     out2 = _run([os.path.join(HERE, "make_record.py"), "--dir", wd, "--synthetic",
                  "--stages", "post fit compare"])
     d2 = _digest(out2.stdout)
     recs2 = sorted(os.listdir(os.path.join(wd, "records")))
     unchanged = all(open(os.path.join(wd, "records", n)).read() == t for n, t in snap.items())
+    rc2["make_record"] = out2.returncode
     res["rerun_exit_codes"] = rc2
+    if out2.returncode:
+        res["rerun_make_record_stderr"] = out2.stderr.strip()[-500:]
     res["rerun_digest_equal"] = d1 is not None and d1 == d2
     res["rerun_added_new_record_prior_unchanged"] = len(recs2) == 2 * len(recs1) and unchanged
-    ok &= (all(v == 0 for v in rc.values()) and res["success_status"] == "SYNTHETIC-QUALIFIED"
+    ok &= (all(v == 0 for v in rc.values()) and all(v == 0 for v in rc2.values())
+           and res["success_status"] == "SYNTHETIC-QUALIFIED"
            and res["rerun_digest_equal"] and res["rerun_added_new_record_prior_unchanged"])
     m = json.load(open(os.path.join(wd, "results", "p1_compare.json")))
     res["fit_rel_err_pct_at_band"] = [e["rel_err_pct"] for e in m["zse"]["at_band"]]
@@ -255,8 +295,88 @@ def ctl_pipeline(tmp):
     return ok, res
 
 
+_HELD_CLOCK = (
+    "import datetime, sys\n"
+    "sys.path.insert(0, sys.argv[1])\n"
+    "import make_record as R\n"
+    "held = datetime.datetime.fromisoformat(sys.argv[2])\n"
+    "R._utcnow = lambda: held\n"
+    "sys.argv = ['make_record.py'] + sys.argv[3:]\n"
+    "sys.exit(R.main())\n")
+
+
+def _make_record_at(utc_iso, args):
+    """make_record.py with its wall clock held at utc_iso (a subprocess, so the
+    script's own exit code and output are what is checked)."""
+    return subprocess.run([PY, "-c", _HELD_CLOCK, HERE, utc_iso] + args, capture_output=True, text=True)
+
+
+def _snapshot(d):
+    return {n: open(os.path.join(d, n), "rb").read() for n in sorted(os.listdir(d))}
+
+
+def ctl_collision(tmp):
+    """Two records in the same UTC second: the second is refused (exit 4,
+    "record id collision", no traceback, no DIGEST), nothing is overwritten,
+    and only files the refused run created are removed."""
+    res, ok = {}, True
+    wd = os.path.join(tmp, "coll")
+    M.lossy_campaign(wd)
+    for s in ("postprocess_p1.py", "fit_p1.py", "compare_p1.py"):
+        ok &= _run([os.path.join(HERE, s), "--dir", wd]).returncode == 0
+    recdir = os.path.join(wd, "records")
+    mr = ["--dir", wd, "--synthetic", "--stages", "post fit compare"]
+    # first record, clock held at .100 s; second at .900 s of the SAME second
+    a = _make_record_at("2000-01-01T00:00:00.100000+00:00", mr)
+    res["first_exit"] = a.returncode
+    d1 = _digest(a.stdout)
+    snap = _snapshot(recdir)
+    b = _make_record_at("2000-01-01T00:00:00.900000+00:00", mr)
+    berr = b.stdout + b.stderr
+    res["same_second_exit"] = b.returncode
+    res["same_second_says_record_id_collision"] = "record id collision" in berr
+    res["same_second_no_traceback"] = "Traceback" not in berr
+    res["same_second_no_digest"] = _digest(b.stdout) is None
+    res["same_second_records_unchanged"] = _snapshot(recdir) == snap
+    # id = <UTC second>-<7-hex commit | nogit>-<status>, nothing else (no git
+    # error text leaking into a filename outside a checkout)
+    res["record_ids"] = sorted(snap)
+    res["record_ids_well_formed"] = all(
+        re.fullmatch(r"\d{8}-\d{6}-([0-9a-f]{7}|nogit)-SYNTHETIC-[A-Z_]+\.(md|json)", n) for n in snap)
+    ok &= res["record_ids_well_formed"]
+    ok &= (a.returncode == 0 and d1 is not None and len(snap) == 2 and b.returncode == 4
+           and res["same_second_says_record_id_collision"] and res["same_second_no_traceback"]
+           and res["same_second_no_digest"] and res["same_second_records_unchanged"])
+    # partial collision: only the .json of the id exists (not written by this
+    # run).  The run creates the .md, hits the .json, and must remove ONLY the
+    # .md it created; the pre-existing file is left byte-identical.
+    rest = [n for n in snap if n.endswith(".json")][0][len("20000101-000000"):-len(".json")]
+    foreign = os.path.join(recdir, "20000101-000010" + rest + ".json")
+    with open(foreign, "x") as fh:
+        fh.write("not written by make_record\n")
+    snap_p = _snapshot(recdir)
+    c = _make_record_at("2000-01-01T00:00:10.500000+00:00", mr)
+    res["partial_exit"] = c.returncode
+    res["partial_removed_only_own_files"] = _snapshot(recdir) == snap_p
+    ok &= c.returncode == 4 and res["partial_removed_only_own_files"] and "Traceback" not in c.stderr
+    os.remove(foreign)  # control scaffolding in a temp dir, not a record
+    # same second, different status -> different id, no collision
+    e = _make_record_at("2000-01-01T00:00:00.500000+00:00",
+                        ["--dir", wd, "--synthetic", "--unavailable", "--failed-command", "control",
+                         "--detail", "control: same second, different status"])
+    res["same_second_other_status_exit"] = e.returncode
+    res["same_second_other_status_added"] = len(os.listdir(recdir)) == 4 and _snapshot(recdir).items() >= snap.items()
+    ok &= e.returncode == 0 and res["same_second_other_status_added"]
+    # the digest does not depend on the wall clock: a later second, same data
+    f = _make_record_at("2000-01-01T00:00:01.000000+00:00", mr)
+    res["next_second_exit"] = f.returncode
+    res["digest_independent_of_clock"] = d1 is not None and _digest(f.stdout) == d1
+    ok &= f.returncode == 0 and res["digest_independent_of_clock"]
+    return bool(ok), res
+
+
 GROUPS = {"known-answer": ctl_known_answer, "wrong-value": ctl_wrong_value,
-          "malformed": ctl_malformed, "pipeline": ctl_pipeline}
+          "malformed": ctl_malformed, "pipeline": ctl_pipeline, "collision": ctl_collision}
 
 
 def main():
