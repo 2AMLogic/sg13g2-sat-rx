@@ -55,9 +55,9 @@ What is checked, and when (`harness/pdkartifact.py`):
 - Only the file hashes establish a match. The install's `.fetched-version`
   marker is provenance: a missing marker is reported as `unknown` and the
   hashes alone decide; a marker equal to the pin never rescues wrong hashes;
-  a marker that disagrees with the pin fails. (This is also why
-  `Pdk.version` stays `"unknown"` for IHP -- see above -- and is not used as
-  an integrity signal.)
+  a marker that disagrees with the pin fails. (`Pdk.version` now
+  reports the `.fetched-version` marker -- see above -- but it is provenance
+  only, never an integrity signal.)
 - A model file that is missing, differs, is reachable but not listed, or is
   listed but no longer reachable fails. A missing PDK, a missing manifest or
   (with `--require-ngspice`, which hosted CI sets via
