@@ -73,8 +73,31 @@ a local run. The two flags above are the documented skew between this host's
   0.4-2.0 V window) and the card V_BE box 0.65-0.96 V, applied to the
   instantaneous extremes of Q1 and Q2 over the retained window. A point that
   breaks one is classified and excluded, never fitted through; an "unrestricted
-  reference" fit is also shown, labelled NOT A RESULT. The card Ic box is not
-  monitored (collector current is not saved).
+  reference" fit is also shown, labelled NOT A RESULT. Under `plan.json`
+  (plan_version 1, frozen) the card Ic box is not monitored (collector current
+  is not saved); that record keeps its voltage-only semantics unedited.
+* **Collector-current diagnostics (plan_version 2, `testbench/plan-v2.json`,
+  issue #121).** Per device (Q1, Q2) the signed maximum and minimum of the
+  simulator's own collector terminal current `@q.xdut.<inst>.qnpn13g2[ic]`
+  (positive = into the collector; amperes), no element added to the circuit,
+  published with the fraction `I_C / (3 mA x Nx)` (Nx = 8, checked against the
+  netlist). *Applicability is unresolved*: the model-card line
+  `ic: <(0.003*Nx) A` belongs to the valid range of a DC-measured VBIC
+  extraction, and nothing says it bounds the instantaneous terminal current
+  (conduction plus displacement) of an 18-21 GHz transient. So the bound is not
+  promoted to an instantaneous rating: the extrema and an `unresolved`
+  current-validity flag (`complete_envelope: false`) are published and a
+  voltage-eligible fit is not claimed to cover the whole card box. Missing,
+  incomplete or non-finite current diagnostics always reject a point. Setting
+  `enforce: true` in a later plan version (with a decision record establishing
+  applicability) sends over-box points through the same rejection as the
+  voltage limits, out of baselines and both estimators. Qualification
+  (`tests/test_current_instrumentation.py`): a known-answer fixture checks sign
+  and scale against collector-resistor currents (agree to < 2 %), a with/without
+  comparison on the DUT checks that gain and voltage extraction are unchanged,
+  and current-only violation and missing/non-finite controls are exercised.
+  Select the plan with `run.py <cmd> --plan testbench/plan-v2.json`; no v2
+  campaign has been collected, and collection stays on the Spot fleet.
 * **Aborted transients.** A transient that the simulator aborts (solver
   timestep too small at high drive) is a published `sim_failed` sweep point,
   excluded from every fit; it is not a corrupt log.
