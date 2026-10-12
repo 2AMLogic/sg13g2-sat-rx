@@ -106,6 +106,21 @@ def test_bench_missing_from_benches_table_fails(tree, bench):
     assert_fails(tree, f"sim/{bench}", "Benches table")
 
 
+def test_absent_sim_readme_skips_benches_index_check(tree):
+    """Synthetic trees with no sim/README.md (harness/adapter fixtures) are not
+    failed by the index check; every other check still runs."""
+    (tree / "sim" / "README.md").unlink()
+    found = problems_of(tree)
+    assert not any("Benches" in p for p in found), "\n".join(found)
+    assert found == []
+
+
+def test_sim_readme_without_benches_section_fails(tree):
+    rd = own(tree / "sim" / "README.md")
+    rd.write_text(rd.read_text().replace("## Benches", "## Bench list"))
+    assert_fails(tree, "sim/README.md", "no '## Benches' section")
+
+
 def test_readme_without_invocation_section_fails(tree):
     rd = own(tree / "sim" / "lna-sparam-nf" / "README.md")
     rd.write_text("# lna-sparam-nf\n\nJust prose, no way to run it.\n")

@@ -76,11 +76,19 @@ def benches_table_names(sim_readme: Path) -> set[str] | None:
 
 
 def check_benches_index(problems: Problems, root: Path) -> None:
-    """Every sim/<dir> holding records/ has a row in sim/README.md's Benches table (issue #175)."""
+    """Every sim/<dir> holding records/ has a row in sim/README.md's Benches table (issue #175).
+
+    Skipped when sim/README.md is absent: synthetic fixture trees (harness and
+    adapter unit tests) carry no index, and the real tree's README is pinned by
+    test_sim_readme_benches_table_lists_every_bench. A README that exists but
+    has lost its ``## Benches`` section is still a hard failure."""
     sim = root / "sim"
-    names = benches_table_names(sim / "README.md")
+    sim_readme = sim / "README.md"
+    if not sim_readme.is_file():
+        return
+    names = benches_table_names(sim_readme)
     if names is None:
-        problems.add(rel(root, sim / "README.md"), "missing, or has no '## Benches' section")
+        problems.add(rel(root, sim_readme), "has no '## Benches' section")
         return
     for d in sorted(p for p in sim.iterdir() if p.is_dir()):
         if (d / "records").is_dir() and d.name not in names:
