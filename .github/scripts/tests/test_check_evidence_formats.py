@@ -100,9 +100,17 @@ def test_readme_invocation_without_command_block_fails(tree):
     assert_fails(tree, "sim/lna-sparam-nf/README.md", "no fenced command block")
 
 
+def _legacy_source(rec):
+    """Deterministically pick a legacy record (no `- PDK artifact:` line)."""
+    legacy = [p for p in sorted(rec.glob("*.md"))
+              if not any(ln.startswith("- PDK artifact:") for ln in p.read_text().splitlines())]
+    assert legacy, f"no legacy (artifact-less) record left in {rec}"
+    return legacy[0]
+
+
 def test_new_record_naming_pdk_unknown_fails(tree):
     rec = tree / "sim" / "mixer-conversion-iip3" / "records"
-    src = next(iter(rec.glob("*.md")))
+    src = _legacy_source(rec)
     new = rec / "20270101-000000-deadbee.md"
     new.write_text(src.read_text())
     assert any("20270101-000000-deadbee.md" in p and "'unknown'" in p for p in problems_of(tree))
@@ -111,9 +119,11 @@ def test_new_record_naming_pdk_unknown_fails(tree):
 def _marker_record(tmp_tree, name, artifact_line):
     """A copy of a legacy record rewritten to the post-#103 PDK line shape."""
     rec = tmp_tree / "sim" / "mixer-conversion-iip3" / "records"
-    src = next(iter(rec.glob("*.md"))).read_text()
+    src = _legacy_source(rec).read_text()
     lines = []
     for ln in src.splitlines():
+        if ln.startswith("- PDK artifact:"):
+            continue  # result must depend only on `artifact_line`
         if ln.startswith("- PDK:"):
             ln = "- PDK: ihp-sg13g2 sg13g2 (install marker: unknown, via test)"
             lines.append(ln)
