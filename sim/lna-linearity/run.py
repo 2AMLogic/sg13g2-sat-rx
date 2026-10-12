@@ -26,12 +26,12 @@ from __future__ import annotations
 import argparse
 import datetime as _dt
 import gzip
-import hashlib
 import json
 import shlex
 import shutil
 import subprocess
 import sys
+from functools import partial
 from pathlib import Path
 
 BENCH_DIR = Path(__file__).resolve().parent
@@ -43,6 +43,7 @@ sys.path.insert(0, str(BENCH_DIR))
 import analysis as A  # noqa: E402
 import linearity as L  # noqa: E402
 from harness import klt_driver  # noqa: E402
+from harness.provenance import git_out as _git_out, sha256_file  # noqa: E402
 from harness.report import RecordExists, allocate_record_id, git_provenance  # noqa: E402
 
 PLAN_PATH = BENCH_DIR / "testbench" / "plan.json"
@@ -61,20 +62,8 @@ SCOPE = ("nominal-corner (hbt_typ, 27 C, 2.5 V) nonlinear characterization of de
          "(row 1) still a DRAFT")
 
 
-class CollectionError(RuntimeError):
-    pass
-
-
-def sha256_bytes(b: bytes) -> str:
-    return hashlib.sha256(b).hexdigest()
-
-
-def sha256_file(p: Path) -> str:
-    return sha256_bytes(p.read_bytes())
-
-
-def git_out(*args: str) -> str:
-    return subprocess.run(["git", *args], cwd=REPO_ROOT, capture_output=True, text=True).stdout.strip()
+CollectionError = klt_driver.CollectionError
+git_out = partial(_git_out, cwd=REPO_ROOT)
 
 
 # ---------------------------------------------------------------------------
@@ -164,25 +153,7 @@ def write_requests(plan: dict, work: Path, backend: str, args) -> dict[str, Path
 def submit(key: str, req: Path, work: Path, backend: str, args) -> Path:
     """One klt request on an explicit backend; reuses a complete report (resume).
     Any failure raises: there is no local fallback."""
-    report = work / f"report_{key}.json"
-    if report.is_file():
-        try:
-            if "corners" in json.loads(report.read_text()):
-                print(f"  reuse {report.name}", flush=True)
-                return report
-        except ValueError:
-            pass
-    out = (work / f"out_{key}").resolve()
-    cmd = shlex.split(args.klt_cmd) + ["sim", str(req), "--backend", backend, "-o", str(out), "--format", "json"]
-    print("$ " + " ".join(cmd), flush=True)
-    with report.open("w") as fh:
-        proc = subprocess.run(cmd, stdout=fh, stderr=subprocess.PIPE, text=True)
-    if proc.stderr:
-        (work / f"stderr_{key}.log").write_text(proc.stderr)
-    if proc.returncode != 0:
-        report.rename(work / f"report_{key}.failed.json")
-        raise CollectionError(f"klt sim failed for {key} (exit {proc.returncode}, backend {backend}): {proc.stderr[-3000:]}")
-    return report
+    return klt_driver.submit_request(req, work / f"report_{key}.json", key, backend, args.klt_cmd, work)
 
 
 def read_unit(report: Path) -> tuple[dict, str]:

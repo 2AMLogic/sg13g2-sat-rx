@@ -38,3 +38,40 @@ def test_pdk_provenance(tmp_path):
     assert list(prov["model_sha256"]) == ["a.lib"] and prov["fetched_version_file"] is None
     (tmp_path / ".fetched-version").write_text("v1\n")
     assert kd.pdk_provenance(pdk, ("a.lib",))["fetched_version_file"] == "v1"
+
+
+def _fake_run(monkeypatch, rc, stdout, stderr=""):
+    calls = []
+
+    def run(cmd, stdout=None, stderr=None, text=None, **kw):  # noqa: ARG001
+        calls.append(cmd)
+        stdout.write(_fake_run.out)
+        return SimpleNamespace(returncode=rc, stderr=_fake_run.err)
+
+    _fake_run.out, _fake_run.err = stdout, stderr
+    monkeypatch.setattr(kd.subprocess, "run", run)
+    return calls
+
+
+def test_submit_request_reuses_report_with_corners(tmp_path, monkeypatch):
+    report = tmp_path / "report_k.json"
+    report.write_text('{"corners": []}')
+    calls = _fake_run(monkeypatch, 0, "{}")
+    assert kd.submit_request(tmp_path / "r.json", report, "k", "batch", "klt", tmp_path) == report
+    assert calls == []
+
+
+def test_submit_request_runs_and_logs_stderr(tmp_path, monkeypatch):
+    report = tmp_path / "report_k.json"
+    calls = _fake_run(monkeypatch, 0, '{"corners": []}', "warn")
+    assert kd.submit_request(tmp_path / "r.json", report, "k", "batch", "klt --x", tmp_path) == report
+    assert calls[0][:2] == ["klt", "--x"] and calls[0][calls[0].index("--backend") + 1] == "batch"
+    assert (tmp_path / "stderr_k.log").read_text() == "warn"
+
+
+def test_submit_request_failure_renames_report_and_raises(tmp_path, monkeypatch):
+    report = tmp_path / "report_k.json"
+    _fake_run(monkeypatch, 3, '{"corners": []}', "boom")
+    with pytest.raises(kd.CollectionError, match="exit 3"):
+        kd.submit_request(tmp_path / "r.json", report, "k", "batch", "klt", tmp_path)
+    assert not report.exists() and (tmp_path / "report_k.failed.json").is_file()
