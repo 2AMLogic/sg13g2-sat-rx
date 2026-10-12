@@ -4,6 +4,11 @@ Chronological record of merged pull requests and closed issues, maintained by th
 
 ### 2026-10-12
 
+- **PR #184**: evidence(signoff): attest T1 item 9 (testbenches shipped) with pinned-PDK lna-sparam-nf record
+- **Issue #183** (closed): spec: cascade gain/NF margin analysis (Friis cross-check) for open rows 12-13
+- **Issue #182** (closed): signoff: attest T1 item 9 (testbenches shipped) with a pinned-PDK bench record
+- **PR #180**: mixer-conversion-iip3: swept two-tone IIP3 bench with one-tone floor control, convergence study and backend evidence
+- **Issue #165** (closed): mixer-conversion-iip3: a method that actually resolves IM3/IIP3 (current IM3 read sits on the transient interpolation-error floor)
 - **PR #177**: docs+ci: index every bench in sim/README.md Benches table (#175)
 - **Issue #175** (closed): docs: sim/README.md Benches table omits lna-headroom and lna-linearity
 - **PR #174**: test: make evidence-format marker-record fixtures glob-order independent
