@@ -4,6 +4,14 @@ Chronological record of merged pull requests and closed issues, maintained by th
 
 ### 2026-10-12
 
+- **PR #174**: test: make evidence-format marker-record fixtures glob-order independent
+- **Issue #171** (closed): Test fixture _marker_record in test_check_evidence_formats.py depends on glob order of mixer-conversion-iip3 records
+- **PR #173**: signoff: state item 1 attests LNA stage only (block_coverage)
+- **Issue #170** (closed): signoff: state that T1 item 1 attests the LNA stage only (mixer has no design source)
+- **PR #172**: Consolidate duplicated klt submit/CollectionError/provenance helpers in sim drivers
+- **Issue #169** (closed): Consolidate duplicated klt submit/CollectionError/provenance helpers in sim drivers
+- **PR #167**: Split check_evidence_formats.py into evidence_checks package (#163)
+- **Issue #163** (closed): ci: split the 2,930-line check_evidence_formats.py into per-bench modules behind the same CLI
 - **PR #164**: mixer-conversion-iip3: power-of-two FFT window, corrected FFT notes, supersession record (#135)
 
 ### 2026-10-11
