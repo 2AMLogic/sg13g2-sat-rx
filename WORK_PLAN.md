@@ -25,7 +25,7 @@ _None._
 
 Issues currently being built (`loom:building`).
 
-_None._
+- **#165**: mixer-conversion-iip3: a method that actually resolves IM3/IIP3 (current IM3 read sits on the transient interpolation-error floor)
 
 ## PRs Awaiting Review
 
@@ -47,6 +47,7 @@ Issues carrying `loom:curated`.
 - **#79**: design: choose the first-stage core change that lets NF and input match close together *(curated)*
 - **#132**: sim: refine headroom shortlist (C08/C05) - convergence, two-tone IIP3, gain/NF/stability vs baseline *(curated)*
 - **#135**: mixer-conversion-iip3: FFT-bin metrics depend on the ngspice FFT build (local zero-padded vs batch unpadded) *(curated)*
+- **#165**: mixer-conversion-iip3: a method that actually resolves IM3/IIP3 (current IM3 read sits on the transient interpolation-error floor) *(curated)*
 
 ## Proposed (Architect / Hermit)
 
@@ -63,10 +64,10 @@ _None._
 | Operator merge-risk holds | 0 |
 | Operator priority | 0 |
 | Ready (`loom:issue`) | 0 |
-| In Progress (`loom:building`) | 0 |
+| In Progress (`loom:building`) | 1 |
 | PRs awaiting review | 0 |
 | Approved PRs awaiting merge | 0 |
-| Curated | 4 |
+| Curated | 5 |
 | Architect / Hermit proposals | 0 |
 | Active epics | 0 |
 <!-- guide:plan-body:end -->
