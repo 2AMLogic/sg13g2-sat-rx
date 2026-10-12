@@ -33,16 +33,25 @@ Full 27-point campaign. A multi-point `harness.cli run` submits the grid as
 all process x temperature corners in each), so it is safe on a shared
 dispatch host; a failed submit records nothing and never falls back to a
 local loop. `--backend local` runs the old sequential `ngspice -b` loop
-(workstation only). The FFT-bin metrics USED to depend on the ngspice FFT
-build -- the fleet's ngspice-46 does not zero-pad a non-power-of-two `fft`
-input, this host's builds do -- so the 20260912 record (old 8001-sample
-window) is not comparable across the two backends. Since issue #135 the
-window is exactly 65536 = 2^16 samples over an exactly-80-ns DFT record, so
-both builds run the identical transform. pfund_dbm, conversion gain and
-lo_rf_leak_dbm then agree across backends within 0.002 dB. pim3_dbm and
-iip3_dbm do NOT agree (5.1 / 2.6 dB): they sit on the transient sampler's
-floor and are not a device IM3/IIP3. See this experiment's tb.json evidence
-notes.
+(workstation only). Since issue #135 the window is exactly 65536 = 2^16
+samples over an exactly-80-ns DFT record (endpoint-aligned, so the saved grid
+is uniform), so both builds run the identical transform; pfund_dbm,
+conversion gain and lo_rf_leak_dbm agree across backends within 0.002 dB.
+Since issue #165 the deck sweeps the two-tone drive and extrapolates IIP3
+from the stated 1:3-slope window, with a one-tone floor control and in-deck
+slope checks; pim3_dbm/iip3_dbm are measured at least 20 dB above the
+one-tone floor at every PVT point. See the experiment's tb.json evidence
+notes for the swept method, the tracked-sideband choice and the convergence
+study.
+
+Open follow-up from the #165 method: extrapolated iip3_dbm agrees across
+backends only to ~1.4 dB -- the free two-line intersection amplifies the
+low-drive IM3 inter-build scatter (the top-of-fit pim3_dbm read does meet
+#135's 0.1 dB criterion); tracked in #181. And at 6 of 27 PVT corners the
+static fit window contains no valid 1:3 region (hot corners compress inside
+it): the slope gates fail there by design, no IIP3 is published at those
+corners, and `characterize.sh smoke` exercises the temperatures the stated
+window covers for that reason.
 
 Single local point (debug probe, allowed on a dispatch host):
 
