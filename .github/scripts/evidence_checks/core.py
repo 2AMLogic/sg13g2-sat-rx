@@ -180,6 +180,7 @@ import sys
 from pathlib import Path
 
 from .common import PROTECTED_RE, Problems, RECORD_ID_PREFIX_RE, git, rel
+from .hbt_mismatch_pair import check_hbt_mismatch_pair
 from .kaband import check_kaband_record
 from .lna_headroom import check_lna_headroom
 from .lna_linearity import check_lna_linearity
@@ -204,6 +205,7 @@ ADAPTERS = {
     "lna-match-tradeoff": check_lna_match_tradeoff,
     "lna-linearity": check_lna_linearity,
     "lna-headroom": check_lna_headroom,
+    "hbt-mismatch-pair": check_hbt_mismatch_pair,
 }
 EVIDENCE_DIRS = ("records", "corners", "netlist-snapshots", "probe-logs", "solver-artifacts")
 

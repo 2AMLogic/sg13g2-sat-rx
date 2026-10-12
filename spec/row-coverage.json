@@ -156,7 +156,8 @@
       "verdict": "placeholder_circuit",
       "statistical": true,
       "statistical_rationale": "LO-to-RF/IF leakage is a matching/symmetry effect (target-spec.md row 15 and the mismatch corner axis); the typical-corner result is zero by symmetry, so only a mismatch/statistical run bounds it.",
-      "statistical_card": "sg13g2_hbt_mod_mismatch.lib; sg13g2_hbt_stat.lib"
+      "statistical_card": "sg13g2_hbt_mod_mismatch.lib; sg13g2_hbt_stat.lib",
+      "note": "Method note (issue #186): sim/hbt-mismatch-pair qualifies the klt sim monte_carlo METHOD on the pinned mismatch/stat cards with a known-answer matched npn13G2 pair (fleet + fixed-seed rerun + local agreement; METHOD-only record). Row 15's verdict, bench and latest_record are unchanged; its Monte Carlo evidence still comes from the mixer bench."
     },
     {
       "row": 16,

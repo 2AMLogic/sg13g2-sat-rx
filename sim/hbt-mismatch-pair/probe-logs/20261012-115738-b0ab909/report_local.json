@@ -1,0 +1,279 @@
+{
+  "schema_version": 3,
+  "netlist": {
+    "path": "sim/hbt-mismatch-pair/probe-logs/20261012-115738-b0ab909/pair_body.spice",
+    "scope": "repo"
+  },
+  "status": "pass",
+  "corner_count": 3,
+  "passed": 3,
+  "failed": 0,
+  "errored": 0,
+  "inconclusive": 0,
+  "diagnostic_counts": {
+    "by_code": {},
+    "by_severity": {},
+    "corners_with_diagnostics": 0
+  },
+  "metrics": {
+    "sim__corner__count": 3,
+    "sim__corner__passed_count": 3,
+    "sim__corner__failed_count": 0,
+    "sim__corner__errored_count": 0,
+    "sim__corner__inconclusive_count": 0
+  },
+  "environment": {
+    "engine": "ngspice",
+    "engine_version": "42",
+    "ngspice_binary": "/usr/bin/ngspice",
+    "models_lib": {
+      "path": null,
+      "scope": "external"
+    },
+    "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+    "netlist_sha256": "8b58e39832d18fead1030915814f2bfd77ed261600450e9b4ab98119a397068b",
+    "netlist_closure": [
+      {
+        "path": "sim/hbt-mismatch-pair/probe-logs/20261012-115738-b0ab909/pair_body.spice",
+        "scope": "repo",
+        "sha256": "8b58e39832d18fead1030915814f2bfd77ed261600450e9b4ab98119a397068b"
+      }
+    ],
+    "monte_carlo": {
+      "n": 1,
+      "seed": 186,
+      "vary": "both",
+      "family_mismatch": [
+        {
+          "family": "resistor",
+          "active": null,
+          "note": "mismatch activity for the 'resistor' family is not independently verified for PDK family 'sg13g2'; treat any sampled spread for it as unconfirmed."
+        },
+        {
+          "family": "bipolar",
+          "active": null,
+          "note": "mismatch activity for the 'bipolar' family is not independently verified for PDK family 'sg13g2'; treat any sampled spread for it as unconfirmed."
+        }
+      ]
+    }
+  },
+  "coverage": {
+    "corners_simulated": 3,
+    "measurements_declared": 1,
+    "measurements_with_limits": 0,
+    "unrecognized_limit_keys": [],
+    "schema_version": 1,
+    "known": true,
+    "checked": [
+      "measurement:[0,\"hbt_typ_mismatch/novdd/27C/mc0\",\"harness_rail_v\"]/observation",
+      "measurement:[1,\"hbt_typ_stat/novdd/27C/mc0\",\"harness_rail_v\"]/observation",
+      "measurement:[2,\"hbt_typ/novdd/27C/mc0\",\"harness_rail_v\"]/observation"
+    ],
+    "skipped": [],
+    "inapplicable": [
+      {
+        "id": "measurement:[0,\"hbt_typ_mismatch/novdd/27C/mc0\",\"harness_rail_v\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[1,\"hbt_typ_stat/novdd/27C/mc0\",\"harness_rail_v\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[2,\"hbt_typ/novdd/27C/mc0\",\"harness_rail_v\"]/limits",
+        "reason": "characterization_without_limits"
+      }
+    ],
+    "unknown": [],
+    "nothing_checked": false,
+    "nothing_checked_reasons": []
+  },
+  "provenance": {
+    "klt_version": "0.7.0+gb770c86e0e96",
+    "klayout_version": "0.30.12",
+    "pdk": {
+      "name": "ihp-sg13g2",
+      "source": "PDK_ROOT environment variable",
+      "version": null
+    },
+    "deck": {
+      "name": "cornerHBT.lib",
+      "content_hash": "sha256:bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+      "released": false
+    },
+    "input": {
+      "content_hash": "sha256:8b58e39832d18fead1030915814f2bfd77ed261600450e9b4ab98119a397068b",
+      "role": "netlist"
+    }
+  },
+  "measurements": [
+    {
+      "name": "harness_rail_v",
+      "unit": "V",
+      "limits": null,
+      "status": "pass",
+      "worst_case": {
+        "corner_id": "hbt_typ_mismatch/novdd/27C/mc0",
+        "value": 2.5,
+        "margin": null
+      },
+      "monte_carlo": {
+        "n": 3,
+        "errored": 0,
+        "inconclusive": 0,
+        "mean": 2.5,
+        "stddev": 0.0,
+        "min": 2.5,
+        "max": 2.5,
+        "quantiles": {
+          "p5": 2.5,
+          "p50": 2.5,
+          "p95": 2.5
+        },
+        "sigma_window": null,
+        "by_corner": [
+          {
+            "corner_id": "hbt_typ_mismatch/novdd/27C",
+            "n": 1,
+            "errored": 0,
+            "inconclusive": 0,
+            "mean": 2.5,
+            "stddev": null,
+            "min": 2.5,
+            "max": 2.5,
+            "quantiles": {
+              "p5": 2.5,
+              "p50": 2.5,
+              "p95": 2.5
+            },
+            "sigma_window": null
+          },
+          {
+            "corner_id": "hbt_typ_stat/novdd/27C",
+            "n": 1,
+            "errored": 0,
+            "inconclusive": 0,
+            "mean": 2.5,
+            "stddev": null,
+            "min": 2.5,
+            "max": 2.5,
+            "quantiles": {
+              "p5": 2.5,
+              "p50": 2.5,
+              "p95": 2.5
+            },
+            "sigma_window": null
+          },
+          {
+            "corner_id": "hbt_typ/novdd/27C",
+            "n": 1,
+            "errored": 0,
+            "inconclusive": 0,
+            "mean": 2.5,
+            "stddev": null,
+            "min": 2.5,
+            "max": 2.5,
+            "quantiles": {
+              "p5": 2.5,
+              "p50": 2.5,
+              "p95": 2.5
+            },
+            "sigma_window": null
+          }
+        ]
+      }
+    }
+  ],
+  "corners": [
+    {
+      "corner_id": "hbt_typ_mismatch/novdd/27C/mc0",
+      "process": "hbt_typ_mismatch",
+      "supply_v": {},
+      "temperature_c": 27,
+      "status": "pass",
+      "runtime_s": 0.018,
+      "measurements": [
+        {
+          "name": "harness_rail_v",
+          "value": 2.5,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        }
+      ],
+      "diagnostics": [],
+      "artifacts": {
+        "log": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-186/sim/hbt-mismatch-pair/probe-logs/20261012-115738-b0ab909/out_local/hbt_typ_mismatch_novdd_27C_mc0/ngspice.log",
+        "raw": null,
+        "waveform": null,
+        "deck": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-186/sim/hbt-mismatch-pair/probe-logs/20261012-115738-b0ab909/out_local/hbt_typ_mismatch_novdd_27C_mc0/corner.cir"
+      },
+      "monte_carlo": {
+        "sample_index": 0,
+        "seed": 518697749,
+        "process_seed": 1607120498,
+        "mismatch_seed": 1026951891
+      }
+    },
+    {
+      "corner_id": "hbt_typ_stat/novdd/27C/mc0",
+      "process": "hbt_typ_stat",
+      "supply_v": {},
+      "temperature_c": 27,
+      "status": "pass",
+      "runtime_s": 0.018,
+      "measurements": [
+        {
+          "name": "harness_rail_v",
+          "value": 2.5,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        }
+      ],
+      "diagnostics": [],
+      "artifacts": {
+        "log": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-186/sim/hbt-mismatch-pair/probe-logs/20261012-115738-b0ab909/out_local/hbt_typ_stat_novdd_27C_mc0/ngspice.log",
+        "raw": null,
+        "waveform": null,
+        "deck": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-186/sim/hbt-mismatch-pair/probe-logs/20261012-115738-b0ab909/out_local/hbt_typ_stat_novdd_27C_mc0/corner.cir"
+      },
+      "monte_carlo": {
+        "sample_index": 0,
+        "seed": 1891132310,
+        "process_seed": 107861577,
+        "mismatch_seed": 1046447279
+      }
+    },
+    {
+      "corner_id": "hbt_typ/novdd/27C/mc0",
+      "process": "hbt_typ",
+      "supply_v": {},
+      "temperature_c": 27,
+      "status": "pass",
+      "runtime_s": 0.01,
+      "measurements": [
+        {
+          "name": "harness_rail_v",
+          "value": 2.5,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        }
+      ],
+      "diagnostics": [],
+      "artifacts": {
+        "log": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-186/sim/hbt-mismatch-pair/probe-logs/20261012-115738-b0ab909/out_local/hbt_typ_novdd_27C_mc0/ngspice.log",
+        "raw": null,
+        "waveform": null,
+        "deck": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-186/sim/hbt-mismatch-pair/probe-logs/20261012-115738-b0ab909/out_local/hbt_typ_novdd_27C_mc0/corner.cir"
+      },
+      "monte_carlo": {
+        "sample_index": 0,
+        "seed": 505021914,
+        "process_seed": 1846066552,
+        "mismatch_seed": 1076534335
+      }
+    }
+  ]
+}
