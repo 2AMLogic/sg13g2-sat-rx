@@ -25,13 +25,13 @@ _None._
 
 Issues currently being built (`loom:building`).
 
-- **#163**: ci: split the 2,930-line check_evidence_formats.py into per-bench modules behind the same CLI
+_None._
 
 ## PRs Awaiting Review
 
 PRs waiting on Judge (`loom:review-requested`).
 
-- **#167**: Split check_evidence_formats.py into evidence_checks package (#163)
+_None._
 
 ## Approved (Awaiting Merge)
 
@@ -47,7 +47,6 @@ Issues carrying `loom:curated`.
 - **#79**: design: choose the first-stage core change that lets NF and input match close together *(curated)*
 - **#132**: sim: refine headroom shortlist (C08/C05) - convergence, two-tone IIP3, gain/NF/stability vs baseline *(curated)*
 - **#135**: mixer-conversion-iip3: FFT-bin metrics depend on the ngspice FFT build (local zero-padded vs batch unpadded) *(curated)*
-- **#163**: ci: split the 2,930-line check_evidence_formats.py into per-bench modules behind the same CLI *(curated)*
 
 ## Proposed (Architect / Hermit)
 
@@ -64,10 +63,10 @@ _None._
 | Operator merge-risk holds | 0 |
 | Operator priority | 0 |
 | Ready (`loom:issue`) | 0 |
-| In Progress (`loom:building`) | 1 |
-| PRs awaiting review | 1 |
+| In Progress (`loom:building`) | 0 |
+| PRs awaiting review | 0 |
 | Approved PRs awaiting merge | 0 |
-| Curated | 5 |
+| Curated | 4 |
 | Architect / Hermit proposals | 0 |
 | Active epics | 0 |
 <!-- guide:plan-body:end -->
