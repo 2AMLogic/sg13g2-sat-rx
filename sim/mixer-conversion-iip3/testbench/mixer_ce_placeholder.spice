@@ -1,5 +1,6 @@
 * Single-HBT active-mixer placeholder: conversion gain, LO-to-RF leakage, and
-* two-tone IIP3 via transient + coherent-bin FFT.
+* two-tone IIP3 via a SWEPT two-tone transient + coherent-bin FFT (issue #165
+* method), plus a one-tone floor control.
 *
 * PLACEHOLDER CIRCUIT, NOT A DESIGN CANDIDATE -- same status as
 * sim/lna-sparam-nf/testbench/lna_ce_placeholder.spice: design/ has no
@@ -14,14 +15,17 @@
 * feedthrough rejection are much worse here than a balanced design would
 * show; see this experiment's tb.json "claim" for the explicit disclaimer.
 *
-* Method -- conversion gain, LO-to-RF leakage, and IIP3 all read off ONE
-* transient run's FFT, no S-parameter/AC-based method applies to a
+* Method -- conversion gain, LO-to-RF leakage, and IIP3 all read off
+* transients of ONE deck, no S-parameter/AC-based method applies to a
 * LO-pumped, time-varying operating point:
 *
 *   RF drive: two tones f1=19.4375 GHz, f2=19.4625 GHz (25 MHz spacing,
 *     centered on the Ka-band downlink DRAFT's 19.45 GHz band center),
-*     amplitude {vrf} each, each through its own Z0=50 ohm source resistor
-*     (available-power reference) and 1 pF coupling cap into the base.
+*     amplitude {vrf} and {vrf2} respectively (swept TOGETHER by the deck's
+*     control block via alterparam; vrf2 is a separate parameter only so the
+*     one-tone floor control can zero it), each through its own Z0=50 ohm
+*     source resistor (available-power reference) and 1 pF coupling cap into
+*     the base.
 *   LO drive: single tone at 18.45 GHz (low-side LO, 1 GHz IF, per
 *     spec/target-spec.md's DRAFT "LO range / LO-to-RF leakage" row),
 *     amplitude {vlo}, through its
@@ -34,7 +38,39 @@
 *   spaced 25 MHz apart, by construction (frequency conversion preserves tone
 *   spacing).
 *
-* Coherent-bin FFT with a POWER-OF-TWO SAMPLE COUNT (issue #135): the
+* SWEPT DRIVE (issue #165; supersedes the single fixed drive vrf=10 mV of
+* the pre-#165 method): the tb.json control block steps the two-tone drive
+* over a list of amplitudes (foreach + alterparam vrf/vrf2 + reset + the
+* SAME transient window per step), reading the IF-fundamental and IM3 bins
+* at each step and echoing one SWEEPPOINT row per step into the corner log.
+* spec/porting-plan.md S4.1 requires a real IIP3 claim to extrapolate from
+* the 1:3 slope region a swept input-power bench shows -- "an IIP3
+* extrapolated from a compressed point is not an IIP3" -- and the single
+* 10 mV point of the pre-#165 method could not even be shown to be a real
+* IM3 product: with the leakage-free coherent window it sat ON the transient
+* sampler's interpolation-error floor (falling monotonically with sample
+* count instead of converging, and build-dependent: -137.45 dBm local
+* ngspice-42 vs -142.6 batch ngspice-46 at the same point). The deck fits
+* least-squares lines to Pfund_dBm and Pim3_dBm vs Pin_dBm over a STATED
+* sub-region of the sweep (the fit window, listed literally in tb.json's
+* analyses as the FITLIST drive values) and intersects them: the classical
+* two-line IIP3 extrapolation, from inside the region the slopes verify,
+* never from a single point. The per-step SWEEPPOINT rows plus
+* adjacent-pair local slopes are the shown 1:3 slope region; points outside
+* the fit window are excluded a priori (lowest drives: IM3 approaching the
+* sampler floor; highest drive: compression onset) and the record must
+* justify both exclusions from the table.
+*
+* ONE-TONE FLOOR CONTROL (issue #165): after the two-tone sweep the deck
+* re-runs the SAME window with vrf2=0 at the top-of-fit drive, and reads the
+* SAME 962.5 MHz bin -- now a product-free bin holding only the sampler
+* floor + spurious content. pim3_fit_margin_db (the two-tone IM3 read at the
+* top-of-fit drive minus this one-tone floor) is the measured "IM3 above
+* floor" reference the record cites; a floor-margin check in tb.json gates
+* every PVT point on it, so an IM3 number that quietly sank back onto the
+* floor would fail the bench instead of publishing a fake IIP3.
+*
+* Coherent-bin FFT with a POWER-OF-TWO SAMPLE COUNT (issue #135): every
 * transient records exactly 65536 = 2^16 samples -- tstart=20 ns (settle
 * discard, several RC time constants of this fixture's coupling/bias network),
 * tstep=1.220703125 ps = 80ns/65536, tstop=20ns + 65535*tstep =
@@ -60,28 +96,27 @@
 * its nearest bin -- now a no-op guard, kept so a future window edit cannot
 * silently reintroduce off-bin reads. Until klayout-tools#3095 makes klt
 * disclose the runner's FFT build, the per-corner log FFT banner lines are
-* that disclosure.
+* that disclosure; every transient in the swept deck logs its own banner, so
+* each SWEEPPOINT row is disclosable down to its producing transform.
 *
-* Floor caveat (visible only now that leakage is gone): at this drive
-* (vrf=10 mV) the IM3 product sits BELOW what this sampling/FFT path resolves
-* -- along the SAMPLE-COUNT axis (same 80 ns window, finer tstep, default
-* tolerances) pim3_dbm falls monotonically instead of converging, at
-* hbt_typ/27C/2.50V: 8192 samples: -104.7 dBm; 16384: -117.4; 32768: -124.2
-* (producing ngspice build of these three rungs not recorded); 65536: -142.6
-* on the batch fleet's ngspice-46, -137.45 on this host's ngspice-42. Along
-* the separate TOLERANCE axis (65536 samples fixed, local ngspice-42),
-* tightening reltol to 1e-6 moved it UP, -137 -> -130 dBm. Opposite signs on
-* different axes: a resolved IM3 product would be stable along both, and
-* this read is stable along neither. So pim3_dbm/iip3_dbm here are NOT a
-* device IM3/IIP3 and do not reproduce across backends (only pfund_dbm,
-* conversion gain and lo_rf_leak_dbm do); see this experiment's tb.json
-* evidence notes.
+* Floor caveat, restated for the swept method (issue #165): the sampler's
+* interpolation-error floor is still down there, and at the LOWEST swept
+* drives the IM3 product approaches it -- that is exactly why the fit window
+* excludes the bottom of the sweep, and why the one-tone control runs at the
+* TOP of the fit window (where the IM3-to-floor margin is smallest). The
+* convergence study (sample count x reltol) that shows the chosen readout is
+* stable along both axes lives in the issue-#165 record and its producing
+* runs, not in this deck: ngspice cannot change reltol from the control
+* language (`option` in .control is a silent no-op -- verified on
+* ngspice-42), so the tolerance axis needs deck variants, i.e. separate
+* runs; see the record for the producing commands and per-cell numbers.
 *
 * LO-to-RF leakage: read from the SAME transient's FFT of v(prf) (the RF
 * port node, i.e. the side of the RF source resistor facing the DUT) at the
 * LO frequency -- how much LO signal appears back at the RF port through
 * whatever coupling path exists (here, directly through the shared base
-* node and the RF coupling cap).
+* node and the RF coupling cap). The swept deck reads it at every drive
+* step; the headline m_ value is the top-of-fit-drive step's.
 *
 * Conversion gain / IIP3 dBm convention: this fixture has NO output port
 * impedance termination (the collector node is not terminated in Z0 the way
@@ -91,16 +126,18 @@
 * V_peak^2/(8*Z0), the standard AVAILABLE POWER from a Thevenin source with
 * series Z0, at the input), not as an assertion that the output is actually
 * delivering power into a matched 50 ohm load. Both dBc-difference
-* quantities (the IIP3 extrapolation's Pfund_dBm - Pim3_dBm; the
-* conversion_gain_db measurement's Pfund_dBm - Pin_dBm) are insensitive to
-* this approximation (both terms use the identical conversion, so the
-* assumed impedance cancels in the difference); only the absolute Pin_dBm
-* term depends on Z0 being a reasonable stand-in for the real RF source
+* quantities (conversion_gain_db; every IIP3 term) are insensitive to this
+* approximation (all terms use the identical conversion, so the assumed
+* impedance cancels in the differences); only the absolute Pin_dBm term
+* depends on Z0 being a reasonable stand-in for the real RF source
 * impedance. Per spec/target-spec.md row 9's port convention, power
 * conversion gain into 50 ohm (conversion_gain_db, Pfund_dBm - Pin_dBm) is
 * the PRIMARY figure; a bare voltage ratio (20*log10(vif1/vrf), reported as
 * conv_gain_voltage_secondary_db) is retained only as the explicitly-labelled
-* secondary that same row permits.
+* secondary that same row permits. In the swept deck conversion_gain_db and
+* the other single-number figures are read at the TOP-OF-FIT drive step
+* (stated in tb.json's analyses and in the record) -- the most demanding
+* point the linear model is asked to describe -- not at the old fixed 10 mV.
 *
 * SSB noise figure: NOT SIMULATED in this bench. ngspice has no
 * periodic-steady-state / periodic-noise (pnoise) analysis, so there is no
@@ -122,7 +159,7 @@
 
 .param z0=50
 .param nx_mx=4 rc_mx=300 re_mx=10 rbias_mx=3k vbb_mx=0.90
-.param vrf=0.01 vlo=0.08
+.param vrf=0.01 vrf2=0.01 vlo=0.08
 
 * ---- bias: single npn13G2 stage, RF+LO summed at the base ----
 Vdd vdd 0 DC {vdd_val}
@@ -133,11 +170,13 @@ Vbb bb 0 DC {vbb_mx}
 Rbias bb base {rbias_mx}
 
 * ---- RF port: two-tone drive, Z0 source impedance, AC-coupled to base ----
+* vrf and vrf2 are separate parameters carrying the SAME swept value in the
+* two-tone steps; the one-tone floor control zeroes vrf2 via alterparam.
 Vrf rfsrc 0 DC 0 SIN(0 {vrf} 19.4375e9)
 Rrf rfsrc prf {z0}
 Cin_rf prf base 1p
 
-Vrf2 rfsrc2 0 DC 0 SIN(0 {vrf} 19.4625e9)
+Vrf2 rfsrc2 0 DC 0 SIN(0 {vrf2} 19.4625e9)
 Rrf2 rfsrc2 prf2 {z0}
 Cin_rf2 prf2 base 1p
 

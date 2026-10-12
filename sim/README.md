@@ -231,9 +231,14 @@ carry finite values and, with `--supersedes`, agree with that record's logs.
 
 ### `mixer-conversion-iip3`
 
-Conversion gain, LO-to-RF leakage, and two-tone IIP3 via one transient run's
-coherent-bin FFT (two RF tones at 19.4375/19.4625 GHz, LO at 18.45 GHz —
-low-side, 1 GHz IF per the DRAFT LO-range row). **SSB noise figure is not
+Conversion gain, LO-to-RF leakage, and two-tone IIP3 via a SWEPT two-tone
+transient + coherent-bin FFT (two RF tones at 19.4375/19.4625 GHz stepped over
+a drive list by the deck's control block, LO at 18.45 GHz — low-side, 1 GHz IF
+per the DRAFT LO-range row). IIP3 is extrapolated by intersecting two
+least-squares lines (fundamental ~1, tracked IM3 ~3) fitted over a stated
+sub-region of the sweep, per spec/porting-plan.md S4.1, and a one-tone floor
+control bounds how far above the transient sampler's interpolation-error floor
+the IM3 read sits (issue #165). **SSB noise figure is not
 measured by this bench at all**: ngspice has no periodic-steady-state /
 periodic-noise (pnoise) analysis, so there is no valid way to linearize noise
 about a mixer's LO-pumped operating point with ngspice's plain `.noise`
