@@ -32,7 +32,7 @@ hashes in `metrics`, and is `pass` only if `design/export_netlist.sh --check`
 says the committed netlist is what those sources export now. Regenerate it
 with `python3 signoff/make_item1_evidence.py` (it prints the manifest entry to
 paste, including the pinned `content_hash`) whenever the schematic or netlist
-changes; a stale pin renders `stale_evidence`, never a false pass. The graded
+changes; a stale pin renders `stale_evidence`, never a false pass. Item 1 currently attests the LNA first stage only; the mixer has no committed design source. The graded
 `met` is "the item is bound to an audited artifact", not a judgment that the
 design is any good. Item 10 cites `evidence/item10-repo-hygiene.json` (issue #71), a `generic`
 attestation that is `pass` only if `README.md`, `LICENSE` and

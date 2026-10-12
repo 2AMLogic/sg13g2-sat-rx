@@ -41,7 +41,8 @@ def main() -> int:
                     "(klt netlist --block via design/export_netlist.sh); the committed netlist matches "
                     "what the sources export now."),
         "source": "design/export_netlist.sh --check",
-        "metrics": {"sources": {p: sha(p) for p in SOURCES}, "netlist": NETLIST,
+        "metrics": {"block_coverage": {"lna_stage1": "sources_committed", "mixer": "no_design_source"},
+                    "sources": {p: sha(p) for p in SOURCES}, "netlist": NETLIST,
                     "check_output": (chk.stdout + chk.stderr).strip()},
         "provenance": {"input": {"path": NETLIST, "content_hash": sha(NETLIST)}},
     }

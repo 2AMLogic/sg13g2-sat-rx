@@ -6,6 +6,10 @@
   "summary": "Committed xschem schematic sources and the SPICE netlist derived from them (klt netlist --block via design/export_netlist.sh); the committed netlist matches what the sources export now.",
   "source": "design/export_netlist.sh --check",
   "metrics": {
+    "block_coverage": {
+      "lna_stage1": "sources_committed",
+      "mixer": "no_design_source"
+    },
     "sources": {
       "design/lna_stage1.sch": "sha256:e676f996a5ab0139630c880892cf87a93d919e6bf0ee40dc8a36584b96a98744",
       "design/lna_stage1.sym": "sha256:e3b79cbadcebb818effa6afd04e178a0f6e84e07292f2c0d17791f097333af70"
