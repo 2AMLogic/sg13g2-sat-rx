@@ -1,0 +1,258 @@
+{
+  "schema_version": 1,
+  "engine": "klayout",
+  "layout": "../probe.gds",
+  "reference": "../reference-simform-recognized-only.spice",
+  "top": "probe_readiness",
+  "reference_top": "PROBE_READINESS",
+  "reference_conversion": {
+    "form": "subckt-call",
+    "deck": "sg13g2",
+    "device_map": null
+  },
+  "parameter_tolerance": null,
+  "options": {
+    "combine_devices": false,
+    "combine_devices_per_circuit": null,
+    "combine_devices_max_attempts": 5,
+    "flatten_layout": false,
+    "flatten_reference": false,
+    "netgen_setup": null,
+    "parameter_tolerance": null,
+    "compare_parameters": null,
+    "power_connectivity": null,
+    "anchor_top_level_pins": null,
+    "supply_nets": [
+      "GND",
+      "VCC",
+      "VDD",
+      "VGND",
+      "VPWR",
+      "VSS"
+    ]
+  },
+  "hints_applied": null,
+  "status": "match",
+  "power_connectivity": {
+    "status": "unchecked",
+    "reason": "reference.form is 'subckt-call', whose reference netlist carries its own power/ground pins and nets -- they take part in the ordinary compare, so this check (which exists to cover the signal-only 'gate-level-verilog' form) does not apply",
+    "power_pins": [],
+    "power_pins_derivation": null,
+    "instance_count": 0,
+    "expected_nets": null,
+    "unchecked_expected_pins": [],
+    "findings": [],
+    "finding_count": 0
+  },
+  "body_verification": {
+    "status": "verified",
+    "reason": null,
+    "device_classes": [],
+    "device_count": 0,
+    "findings": [],
+    "finding_count": 0
+  },
+  "device_parameter_coverage": [
+    {
+      "class": "cap_cmim",
+      "device_kind": "capacitor",
+      "layout_devices": 1,
+      "reference_devices": 1,
+      "compared": [],
+      "not_compared": [
+        {
+          "parameter": "C",
+          "reason": "placeholder_value"
+        },
+        {
+          "parameter": "A",
+          "reason": "secondary"
+        },
+        {
+          "parameter": "P",
+          "reason": "secondary"
+        }
+      ]
+    }
+  ],
+  "mismatch_count": 4,
+  "error_count": 0,
+  "category_counts": {
+    "device.geometry_not_compared": 1,
+    "device.placeholder_value": 1,
+    "topology": 2
+  },
+  "category_error_counts": {},
+  "counts": {
+    "nets": {
+      "layout": 8,
+      "reference": 8,
+      "matched": 8
+    },
+    "devices": {
+      "layout": 1,
+      "reference": 1,
+      "matched": 1
+    },
+    "pins": {
+      "layout": 8,
+      "reference": 8,
+      "matched": 8
+    }
+  },
+  "device_classes": [
+    "nfet",
+    "pfet",
+    "cap_cmim",
+    "rfcmim",
+    "cap_cmomi",
+    "cap_cmomf",
+    "resistor",
+    "dantenna",
+    "dpantenna"
+  ],
+  "environment": {
+    "engine": "klayout",
+    "engine_version": "0.30.12",
+    "netgen_binary": null,
+    "layout_sha256": "9759f9eeb84b259ab2579d147a7f485315fc9da7291fcabd1ec34ddb6a62db0b",
+    "reference_sha256": "71f33c5b6a69e3542c929d62c21ea501c5360c3fb69d1ccc1c766fcf9a84753f",
+    "extracted_netlist": null
+  },
+  "provenance": {
+    "klt_version": "0.7.0+gb770c86e0e96",
+    "klayout_version": "0.30.12",
+    "pdk": null,
+    "deck": {
+      "name": "sg13g2",
+      "content_hash": "sha256:bf483105cb17948270f0cad45d9418787654bfc0a5ffd04a2e2413d8c7d3b6e7",
+      "released": true
+    },
+    "input": {
+      "content_hash": "sha256:9759f9eeb84b259ab2579d147a7f485315fc9da7291fcabd1ec34ddb6a62db0b",
+      "role": "layout"
+    },
+    "klayout_version_mismatch": false
+  },
+  "mismatches": [
+    {
+      "category": "device.geometry_not_compared",
+      "severity": "warning",
+      "description": "device class 'cap_cmim' is a capacitor class, whose ['A', 'P'] parameter(s) KLayout declares *secondary*: kdb.NetlistComparer compares primary parameters only, so none of them took part in this compare and each is NOT verified -- this capacitor's geometry could differ between the two sides by any amount and this run would still report 'match'. No parameter of this class was compared at all: the remaining parameter(s) were separately excluded from this run (see the device.placeholder_value/device.parameter_excluded entries), so the two sides were paired on topology alone. Name them in options.compare_parameters to compare them (see docs/cli/lvs.md, 'device.geometry_not_compared')",
+      "side": "both",
+      "net": null,
+      "device": {
+        "layout": null,
+        "reference": null,
+        "class": "cap_cmim"
+      },
+      "property": null,
+      "details": {
+        "device_kind": "capacitor",
+        "compared_parameters": [],
+        "not_compared_parameters": [
+          "A",
+          "P"
+        ],
+        "layout_devices": 1,
+        "reference_devices": 1
+      },
+      "circuit": null,
+      "instance": null,
+      "subcircuit": null
+    },
+    {
+      "category": "device.placeholder_value",
+      "severity": "warning",
+      "description": "reference device class 'CAP_CMIM' was converted from a subcircuit call (request.reference.form: \"subckt-call\"), so its 'C' value is the literal 0 placeholder on all 1 reference instance(s) -- klt lvs has no PDK sheet-resistance/capacitance-per-area data to compute a real one. 'C' was therefore excluded from this compare on both sides (layout: 1 instance(s), C 7.440854999999999e-14) and the two sides were paired on topology alone -- that dimension of the compare is not independently verified. Supply a reference in the plain-element form carrying real 'C' values to compare it (see docs/cli/lvs.md, 'device.placeholder_value')",
+      "side": "reference",
+      "net": null,
+      "device": {
+        "layout": null,
+        "reference": null,
+        "class": "CAP_CMIM"
+      },
+      "property": null,
+      "details": {
+        "parameter": "C",
+        "device_kind": "capacitor",
+        "reference_devices": 1,
+        "layout_devices": 1,
+        "layout_values": [
+          7.440854999999999e-14
+        ]
+      },
+      "circuit": null,
+      "instance": null,
+      "subcircuit": null
+    },
+    {
+      "category": "topology",
+      "severity": "warning",
+      "description": "device class has no counterpart on the other side, but no devices of this class were extracted either -- not a real topology mismatch",
+      "side": "layout",
+      "net": null,
+      "device": null,
+      "property": null,
+      "details": null,
+      "circuit": null,
+      "instance": null,
+      "subcircuit": null
+    },
+    {
+      "category": "topology",
+      "severity": "warning",
+      "description": "device class has no counterpart on the other side, but no devices of this class were extracted either -- not a real topology mismatch",
+      "side": "layout",
+      "net": null,
+      "device": null,
+      "property": null,
+      "details": null,
+      "circuit": null,
+      "instance": null,
+      "subcircuit": null
+    }
+  ],
+  "net_correspondence": [
+    {
+      "layout": "B",
+      "reference": "B",
+      "pin": true
+    },
+    {
+      "layout": "C",
+      "reference": "C",
+      "pin": true
+    },
+    {
+      "layout": "CB",
+      "reference": "CB",
+      "pin": true
+    },
+    {
+      "layout": "CT",
+      "reference": "CT",
+      "pin": true
+    },
+    {
+      "layout": "E",
+      "reference": "E",
+      "pin": true
+    },
+    {
+      "layout": "GND",
+      "reference": "GND",
+      "pin": true
+    },
+    {
+      "layout": "RA",
+      "reference": "RA",
+      "pin": true
+    },
+    {
+      "layout": "RB",
+      "reference": "RB",
+      "pin": true
+    }
+  ]
+}
