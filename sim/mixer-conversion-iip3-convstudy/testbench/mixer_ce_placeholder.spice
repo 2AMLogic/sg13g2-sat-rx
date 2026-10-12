@@ -107,7 +107,8 @@
 * convergence study (sample count x reltol) that shows the chosen readout is
 * stable along both axes lives in the issue-#165 record and its producing
 * runs, not in this deck: ngspice cannot change reltol from the control
-* language (`option` in .control is a silent no-op -- verified on
+* language (an `option` line inside the control block is a silent no-op --
+* verified on
 * ngspice-42), so the tolerance axis needs deck variants, i.e. separate
 * runs; see the record for the producing commands and per-cell numbers.
 *

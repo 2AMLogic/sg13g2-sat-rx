@@ -52,8 +52,11 @@ def _grid(tb, corner_names=("hbt",)):
 
 
 def _value(tb, name, process, temp, vdd):
-    return 1.0 + list(tb.measure).index(name) + {"hbt_typ": 0.0, "hbt_bcs": 0.1, "hbt_wcs": 0.2}[process] \
+    from conftest import in_check_window
+
+    raw = 1.0 + list(tb.measure).index(name) + {"hbt_typ": 0.0, "hbt_bcs": 0.1, "hbt_wcs": 0.2}[process] \
         + temp / 100.0 + vdd
+    return in_check_window(tb.checks.get(name), raw)
 
 
 def fake_submit(tb, *, drop=(), errored=(), nolog=(), nomeas=(), dup=(), job_env=None):

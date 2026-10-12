@@ -15,6 +15,8 @@ from pathlib import Path
 
 import pytest
 
+from conftest import in_check_window
+
 from harness import cli
 from harness import corners as C
 from harness import testbench as T
@@ -28,7 +30,7 @@ def _varying(p, name, k):
     return 1.0 + k + p.temp_c / 100.0 + p.vdd
 
 
-def _results(tb, mode="good"):
+def _results(tb, mode="good", good_checks=None):
     corners = C.resolve_corners(["hbt_typ"])
     points = C.build_grid(corners, tb.temperatures_c, C.supply_points(tb.nominal_supply_v, tb.supply_tolerance))
     out = []
@@ -40,7 +42,8 @@ def _results(tb, mode="good"):
             elif mode == "stuck_supply":
                 m[name] = 1.0 + k + p.temp_c / 100.0
             else:
-                m[name] = _varying(p, name, k)
+                m[name] = in_check_window((good_checks or tb.checks).get(name),
+                                          _varying(p, name, k))
         out.append(PointResult(point=p, status="ok", measurements=m))
     if mode == "missing":
         out[0] = PointResult(point=out[0].point, status="failed", missing=list(tb.measure))
@@ -53,6 +56,9 @@ def _results(tb, mode="good"):
 def run_cli(monkeypatch, capsys):
     def go(exp, mode, *flags, tb_mutator=None):
         tb = T.load(SIM / exp)
+        # Clamp synthetic values against the PRE-mutation checks: a control
+        # that deliberately tightens a bound must still see its violation.
+        good_checks = {k: dict(v) for k, v in tb.checks.items()}
         if tb_mutator:
             tb_mutator(tb)
         calls = []
@@ -63,7 +69,7 @@ def run_cli(monkeypatch, capsys):
 
         def fake_run_grid(*a, **k):
             calls.append(1)
-            return _results(tb, mode)
+            return _results(tb, mode, good_checks)
 
         monkeypatch.setattr(cli, "run_grid", fake_run_grid)
         wrote = []
