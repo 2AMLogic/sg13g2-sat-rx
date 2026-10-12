@@ -21,8 +21,8 @@ FENCE_RE = re.compile(r"^\s*(?:```|~~~)", re.M)
 #: ``SOURCES`` file that IHP-Open-PDK does not ship). Records are append-only,
 #: so these are grandfathered BY ID and the set is closed: any record not listed
 #: here that names the PDK ``unknown`` fails. Note the last entry post-dates the
-#: model-artifact pin (sim/pdk-artifact.json); that is the remaining T1 item 9
-#: gap and is why item 9 is not attested (signoff/README.md).
+#: model-artifact pin (sim/pdk-artifact.json); item 9 binds a later, pinned
+#: record instead (signoff/make_item9_evidence.py).
 LEGACY_UNKNOWN_PDK = frozenset({
     "sim/lna-sparam-nf/records/20260912-034726-9204518.md",
     "sim/mixer-conversion-iip3/records/20260912-034727-9204518.md",

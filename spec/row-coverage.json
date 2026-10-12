@@ -57,7 +57,7 @@
       "status": "ratified-target",
       "bound_corner": "worst process × temp × supply combination; out-of-band as well as in-band",
       "bench": "sim/lna-sparam-nf",
-      "latest_record": "sim/lna-sparam-nf/records/20261010-012923-6cad7fc.md",
+      "latest_record": "sim/lna-sparam-nf/records/20261012-073327-c8afc00.md",
       "verdict": "placeholder_circuit",
       "statistical": false,
       "statistical_rationale": "k-factor is bound by the worst process x temperature x supply combination; a Monte Carlo would add confidence but cannot replace the corner, so the corner bench is the claim."
@@ -174,7 +174,7 @@
       "status": "ratified-target",
       "bound_corner": "—",
       "bench": "sim/lna-sparam-nf",
-      "latest_record": "sim/lna-sparam-nf/records/20261010-012923-6cad7fc.md",
+      "latest_record": "sim/lna-sparam-nf/records/20261012-073327-c8afc00.md",
       "verdict": "placeholder_circuit",
       "blocked_by": "LNA stage 1 only, ideal matching: per-device V_CE/V_BE/I_C reported, 2.75 V cells labelled excursion, not claimed; mixer stress at an acceptable LO drive is missing (sim/mixer-topology-feasibility records 20261010-010744-a10c193 and 20261010-025859-2113f00 are device-level only, no acceptable drive at any declared sizing)",
       "statistical": false,

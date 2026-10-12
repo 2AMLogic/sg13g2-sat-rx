@@ -20,10 +20,11 @@ re-run by CI on every push (`.github/workflows/signoff.yml`).
 ```
 block: sg13g2-sat-rx  kind: analog
 tier: none
-T1: 2/11 items met
+T1: 3/11 items met
 ```
 
-**Items 1 (Design sources) and 10 (Repo hygiene) are `met`; items 2-9 and 11 are
+**Items 1 (Design sources), 9 (Testbenches shipped) and 10 (Repo hygiene) are
+`met`; items 2-8 and 11 are
 `unmet` with `reason: "no_evidence"`.** Item 1 cites `evidence/item1-design-sources.json`, an
 artifact-anchored `generic` attestation (issue #28): it declares `t1_item: 1`,
 binds the derived netlist `design/netlist/lna_stage1.spice` by path and content
@@ -42,32 +43,42 @@ attestation that is `pass` only if `README.md`, `LICENSE` and
 `sim/characterize.sh smoke`. It binds the CI workflow by content hash;
 regenerate with `python3 signoff/make_item10_evidence.py` (exits non-zero if
 any check fails, e.g. LICENSE removed). These are presence/invocation checks,
-not a quality judgment. **Item 9 (Testbenches shipped) is still deliberately not
-attested.** Issue #85 removed the first blocker: every `sim/<bench>/` holding
-`records/` now has a cold-start README (`.github/scripts/check_evidence_formats.py`
-fails CI if one is missing or has no invocation section with a fenced command
-block; negative controls in `.github/scripts/tests/test_check_evidence_formats.py`).
-The second blocker remains: the newest `sim/lna-sparam-nf` record
-(`20261010-012923-6cad7fc.md`) was written after the model artifact was pinned
-(`sim/pdk-artifact.json`) yet still names the PDK `unknown`, because the
-harness's `Pdk.version` reads a `SOURCES` file that IHP-Open-PDK does not ship
-(`.fetched-version` instead). Records are append-only, so it cannot be edited;
-the checker grandfathers exactly four legacy records by id
-(`LEGACY_UNKNOWN_PDK`) and rejects any other record naming the PDK `unknown`.
-Since #103 the harness records the hash-verified artifact identity (upstream
-commit, manifest digest, verification result) on a `- PDK artifact:` line,
-separate from the install marker, and refuses to record without it; no record
-has been taken with it yet, so this is a capability, not an attestation.
-For off-host (`klt sim` batch) results the identity is bound from the klt
-reports' staged model inputs, not the ingesting host's install; current klt
-reports cannot prove the runner's model closure (2AMLogic/klayout-tools#3071),
-so `sim/lna-sparam-nf/run.py ingest` refuses to record them for now.
-Item 9 can honestly be attested once a later record of each harness-native
-bench carries a pinned PDK revision (fix `Pdk.version` to read `.fetched-version`
-or have `report.py` print the `pdk-artifact.json` commit, then re-run the bench),
-at which point a `make_item9_evidence.py` in the item-10 pattern can bind the
-README set and that record. Until then no envelope exists and the report stays
-`unmet`/`no_evidence`. The remainder is the correct, honest result for a block
+not a quality judgment. **Item 9 (Testbenches shipped)** cites
+`evidence/item9-testbenches-shipped.json` (issue #182), a `generic` attestation
+written by `python3 signoff/make_item9_evidence.py`. **It attests that the
+testbenches are shipped and reproducible; it does NOT attest that any spec row
+is met**, nor that any bench's full PVT grid was re-run. It is `pass` only if
+(a) every `sim/<dir>/` holding `records/` (all 11 today) has a cold-start
+README whose invocation section has a fenced command block (the rule of
+`.github/scripts/check_evidence_formats.py`, imported rather than copied), and
+(b) the newest `sim/lna-sparam-nf` record carries a `- PDK artifact:
+**verified**` line whose commit and digest match `sim/pdk-artifact.json`, does
+not name the PDK `unknown`, completed every point it declared, and, if its
+Result is FAIL, fails only on "axis was never swept" sensitivity checks. The
+generator exits non-zero (and writes status `fail`) otherwise; negative
+controls (missing README, README without a fenced block, no artifact line,
+PDK `unknown`, mismatched pin, unexplained FAIL) are in
+`signoff/tests/test_make_item9_evidence.py`, which CI runs, and which also
+fails if the committed envelope no longer equals what the generator writes
+from the tree (the grader itself re-hashes only the bound record; the README
+hashes and the PDK pin are fenced by that test). The bound record is
+`sim/lna-sparam-nf/records/20261012-073327-c8afc00.md`: a declared
+**single-point** local subset (hbt_typ, 27 C, 2.50 V, one `ngspice -b`, ngspice
+42 vs the tested 46) because off-host `klt sim` batch ingest is still refused
+(2AMLogic/klayout-tools#3071) and a local grid is not permitted on the shared
+dispatch host. Its own Result is FAIL, solely because a one-point run cannot
+satisfy the axis-spread checks; that is visible in the record and is not
+hidden by the attestation. Only two benches (`lna-sparam-nf`,
+`mixer-conversion-iip3`) currently have a newest record with a pinned
+artifact line; the others' status is listed in the envelope's
+`newest_record_pinned_pdk_by_bench` metric and is not claimed. Re-run those
+benches in follow-up work. Records stay append-only; the older `unknown`-PDK
+records remain grandfathered by id in the checker. Regenerate the envelope
+(and re-pin the manifest `content_hash`) whenever the bound record, a bench
+README or `sim/pdk-artifact.json` changes. Because item 10 binds
+`.github/workflows/ci.yml`, a change to that file also requires
+`python3 signoff/make_item10_evidence.py` and a re-pin.
+The remainder is the correct, honest result for a block
 whose layout and verification evidence has not started. The per-item *human*
 context stays in the gap-to-T1 tracker
 ([#4](https://github.com/2AMLogic/sg13g2-sat-rx/issues/4)); this report carries
