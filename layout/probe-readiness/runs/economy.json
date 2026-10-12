@@ -1,0 +1,903 @@
+{
+  "schema_version": 1,
+  "file": "probe.gds",
+  "top": "probe_readiness",
+  "dbu_um": 0.001,
+  "bbox_um": {
+    "left": -6.05,
+    "bottom": -12.05,
+    "right": 37.730000000000004,
+    "top": 20.03,
+    "width": 43.78,
+    "height": 32.08
+  },
+  "bbox_area_um2": 1404.4624000000001,
+  "bbox_area_mm2": 0.0014044624000000001,
+  "aspect_ratio": 1.3647132169576062,
+  "drawn_area_um2": 294.2373,
+  "utilization": 0.2095017282057533,
+  "tight_bbox_um": {
+    "left": -6.05,
+    "bottom": -12.05,
+    "right": 37.730000000000004,
+    "top": 20.03,
+    "width": 43.78,
+    "height": 32.08
+  },
+  "tight_bbox_area_um2": 1404.4624000000001,
+  "bbox_tightness": 1.0,
+  "dead_margins_um": {
+    "left": 0.0,
+    "right": 0.0,
+    "bottom": 0.0,
+    "top": 0.0
+  },
+  "whitespace_area_um2": 1110.2251,
+  "whitespace_fraction": 0.7904982717942467,
+  "whitespace_grid": {
+    "cols": 4,
+    "rows": 4,
+    "cells": [
+      {
+        "row": 0,
+        "col": 0,
+        "bbox_um": {
+          "left": -6.05,
+          "bottom": -12.05,
+          "right": 4.8950000000000005,
+          "top": -4.03,
+          "width": 10.945,
+          "height": 8.02
+        },
+        "covered_fraction": 0.24820087743182018,
+        "whitespace_fraction": 0.7517991225681798
+      },
+      {
+        "row": 0,
+        "col": 1,
+        "bbox_um": {
+          "left": 4.8950000000000005,
+          "bottom": -12.05,
+          "right": 15.84,
+          "top": -4.03,
+          "width": 10.945,
+          "height": 8.02
+        },
+        "covered_fraction": 0.12468827930174564,
+        "whitespace_fraction": 0.8753117206982544
+      },
+      {
+        "row": 0,
+        "col": 2,
+        "bbox_um": {
+          "left": 15.84,
+          "bottom": -12.05,
+          "right": 26.785,
+          "top": -4.03,
+          "width": 10.945,
+          "height": 8.02
+        },
+        "covered_fraction": 0.12468827930174564,
+        "whitespace_fraction": 0.8753117206982544
+      },
+      {
+        "row": 0,
+        "col": 3,
+        "bbox_um": {
+          "left": 26.785,
+          "bottom": -12.05,
+          "right": 37.730000000000004,
+          "top": -4.03,
+          "width": 10.945,
+          "height": 8.02
+        },
+        "covered_fraction": 0.2046619403979772,
+        "whitespace_fraction": 0.7953380596020228
+      },
+      {
+        "row": 1,
+        "col": 0,
+        "bbox_um": {
+          "left": -6.05,
+          "bottom": -4.03,
+          "right": 4.8950000000000005,
+          "top": 3.99,
+          "width": 10.945,
+          "height": 8.02
+        },
+        "covered_fraction": 0.664492264086244,
+        "whitespace_fraction": 0.33550773591375604
+      },
+      {
+        "row": 1,
+        "col": 1,
+        "bbox_um": {
+          "left": 4.8950000000000005,
+          "bottom": -4.03,
+          "right": 15.84,
+          "top": 3.99,
+          "width": 10.945,
+          "height": 8.02
+        },
+        "covered_fraction": 0.13514181654133284,
+        "whitespace_fraction": 0.8648581834586672
+      },
+      {
+        "row": 1,
+        "col": 2,
+        "bbox_um": {
+          "left": 15.84,
+          "bottom": -4.03,
+          "right": 26.785,
+          "top": 3.99,
+          "width": 10.945,
+          "height": 8.02
+        },
+        "covered_fraction": 0.35040767200318074,
+        "whitespace_fraction": 0.6495923279968192
+      },
+      {
+        "row": 1,
+        "col": 3,
+        "bbox_um": {
+          "left": 26.785,
+          "bottom": -4.03,
+          "right": 37.730000000000004,
+          "top": 3.99,
+          "width": 10.945,
+          "height": 8.02
+        },
+        "covered_fraction": 0.15003149959728362,
+        "whitespace_fraction": 0.8499685004027164
+      },
+      {
+        "row": 2,
+        "col": 0,
+        "bbox_um": {
+          "left": -6.05,
+          "bottom": 3.99,
+          "right": 4.8950000000000005,
+          "top": 12.01,
+          "width": 10.945,
+          "height": 8.02
+        },
+        "covered_fraction": 0.11253729540926122,
+        "whitespace_fraction": 0.8874627045907388
+      },
+      {
+        "row": 2,
+        "col": 1,
+        "bbox_um": {
+          "left": 4.8950000000000005,
+          "bottom": 3.99,
+          "right": 15.84,
+          "top": 12.01,
+          "width": 10.945,
+          "height": 8.02
+        },
+        "covered_fraction": 0.10006960670502821,
+        "whitespace_fraction": 0.8999303932949718
+      },
+      {
+        "row": 2,
+        "col": 2,
+        "bbox_um": {
+          "left": 15.84,
+          "bottom": 3.99,
+          "right": 26.785,
+          "top": 12.01,
+          "width": 10.945,
+          "height": 8.02
+        },
+        "covered_fraction": 0.38704176060533907,
+        "whitespace_fraction": 0.6129582393946609
+      },
+      {
+        "row": 2,
+        "col": 3,
+        "bbox_um": {
+          "left": 26.785,
+          "bottom": 3.99,
+          "right": 37.730000000000004,
+          "top": 12.01,
+          "width": 10.945,
+          "height": 8.02
+        },
+        "covered_fraction": 0.09136592051164916,
+        "whitespace_fraction": 0.9086340794883508
+      },
+      {
+        "row": 3,
+        "col": 0,
+        "bbox_um": {
+          "left": -6.05,
+          "bottom": 12.01,
+          "right": 4.8950000000000005,
+          "top": 20.03,
+          "width": 10.945,
+          "height": 8.02
+        },
+        "covered_fraction": 0.2046619403979772,
+        "whitespace_fraction": 0.7953380596020228
+      },
+      {
+        "row": 3,
+        "col": 1,
+        "bbox_um": {
+          "left": 4.8950000000000005,
+          "bottom": 12.01,
+          "right": 15.84,
+          "top": 20.03,
+          "width": 10.945,
+          "height": 8.02
+        },
+        "covered_fraction": 0.12468827930174564,
+        "whitespace_fraction": 0.8753117206982544
+      },
+      {
+        "row": 3,
+        "col": 2,
+        "bbox_um": {
+          "left": 15.84,
+          "bottom": 12.01,
+          "right": 26.785,
+          "top": 20.03,
+          "width": 10.945,
+          "height": 8.02
+        },
+        "covered_fraction": 0.12468827930174564,
+        "whitespace_fraction": 0.8753117206982544
+      },
+      {
+        "row": 3,
+        "col": 3,
+        "bbox_um": {
+          "left": 26.785,
+          "bottom": 12.01,
+          "right": 37.730000000000004,
+          "top": 20.03,
+          "width": 10.945,
+          "height": 8.02
+        },
+        "covered_fraction": 0.2046619403979772,
+        "whitespace_fraction": 0.7953380596020228
+      }
+    ]
+  },
+  "largest_empty_regions": [
+    {
+      "bbox_um": {
+        "left": -5.05,
+        "bottom": -11.05,
+        "right": 36.730000000000004,
+        "top": 19.03,
+        "width": 41.78,
+        "height": 30.080000000000002
+      },
+      "area_um2": 1110.2251,
+      "fill_fraction": 0.8834150101086746
+    }
+  ],
+  "empty_region_count": 1,
+  "cells": [
+    {
+      "name": "cmim",
+      "bbox_um": {
+        "left": -0.6,
+        "bottom": -0.6,
+        "right": 7.59,
+        "top": 7.59,
+        "width": 8.19,
+        "height": 8.19
+      },
+      "bbox_area_um2": 67.07610000000001,
+      "drawn_area_um2": 67.07610000000001,
+      "utilization": 1.0
+    },
+    {
+      "name": "npn13G2",
+      "bbox_um": {
+        "left": -3.35,
+        "bottom": -3.33,
+        "right": 3.35,
+        "top": 3.7800000000000002,
+        "width": 6.7,
+        "height": 7.11
+      },
+      "bbox_area_um2": 47.637,
+      "drawn_area_um2": 47.637,
+      "utilization": 1.0
+    },
+    {
+      "name": "npn13G2_base_CDNS_675179387640",
+      "bbox_um": {
+        "left": -0.975,
+        "bottom": -1.28,
+        "right": 0.975,
+        "top": 2.43,
+        "width": 1.95,
+        "height": 3.71
+      },
+      "bbox_area_um2": 7.2345,
+      "drawn_area_um2": 7.014775000000001,
+      "utilization": 0.969628170571567
+    },
+    {
+      "name": "probe_readiness",
+      "bbox_um": {
+        "left": -6.05,
+        "bottom": -12.05,
+        "right": 37.730000000000004,
+        "top": 20.03,
+        "width": 43.78,
+        "height": 32.08
+      },
+      "bbox_area_um2": 1404.4624000000001,
+      "drawn_area_um2": 194.201,
+      "utilization": 0.13827426067084458
+    },
+    {
+      "name": "ptap",
+      "bbox_um": {
+        "left": -0.03,
+        "bottom": -0.03,
+        "right": 0.81,
+        "top": 0.81,
+        "width": 0.84,
+        "height": 0.84
+      },
+      "bbox_area_um2": 0.7056,
+      "drawn_area_um2": 0.7056,
+      "utilization": 1.0
+    },
+    {
+      "name": "rsil",
+      "bbox_um": {
+        "left": -0.18,
+        "bottom": -0.53,
+        "right": 0.68,
+        "top": 1.03,
+        "width": 0.86,
+        "height": 1.56
+      },
+      "bbox_area_um2": 1.3416000000000001,
+      "drawn_area_um2": 1.3416000000000001,
+      "utilization": 1.0
+    }
+  ],
+  "row_utilization": {
+    "row_count": 37,
+    "mean_utilization": 0.03840877914951989,
+    "rows": [
+      {
+        "bbox_um": {
+          "left": -6.03,
+          "bottom": -11.25,
+          "right": 37.71,
+          "top": -10.41,
+          "width": 43.74,
+          "height": 0.84
+        },
+        "instance_count": 2,
+        "row_area_um2": 36.7416,
+        "placed_area_um2": 1.4112,
+        "utilization": 0.038408779149519894
+      },
+      {
+        "bbox_um": {
+          "left": -6.03,
+          "bottom": -10.47,
+          "right": 37.71,
+          "top": -9.63,
+          "width": 43.74,
+          "height": 0.84
+        },
+        "instance_count": 2,
+        "row_area_um2": 36.7416,
+        "placed_area_um2": 1.4112,
+        "utilization": 0.038408779149519894
+      },
+      {
+        "bbox_um": {
+          "left": -6.03,
+          "bottom": -9.69,
+          "right": 37.71,
+          "top": -8.85,
+          "width": 43.74,
+          "height": 0.84
+        },
+        "instance_count": 2,
+        "row_area_um2": 36.7416,
+        "placed_area_um2": 1.4112,
+        "utilization": 0.038408779149519894
+      },
+      {
+        "bbox_um": {
+          "left": -6.03,
+          "bottom": -8.91,
+          "right": 37.71,
+          "top": -8.07,
+          "width": 43.74,
+          "height": 0.84
+        },
+        "instance_count": 2,
+        "row_area_um2": 36.7416,
+        "placed_area_um2": 1.4112,
+        "utilization": 0.038408779149519894
+      },
+      {
+        "bbox_um": {
+          "left": -6.03,
+          "bottom": -8.13,
+          "right": 37.71,
+          "top": -7.29,
+          "width": 43.74,
+          "height": 0.84
+        },
+        "instance_count": 2,
+        "row_area_um2": 36.7416,
+        "placed_area_um2": 1.4112,
+        "utilization": 0.038408779149519894
+      },
+      {
+        "bbox_um": {
+          "left": -6.03,
+          "bottom": -7.3500000000000005,
+          "right": 37.71,
+          "top": -6.51,
+          "width": 43.74,
+          "height": 0.84
+        },
+        "instance_count": 2,
+        "row_area_um2": 36.7416,
+        "placed_area_um2": 1.4112,
+        "utilization": 0.038408779149519894
+      },
+      {
+        "bbox_um": {
+          "left": -6.03,
+          "bottom": -6.57,
+          "right": 37.71,
+          "top": -5.73,
+          "width": 43.74,
+          "height": 0.84
+        },
+        "instance_count": 2,
+        "row_area_um2": 36.7416,
+        "placed_area_um2": 1.4112,
+        "utilization": 0.038408779149519894
+      },
+      {
+        "bbox_um": {
+          "left": -6.03,
+          "bottom": -5.79,
+          "right": 37.71,
+          "top": -4.95,
+          "width": 43.74,
+          "height": 0.84
+        },
+        "instance_count": 2,
+        "row_area_um2": 36.7416,
+        "placed_area_um2": 1.4112,
+        "utilization": 0.038408779149519894
+      },
+      {
+        "bbox_um": {
+          "left": -6.03,
+          "bottom": -5.01,
+          "right": 37.71,
+          "top": -4.17,
+          "width": 43.74,
+          "height": 0.84
+        },
+        "instance_count": 2,
+        "row_area_um2": 36.7416,
+        "placed_area_um2": 1.4112,
+        "utilization": 0.038408779149519894
+      },
+      {
+        "bbox_um": {
+          "left": -6.03,
+          "bottom": -4.23,
+          "right": 37.71,
+          "top": -3.39,
+          "width": 43.74,
+          "height": 0.84
+        },
+        "instance_count": 2,
+        "row_area_um2": 36.7416,
+        "placed_area_um2": 1.4112,
+        "utilization": 0.038408779149519894
+      },
+      {
+        "bbox_um": {
+          "left": -6.03,
+          "bottom": -2.67,
+          "right": 37.71,
+          "top": -1.83,
+          "width": 43.74,
+          "height": 0.84
+        },
+        "instance_count": 2,
+        "row_area_um2": 36.7416,
+        "placed_area_um2": 1.4112,
+        "utilization": 0.038408779149519894
+      },
+      {
+        "bbox_um": {
+          "left": -6.03,
+          "bottom": -1.8900000000000001,
+          "right": 37.71,
+          "top": -1.05,
+          "width": 43.74,
+          "height": 0.84
+        },
+        "instance_count": 2,
+        "row_area_um2": 36.7416,
+        "placed_area_um2": 1.4112,
+        "utilization": 0.038408779149519894
+      },
+      {
+        "bbox_um": {
+          "left": -6.03,
+          "bottom": -1.11,
+          "right": 37.71,
+          "top": -0.27,
+          "width": 43.74,
+          "height": 0.84
+        },
+        "instance_count": 2,
+        "row_area_um2": 36.7416,
+        "placed_area_um2": 1.4112,
+        "utilization": 0.038408779149519894
+      },
+      {
+        "bbox_um": {
+          "left": -6.03,
+          "bottom": 0.45,
+          "right": 37.71,
+          "top": 1.29,
+          "width": 43.74,
+          "height": 0.84
+        },
+        "instance_count": 2,
+        "row_area_um2": 36.7416,
+        "placed_area_um2": 1.4112,
+        "utilization": 0.038408779149519894
+      },
+      {
+        "bbox_um": {
+          "left": -6.03,
+          "bottom": 1.23,
+          "right": 37.71,
+          "top": 2.07,
+          "width": 43.74,
+          "height": 0.84
+        },
+        "instance_count": 2,
+        "row_area_um2": 36.7416,
+        "placed_area_um2": 1.4112,
+        "utilization": 0.038408779149519894
+      },
+      {
+        "bbox_um": {
+          "left": -6.03,
+          "bottom": 2.0100000000000002,
+          "right": 37.71,
+          "top": 2.85,
+          "width": 43.74,
+          "height": 0.84
+        },
+        "instance_count": 2,
+        "row_area_um2": 36.7416,
+        "placed_area_um2": 1.4112,
+        "utilization": 0.038408779149519894
+      },
+      {
+        "bbox_um": {
+          "left": -6.03,
+          "bottom": 2.79,
+          "right": 37.71,
+          "top": 3.63,
+          "width": 43.74,
+          "height": 0.84
+        },
+        "instance_count": 2,
+        "row_area_um2": 36.7416,
+        "placed_area_um2": 1.4112,
+        "utilization": 0.038408779149519894
+      },
+      {
+        "bbox_um": {
+          "left": -6.03,
+          "bottom": 3.5700000000000003,
+          "right": 37.71,
+          "top": 4.41,
+          "width": 43.74,
+          "height": 0.84
+        },
+        "instance_count": 2,
+        "row_area_um2": 36.7416,
+        "placed_area_um2": 1.4112,
+        "utilization": 0.038408779149519894
+      },
+      {
+        "bbox_um": {
+          "left": -6.03,
+          "bottom": 4.3500000000000005,
+          "right": 37.71,
+          "top": 5.19,
+          "width": 43.74,
+          "height": 0.84
+        },
+        "instance_count": 2,
+        "row_area_um2": 36.7416,
+        "placed_area_um2": 1.4112,
+        "utilization": 0.038408779149519894
+      },
+      {
+        "bbox_um": {
+          "left": -6.03,
+          "bottom": 5.13,
+          "right": 37.71,
+          "top": 5.97,
+          "width": 43.74,
+          "height": 0.84
+        },
+        "instance_count": 2,
+        "row_area_um2": 36.7416,
+        "placed_area_um2": 1.4112,
+        "utilization": 0.038408779149519894
+      },
+      {
+        "bbox_um": {
+          "left": -6.03,
+          "bottom": 5.91,
+          "right": 37.71,
+          "top": 6.75,
+          "width": 43.74,
+          "height": 0.84
+        },
+        "instance_count": 2,
+        "row_area_um2": 36.7416,
+        "placed_area_um2": 1.4112,
+        "utilization": 0.038408779149519894
+      },
+      {
+        "bbox_um": {
+          "left": -6.03,
+          "bottom": 6.69,
+          "right": 37.71,
+          "top": 7.53,
+          "width": 43.74,
+          "height": 0.84
+        },
+        "instance_count": 2,
+        "row_area_um2": 36.7416,
+        "placed_area_um2": 1.4112,
+        "utilization": 0.038408779149519894
+      },
+      {
+        "bbox_um": {
+          "left": -6.03,
+          "bottom": 7.47,
+          "right": 37.71,
+          "top": 8.31,
+          "width": 43.74,
+          "height": 0.84
+        },
+        "instance_count": 2,
+        "row_area_um2": 36.7416,
+        "placed_area_um2": 1.4112,
+        "utilization": 0.038408779149519894
+      },
+      {
+        "bbox_um": {
+          "left": -6.03,
+          "bottom": 8.25,
+          "right": 37.71,
+          "top": 9.09,
+          "width": 43.74,
+          "height": 0.84
+        },
+        "instance_count": 2,
+        "row_area_um2": 36.7416,
+        "placed_area_um2": 1.4112,
+        "utilization": 0.038408779149519894
+      },
+      {
+        "bbox_um": {
+          "left": -6.03,
+          "bottom": 9.03,
+          "right": 37.71,
+          "top": 9.870000000000001,
+          "width": 43.74,
+          "height": 0.84
+        },
+        "instance_count": 2,
+        "row_area_um2": 36.7416,
+        "placed_area_um2": 1.4112,
+        "utilization": 0.038408779149519894
+      },
+      {
+        "bbox_um": {
+          "left": -6.03,
+          "bottom": 9.81,
+          "right": 37.71,
+          "top": 10.65,
+          "width": 43.74,
+          "height": 0.84
+        },
+        "instance_count": 2,
+        "row_area_um2": 36.7416,
+        "placed_area_um2": 1.4112,
+        "utilization": 0.038408779149519894
+      },
+      {
+        "bbox_um": {
+          "left": -6.03,
+          "bottom": 10.59,
+          "right": 37.71,
+          "top": 11.43,
+          "width": 43.74,
+          "height": 0.84
+        },
+        "instance_count": 2,
+        "row_area_um2": 36.7416,
+        "placed_area_um2": 1.4112,
+        "utilization": 0.038408779149519894
+      },
+      {
+        "bbox_um": {
+          "left": -6.03,
+          "bottom": 11.370000000000001,
+          "right": 37.71,
+          "top": 12.21,
+          "width": 43.74,
+          "height": 0.84
+        },
+        "instance_count": 2,
+        "row_area_um2": 36.7416,
+        "placed_area_um2": 1.4112,
+        "utilization": 0.038408779149519894
+      },
+      {
+        "bbox_um": {
+          "left": -6.03,
+          "bottom": 12.15,
+          "right": 37.71,
+          "top": 12.99,
+          "width": 43.74,
+          "height": 0.84
+        },
+        "instance_count": 2,
+        "row_area_um2": 36.7416,
+        "placed_area_um2": 1.4112,
+        "utilization": 0.038408779149519894
+      },
+      {
+        "bbox_um": {
+          "left": -6.03,
+          "bottom": 12.93,
+          "right": 37.71,
+          "top": 13.77,
+          "width": 43.74,
+          "height": 0.84
+        },
+        "instance_count": 2,
+        "row_area_um2": 36.7416,
+        "placed_area_um2": 1.4112,
+        "utilization": 0.038408779149519894
+      },
+      {
+        "bbox_um": {
+          "left": -6.03,
+          "bottom": 13.71,
+          "right": 37.71,
+          "top": 14.55,
+          "width": 43.74,
+          "height": 0.84
+        },
+        "instance_count": 2,
+        "row_area_um2": 36.7416,
+        "placed_area_um2": 1.4112,
+        "utilization": 0.038408779149519894
+      },
+      {
+        "bbox_um": {
+          "left": -6.03,
+          "bottom": 14.49,
+          "right": 37.71,
+          "top": 15.33,
+          "width": 43.74,
+          "height": 0.84
+        },
+        "instance_count": 2,
+        "row_area_um2": 36.7416,
+        "placed_area_um2": 1.4112,
+        "utilization": 0.038408779149519894
+      },
+      {
+        "bbox_um": {
+          "left": -6.03,
+          "bottom": 15.27,
+          "right": 37.71,
+          "top": 16.11,
+          "width": 43.74,
+          "height": 0.84
+        },
+        "instance_count": 2,
+        "row_area_um2": 36.7416,
+        "placed_area_um2": 1.4112,
+        "utilization": 0.038408779149519894
+      },
+      {
+        "bbox_um": {
+          "left": -6.03,
+          "bottom": 16.05,
+          "right": 37.71,
+          "top": 16.89,
+          "width": 43.74,
+          "height": 0.84
+        },
+        "instance_count": 2,
+        "row_area_um2": 36.7416,
+        "placed_area_um2": 1.4112,
+        "utilization": 0.038408779149519894
+      },
+      {
+        "bbox_um": {
+          "left": -6.03,
+          "bottom": 16.830000000000002,
+          "right": 37.71,
+          "top": 17.67,
+          "width": 43.74,
+          "height": 0.84
+        },
+        "instance_count": 2,
+        "row_area_um2": 36.7416,
+        "placed_area_um2": 1.4112,
+        "utilization": 0.038408779149519894
+      },
+      {
+        "bbox_um": {
+          "left": -6.03,
+          "bottom": 17.61,
+          "right": 37.71,
+          "top": 18.45,
+          "width": 43.74,
+          "height": 0.84
+        },
+        "instance_count": 2,
+        "row_area_um2": 36.7416,
+        "placed_area_um2": 1.4112,
+        "utilization": 0.038408779149519894
+      },
+      {
+        "bbox_um": {
+          "left": -6.03,
+          "bottom": 18.39,
+          "right": 37.71,
+          "top": 19.23,
+          "width": 43.74,
+          "height": 0.84
+        },
+        "instance_count": 2,
+        "row_area_um2": 36.7416,
+        "placed_area_um2": 1.4112,
+        "utilization": 0.038408779149519894
+      }
+    ]
+  },
+  "annotation_layers_excluded": [],
+  "provenance": {
+    "klt_version": "0.7.0+gb770c86e0e96",
+    "klayout_version": "0.30.12",
+    "pdk": null,
+    "deck": null,
+    "input": {
+      "content_hash": "sha256:9759f9eeb84b259ab2579d147a7f485315fc9da7291fcabd1ec34ddb6a62db0b",
+      "role": "layout"
+    }
+  }
+}

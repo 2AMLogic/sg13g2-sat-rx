@@ -1,0 +1,9 @@
+* probe-readiness reference, PDK xschem simulation form (issue #185 probe)
+* Exactly what the sg13g2_pr symbols netlist: spiceprefix=X subcircuit
+* calls. Contains all three devices the schematic draws.
+.SUBCKT probe_readiness CB CT E RB C B RA GND
+XQ1 C B E GND npn13G2 Nx=1
+XR1 RA RB rsil w=0.5e-6 l=0.5e-6 m=1 b=0
+XC1 CB CT cap_cmim w=6.99e-6 l=6.99e-6 m=1
+.ENDS probe_readiness
+.END
