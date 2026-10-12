@@ -1,0 +1,200 @@
+{
+  "bench": "hbt-mismatch-pair",
+  "distributions": {
+    "hbt_typ": {
+      "m_off": {
+        "max": 3.3750779949e-14,
+        "mean": 3.3750779949e-14,
+        "min": 3.3750779949e-14,
+        "n": 100,
+        "sigma": 0.0
+      },
+      "m_ratio": {
+        "max": 1.0,
+        "mean": 1.0,
+        "min": 1.0,
+        "n": 100,
+        "sigma": 0.0
+      }
+    },
+    "hbt_typ_mismatch": {
+      "m_off": {
+        "max": 0.37383340887,
+        "mean": -0.0010708404387487994,
+        "min": -0.4097393687,
+        "n": 100,
+        "sigma": 0.16156411530483394
+      },
+      "m_ratio": {
+        "max": 1.4212152708,
+        "mean": 1.0105592235303,
+        "min": 0.72531358939,
+        "n": 100,
+        "sigma": 0.14212148647522382
+      }
+    },
+    "hbt_typ_stat": {
+      "m_ic1": {
+        "max": 0.00052698726343,
+        "mean": 0.0005206493689168,
+        "min": 0.00051415823581,
+        "n": 100,
+        "sigma": 2.433595669407771e-06
+      },
+      "m_ratio": {
+        "max": 1.0,
+        "mean": 1.0,
+        "min": 1.0,
+        "n": 100,
+        "sigma": 0.0
+      }
+    }
+  },
+  "gates": {
+    "local_vs_batch_max_rel": 5.795364188400001e-14,
+    "local_vs_batch_per_corner_rel": {
+      "hbt_typ": 4.4408920900000504e-16,
+      "hbt_typ_mismatch": 0.0,
+      "hbt_typ_stat": 5.795364188400001e-14
+    },
+    "max_abs_offset_dev_v": {
+      "hbt_typ": 3.3750779949e-14,
+      "hbt_typ_mismatch": 0.4097393687
+    },
+    "max_abs_ratio_dev": {
+      "hbt_typ": 0.0,
+      "hbt_typ_mismatch": 0.4212152708000001,
+      "hbt_typ_stat": 0.0
+    },
+    "mismatch_sampled": true,
+    "mismatch_sigma_vs_card": {
+      "card_area_sigma": 0.1,
+      "expected_ratio_sigma_order": 0.14142135623730953,
+      "sigma_ratio_measured": 0.14212148647522382
+    },
+    "nominal_exact": true,
+    "reproducibility_max_rel": 0.0,
+    "stat_global_cancels": true
+  },
+  "notes": [],
+  "provenance": {
+    "git": {
+      "commit": "b0ab9092a8b3f087188034bd73d6dd7e06430c1b",
+      "dirty": true
+    },
+    "host": "loom-worker-3",
+    "klt_client_cmd": "klt",
+    "legs": {
+      "local": {
+        "client_klt_version": null,
+        "engine": "ngspice",
+        "engine_version": "42",
+        "instance_type": null,
+        "job_id": null,
+        "monte_carlo": {
+          "family_mismatch": [
+            {
+              "active": null,
+              "family": "resistor",
+              "note": "mismatch activity for the 'resistor' family is not independently verified for PDK family 'sg13g2'; treat any sampled spread for it as unconfirmed."
+            },
+            {
+              "active": null,
+              "family": "bipolar",
+              "note": "mismatch activity for the 'bipolar' family is not independently verified for PDK family 'sg13g2'; treat any sampled spread for it as unconfirmed."
+            }
+          ],
+          "n": 1,
+          "seed": 186,
+          "vary": "both"
+        },
+        "provider": null,
+        "runner_compatibility": null,
+        "runner_klt_version": null,
+        "status": "pass"
+      },
+      "mc": {
+        "client_klt_version": "0.7.0+gb770c86e0e96",
+        "engine": "ngspice",
+        "engine_version": "46",
+        "instance_type": "c7i.8xlarge",
+        "job_id": "klt-sim-bc59547be5bb",
+        "monte_carlo": {
+          "family_mismatch": [
+            {
+              "active": null,
+              "family": "resistor",
+              "note": "mismatch activity for the 'resistor' family is not independently verified for PDK family 'sg13g2'; treat any sampled spread for it as unconfirmed."
+            },
+            {
+              "active": null,
+              "family": "bipolar",
+              "note": "mismatch activity for the 'bipolar' family is not independently verified for PDK family 'sg13g2'; treat any sampled spread for it as unconfirmed."
+            }
+          ],
+          "n": 100,
+          "seed": 186,
+          "vary": "both"
+        },
+        "provider": "aws-batch-fleet",
+        "runner_compatibility": "mismatch",
+        "runner_klt_version": "0.5.0",
+        "status": "pass"
+      },
+      "rerun": {
+        "client_klt_version": "0.7.0+gb770c86e0e96",
+        "engine": "ngspice",
+        "engine_version": "46",
+        "instance_type": "c7i.8xlarge",
+        "job_id": "klt-sim-54ec49c33c42",
+        "monte_carlo": {
+          "family_mismatch": [
+            {
+              "active": null,
+              "family": "resistor",
+              "note": "mismatch activity for the 'resistor' family is not independently verified for PDK family 'sg13g2'; treat any sampled spread for it as unconfirmed."
+            },
+            {
+              "active": null,
+              "family": "bipolar",
+              "note": "mismatch activity for the 'bipolar' family is not independently verified for PDK family 'sg13g2'; treat any sampled spread for it as unconfirmed."
+            }
+          ],
+          "n": 100,
+          "seed": 186,
+          "vary": "both"
+        },
+        "provider": "aws-batch-fleet",
+        "runner_compatibility": "mismatch",
+        "runner_klt_version": "0.5.0",
+        "status": "pass"
+      }
+    },
+    "pdk_integrity": {
+      "gate": "sim/harness/pdkartifact.py verify(require_ngspice=False)",
+      "notes": [
+        "install marker '0.3.0' recorded as provenance (not an integrity check)",
+        "IHP model closure (4 files) matches the pin at 5cccb161f749 (https://github.com/IHP-GmbH/IHP-Open-PDK)"
+      ],
+      "ok": true,
+      "problems": []
+    },
+    "run_dir": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-186/sim/hbt-mismatch-pair/probe-logs/20261012-115738-b0ab909"
+  },
+  "reason": null,
+  "record": "20261012-115738-b0ab909-MC_METHOD_WORKS",
+  "request": {
+    "backend": "batch",
+    "corners": [
+      "hbt_typ_mismatch",
+      "hbt_typ_stat",
+      "hbt_typ"
+    ],
+    "n": 100,
+    "seed": 186,
+    "temperature_c": 27,
+    "vary": "both"
+  },
+  "scope": "method-only; no spec-row evidence",
+  "status": "MC_METHOD_WORKS"
+}

@@ -9,6 +9,7 @@
     "checks": {
       "benches:found": true,
       "readme:hbt-kaband-characterization": true,
+      "readme:hbt-mismatch-pair": true,
       "readme:lna-headroom": true,
       "readme:lna-linearity": true,
       "readme:lna-match-tradeoff": true,
@@ -29,6 +30,7 @@
     },
     "readmes": {
       "hbt-kaband-characterization": "sha256:31409c0422cfc9f8814f24df1f7a4292b750301c3aa184d93b62c7bc50aa5d7e",
+      "hbt-mismatch-pair": "sha256:8e42bcf9b342dd9cb54e5f740435d16b39c0d3d7ec2f2c64f1fefd7deb86de5a",
       "lna-headroom": "sha256:f523dfadc91a379d3c5fa26aec6c8cf4471ee7dc5271c8d91cd7b39b0c6576d6",
       "lna-linearity": "sha256:df5efc063f8980fe6c0b6da0f5bfa14d7fa525a6f29051e1050cc8acb849e2a8",
       "lna-match-tradeoff": "sha256:ade3fe9718fd395089f58246daf9c08276ac6d1d3ad32bc04f31bc7510c1308b",
@@ -45,6 +47,7 @@
     },
     "newest_record_pinned_pdk_by_bench": {
       "hbt-kaband-characterization": false,
+      "hbt-mismatch-pair": false,
       "lna-headroom": false,
       "lna-linearity": false,
       "lna-match-tradeoff": false,

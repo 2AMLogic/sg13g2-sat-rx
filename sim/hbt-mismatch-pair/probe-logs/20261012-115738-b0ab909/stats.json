@@ -1,0 +1,79 @@
+{
+  "distributions": {
+    "hbt_typ": {
+      "m_off": {
+        "max": 3.3750779949e-14,
+        "mean": 3.3750779949e-14,
+        "min": 3.3750779949e-14,
+        "n": 100,
+        "sigma": 0.0
+      },
+      "m_ratio": {
+        "max": 1.0,
+        "mean": 1.0,
+        "min": 1.0,
+        "n": 100,
+        "sigma": 0.0
+      }
+    },
+    "hbt_typ_mismatch": {
+      "m_off": {
+        "max": 0.37383340887,
+        "mean": -0.0010708404387487994,
+        "min": -0.4097393687,
+        "n": 100,
+        "sigma": 0.16156411530483394
+      },
+      "m_ratio": {
+        "max": 1.4212152708,
+        "mean": 1.0105592235303,
+        "min": 0.72531358939,
+        "n": 100,
+        "sigma": 0.14212148647522382
+      }
+    },
+    "hbt_typ_stat": {
+      "m_ic1": {
+        "max": 0.00052698726343,
+        "mean": 0.0005206493689168,
+        "min": 0.00051415823581,
+        "n": 100,
+        "sigma": 2.433595669407771e-06
+      },
+      "m_ratio": {
+        "max": 1.0,
+        "mean": 1.0,
+        "min": 1.0,
+        "n": 100,
+        "sigma": 0.0
+      }
+    }
+  },
+  "gates": {
+    "local_vs_batch_max_rel": 5.795364188400001e-14,
+    "local_vs_batch_per_corner_rel": {
+      "hbt_typ": 4.4408920900000504e-16,
+      "hbt_typ_mismatch": 0.0,
+      "hbt_typ_stat": 5.795364188400001e-14
+    },
+    "max_abs_offset_dev_v": {
+      "hbt_typ": 3.3750779949e-14,
+      "hbt_typ_mismatch": 0.4097393687
+    },
+    "max_abs_ratio_dev": {
+      "hbt_typ": 0.0,
+      "hbt_typ_mismatch": 0.4212152708000001,
+      "hbt_typ_stat": 0.0
+    },
+    "mismatch_sampled": true,
+    "mismatch_sigma_vs_card": {
+      "card_area_sigma": 0.1,
+      "expected_ratio_sigma_order": 0.14142135623730953,
+      "sigma_ratio_measured": 0.14212148647522382
+    },
+    "nominal_exact": true,
+    "reproducibility_max_rel": 0.0,
+    "stat_global_cancels": true
+  },
+  "notes": []
+}

@@ -1,0 +1,55 @@
+* hbt-mismatch-pair: matched npn13G2 pair, resistive loads -- issue 186 method probe.
+*
+* PURPOSE (scope): qualify the Monte Carlo mismatch-card METHOD on the pinned
+* PDK, independent of any mixer topology. A single differential pair whose
+* only measured quantities are known-answer observables:
+*
+*   m_ic1 / m_ic2  collector currents (through the 2.8 k load resistors)
+*   m_ratio        m_ic1 / m_ic2          -- exactly 1.000000 on a nominal,
+*                                            perfectly matched pair
+*   m_off          v(c1)-v(c2)            -- exactly 0 V on that same pair
+*
+* Corner sections decide everything else:
+*   hbt_typ           no randomness at all: sg13g2_hbt_mod.lib has no
+*                     mm_ok/area sampling -- both instances are identical, so
+*                     m_ratio == 1 and m_off == 0 is the nominal known answer.
+*   hbt_typ_mismatch  sg13g2_hbt_mod_mismatch.lib: mm_ok=1 makes each
+*                     instance's area qarea = agauss(1, 0.1, 1) -- per-instance
+*                     (uncorrelated) 10% 1-sigma area sampling. The pair then
+*                     converts the area difference into a current ratio
+*                     spread. THE observable for the mismatch path.
+*   hbt_typ_stat      sg13g2_hbt_stat.lib + sg13g2_hbt_mod.lib: the vbic_*
+*                     params are gauss() draws at file scope -- ONE value per
+*                     run, shared by both instances. A matched pair cancels a
+*                     perfectly correlated variation: m_ratio must stay 1.
+*                     Known-answer NEGATIVE control proving the bench measures
+*                     mismatch, not noise.
+*
+* Operating point (nominal, by design; the record states the simulated OP):
+*   tail current ~1.04 mA through RT=530 (Ve ~ 0.552 V), ~0.52 mA per side,
+*   Vc ~ 1.33 V, Vce ~ 0.78 V, Vbe ~ 0.848 V -- inside the model validity
+*   window stated in the card header (vbe 0.65-0.96 V, vce 0.4-2.0 V,
+*   ic < 0.003*Nx A) and below vce_max = 1.6 V, with ~+-0.3 V of Vce
+*   headroom left for the +-14% 1-sigma current spread the mismatch card
+*   produces.
+* Values are hard-coded on purpose: nothing here is a design selection, and
+* a fixed deck is one less thing that can drift between legs.
+
+VDD vdd 0 2.5
+VCM in 0 1.4
+RT tail 0 530
+RC1 vdd c1 2.25k
+RC2 vdd c2 2.25k
+XQ1 c1 in tail 0 npn13G2
+XQ2 c2 in tail 0 npn13G2
+
+.control
+set numdgt=10
+op
+let m_ic1 = (v(vdd)-v(c1))/2250
+let m_ic2 = (v(vdd)-v(c2))/2250
+let m_ratio = m_ic1/m_ic2
+let m_off = v(c1)-v(c2)
+print m_ic1 m_ic2 m_ratio m_off
+print v(c1) v(c2) v(tail) v(in)
+.endc

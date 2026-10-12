@@ -46,6 +46,8 @@ jobs:
         run: python -m pytest sim/mixer-nf-method/tests/test_nfmethod.py -v
       - name: mixer-cm-interface-probe closed-form control / sabotage / status tests (no simulator; interface feasibility only)
         run: python -m pytest sim/mixer-cm-interface-probe/tests -q
+      - name: hbt-mismatch-pair Monte Carlo method-probe ingestion / gate / sabotage tests (no simulator; method feasibility only)
+        run: python -m pytest sim/hbt-mismatch-pair/tests -q
       - name: mixer-pumped-rf-admittance extraction / known-answer / sabotage / classification tests (no simulator; method feasibility only)
         run: python -m pytest sim/mixer-pumped-rf-admittance/tests -q
       - name: lna-linearity analytic controls / negative controls / convergence / record round-trip tests (closed-form fake klt; no simulator)
