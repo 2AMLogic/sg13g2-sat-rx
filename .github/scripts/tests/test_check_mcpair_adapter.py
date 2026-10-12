@@ -71,7 +71,15 @@ def write_run(root: Path, rid_status: str = RID_STATUS, ev=None) -> Path:
         legs = {"mc": healthy_legs(4), "rerun": healthy_legs(4), "local": healthy_legs(1)}
         ev = M.evaluate(batch=legs["mc"], rerun=legs["rerun"], local=legs["local"])
     args = A()
-    prov = R.collect_provenance(args, {}, pkg)
+    # collect_provenance runs the real model-integrity gate, which needs a PDK
+    # install; this suite must not (see module docstring). Stub it the way the
+    # sibling adapter tests inject `pdk_integrity` into the record environment.
+    real_gate = R.pdk_integrity
+    R.pdk_integrity = lambda: {"gate": "stub", "ok": True, "problems": [], "notes": ["models match"]}
+    try:
+        prov = R.collect_provenance(args, {}, pkg)
+    finally:
+        R.pdk_integrity = real_gate
     prov["cmd_args"] = ["--n", "4", "--seed", "186"]
     md, rj = R.render_record(rid_status, status, ev, args, prov)
     rj = dict(rj)
