@@ -5,7 +5,7 @@
   "tier": null,
   "t1_item_count": 11,
   "build_t1_item_count": 11,
-  "t1_met_count": 2,
+  "t1_met_count": 3,
   "source_doc": "signoff/design-evidence-tiers.md",
   "source_doc_content_hash": "sha256:c7a1e7e10627fae396007e0ff951734f37d95028b8f49f2e21e802e9f552f318",
   "build": {
@@ -141,10 +141,26 @@
       "partition": null,
       "text": "every claimed measurement's testbench committed, with a documented cold-start invocation a third party can run; pinned PDK revision.",
       "notes": [],
-      "status": "unmet",
-      "reason": "no_evidence",
+      "status": "met",
+      "reason": null,
       "graded_by_build": true,
-      "citation": null
+      "citation": {
+        "file": "signoff/evidence/item9-testbenches-shipped.json",
+        "command": null,
+        "kind": "generic",
+        "check_status": "pass",
+        "content_hash": "sha256:4fd18459dda79b0070e20b41aa7dd75d86cd0f9380f2aeabda048733f2305c35",
+        "input_verified": true,
+        "exit_status": 0,
+        "artifact_binding": {
+          "t1_item": 9,
+          "path": "sim/lna-sparam-nf/records/20261012-073327-c8afc00.md",
+          "content_hash": "sha256:4fd18459dda79b0070e20b41aa7dd75d86cd0f9380f2aeabda048733f2305c35",
+          "input_verified": true,
+          "summary": "Testbenches shipped: every sim/<bench>/ holding records/ has a cold-start README with a fenced invocation block, and the newest sim/lna-sparam-nf record was written by the harness under a hash-verified pinned PDK artifact (sim/pdk-artifact.json). This attests the testbenches are shipped and reproducible. It does NOT attest that any spec row is met, and the bound record is a declared single-point (hbt_typ, 27 C, 2.50 V) local subset, not the 27-point grid; its Result may be FAIL only because a one-point run cannot satisfy axis-sensitivity checks. Presence/provenance checks only.",
+          "source": "signoff/make_item9_evidence.py"
+        }
+      }
     },
     {
       "tier": "T1",
@@ -161,13 +177,13 @@
         "command": null,
         "kind": "generic",
         "check_status": "pass",
-        "content_hash": "sha256:0c1dc18747f8b49a2d58ff62ba4864ae473a58473ff07aff310c47e1d71777ef",
+        "content_hash": "sha256:f817d28577e11a4132895160a0407d1d8365b847f9da99e7e2715018092c2ed6",
         "input_verified": true,
         "exit_status": 0,
         "artifact_binding": {
           "t1_item": 10,
           "path": ".github/workflows/ci.yml",
-          "content_hash": "sha256:0c1dc18747f8b49a2d58ff62ba4864ae473a58473ff07aff310c47e1d71777ef",
+          "content_hash": "sha256:f817d28577e11a4132895160a0407d1d8365b847f9da99e7e2715018092c2ed6",
           "input_verified": true,
           "summary": "Repo hygiene: README (with a Reproduce section linking sim/README.md), LICENSE and spec/target-spec.md are present; CI (.github/workflows/ci.yml) runs the evidence-format check and the harness smoke test. Presence/invocation checks only; they do not judge the content's quality.",
           "source": "signoff/make_item10_evidence.py"

@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "kind": "generic",
+  "status": "pass",
+  "t1_item": 9,
+  "summary": "Testbenches shipped: every sim/<bench>/ holding records/ has a cold-start README with a fenced invocation block, and the newest sim/lna-sparam-nf record was written by the harness under a hash-verified pinned PDK artifact (sim/pdk-artifact.json). This attests the testbenches are shipped and reproducible. It does NOT attest that any spec row is met, and the bound record is a declared single-point (hbt_typ, 27 C, 2.50 V) local subset, not the 27-point grid; its Result may be FAIL only because a one-point run cannot satisfy axis-sensitivity checks. Presence/provenance checks only.",
+  "source": "signoff/make_item9_evidence.py",
+  "metrics": {
+    "checks": {
+      "benches:found": true,
+      "readme:hbt-kaband-characterization": true,
+      "readme:lna-headroom": true,
+      "readme:lna-linearity": true,
+      "readme:lna-match-tradeoff": true,
+      "readme:lna-sparam-nf": true,
+      "readme:mixer-cm-interface-probe": true,
+      "readme:mixer-conversion-iip3": true,
+      "readme:mixer-nf-method": true,
+      "readme:mixer-pumped-rf-admittance": true,
+      "readme:mixer-topology-feasibility": true,
+      "readme:passive-p1": true,
+      "record:exists": true,
+      "record:pdk-artifact-line": true,
+      "record:pdk-not-unknown": true,
+      "record:pdk-commit-matches-pin": true,
+      "record:pdk-digest-matches-pin": true,
+      "record:all-declared-points-completed": true,
+      "record:fail-only-unswept-axis": true
+    },
+    "readmes": {
+      "hbt-kaband-characterization": "sha256:31409c0422cfc9f8814f24df1f7a4292b750301c3aa184d93b62c7bc50aa5d7e",
+      "lna-headroom": "sha256:f523dfadc91a379d3c5fa26aec6c8cf4471ee7dc5271c8d91cd7b39b0c6576d6",
+      "lna-linearity": "sha256:df5efc063f8980fe6c0b6da0f5bfa14d7fa525a6f29051e1050cc8acb849e2a8",
+      "lna-match-tradeoff": "sha256:ade3fe9718fd395089f58246daf9c08276ac6d1d3ad32bc04f31bc7510c1308b",
+      "lna-sparam-nf": "sha256:1ae5f41c76c3b941838dc4111c60c005857a0a7561b5e00466ad31a15892d2bd",
+      "mixer-cm-interface-probe": "sha256:7b146013b8d707f1a98729c89856cfd0940c62729767ae1632da9942949aa31e",
+      "mixer-conversion-iip3": "sha256:ee8e0048c9f4301a7cc984da2d4998dd52d2b4ce0de497197379315dcd8e28a8",
+      "mixer-nf-method": "sha256:962be16ffb6e3680d8074196f9d654532444427981b72c6388a216c95a247f67",
+      "mixer-pumped-rf-admittance": "sha256:46fa18ebdca944b37977db1497c06524b4066705c74e2c6524e433a1fde15e15",
+      "mixer-topology-feasibility": "sha256:02da4d8fc2f23bcb0992dc7c62ca136a7891ed5853e9aa4700159c8722b2c8bd",
+      "passive-p1": "sha256:83f083e2e2a08fbf4e613dbc2b3775f16b245fd82fe03a2afa9dabc74a4ae3bc"
+    },
+    "pdk_pin": {
+      "sim/pdk-artifact.json": "sha256:2ca42a292eeef18dc0da32004bb2cfa66dfead21c73b4f77d4609d60dadeabf1"
+    },
+    "newest_record_pinned_pdk_by_bench": {
+      "hbt-kaband-characterization": false,
+      "lna-headroom": false,
+      "lna-linearity": false,
+      "lna-match-tradeoff": false,
+      "lna-sparam-nf": true,
+      "mixer-cm-interface-probe": false,
+      "mixer-conversion-iip3": true,
+      "mixer-nf-method": false,
+      "mixer-pumped-rf-admittance": false,
+      "mixer-topology-feasibility": false,
+      "passive-p1": false
+    }
+  },
+  "provenance": {
+    "input": {
+      "path": "sim/lna-sparam-nf/records/20261012-073327-c8afc00.md",
+      "content_hash": "sha256:4fd18459dda79b0070e20b41aa7dd75d86cd0f9380f2aeabda048733f2305c35"
+    }
+  }
+}

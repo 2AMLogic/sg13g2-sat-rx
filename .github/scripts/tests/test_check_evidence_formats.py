@@ -650,12 +650,12 @@ def test_coverage_current_tree_passes():
 def test_coverage_stale_latest_record_fails_and_fixed_passes(tree):
     man = tree / "spec" / "row-coverage.json"
     doc = json.loads(man.read_text())
-    entry = next(e for e in doc["rows"] if e["row"] == 5)
+    entry = next(e for e in doc["rows"] if e["row"] == 6)
     recs = sorted((REPO / "sim" / "lna-sparam-nf" / "records").glob("*.md"))
     entry["latest_record"] = f"sim/lna-sparam-nf/records/{recs[0].name}"
     man.write_text(json.dumps(doc))
     found = coverage_problems(tree)
-    assert any("row 5" in p and "stale" in p and recs[-1].name in p for p in found), found
+    assert any("row 6" in p and "stale" in p and recs[-1].name in p for p in found), found
     entry["latest_record"] = f"sim/lna-sparam-nf/records/{recs[-1].name}"
     man.write_text(json.dumps(doc))
     assert coverage_problems(tree) == []
