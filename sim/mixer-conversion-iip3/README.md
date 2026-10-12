@@ -44,14 +44,22 @@ one-tone floor at every PVT point. See the experiment's tb.json evidence
 notes for the swept method, the tracked-sideband choice and the convergence
 study.
 
-Open follow-up from the #165 method: extrapolated iip3_dbm agrees across
-backends only to ~1.4 dB -- the free two-line intersection amplifies the
-low-drive IM3 inter-build scatter (the top-of-fit pim3_dbm read does meet
-#135's 0.1 dB criterion); tracked in #181. And at 6 of 27 PVT corners the
-static fit window contains no valid 1:3 region (hot corners compress inside
-it): the slope gates fail there by design, no IIP3 is published at those
-corners, and `characterize.sh smoke` exercises the temperatures the stated
-window covers for that reason.
+Issue-#181 resolution of the #165 method's open backend bound: the published
+`iip3_dbm` is no longer the free two-line intersection (measured ~1.4 dB
+local-vs-batch; it rotates with the fitted IM3 slope the two ngspice builds
+agree to only ~0.10) but the **slope-3-constrained read at the top-of-fit
+drive**, `IIP3 = Pin + (Pfund - Pim3)/2`, whose measured backend bound at
+hbt_typ/27C/2.50V is **0.0492 dB** (ngspice-42 +3.8513 vs ngspice-46 +3.8021,
+within #135's 0.1 dB criterion). The free intersection and the window-centroid
+mean (~0.27 dB bound) remain published per-corner diagnostics
+(`iip3_free_intersection_dbm`, `iip3_window_centroid_dbm`); the slope gates,
+`fit_n = 5` window pin and the >= 20 dB one-tone floor margin are unchanged.
+The two open follow-ups from the #165/#180 records stand: the low-drive IM3
+reads are still not tolerance-converged (reltol alone fails the slope gate),
+and at 6 of 27 PVT corners the static fit window contains no valid 1:3 region
+(hot corners compress inside it): the slope gates fail there by design, no
+IIP3 is published at those corners, and `characterize.sh smoke` exercises the
+temperatures the stated window covers for that reason.
 
 Single local point (debug probe, allowed on a dispatch host):
 

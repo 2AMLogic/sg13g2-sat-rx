@@ -2,6 +2,7 @@
 against deliberately broken synthetic ones."""
 
 import json
+import math
 from pathlib import Path
 
 import pytest
@@ -193,3 +194,105 @@ def test_valid_numeric_limits_still_load(tmp_path):
     ))
     assert tb.checks["m1"]["max"] == 2.5
     T.load(make_bench(tmp_path / "x", {"checks": {"m1": {"min": 3, "max": 3}}}))
+
+
+# ---------------------------------------------------------------- issue #181: iip3 readout
+
+# The committed mixer bench publishes iip3_dbm as the SLOPE-3-CONSTRAINED read
+# at the top-of-fit drive (IIP3 = Pin + (Pfund - Pim3)/2, the classical
+# slope-1/slope-3 extrapolation applied at the last fit-window point), with the
+# free two-line intersection and the window-centroid mean demoted to published
+# diagnostics. Record 20261012-061538-2bdb5be measured the free intersection's
+# local-vs-batch bound at ~1.4 dB (it rotates with the fitted IM3 slope, which
+# ngspice builds agree to only ~0.10) while the top-of-fit per-point reads
+# agree to 0.0998 dB -- so the constrained headline's bound is ~0.05 dB.
+
+MIXER = next(p for p in BENCHES if p.name == "mixer-conversion-iip3")
+
+
+def mixer_manifest():
+    return json.loads((MIXER / "testbench" / "tb.json").read_text())
+
+
+def test_iip3_headline_is_topfit_slope3_read_with_published_diagnostics():
+    raw = mixer_manifest()
+    assert raw["measure"]["iip3_dbm"] == "iip3t"
+    assert raw["measure"]["iip3_free_intersection_dbm"] == "iip3x"
+    assert raw["measure"]["iip3_window_centroid_dbm"] == "iip3c"
+    analyses = "\n".join(raw["analyses"])
+    # the estimator definitions the synthetic-data mirror below computes
+    assert "let iip3t = ($lopin) + ((($lopf) - ($lopim))/2)" in analyses
+    assert "let iip3c = (($sx)/($n)) + (((($syf) - (($syi)))/($n))/2)" in analyses
+    assert "let iip3x = (bfit_i - bfit_f) / (mfit_f - mfit_i)" in analyses
+    # the headline read consumes the LAST fit-window point (lopin/lopf/lopim
+    # accumulate inside the fit foreach), which must stay the top-of-fit drive
+    # the floor control also runs at
+    assert "foreach drv 0.014 0.02 0.028 0.04 0.056" in analyses
+    assert "alterparam vrf = 0.056" in analyses
+
+
+def test_issue181_slope_region_and_floor_gates_not_loosened():
+    checks = mixer_manifest()["checks"]
+    assert (checks["slope_fund_db_per_db"]["min"], checks["slope_fund_db_per_db"]["max"]) == (0.9, 1.1)
+    assert (checks["slope_im3_db_per_db"]["min"], checks["slope_im3_db_per_db"]["max"]) == (2.7, 3.3)
+    assert (checks["fit_n"]["min"], checks["fit_n"]["max"]) == (5, 5)
+    assert checks["pim3_fit_margin_db"]["min"] == 20.0
+
+
+def _deck_estimators(pin, pfund, pim3):
+    """Python mirror of the tb.json in-deck estimators: the least-squares
+    accumulators' free two-line intersection (iip3x), the window-centroid
+    mean (iip3c) and the top-of-fit slope-3 read (iip3t)."""
+    n = len(pin)
+    sx = sum(pin)
+    sxx = sum(p * p for p in pin)
+    sxyf = sum(p * f for p, f in zip(pin, pfund))
+    syf = sum(pfund)
+    sxyi = sum(p * i for p, i in zip(pin, pim3))
+    syi = sum(pim3)
+    den = n * sxx - sx * sx
+    mfit_f = (n * sxyf - sx * syf) / den
+    mfit_i = (n * sxyi - sx * syi) / den
+    bfit_f = (syf - mfit_f * sx) / n
+    bfit_i = (syi - mfit_i * sx) / n
+    return (
+        (bfit_i - bfit_f) / (mfit_f - mfit_i),
+        sx / n + ((syf - syi) / n) / 2,
+        pin[-1] + (pfund[-1] - pim3[-1]) / 2,
+    )
+
+
+# the bench's stated fit window, DRIVELIST 0.014..0.056 V
+_FIT_DRIVES = [0.014, 0.02, 0.028, 0.04, 0.056]
+
+
+def _fit_pins_dbm():
+    return [10 * math.log10(d * d / (8 * 50 * 1e-3)) for d in _FIT_DRIVES]
+
+
+def test_iip3_estimators_recover_known_intercept_on_exact_two_line_data():
+    # pfund = pin (slope 1), pim3 = 3*pin - 20 (slope 3): both lines meet at
+    # IIP3 = +10 dBm, so every estimator must return exactly the intercept
+    pin = _fit_pins_dbm()
+    pfund, pim3 = pin, [3 * p - 20.0 for p in pin]
+    free, centroid, topfit = _deck_estimators(pin, pfund, pim3)
+    for got in (free, centroid, topfit):
+        assert abs(got - 10.0) < 1e-9
+
+
+def test_iip3_topfit_read_holds_while_free_intersection_swings():
+    # two builds' IM3 reads per the cross-backend note of record
+    # 20261012-061538-2bdb5be: per-point disagreement grows toward the window's
+    # low end (0.0998 dB at top-of-fit up to 1.375 dB at 0.014 V); fundamentals
+    # agree to 0.0014 dB (treated as identical here). The constrained top-of-fit
+    # read inherits half the top-of-fit delta; the free intersection amplifies
+    # the low-end scatter across the ~31 dB extrapolation.
+    pin = _fit_pins_dbm()
+    pfund = pin
+    pim3_a = [3 * p - 20.0 for p in pin]
+    pim3_b = [v + d for v, d in zip(pim3_a, [1.375, 0.685, 0.348, 0.187, 0.0998])]
+    free_a, _, top_a = _deck_estimators(pin, pfund, pim3_a)
+    free_b, cent_b, top_b = _deck_estimators(pin, pfund, pim3_b)
+    assert abs(top_b - top_a) <= 0.05        # half the 0.0998 dB top-of-fit delta
+    assert abs(free_b - free_a) > 1.0        # the free intersection swings ~dBs
+    assert abs(cent_b - top_b) > 0.2         # the centroid keeps the low-drive scatter

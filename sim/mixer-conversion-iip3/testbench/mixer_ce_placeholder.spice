@@ -53,9 +53,17 @@
 * ngspice-42 vs -142.6 batch ngspice-46 at the same point). The deck fits
 * least-squares lines to Pfund_dBm and Pim3_dBm vs Pin_dBm over a STATED
 * sub-region of the sweep (the fit window, listed literally in tb.json's
-* analyses as the FITLIST drive values) and intersects them: the classical
-* two-line IIP3 extrapolation, from inside the region the slopes verify,
-* never from a single point. The per-step SWEEPPOINT rows plus
+* analyses as the FITLIST drive values); the fitted slopes are the shown
+* region's GATES, and the published iip3_dbm is the SLOPE-3-CONSTRAINED read
+* at the top-of-fit drive, IIP3 = Pin + (Pfund - Pim3)/2 (issue #181): the
+* slope-1/slope-3 extrapolation applied at the one point whose per-point
+* reads agree across builds, inside the region the gates verify -- never
+* from a compressed point, which is what the gate check rules out. The free
+* two-line intersection and the window-centroid mean are computed and
+* published as diagnostics only (issue #181: the free intersection rotates
+* with the fitted IM3 slope, which ngspice builds agree to only ~0.10, so
+* its local-vs-batch bound measured ~1.4 dB vs ~0.05 dB for the constrained
+* headline). The per-step SWEEPPOINT rows plus
 * adjacent-pair local slopes are the shown 1:3 slope region; points outside
 * the fit window are excluded a priori (lowest drives: IM3 approaching the
 * sampler floor; highest drive: compression onset) and the record must
