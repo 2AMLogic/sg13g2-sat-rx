@@ -34,26 +34,48 @@
 *   spaced 25 MHz apart, by construction (frequency conversion preserves tone
 *   spacing).
 *
-* Coherent-bin FFT: the transient runs from t=20 ns (settle time, several
-* RC time constants of this fixture's coupling/bias network -- excludes the
-* startup transient from the measurement window) to t=100 ns, an 80 ns
-* window. Every tone above (LO, both RF tones, both IF fundamentals, both
-* IM3 products) is an EXACT integer multiple of 12.5 MHz = 1/80ns, so an
-* ideal (infinite-precision, unpadded) FFT of this window would place every
-* one of them exactly on a bin with zero spectral leakage. In practice
-* ngspice's `fft` command zero-pads its input to the next power-of-two
-* length (confirmed during development: an 8001-sample input becomes a
-* 8192-point FFT, i.e. a slightly different -- not exactly 12.5 MHz --
-* actual bin spacing), so this bench does NOT hardcode a bin index: it reads
-* the FFT's own reported bin spacing back (`frequency[1]-frequency[0]`) and
-* computes `floor(f_target/bin_spacing + 0.5)` for each target frequency at
-* run time, in tb.json's "analyses". This is robust to whatever padding
-* ngspice applies, at the cost of a small (bounded by the standard
-* rectangular-window worst-case scalloping loss, ~3.9 dB) amplitude error
-* when the true padded bin spacing does not divide a target frequency
-* exactly -- an accepted, documented approximation for a harness-bootstrap
-* placeholder, not appropriate to carry forward uncritically into a
-* spec-compliance measurement of a real design.
+* Coherent-bin FFT with a POWER-OF-TWO SAMPLE COUNT (issue #135): the
+* transient records exactly 65536 = 2^16 samples -- tstart=20 ns (settle
+* discard, several RC time constants of this fixture's coupling/bias network),
+* tstep=1.220703125 ps = 80ns/65536, tstop=20ns + 65535*tstep =
+* 99.998779296875 ns -- so the DFT record length is exactly 80 ns and every
+* tone above (LO, both RF tones, both IF fundamentals, both IM3 products) is
+* an EXACT integer multiple of the 12.5 MHz bin: an ideal FFT places each one
+* exactly on a bin, with zero spectral leakage and zero scalloping.
+*
+* WHY the sample count itself must be 2^k, not merely coherent: ngspice builds
+* differ in what the `fft` command does with a non-power-of-two input. This
+* repo's local ngspice builds zero-pad to the next power of two -- the old
+* `tran 10p 100n 20n` window (8001 samples) logged "FFT: ... input length:
+* 8001, zero padding: 191" and reported a frequency resolution derived from
+* the 8001-sample span, so the padded transform's frequency labels did not
+* describe its own bins -- while the batch fleet's ngspice-46 does not pad
+* (4001 one-sided bins for the same samples). The same deck then produced
+* different pfund/pim3/iip3 numbers per backend (issue #135's finding). With
+* the input length exactly 2^16 the two behaviours COINCIDE: a padding build
+* has zero samples to add ("zero padding: 0") and a non-padding build sees the
+* same 2^k length, so both run the identical transform and the metrics are
+* backend-independent. tb.json's analyses still read the bin spacing back at
+* run time (`frequency[1]-frequency[0]`) and round each target frequency to
+* its nearest bin -- now a no-op guard, kept so a future window edit cannot
+* silently reintroduce off-bin reads. Until klayout-tools#3095 makes klt
+* disclose the runner's FFT build, the per-corner log FFT banner lines are
+* that disclosure.
+*
+* Floor caveat (visible only now that leakage is gone): at this drive
+* (vrf=10 mV) the IM3 product sits BELOW what this sampling/FFT path resolves
+* -- along the SAMPLE-COUNT axis (same 80 ns window, finer tstep, default
+* tolerances) pim3_dbm falls monotonically instead of converging, at
+* hbt_typ/27C/2.50V: 8192 samples: -104.7 dBm; 16384: -117.4; 32768: -124.2
+* (producing ngspice build of these three rungs not recorded); 65536: -142.6
+* on the batch fleet's ngspice-46, -137.45 on this host's ngspice-42. Along
+* the separate TOLERANCE axis (65536 samples fixed, local ngspice-42),
+* tightening reltol to 1e-6 moved it UP, -137 -> -130 dBm. Opposite signs on
+* different axes: a resolved IM3 product would be stable along both, and
+* this read is stable along neither. So pim3_dbm/iip3_dbm here are NOT a
+* device IM3/IIP3 and do not reproduce across backends (only pfund_dbm,
+* conversion gain and lo_rf_leak_dbm do); see this experiment's tb.json
+* evidence notes.
 *
 * LO-to-RF leakage: read from the SAME transient's FFT of v(prf) (the RF
 * port node, i.e. the side of the RF source resistor facing the DUT) at the

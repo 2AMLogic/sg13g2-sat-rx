@@ -112,6 +112,7 @@ python3 -m harness.cli selftest <experiment-slug>
 - Corners must each select exactly one `.lib` section, and no two corners may share a section. A `--sabotage` set fails this check, so run it with `--backend local`. `selftest` is local-only.
 - `--runner-version-check warn` passes klt's runner/client skew policy through to the requests. A skewed runner then runs the grid, but `offhost_identity` refuses to record its results, so use it only with `--no-write` (method checks).
 - `--no-stage-models` (requires `--no-write`) leaves the models out of the requests, so the runner uses its own image's models. A skewed runner that ignores `stage_model_inputs` needs it (klayout-tools#2877, #2901). Those models are not hashed, so the run is a method check only.
+- `--temperatures` / `--supplies` narrow the grid to a subset of the testbench's own declared levels (an undeclared level is refused, exit 2). Combined with a single `--corners` entry this records one local point. An evidence-writing subset run needs `--subset-reason`, which the record prints as the subset Justification. The record is a declared subset, and its checks are still evaluated, so a sensitivity check over an axis the subset does not sweep makes the status `fail`.
 - `--klt-cmd` picks the klt client (e.g. `uvx --from klayout-tools==X.Y.Z klt`). `--timeout-s` is the per-corner timeout (default 1800 s for klt, 300 s local).
 
 ### Frozen inputs: what a record freezes and how to read it back

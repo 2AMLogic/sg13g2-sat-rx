@@ -132,6 +132,38 @@ def local_jobs_problem(jobs: int, n_points: int) -> str | None:
     return None
 
 
+def select_axis(declared: list[float], requested: str, axis: str) -> list[float]:
+    """``--temperatures``/``--supplies``: narrow one PVT axis to a subset of
+    the testbench's OWN declared levels (empty ``requested`` keeps them all).
+
+    A level the testbench does not declare is refused (ValueError), so a
+    subset run can only drop points of the bench's grid, never invent one.
+    """
+    if not requested.strip():
+        return list(declared)
+    chosen: list[float] = []
+    for raw in requested.split(","):
+        raw = raw.strip()
+        try:
+            value = float(raw)
+        except ValueError:
+            raise ValueError(f"--{axis}: {raw!r} is not a number") from None
+        match = [d for d in declared if abs(d - value) <= 1e-9 * max(1.0, abs(d))]
+        if not match:
+            raise ValueError(f"--{axis}: {raw} is not one of the testbench's declared levels "
+                             f"({', '.join(f'{d:g}' for d in declared)})")
+        if match[0] not in chosen:
+            chosen.append(match[0])
+    return chosen
+
+
+SUBSET_REASON_REQUIRED = (
+    "error: --temperatures/--supplies narrow the grid to a subset of the testbench's matrix; "
+    "an evidence-writing subset run needs --subset-reason saying why (it is printed as the "
+    "record's subset Justification)"
+)
+
+
 SMOKE_SUBSET_REJECTION = (
     "error: --smoke-subset only applies to non-recording runs; it requires "
     "--no-write and cannot be combined with an evidence-writing run"
@@ -193,8 +225,17 @@ def cmd_run(args: argparse.Namespace) -> int:
             print(str(exc), file=sys.stderr)
             return 3
 
-    temperatures = tb.temperatures_c
-    supplies = supply_points(tb.nominal_supply_v, tb.supply_tolerance)
+    try:
+        temperatures = select_axis(list(tb.temperatures_c), args.temperatures, "temperatures")
+        supplies = select_axis(supply_points(tb.nominal_supply_v, tb.supply_tolerance),
+                               args.supplies, "supplies")
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    narrowed = bool(args.temperatures.strip() or args.supplies.strip())
+    if narrowed and not args.no_write and not args.subset_reason.strip():
+        print(SUBSET_REASON_REQUIRED, file=sys.stderr)
+        return 2
     points = build_grid(corners, temperatures, supplies)
 
     # Artifact-identity gate (issue #150): distinct points whose corner_id
@@ -341,7 +382,7 @@ def cmd_run(args: argparse.Namespace) -> int:
     record = build_record(
         tb, pdk, points, results, record_ngspice, SIM_DIR.parent, record_id,
         started.isoformat(), wall_seconds, claim=args.claim or tb.claim,
-        supersedes=args.supersedes or "", git=git, toolchain=tc_summary,
+        supersedes=args.supersedes or "", subset_reason=args.subset_reason.strip(), git=git, toolchain=tc_summary,
         pdk_artifact=pdk_artifact, execution=execution,
     )
     try:
@@ -444,6 +485,14 @@ def build_parser() -> argparse.ArgumentParser:
     p_run.add_argument("--no-stage-models", action="store_true",
                        help="batch only, requires --no-write: do not ship this host's models with "
                             "the requests (the runner uses its image's own, unhashed)")
+    p_run.add_argument("--temperatures", default="",
+                       help="comma-separated subset of the testbench's temperatures_c (default: all)")
+    p_run.add_argument("--supplies", default="",
+                       help="comma-separated subset of the testbench's supply points in V "
+                            "(default: all)")
+    p_run.add_argument("--subset-reason", default="",
+                       help="why the grid is a subset of the testbench's matrix; required for an "
+                            "evidence-writing run with --temperatures/--supplies")
     p_run.add_argument("--klt-cmd", default="klt",
                        help="klt client command (e.g. 'uvx --from klayout-tools==X klt')")
     p_run.add_argument("--workdir", default="")
