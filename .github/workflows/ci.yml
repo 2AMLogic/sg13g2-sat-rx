@@ -31,7 +31,7 @@ jobs:
       - name: Install test dependencies (pinned ranges in requirements-test.txt)
         run: pip install -r requirements-test.txt
       - name: Byte-compile every Python file
-        run: python -m compileall -q sim .github/scripts
+        run: python -m compileall -q sim .github/scripts signoff
       - name: Harness unit tests (corners, evidence, report, testbench manifests)
         run: python -m pytest sim/harness/tests -q
       - name: Ka-band postprocessor unit tests
@@ -72,7 +72,7 @@ jobs:
         run: pip install pytest
       - name: Checker self-test (negative controls on broken fixtures and temporary git histories)
         run: python -m pytest .github/scripts/tests -q
-      - name: Item-9 evidence generator negative controls + committed envelope freshness
+      - name: Signoff evidence generator negative controls + committed envelope freshness (items 1, 9, 10)
         run: python -m pytest signoff/tests -q
       # The spec-row coverage check (spec/row-coverage.json vs the table in
       # spec/target-spec.md; issue #50) runs inside the next step as the
