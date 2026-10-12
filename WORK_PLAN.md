@@ -25,13 +25,13 @@ _None._
 
 Issues currently being built (`loom:building`).
 
-_None._
+- **#163**: ci: split the 2,930-line check_evidence_formats.py into per-bench modules behind the same CLI
 
 ## PRs Awaiting Review
 
 PRs waiting on Judge (`loom:review-requested`).
 
-_None._
+- **#167**: Split check_evidence_formats.py into evidence_checks package (#163)
 
 ## Approved (Awaiting Merge)
 
@@ -47,12 +47,11 @@ Issues carrying `loom:curated`.
 - **#79**: design: choose the first-stage core change that lets NF and input match close together *(curated)*
 - **#132**: sim: refine headroom shortlist (C08/C05) - convergence, two-tone IIP3, gain/NF/stability vs baseline *(curated)*
 - **#135**: mixer-conversion-iip3: FFT-bin metrics depend on the ngspice FFT build (local zero-padded vs batch unpadded) *(curated)*
+- **#163**: ci: split the 2,930-line check_evidence_formats.py into per-bench modules behind the same CLI *(curated)*
 
 ## Proposed (Architect / Hermit)
 
-- **#155**: harness: report the installed PDK revision from .fetched-version instead of 'unknown' *(architect)*
-- **#156**: spec: classify each target-spec row as statistical or deterministic for T1 item 6 *(architect)*
-- **#144**: Consolidate duplicated provenance helpers in mixer probe drivers into the harness *(hermit)*
+_None._
 
 ## Epics
 
@@ -65,10 +64,10 @@ _None._
 | Operator merge-risk holds | 0 |
 | Operator priority | 0 |
 | Ready (`loom:issue`) | 0 |
-| In Progress (`loom:building`) | 0 |
-| PRs awaiting review | 0 |
+| In Progress (`loom:building`) | 1 |
+| PRs awaiting review | 1 |
 | Approved PRs awaiting merge | 0 |
-| Curated | 4 |
-| Architect / Hermit proposals | 3 |
+| Curated | 5 |
+| Architect / Hermit proposals | 0 |
 | Active epics | 0 |
 <!-- guide:plan-body:end -->

@@ -2,8 +2,14 @@
 
 Chronological record of merged pull requests and closed issues, maintained by the Loom Guide role.
 
+### 2026-10-12
+
+- **PR #164**: mixer-conversion-iip3: power-of-two FFT window, corrected FFT notes, supersession record (#135)
+
 ### 2026-10-11
 
+- **PR #166**: docs: fix stale Pdk.version 'unknown' claim in sim/README.md
+- **Issue #162** (closed): docs: sim/README.md still says Pdk.version stays 'unknown' for IHP (stale after #155)
 - **PR #160**: refactor: consolidate probe provenance helpers into harness.provenance
 - **Issue #144** (closed): Consolidate duplicated provenance helpers in mixer probe drivers into the harness
 - **PR #159**: spec: per-row statistical classification and DR-0007 (#156)
