@@ -1,0 +1,9 @@
+* probe-readiness reference, recognised-devices-only subset (issue #185 probe)
+* Same cell with only the devices `klt extract --deck sg13g2` actually
+* recognises (the cmim MIM capacitor). Documents the "works with
+* workaround" carve-out; the npn13G2 HBT and rsil resistor are omitted
+* because the curated deck recognises neither (see README.md).
+.SUBCKT probe_readiness CB CT E RB C B RA GND
+C1 CB CT cap_cmim 7.440855e-14
+.ENDS probe_readiness
+.END

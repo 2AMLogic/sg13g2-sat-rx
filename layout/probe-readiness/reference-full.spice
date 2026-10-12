@@ -1,0 +1,9 @@
+* probe-readiness schematic-side reference (hand-written, issue #185 probe)
+* One npn13G2 HBT, one cmim MIM capacitor, one rsil poly resistor --
+* what the schematic would instantiate. NOT a claim; probe input only.
+.SUBCKT probe_readiness CB CT E RB C B RA GND
+Q1 C B E GND npn13G2 area=1
+R1 RA RB rsil 24.863
+C1 CB CT cap_cmim 7.440855e-14
+.ENDS probe_readiness
+.END
