@@ -19,13 +19,14 @@ _None._
 
 Human-approved issues ready for implementation (`loom:issue`).
 
-_None._
+- **#185**: layout: non-claiming klt layout-chain readiness probe (npn13G2 + MIM + resistor) before the LNA layout
+- **#186**: sim: Monte Carlo mismatch-card method probe on a matched npn13G2 pair (prepares T1 item 6 / row 15)
 
 ## In Progress
 
 Issues currently being built (`loom:building`).
 
-- **#165**: mixer-conversion-iip3: a method that actually resolves IM3/IIP3 (current IM3 read sits on the transient interpolation-error floor)
+_None._
 
 ## PRs Awaiting Review
 
@@ -63,8 +64,8 @@ _None._
 |------|-------|
 | Operator merge-risk holds | 0 |
 | Operator priority | 0 |
-| Ready (`loom:issue`) | 0 |
-| In Progress (`loom:building`) | 1 |
+| Ready (`loom:issue`) | 2 |
+| In Progress (`loom:building`) | 0 |
 | PRs awaiting review | 0 |
 | Approved PRs awaiting merge | 0 |
 | Curated | 5 |
