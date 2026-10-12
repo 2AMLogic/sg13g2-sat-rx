@@ -81,8 +81,7 @@ def is_local_backend(backend: str) -> bool:
     return str(backend).startswith("local")
 
 
-class CollectionError(RuntimeError):
-    """The collection is corrupt/incomplete: exit non-zero, write nothing."""
+CollectionError = klt_driver.CollectionError
 
 
 # ---------------------------------------------------------------------------
@@ -219,29 +218,8 @@ def submit(spec: RequestSpec, req: Path, work: Path, args) -> Path:
     """Run one klt request (skipped when its report already exists, so an
     interrupted collection resumes). Returns the report path; raises
     CollectionError on any klt failure."""
-    out = (work / f"out_{spec.key}").resolve()
-    report = work / f"report_{spec.key}.json"
-    if report.is_file():
-        try:
-            if "corners" in json.loads(report.read_text()):
-                print(f"  reuse {report.name}", flush=True)
-                return report
-        except ValueError:
-            pass
-    backend = backend_for(spec, args)
-    cmd = shlex.split(args.klt_cmd) + ["sim", str(req), "--backend", backend, "-o", str(out),
-                                       "--format", "json"]
-    print("$ " + " ".join(cmd), flush=True)
-    with report.open("w") as fh:
-        proc = subprocess.run(cmd, stdout=fh, stderr=subprocess.PIPE, text=True)
-    if proc.stderr:
-        (work / f"stderr_{spec.key}.log").write_text(proc.stderr)
-    if proc.returncode != 0:
-        tail = proc.stderr[-3000:]
-        report.rename(work / f"report_{spec.key}.failed.json")
-        raise CollectionError(f"klt sim failed for {spec.key} (exit {proc.returncode}); "
-                              f"backend {backend}: {tail}")
-    return report
+    return klt_driver.submit_request(req, work / f"report_{spec.key}.json", spec.key,
+                                     backend_for(spec, args), args.klt_cmd, work)
 
 
 # ---------------------------------------------------------------------------

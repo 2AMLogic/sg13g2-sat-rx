@@ -22,11 +22,13 @@ import json
 import shlex
 import subprocess
 import sys
+from functools import partial
 from pathlib import Path
 
 import headroom as H
 from headroom import BENCH_DIR, REPO_ROOT, SIM_DIR
 from harness import klt_driver
+from harness.provenance import git_out as _git_out, sha256_file
 from harness.report import RecordExists, allocate_record_id, git_provenance
 
 RECORDS = BENCH_DIR / "records"
@@ -37,16 +39,8 @@ MODEL_FILES = ("cornerHBT.lib", "sg13g2_hbt_mod.lib")
 HIST_ID = "20261010-174208-0f67eaf"
 
 
-class CollectionError(RuntimeError):
-    pass
-
-
-def git_out(*args: str) -> str:
-    return subprocess.run(["git", *args], cwd=REPO_ROOT, capture_output=True, text=True).stdout.strip()
-
-
-def sha256_file(p: Path) -> str:
-    return H.sha256_bytes(p.read_bytes())
+CollectionError = klt_driver.CollectionError
+git_out = partial(_git_out, cwd=REPO_ROOT)
 
 
 # ---------------------------------------------------------------------------
@@ -111,25 +105,9 @@ def write_requests(hp, lp, work: Path, backend: str, args) -> dict[str, Path]:
 
 
 def submit(key: str, req: Path, work: Path, backend: str, args) -> Path:
-    report = work / f"report_{key}.json"
-    if report.is_file():
-        try:
-            if "corners" in json.loads(report.read_text()):
-                print(f"  reuse {report.name}", flush=True)
-                return report
-        except ValueError:
-            pass
-    out = (work / f"out_{key}").resolve()
-    cmd = shlex.split(args.klt_cmd) + ["sim", str(req), "--backend", backend, "-o", str(out), "--format", "json"]
-    print("$ " + " ".join(cmd), flush=True)
-    with report.open("w") as fh:
-        proc = subprocess.run(cmd, stdout=fh, stderr=subprocess.PIPE, text=True)
-    if proc.stderr:
-        (work / f"stderr_{key}.log").write_text(proc.stderr)
-    if proc.returncode != 0:
-        report.rename(work / f"report_{key}.failed.json")
-        raise CollectionError(f"klt sim failed for {key} (exit {proc.returncode}, backend {backend}): {proc.stderr[-3000:]}")
-    return report
+    """One klt request on an explicit backend; reuses a complete report (resume).
+    Any failure raises: there is no local fallback."""
+    return klt_driver.submit_request(req, work / f"report_{key}.json", key, backend, args.klt_cmd, work)
 
 
 def read_unit(report: Path) -> tuple[dict, str]:

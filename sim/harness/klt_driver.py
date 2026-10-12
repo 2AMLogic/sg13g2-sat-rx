@@ -254,6 +254,43 @@ def klt_process_names(points) -> dict[str, object]:
     return by_section
 
 
+class CollectionError(RuntimeError):
+    """A study collection is corrupt or incomplete: exit non-zero, write nothing."""
+
+
+def submit_request(req: Path, report: Path, key: str, backend: str, klt_cmd: str,
+                   work: Path) -> Path:
+    """Strict one-request ``klt sim`` for the per-study collect drivers.
+
+    Reuses *report* when it already holds ``corners`` (an interrupted
+    collection resumes). Otherwise runs the request on the explicit *backend*,
+    writes ``stderr_<key>.log`` into *work*, and on any non-zero exit renames
+    the report to ``report_<key>.failed.json`` and raises
+    :class:`CollectionError` -- there is no local fallback. Unlike
+    :func:`submit` (the grid runner) exit 3/4 is a failure here.
+    """
+    if report.is_file():
+        try:
+            if "corners" in json.loads(report.read_text()):
+                print(f"  reuse {report.name}", flush=True)
+                return report
+        except ValueError:
+            pass
+    out = (work / f"out_{key}").resolve()
+    cmd = shlex.split(klt_cmd) + ["sim", str(req), "--backend", backend, "-o", str(out),
+                                  "--format", "json"]
+    print("$ " + " ".join(cmd), flush=True)
+    with report.open("w") as fh:
+        proc = subprocess.run(cmd, stdout=fh, stderr=subprocess.PIPE, text=True)
+    if proc.stderr:
+        (work / f"stderr_{key}.log").write_text(proc.stderr)
+    if proc.returncode != 0:
+        report.rename(work / f"report_{key}.failed.json")
+        raise CollectionError(f"klt sim failed for {key} (exit {proc.returncode}, backend "
+                              f"{backend}): {proc.stderr[-3000:]}")
+    return report
+
+
 def submit(job: KltJob, backend: str, klt_cmd: str = "klt") -> KltJob:
     """Run one ``klt sim`` request; fill ``job.report``/``job.exit_code``.
 
