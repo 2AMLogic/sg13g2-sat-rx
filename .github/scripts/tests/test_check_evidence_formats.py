@@ -88,6 +88,24 @@ def test_removed_readme_fails(tree, bench):
     assert_fails(tree, f"sim/{bench}/README.md", "no cold-start README")
 
 
+def test_sim_readme_benches_table_lists_every_bench():
+    names = chk.benches_table_names(REPO / "sim" / "README.md")
+    assert names is not None
+    for d in (REPO / "sim").iterdir():
+        if (d / "records").is_dir():
+            assert d.name in names
+
+
+@pytest.mark.parametrize("bench", ["lna-headroom", "passive-p1"])
+def test_bench_missing_from_benches_table_fails(tree, bench):
+    rd = own(tree / "sim" / "README.md")
+    lines = rd.read_text().splitlines(keepends=True)
+    kept = [ln for ln in lines if not ln.startswith(f"| `{bench}` |")]
+    assert len(kept) == len(lines) - 1
+    rd.write_text("".join(kept))
+    assert_fails(tree, f"sim/{bench}", "Benches table")
+
+
 def test_readme_without_invocation_section_fails(tree):
     rd = own(tree / "sim" / "lna-sparam-nf" / "README.md")
     rd.write_text("# lna-sparam-nf\n\nJust prose, no way to run it.\n")
