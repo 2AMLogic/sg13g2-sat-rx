@@ -88,6 +88,39 @@ def test_removed_readme_fails(tree, bench):
     assert_fails(tree, f"sim/{bench}/README.md", "no cold-start README")
 
 
+def test_sim_readme_benches_table_lists_every_bench():
+    names = chk.benches_table_names(REPO / "sim" / "README.md")
+    assert names is not None
+    for d in (REPO / "sim").iterdir():
+        if (d / "records").is_dir():
+            assert d.name in names
+
+
+@pytest.mark.parametrize("bench", ["lna-headroom", "passive-p1"])
+def test_bench_missing_from_benches_table_fails(tree, bench):
+    rd = own(tree / "sim" / "README.md")
+    lines = rd.read_text().splitlines(keepends=True)
+    kept = [ln for ln in lines if not ln.startswith(f"| `{bench}` |")]
+    assert len(kept) == len(lines) - 1
+    rd.write_text("".join(kept))
+    assert_fails(tree, f"sim/{bench}", "Benches table")
+
+
+def test_absent_sim_readme_skips_benches_index_check(tree):
+    """Synthetic trees with no sim/README.md (harness/adapter fixtures) are not
+    failed by the index check; every other check still runs."""
+    (tree / "sim" / "README.md").unlink()
+    found = problems_of(tree)
+    assert not any("Benches" in p for p in found), "\n".join(found)
+    assert found == []
+
+
+def test_sim_readme_without_benches_section_fails(tree):
+    rd = own(tree / "sim" / "README.md")
+    rd.write_text(rd.read_text().replace("## Benches", "## Bench list"))
+    assert_fails(tree, "sim/README.md", "no '## Benches' section")
+
+
 def test_readme_without_invocation_section_fails(tree):
     rd = own(tree / "sim" / "lna-sparam-nf" / "README.md")
     rd.write_text("# lna-sparam-nf\n\nJust prose, no way to run it.\n")

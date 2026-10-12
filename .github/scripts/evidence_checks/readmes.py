@@ -57,10 +57,51 @@ def readme_invocation_problem(readme: Path) -> str | None:
     return "invocation section contains no fenced command block"
 
 
+BENCHES_HEADING_RE = re.compile(r"^## Benches\s*$", re.M)
+
+
+def benches_table_names(sim_readme: Path) -> set[str] | None:
+    """Bench names in the leading cell of the ``## Benches`` table rows, or None
+    if sim/README.md or that section is missing. Scoped to the section so a
+    heading or prose mention elsewhere does not count as being indexed."""
+    if not sim_readme.is_file():
+        return None
+    text = sim_readme.read_text(errors="replace")
+    m = BENCHES_HEADING_RE.search(text)
+    if not m:
+        return None
+    nxt = re.search(r"^## ", text[m.end():], re.M)
+    body = text[m.end(): m.end() + nxt.start()] if nxt else text[m.end():]
+    return set(re.findall(r"^\|\s*`([^`]+)`\s*\|", body, re.M))
+
+
+def check_benches_index(problems: Problems, root: Path) -> None:
+    """Every sim/<dir> holding records/ has a row in sim/README.md's Benches table (issue #175).
+
+    Skipped when sim/README.md is absent: synthetic fixture trees (harness and
+    adapter unit tests) carry no index, and the real tree's README is pinned by
+    test_sim_readme_benches_table_lists_every_bench. A README that exists but
+    has lost its ``## Benches`` section is still a hard failure."""
+    sim = root / "sim"
+    sim_readme = sim / "README.md"
+    if not sim_readme.is_file():
+        return
+    names = benches_table_names(sim_readme)
+    if names is None:
+        problems.add(rel(root, sim_readme), "has no '## Benches' section")
+        return
+    for d in sorted(p for p in sim.iterdir() if p.is_dir()):
+        if (d / "records").is_dir() and d.name not in names:
+            problems.add(rel(root, d),
+                         f"bench has records/ but no row in the sim/README.md Benches table "
+                         f"(add a '| `{d.name}` | ... |' row)")
+
+
 def check_bench_readmes(problems: Problems, root: Path) -> None:
     """Every sim/<dir> holding records/ has a README with a runnable invocation,
     and no un-grandfathered record names the PDK ``unknown``."""
     sim = root / "sim"
+    check_benches_index(problems, root)
     for d in sorted(p for p in sim.iterdir() if p.is_dir()):
         records = d / "records"
         if not records.is_dir():
