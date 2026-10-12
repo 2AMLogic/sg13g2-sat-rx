@@ -626,3 +626,26 @@ def test_coverage_stale_latest_record_fails_and_fixed_passes(tree):
     entry["latest_record"] = f"sim/lna-sparam-nf/records/{recs[-1].name}"
     man.write_text(json.dumps(doc))
     assert coverage_problems(tree) == []
+
+
+# ------------------------------------------------ item-1 block coverage (issue #170)
+
+
+def test_block_coverage_current_tree_passes():
+    from evidence_checks.block_coverage import block_coverage_problems
+    assert block_coverage_problems(REPO) == []
+
+
+def test_mixer_source_with_no_design_source_claim_fails(tmp_path):
+    from evidence_checks.block_coverage import block_coverage_problems
+    (tmp_path / "signoff" / "evidence").mkdir(parents=True)
+    shutil.copy(REPO / "signoff/evidence/item1-design-sources.json", tmp_path / "signoff/evidence")
+    (tmp_path / "design").mkdir()
+    assert block_coverage_problems(tmp_path) == []
+    (tmp_path / "design" / "mixer_core.sch").write_text("v {xschem version=3.4.5}\n")
+    found = block_coverage_problems(tmp_path)
+    assert any("no_design_source" in p and "mixer_core.sch" in p for p in found), found
+    # a content-only mention in a differently named source also trips it
+    (tmp_path / "design" / "mixer_core.sch").unlink()
+    (tmp_path / "design" / "stage2.spice").write_text("* Gilbert MIXER core\n")
+    assert block_coverage_problems(tmp_path)
