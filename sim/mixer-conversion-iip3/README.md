@@ -44,6 +44,15 @@ one-tone floor at every PVT point. See the experiment's tb.json evidence
 notes for the swept method, the tracked-sideband choice and the convergence
 study.
 
+Open follow-up from the #165 method: extrapolated iip3_dbm agrees across
+backends only to ~1.4 dB -- the free two-line intersection amplifies the
+low-drive IM3 inter-build scatter (the top-of-fit pim3_dbm read does meet
+#135's 0.1 dB criterion); tracked in #181. And at 6 of 27 PVT corners the
+static fit window contains no valid 1:3 region (hot corners compress inside
+it): the slope gates fail there by design, no IIP3 is published at those
+corners, and `characterize.sh smoke` exercises the temperatures the stated
+window covers for that reason.
+
 Single local point (debug probe, allowed on a dispatch host):
 
 ```
