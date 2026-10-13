@@ -4,6 +4,12 @@ Chronological record of merged pull requests and closed issues, maintained by th
 
 ### 2026-10-12
 
+- **PR #190**: sim/mixer-conversion-iip3: publish iip3_dbm as slope-3-constrained top-of-fit read
+- **PR #189**: sim(hbt-mismatch-pair): Monte Carlo mismatch-card method probe on a matched npn13G2 pair
+- **PR #188**: feat(layout): non-claiming klt layout-chain readiness probe (npn13G2 + cmim + rsil)
+- **Issue #186** (closed): sim: Monte Carlo mismatch-card method probe on a matched npn13G2 pair (prepares T1 item 6 / row 15)
+- **Issue #185** (closed): layout: non-claiming klt layout-chain readiness probe (npn13G2 + MIM + resistor) before the LNA layout
+- **Issue #181** (closed): mixer-conversion-iip3: iip3_dbm local-vs-batch agreement is ~1.4 dB, not the 0.1 dB criterion (low-drive IM3 tolerance fragility)
 - **PR #184**: evidence(signoff): attest T1 item 9 (testbenches shipped) with pinned-PDK lna-sparam-nf record
 - **Issue #183** (closed): spec: cascade gain/NF margin analysis (Friis cross-check) for open rows 12-13
 - **Issue #182** (closed): signoff: attest T1 item 9 (testbenches shipped) with a pinned-PDK bench record

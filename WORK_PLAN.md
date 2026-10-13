@@ -7,11 +7,17 @@ This roadmap is generated from the repository's current GitHub label state by th
 
 Judge-approved PRs stuck under a `loom:operator` merge-risk hold — implementation work is done, only a human merge decision is missing.
 
+- **#192**: signoff: negative controls for item 1/10 evidence generators (#191)
+
+## Very Important
+
+`loom:very-important` (one counts per workspace); every stage takes these first.
+
 _None._
 
-## Operator Priority
+## Important
 
-Issues the operator starred (`loom:operator-priority`); land these first.
+`loom:important`; taken before unlabelled work.
 
 _None._
 
@@ -19,8 +25,7 @@ _None._
 
 Human-approved issues ready for implementation (`loom:issue`).
 
-- **#185**: layout: non-claiming klt layout-chain readiness probe (npn13G2 + MIM + resistor) before the LNA layout
-- **#186**: sim: Monte Carlo mismatch-card method probe on a matched npn13G2 pair (prepares T1 item 6 / row 15)
+_None._
 
 ## In Progress
 
@@ -38,7 +43,7 @@ _None._
 
 PRs that passed review and are queued for Champion auto-merge (`loom:pr`).
 
-_None._
+- **#192**: signoff: negative controls for item 1/10 evidence generators (#191)
 
 ## Proposed
 
@@ -48,7 +53,6 @@ Issues carrying `loom:curated`.
 - **#79**: design: choose the first-stage core change that lets NF and input match close together *(curated)*
 - **#132**: sim: refine headroom shortlist (C08/C05) - convergence, two-tone IIP3, gain/NF/stability vs baseline *(curated)*
 - **#135**: mixer-conversion-iip3: FFT-bin metrics depend on the ngspice FFT build (local zero-padded vs batch unpadded) *(curated)*
-- **#165**: mixer-conversion-iip3: a method that actually resolves IM3/IIP3 (current IM3 read sits on the transient interpolation-error floor) *(curated)*
 
 ## Proposed (Architect / Hermit)
 
@@ -60,15 +64,16 @@ _None._
 
 ## Backlog Balance
 
-| Tier | Count |
+| Bucket | Count |
 |------|-------|
-| Operator merge-risk holds | 0 |
-| Operator priority | 0 |
-| Ready (`loom:issue`) | 2 |
+| Operator merge-risk holds | 1 |
+| Very important | 0 |
+| Important | 0 |
+| Ready (`loom:issue`) | 0 |
 | In Progress (`loom:building`) | 0 |
 | PRs awaiting review | 0 |
-| Approved PRs awaiting merge | 0 |
-| Curated | 5 |
+| Approved PRs awaiting merge | 1 |
+| Curated | 4 |
 | Architect / Hermit proposals | 0 |
 | Active epics | 0 |
 <!-- guide:plan-body:end -->
