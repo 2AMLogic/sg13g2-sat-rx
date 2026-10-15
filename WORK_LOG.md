@@ -2,6 +2,15 @@
 
 Chronological record of merged pull requests and closed issues, maintained by the Loom Guide role.
 
+### 2026-10-14
+
+- **Issue #15** (closed): README: embed the fleet burndown chart (one line)
+
+### 2026-10-13
+
+- **PR #192**: signoff: negative controls for item 1/10 evidence generators (#191)
+- **Issue #191** (closed): signoff: negative-control tests and byte-compile coverage for the item-1 and item-10 evidence generators
+
 ### 2026-10-12
 
 - **PR #190**: sim/mixer-conversion-iip3: publish iip3_dbm as slope-3-constrained top-of-fit read
