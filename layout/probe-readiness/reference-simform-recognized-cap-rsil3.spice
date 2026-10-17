@@ -1,0 +1,8 @@
+* probe-readiness reference, PDK xschem simulation form (issue #197 re-run, 3-terminal rsil (1 2 bn per resistors_mod.lib))
+* Recognised subset at klt 0.7.1.dev1744+g44cc42323184: rsil + cap_cmim
+* (rsil extracts since the #3138 fix; npn13G2 still does not, #3137).
+.SUBCKT probe_readiness CB CT E RB C B RA GND
+XR1 RA RB GND rsil w=0.5e-6 l=0.5e-6 m=1 b=0
+XC1 CB CT cap_cmim w=6.99e-6 l=6.99e-6 m=1
+.ENDS probe_readiness
+.END
