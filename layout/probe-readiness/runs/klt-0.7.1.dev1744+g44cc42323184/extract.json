@@ -1,0 +1,329 @@
+{
+  "schema_version": 3,
+  "file": "probe.gds",
+  "deck": "sg13g2",
+  "top": "probe_readiness",
+  "dbu_um": 0.001,
+  "netlist_path": "runs/klt-0.7.1.dev1744+g44cc42323184/probe_extracted.spice",
+  "netlist_sha256": "859630d83757f00e3ae257afa9fb4c91c4cebcafeee2c7acab8054f64e5eabe7",
+  "netlist_normalized_sha256": "462a0909bcae79c025eae3b7ea83aa2db494abfe7e9139972806bd0592f8b022",
+  "status": "extracted",
+  "device_count": 2,
+  "net_count": 8,
+  "pin_count": 8,
+  "device_counts": {
+    "cap_cmim": 1,
+    "rsil": 1
+  },
+  "dummy_devices_dropped": 0,
+  "ignored_layers": [
+    {
+      "layer": 1,
+      "datatype": 20,
+      "shapes": 1
+    },
+    {
+      "layer": 26,
+      "datatype": 0,
+      "shapes": 1
+    },
+    {
+      "layer": 33,
+      "datatype": 0,
+      "shapes": 2
+    },
+    {
+      "layer": 51,
+      "datatype": 0,
+      "shapes": 2
+    },
+    {
+      "layer": 52,
+      "datatype": 0,
+      "shapes": 2
+    },
+    {
+      "layer": 63,
+      "datatype": 0,
+      "shapes": 8
+    },
+    {
+      "layer": 126,
+      "datatype": 2,
+      "shapes": 1
+    }
+  ],
+  "device_recognition_only_layers": [
+    {
+      "layer": 7,
+      "datatype": 21,
+      "shapes": 1
+    },
+    {
+      "layer": 8,
+      "datatype": 2,
+      "shapes": 5
+    },
+    {
+      "layer": 10,
+      "datatype": 2,
+      "shapes": 1
+    },
+    {
+      "layer": 24,
+      "datatype": 0,
+      "shapes": 1
+    },
+    {
+      "layer": 36,
+      "datatype": 0,
+      "shapes": 1
+    },
+    {
+      "layer": 67,
+      "datatype": 2,
+      "shapes": 1
+    },
+    {
+      "layer": 111,
+      "datatype": 0,
+      "shapes": 3
+    },
+    {
+      "layer": 128,
+      "datatype": 0,
+      "shapes": 1
+    },
+    {
+      "layer": 129,
+      "datatype": 0,
+      "shapes": 25
+    }
+  ],
+  "device_classes": [
+    "nfet",
+    "pfet",
+    "cap_cmim",
+    "rfcmim",
+    "cap_cmomi",
+    "cap_cmomf",
+    "resistor",
+    "dantenna",
+    "dpantenna"
+  ],
+  "devices": [
+    {
+      "name": "$1",
+      "class": "cap_cmim",
+      "nets": {
+        "a": "CB",
+        "b": "CT"
+      },
+      "params": {
+        "c_f": 7.440855e-14,
+        "area_um2": 48.8601,
+        "perimeter_um": 27.96
+      },
+      "instance_path": [
+        {
+          "cell": "cmim",
+          "array_index": null
+        }
+      ]
+    },
+    {
+      "name": "$2",
+      "class": "rsil",
+      "nets": {
+        "a": "RB",
+        "b": "RA",
+        "w": "GND"
+      },
+      "params": {
+        "r_ohm": 24.862745,
+        "l_um": 0.5,
+        "w_um": 0.5,
+        "area_um2": 0.25,
+        "perimeter_um": 2.0
+      },
+      "instance_path": [
+        {
+          "cell": "rsil",
+          "array_index": null
+        }
+      ]
+    }
+  ],
+  "nets": [
+    {
+      "name": "B",
+      "pin": true,
+      "device_count": 0,
+      "net_id": 7,
+      "pin_index": 7,
+      "label_positions_um": [
+        {
+          "text": "B",
+          "x_um": 0.0,
+          "y_um": 4.5
+        }
+      ]
+    },
+    {
+      "name": "C",
+      "pin": true,
+      "device_count": 0,
+      "net_id": 5,
+      "pin_index": 6,
+      "label_positions_um": [
+        {
+          "text": "C",
+          "x_um": 5.5,
+          "y_um": 0.15
+        }
+      ]
+    },
+    {
+      "name": "CB",
+      "pin": true,
+      "device_count": 1,
+      "net_id": 6,
+      "pin_index": 0,
+      "label_positions_um": [
+        {
+          "text": "CB",
+          "x_um": 25.0,
+          "y_um": 6.5
+        }
+      ]
+    },
+    {
+      "name": "CT",
+      "pin": true,
+      "device_count": 1,
+      "net_id": 8,
+      "pin_index": 1,
+      "label_positions_um": [
+        {
+          "text": "CT",
+          "x_um": 25.0,
+          "y_um": 4.0
+        }
+      ]
+    },
+    {
+      "name": "E",
+      "pin": true,
+      "device_count": 0,
+      "net_id": 2,
+      "pin_index": 5,
+      "label_positions_um": [
+        {
+          "text": "E",
+          "x_um": 0.0,
+          "y_um": -5.0
+        }
+      ]
+    },
+    {
+      "name": "GND",
+      "pin": true,
+      "device_count": 1,
+      "net_id": 10,
+      "pin_index": 2,
+      "label_positions_um": [
+        {
+          "text": "GND",
+          "x_um": 2.0,
+          "y_um": -11.6
+        }
+      ]
+    },
+    {
+      "name": "RA",
+      "pin": true,
+      "device_count": 1,
+      "net_id": 9,
+      "pin_index": 3,
+      "label_positions_um": [
+        {
+          "text": "RA",
+          "x_um": 30.3,
+          "y_um": 3.0
+        }
+      ]
+    },
+    {
+      "name": "RB",
+      "pin": true,
+      "device_count": 1,
+      "net_id": 4,
+      "pin_index": 4,
+      "label_positions_um": [
+        {
+          "text": "RB",
+          "x_um": 30.3,
+          "y_um": -3.0
+        }
+      ]
+    }
+  ],
+  "warnings": [
+    "1 candidate 'dantenna' region matches every other drawn-layer predicate of that device class but is missing its device-recognition marker Recog.diode (99/31) -- so this geometry extracted as no device at all rather than as a diode, and the zero device count for this class is not evidence that the layout contains none. Draw the missing layer(s), or run `klt deck devices --deck sg13g2 --class dantenna` for the class's complete marker/requires/excludes set. See docs/cli/extract.md's 'Marker-gated and predicate-gated device classes' section.",
+    "1 drawn capacitor ('cap_cmim') written as a fixed-value 'C' card (the deck's nominal area+perimeter value) -- PDK process corners (e.g. mimcap_ff/mimcap_ss) do not apply to it, so schematic-vs-extracted deltas at non-typical corners include a capacitor-corner term; pass --pdk to bind the PDK capacitor subcircuit instead. See docs/cli/extract.md's 'SPICE model binding' section.",
+    "7 layers (1/20, 26/0, 33/0, 51/0, 52/0, 63/0, 126/2) carrying 17 shapes are outside 'sg13g2' deck's connectivity graph -- this geometry is invisible to extraction, so a net routed only through it extracts as multiple disconnected nets instead of one, which will silently mismatch a downstream `klt lvs` reference netlist -- see ignored_layers[] for the full per-layer shape counts. See docs/cli/extract.md's 'ignored_layers' field documentation."
+  ],
+  "black_box_regions": [],
+  "abstracted_cells": [],
+  "unmodelled_poly": [],
+  "merged_net_labels": [],
+  "voltage_domain_warnings": [],
+  "missing_flavour_markers": [],
+  "unsupported_devices": [],
+  "unbiased_pmos_body_nets": [],
+  "single_terminal_nets": [],
+  "dead_metal": [],
+  "matched_device_groups": [],
+  "def_pin_promotion": null,
+  "pin_renames": null,
+  "rename_declared_pins": false,
+  "declared_pins": null,
+  "def_pins": null,
+  "label_layers": null,
+  "probes": [],
+  "pdk": null,
+  "provenance": {
+    "klt_version": "0.7.1.dev1744+g44cc42323184",
+    "klayout_version": "0.30.12",
+    "pdk": null,
+    "deck": {
+      "name": "sg13g2",
+      "content_hash": "sha256:08dbffe2400474b268e2095c80dd8dbd4297ce71cca7a55ee373b4f9499ec01c",
+      "released": false
+    },
+    "input": {
+      "content_hash": "sha256:9759f9eeb84b259ab2579d147a7f485315fc9da7291fcabd1ec34ddb6a62db0b",
+      "role": "layout"
+    }
+  },
+  "parasitics": null,
+  "spef_path": null,
+  "subcircuit": null,
+  "metrics": {
+    "extract__device__count": 2,
+    "extract__net__count": 8,
+    "extract__pin__count": 8
+  },
+  "timing": {
+    "stages": {
+      "read_layout": 0.001,
+      "device_extraction": 0.039,
+      "diagnostics": 0.0,
+      "netlist_write": 0.0,
+      "netlist_hash": 0.0,
+      "netlist_normalized_hash": 0.0
+    },
+    "total_seconds": 0.16,
+    "unattributed_seconds": 0.119
+  }
+}
