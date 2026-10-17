@@ -2,6 +2,11 @@
 
 Chronological record of merged pull requests and closed issues, maintained by the Loom Guide role.
 
+### 2026-10-17
+
+- **PR #199**: docs(layout): re-run klt readiness probe at klt 44cc423; DRC clean, rsil extracts, HBT blocked
+- **Issue #197** (closed): layout: re-run the klt layout-chain readiness probe at a klt release with the resistor and contact-rule fixes (T1 items 2-4, 11)
+
 ### 2026-10-14
 
 - **Issue #15** (closed): README: embed the fleet burndown chart (one line)
