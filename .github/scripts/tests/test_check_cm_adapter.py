@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import json
 import shutil
-import subprocess
 import sys
 import tempfile
 import unittest
@@ -26,6 +25,7 @@ sys.path.insert(0, str(BENCH))
 sys.path.insert(0, str(BENCH / "tests"))
 
 import check_evidence_formats as chk  # noqa: E402
+from _helpers import CheckerCase, commit, edit_json, run  # noqa: E402
 import cmprobe as C  # noqa: E402
 import fakelog  # noqa: E402
 import run_probe as R  # noqa: E402
@@ -89,13 +89,7 @@ def write_unavailable(root: Path, rid: str = RID) -> str:
     return stem
 
 
-def edit_json(path: Path, fn) -> None:
-    data = json.loads(path.read_text())
-    fn(data)
-    path.write_text(json.dumps(data, indent=2) + "\n")
-
-
-class Base(unittest.TestCase):
+class Base(CheckerCase):
     def setUp(self):
         self._tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self._tmp.cleanup)
@@ -108,15 +102,6 @@ class Base(unittest.TestCase):
                         ignore=shutil.ignore_patterns("_build", "_selftest", "__pycache__"))
         self.exp = exp
         self.rec = exp / "records"
-
-    def problems(self) -> list[str]:
-        return chk.check_format(self.root).items
-
-    def assertFails(self, *needles: str):
-        found = self.problems()
-        self.assertTrue(found, "checker passed a deliberately broken tree")
-        for needle in needles:
-            self.assertTrue(any(needle in p for p in found), f"no problem mentioning {needle!r} in:\n" + "\n".join(found))
 
 
 class ProbeRun(Base):
@@ -317,15 +302,6 @@ class Unavailable(Base):
         logs.mkdir(parents=True)
         (logs / "deck.spice").write_text("x")
         self.assertFails("belongs to no record")
-
-
-def run(cwd: Path, *args: str) -> str:
-    return subprocess.run(args, cwd=cwd, check=True, capture_output=True, text=True).stdout
-
-
-def commit(cwd: Path, msg: str = "c") -> None:
-    run(cwd, "git", "add", "-A")
-    run(cwd, "git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", msg)
 
 
 class History(unittest.TestCase):
