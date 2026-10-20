@@ -15,7 +15,6 @@ import gzip
 import json
 import os
 import shutil
-import subprocess
 import sys
 from pathlib import Path
 
@@ -26,6 +25,7 @@ REPO = SCRIPTS.parents[1]
 sys.path.insert(0, str(SCRIPTS))
 
 import check_evidence_formats as chk  # noqa: E402
+from _helpers import commit, run  # noqa: E402
 
 NATIVE = "lna-sparam-nf"
 NATIVE2 = "mixer-conversion-iip3"
@@ -496,23 +496,6 @@ def test_cli_exit_codes(tree, capsys):
 
 
 # ---------------------------------------------------------------- history
-
-
-def run(cwd, *args):
-    try:
-        return subprocess.run(args, cwd=cwd, check=True, capture_output=True, text=True).stdout
-    except subprocess.CalledProcessError as e:
-        # CalledProcessError's message omits the captured output; surface it so a
-        # CI-only failure (e.g. a fixture `git clone` exiting 128) names its cause.
-        raise RuntimeError(
-            f"{list(args)} failed in {cwd} (exit {e.returncode})\n"
-            f"stdout:\n{e.stdout}\nstderr:\n{e.stderr}"
-        ) from e
-
-
-def commit(cwd, msg="c"):
-    run(cwd, "git", "add", "-A")
-    run(cwd, "git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", msg)
 
 
 @pytest.fixture(scope="module")

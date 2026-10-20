@@ -24,8 +24,9 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
+from _helpers import commit, edit_json, run  # noqa: E402
 from test_check_evidence_adapters import (  # noqa: E402
-    PASSIVE, REPO, P_UNAVAIL, FormatBase, chk, clone_passive_unavailable, commit, copy_sim, edit_json, fz, run,
+    PASSIVE, REPO, P_UNAVAIL, FormatBase, chk, clone_passive_unavailable, copy_sim, fz,
 )
 
 sys.path.insert(0, str(REPO / "sim" / "passive-p1" / "scripts"))

@@ -26,6 +26,7 @@ BENCH = REPO / "sim" / "lna-linearity"
 sys.path.insert(0, str(SCRIPTS))
 
 import check_evidence_formats as chk  # noqa: E402
+from _helpers import CheckerCase, edit_json  # noqa: E402
 
 NAME = "lna-linearity"
 SHA = "a" * 64
@@ -89,12 +90,6 @@ def build_record(root: Path, *, limit_violation: bool = True) -> str:
     return next(p.stem for p in (exp / "records").glob("*.md"))
 
 
-def edit_json(path: Path, fn) -> None:
-    data = json.loads(path.read_text())
-    fn(data)
-    path.write_text(json.dumps(data, indent=2) + "\n")
-
-
 def edit_gz_json(path: Path, fn) -> None:
     with gzip.open(path, "rt", encoding="utf-8") as fh:
         data = json.load(fh)
@@ -103,7 +98,7 @@ def edit_gz_json(path: Path, fn) -> None:
         json.dump(data, fh)
 
 
-class Base(unittest.TestCase):
+class Base(CheckerCase):
     limit_violation = True
 
     def setUp(self):
@@ -121,15 +116,6 @@ class Base(unittest.TestCase):
         self.sweeps = self.exp / "records" / f"{self.rid}-sweeps.json.gz"
         self.snap = self.exp / "netlist-snapshots" / self.rid
         self.logs = self.exp / "corners" / self.rid
-
-    def problems(self) -> list[str]:
-        return chk.check_format(self.root).items
-
-    def assertFails(self, *needles: str):
-        found = self.problems()
-        self.assertTrue(found, "checker passed a deliberately broken tree")
-        for needle in needles:
-            self.assertTrue(any(needle in p for p in found), f"no problem mentioning {needle!r} in:\n" + "\n".join(found))
 
 
 class LimitedRecord(Base):
