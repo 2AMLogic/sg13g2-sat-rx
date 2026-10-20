@@ -31,13 +31,13 @@ _None._
 
 Issues currently being built (`loom:building`).
 
-- **#209**: Dedupe evidence-adapter commit check and remove dead imports/helpers
+_None._
 
 ## PRs Awaiting Review
 
 PRs waiting on Judge (`loom:review-requested`).
 
-- **#210**: refactor: share record-commit check across evidence adapters, drop dead helpers
+_None._
 
 ## Approved (Awaiting Merge)
 
@@ -70,8 +70,8 @@ _None._
 | Very important | 0 |
 | Important | 1 |
 | Ready (`loom:issue`) | 0 |
-| In Progress (`loom:building`) | 1 |
-| PRs awaiting review | 1 |
+| In Progress (`loom:building`) | 0 |
+| PRs awaiting review | 0 |
 | Approved PRs awaiting merge | 0 |
 | Curated | 4 |
 | Architect / Hermit proposals | 0 |
