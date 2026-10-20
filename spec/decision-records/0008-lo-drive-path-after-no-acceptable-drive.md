@@ -92,7 +92,7 @@ Physical rationale: a topology with no stacked HBT quad driven by a large voltag
 
 ### Market gate — status
 
-**Unresolved.** No market evidence was gathered or exists in the repository. Items needed, each marked unresolved here:
+**Unresolved.** No market evidence was gathered or exists in the repository. (2026-10-20: a third retrieval attempt found only unread vendor/agency leads, recorded as V2 in the citations file; none establishes a requirement.) Items needed, each marked unresolved here:
 
 - Intended customer / use case for the per-element receive chain (LEO user-terminal phased array element?) — **unresolved**.
 - System-level need that sets conversion gain and the acceptable LO-level sensitivity (cascade gain row 13 is OPEN and itself `(E)`) — **unresolved**.
