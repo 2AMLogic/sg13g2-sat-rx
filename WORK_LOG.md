@@ -4,6 +4,8 @@ Chronological record of merged pull requests and closed issues, maintained by th
 
 ### 2026-10-20
 
+- **PR #216**: test: share run/commit/edit_json/assertFails helpers across evidence-checker tests
+- **Issue #215** (closed): Share duplicated run/commit/edit_json/assertFails helpers across evidence-checker tests
 - **PR #214**: test: surface git output when evidence-format fixture commands fail
 - **Issue #213** (closed): test flake: test_history_deleting_corner_log_fails errors in fixture git clone on evidence-formats job
 - **PR #210**: refactor: share record-commit check across evidence adapters, drop dead helpers
