@@ -75,3 +75,17 @@ def test_submit_request_failure_renames_report_and_raises(tmp_path, monkeypatch)
     with pytest.raises(kd.CollectionError, match="exit 3"):
         kd.submit_request(tmp_path / "r.json", report, "k", "batch", "klt", tmp_path)
     assert not report.exists() and (tmp_path / "report_k.failed.json").is_file()
+
+
+def test_corner_log_path_resolves_relative_against_report_dir(tmp_path):
+    report = tmp_path / "sub" / "report.json"
+    assert kd.corner_log_path({"artifacts": {"log": "c.log"}}, report) == (tmp_path / "sub" / "c.log").resolve()
+
+
+def test_corner_log_path_keeps_absolute_and_reports_missing(tmp_path):
+    report = tmp_path / "report.json"
+    absolute = tmp_path / "abs.log"
+    assert kd.corner_log_path({"artifacts": {"log": str(absolute)}}, report) == absolute
+    assert kd.corner_log_path({"artifacts": {}}, report) is None
+    assert kd.corner_log_path({"artifacts": None}, report) is None
+    assert kd.corner_log_path({}, report) is None

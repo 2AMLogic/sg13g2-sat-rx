@@ -234,13 +234,10 @@ def read_units(report: Path) -> list[dict]:
         raise CollectionError(f"{report.name}: no corners in klt report ({data.get('error')})")
     units = []
     for corner in data["corners"]:
-        log = (corner.get("artifacts") or {}).get("log")
-        if not log:
+        path = klt_driver.corner_log_path(corner, report)
+        if path is None:
             raise CollectionError(f"{report.name}: {corner.get('process')}/{corner.get('temperature_c')}: "
                                   f"klt returned no log ({corner.get('diagnostics')})")
-        path = Path(log)
-        if not path.is_absolute():
-            path = (report.parent / path).resolve()
         units.append({"process": corner["process"], "temp_c": float(corner["temperature_c"]),
                       "log_path": path, "text": path.read_text()})
     return units
