@@ -68,10 +68,6 @@ def network_abcd(c1: float, l: float, c2: float, f: float) -> tuple:
     return mul(mul(sh1, se), sh2)
 
 
-def pad_s() -> dict:
-    return {"s11": 0j, "s21": 0.5 + 0j, "s12": 0.5 + 0j, "s22": 0j}
-
-
 def total(cand: ms.Candidate, f: float, process: str, temp_c: float, vdd: float) -> tuple[dict, float]:
     """(overall S, inoise V/rtHz) of network + core at one frequency."""
     s = abcd_to_s(mul(network_abcd(cand.c_sh1, cand.l_in, cand.c_sh2, f), s_to_abcd(core_s(f, process, temp_c, vdd))))

@@ -224,10 +224,6 @@ def current_frac(cfg: dict, name: str, amps: float) -> float:
     return amps / (cfg["box_a_per_nx"] * cfg["devices"][q]["nx"])
 
 
-def run_ids(kind: str, n: int) -> list[str]:
-    return [f"{kind}{i:02d}" for i in range(n)]
-
-
 def _g(x: float) -> str:
     return repr(float(f"{float(x):.15g}"))
 

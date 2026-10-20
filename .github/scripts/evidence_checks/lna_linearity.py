@@ -6,7 +6,7 @@ import json
 import re
 from pathlib import Path
 
-from .common import (Problems, git, has_section, header_field, load_json_object, need_sha256, need_str, read_gzip_text, rel)
+from .common import (Problems, has_section, header_field, load_json_object, need_record_commit, need_sha256, need_str, read_gzip_text, rel)
 from .mixer_pra import SHA1_RE, _num
 from .passive_p1 import PASSIVE_PACKAGES, _sha256_of
 from .spec_rows import SPEC_PATH, SPEC_ROW_RE
@@ -339,10 +339,7 @@ def check_lin_record(problems: Problems, root: Path, exp_dir: Path, rid: str) ->
         if not (isinstance(dut.get("file"), str) and dut["file"].endswith("lna_stage1.spice")):
             problems.add(where_js, "dut.file must name the exported lna_stage1.spice")
     env = rec.get("environment") if isinstance(rec.get("environment"), dict) else {}
-    git = env.get("git")
-    commit = git.get("commit") if isinstance(git, dict) else None
-    if not isinstance(commit, str) or not commit.startswith(rid.split("-")[2]):
-        problems.add(where_js, f"environment.git.commit {commit!r} does not match the sha in the record id")
+    need_record_commit(problems, where_js, env, rid)
     need_sha256(problems, where_js, env.get("pdk_artifact_sha256"), "environment.pdk_artifact_sha256")
     need_str(problems, where_js, env, "klt_client", "environment.klt_client")
 

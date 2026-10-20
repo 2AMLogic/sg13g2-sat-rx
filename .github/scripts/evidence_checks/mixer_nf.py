@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from .common import (PAIR_RE, Problems, RECORD_ID_RE, git, has_section, load_json_object, need_sha256, need_str, record_pairs, rel)
+from .common import (PAIR_RE, Problems, RECORD_ID_RE, has_section, load_json_object, need_record_commit, need_sha256, need_str, record_pairs, rel)
 from .passive_p1 import MIXER_PROBE_FILES, MIXER_STATUSES, PASSIVE_PACKAGES
 
 
@@ -69,10 +69,7 @@ def check_mixer_record(problems: Problems, root: Path, exp_dir: Path, stem: str,
     if not isinstance(env, dict):
         problems.add(where_js, "JSON 'environment' is missing")
         env = {}
-    git = env.get("git")
-    commit = git.get("commit") if isinstance(git, dict) else None
-    if not isinstance(commit, str) or not commit.startswith(rid.split("-")[2]):
-        problems.add(where_js, f"environment.git.commit {commit!r} does not match the sha in the record id")
+    commit = need_record_commit(problems, where_js, env, rid)
     for field in ("host", "platform", "python"):
         need_str(problems, where_js, env, field, f"environment.{field}")
 
