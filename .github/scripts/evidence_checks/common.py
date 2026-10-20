@@ -194,5 +194,13 @@ def need_sha256(problems: Problems, where: str, value: object, label: str) -> No
         problems.add(where, f"{label} is missing or not a 64-hex sha256")
 
 
+def need_record_commit(problems: Problems, where: str, env: dict, rid: str) -> object:
+    git = env.get("git")
+    commit = git.get("commit") if isinstance(git, dict) else None
+    if not isinstance(commit, str) or not commit.startswith(rid.split("-")[2]):
+        problems.add(where, f"environment.git.commit {commit!r} does not match the sha in the record id")
+    return commit
+
+
 def git(root: Path, *args: str) -> subprocess.CompletedProcess:
     return subprocess.run(["git", *args], cwd=root, capture_output=True, text=True)

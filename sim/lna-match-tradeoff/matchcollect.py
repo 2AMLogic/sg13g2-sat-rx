@@ -26,7 +26,6 @@ from __future__ import annotations
 
 import datetime as _dt
 import gzip
-import hashlib
 import json
 import math
 import shlex
@@ -578,7 +577,3 @@ def collect(args) -> int:
         return 1
     print(f"wrote records/{rid}.md")
     return 0
-
-
-def sha256_text(text: str) -> str:
-    return hashlib.sha256(text.encode()).hexdigest()
