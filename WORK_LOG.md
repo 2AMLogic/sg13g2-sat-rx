@@ -4,6 +4,8 @@ Chronological record of merged pull requests and closed issues, maintained by th
 
 ### 2026-10-20
 
+- **PR #206**: refactor(sim): share klt corner-log resolution via klt_driver.corner_log_path
+- **Issue #204** (closed): Consolidate six copies of klt corner-log resolution into klt_driver
 - **PR #205**: docs(spec): record third source-retrieval attempt for DR-0008
 - **PR #203**: docs(spec): record second citation retrieval attempt for DR-0008 sources
 
