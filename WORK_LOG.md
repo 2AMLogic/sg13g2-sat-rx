@@ -4,6 +4,8 @@ Chronological record of merged pull requests and closed issues, maintained by th
 
 ### 2026-10-20
 
+- **PR #214**: test: surface git output when evidence-format fixture commands fail
+- **Issue #213** (closed): test flake: test_history_deleting_corner_log_fails errors in fixture git clone on evidence-formats job
 - **PR #210**: refactor: share record-commit check across evidence adapters, drop dead helpers
 - **Issue #209** (closed): Dedupe evidence-adapter commit check and remove dead imports/helpers
 - **PR #206**: refactor(sim): share klt corner-log resolution via klt_driver.corner_log_path
