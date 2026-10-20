@@ -2,6 +2,15 @@
 
 Chronological record of merged pull requests and closed issues, maintained by the Loom Guide role.
 
+### 2026-10-20
+
+- **PR #205**: docs(spec): record third source-retrieval attempt for DR-0008
+- **PR #203**: docs(spec): record second citation retrieval attempt for DR-0008 sources
+
+### 2026-10-19
+
+- **PR #201**: docs(spec): propose DR-0008 comparing mixer LO-drive paths (Part of #68)
+
 ### 2026-10-17
 
 - **PR #199**: docs(layout): re-run klt readiness probe at klt 44cc423; DRC clean, rsil extracts, HBT blocked
