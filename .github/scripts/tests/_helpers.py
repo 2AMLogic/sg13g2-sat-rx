@@ -3,10 +3,15 @@ from __future__ import annotations
 
 import json
 import subprocess
+import sys
 import unittest
 from pathlib import Path
 
-import check_evidence_formats as chk
+# Self-sufficient: a test file imported alone must not depend on another test
+# module having put the scripts dir on sys.path first.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+import check_evidence_formats as chk  # noqa: E402
 
 
 def run(cwd, *args):
