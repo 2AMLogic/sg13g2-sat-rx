@@ -20,9 +20,6 @@ MC_STATUSES = (
     "MC_METHOD_CONTROL_FAIL",
     "MC_METHOD_REPRODUCIBILITY_FAIL",
     "MC_LOCAL_AGREEMENT_FAIL",
-    "MC_COLLAPSED_TO_SINGLE_SAMPLE",
-    "KLT_MC_REJECTED",
-    "CAPABILITY_UNAVAILABLE",
 )
 CONTROL_GATES = ("nominal_exact", "stat_global_cancels", "mismatch_sampled")
 SCOPE_PREFIX = "- **Scope: METHOD only.**"

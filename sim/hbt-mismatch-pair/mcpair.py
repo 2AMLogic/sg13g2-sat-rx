@@ -72,9 +72,6 @@ STATUSES: tuple[str, ...] = (
     "MC_METHOD_CONTROL_FAIL",
     "MC_METHOD_REPRODUCIBILITY_FAIL",
     "MC_LOCAL_AGREEMENT_FAIL",
-    "MC_COLLAPSED_TO_SINGLE_SAMPLE",
-    "KLT_MC_REJECTED",
-    "CAPABILITY_UNAVAILABLE",
 )
 
 
@@ -391,17 +388,6 @@ def evaluate(*, batch: dict[str, list[dict]], rerun: dict[str, list[dict]] | Non
         findings["gates"]["local_vs_batch_max_rel"] = None
 
     return {"status": status, "findings": findings, "reason": None}
-
-
-def evaluate_failure(kind: str, detail: str) -> dict:
-    """Classification for a leg that never produced gradeable reports."""
-    if kind == "rejected":
-        return {"status": "KLT_MC_REJECTED", "findings": {"gates": {}, "distributions": {},
-                                                          "notes": [detail]}, "reason": detail}
-    if kind == "unavailable":
-        return {"status": "CAPABILITY_UNAVAILABLE", "findings": {"gates": {}, "distributions": {},
-                                                                 "notes": [detail]}, "reason": detail}
-    raise ValueError(f"unknown failure kind {kind!r}")
 
 
 def sabotage(legs: dict[str, list[dict]], mode: str) -> dict:
