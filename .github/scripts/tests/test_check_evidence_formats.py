@@ -499,7 +499,15 @@ def test_cli_exit_codes(tree, capsys):
 
 
 def run(cwd, *args):
-    return subprocess.run(args, cwd=cwd, check=True, capture_output=True, text=True).stdout
+    try:
+        return subprocess.run(args, cwd=cwd, check=True, capture_output=True, text=True).stdout
+    except subprocess.CalledProcessError as e:
+        # CalledProcessError's message omits the captured output; surface it so a
+        # CI-only failure (e.g. a fixture `git clone` exiting 128) names its cause.
+        raise RuntimeError(
+            f"{list(args)} failed in {cwd} (exit {e.returncode})\n"
+            f"stdout:\n{e.stdout}\nstderr:\n{e.stderr}"
+        ) from e
 
 
 def commit(cwd, msg="c"):
