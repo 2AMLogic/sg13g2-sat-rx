@@ -249,23 +249,11 @@ class TestSabotage(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
-# failure classification + helpers
+# helpers
 # ---------------------------------------------------------------------------
 
 
-class TestFailures(unittest.TestCase):
-    def test_rejected_classification(self):
-        ev = M.evaluate_failure("rejected", "klt refused: SimError boom")
-        self.assertEqual(ev["status"], "KLT_MC_REJECTED")
-
-    def test_unavailable_classification(self):
-        ev = M.evaluate_failure("unavailable", "klt unavailable")
-        self.assertEqual(ev["status"], "CAPABILITY_UNAVAILABLE")
-
-    def test_unknown_kind_rejected(self):
-        with self.assertRaises(ValueError):
-            M.evaluate_failure("wat", "")
-
+class TestHelpers(unittest.TestCase):
     def test_dist_matches_reference_stats(self):
         d = M.dist([1.0, 2.0, 3.0, 4.0])
         self.assertEqual(d["n"], 4)

@@ -39,9 +39,12 @@ A run that violates any of these three expectations is a method failure
 | `MC_METHOD_CONTROL_FAIL` | a known-answer gate failed (nominal not symmetric / stat spread the pair / mismatch not sampled) |
 | `MC_METHOD_REPRODUCIBILITY_FAIL` | gates pass but the fixed-seed rerun differs beyond `mcpair.REPRO_TOL` |
 | `MC_LOCAL_AGREEMENT_FAIL` | gates pass but the local-vs-batch unit of the same seed disagrees beyond `mcpair.LOCAL_AGREEMENT_TOL` |
-| `MC_COLLAPSED_TO_SINGLE_SAMPLE` | a corner returned fewer units than `monte_carlo.n` (older runner silently ignoring the block) — detected, never averaged over |
-| `KLT_MC_REJECTED` | klt refused the request outright; the error is reported, nothing is recorded |
-| `CAPABILITY_UNAVAILABLE` | no klt client on this host; no probe result |
+
+Outcomes that are **not records** (`run_probe.py` writes nothing for them):
+
+- no klt client on this host — reported on stderr, exit 1;
+- klt refused the request outright — the error is reported, exit 3;
+- a corner returned fewer units than `monte_carlo.n` (older runner silently ignoring the block) — detected, never averaged over; `ingest_error.txt` is written, exit 1.
 
 None of these is `METHOD_VALIDATION` of any spec row.
 
