@@ -48,3 +48,12 @@ Search results (2026-10-19) returned abstract-level summaries for the items belo
 2. The VBIC 1.15 specification and IHP's statement on large-signal validity outside the declared window (source for option A).
 3. A textbook-level derivation of the LO swing needed for hard switching of a bipolar quad (Gilbert 1968; Razavi, *RF Microelectronics*; Lee, *Design of CMOS RF ICs*) — cited here as *names to read*, not read.
 4. Market-side sources (Ka-band LEO user-terminal element requirements, power/area/cost benchmarks). **None were gathered.**
+
+## Update 2026-10-20 (retrieval attempt 2, issue #68, `Part of #68`)
+
+Append-only; nothing above is edited. **No source was upgraded to V1.**
+
+- **S2 (ADI 2016)**: fetched again (WebFetch timeout at 60 s; `curl -m 25` returned no response). Still V2; the Context/DR claims that rest on it stay leads only.
+- **S3 item 1** (14–23 GHz SiGe HBT mixer): a second search returned the same abstract-level summary plus bibliographic data not previously recorded: authors S. S. Ahmed and H. Schumacher (Ulm University), SMACD / PRIME 2021, 4 pages, VDE proceedings record 455588088; 0.13 µm SiGe:C BiCMOS; modified Gilbert cell with passive input matching in place of the RF transconductance stage; abstract figures about −3 dB conversion gain, NF below 12 dB, input P1dB −5 dBm, IIP3 +2 dBm, 2.08 mW from 1.5 V. The VDE page itself served only an anti-bot challenge (no content); it was not bypassed. These are **abstract-level, unverified, not read in full**, and the LO power, device model and measurement-vs-simulation basis remain unknown. Still V2.
+- **S4 (Fischer et al., VBIC for IHP HBTs)**: not re-attempted; text extraction had failed and no other tool was available.
+- Owed items 1–4 above are unchanged. The DR's market gate remains entirely unresolved.
