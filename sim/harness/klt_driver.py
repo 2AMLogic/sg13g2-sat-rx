@@ -359,14 +359,19 @@ def build_jobs(tb, pdk, points, workdir: Path, backend: str, timeout_s: int,
     return jobs
 
 
-def _corner_log(corner: dict, report_path: Path) -> str | None:
+def corner_log_path(corner: dict, report_path: Path) -> Path | None:
+    """The corner's ``artifacts.log`` path, a relative one resolved against the
+    report's directory; ``None`` when klt returned no log path."""
     log = (corner.get("artifacts") or {}).get("log")
     if not log:
         return None
     path = Path(log)
-    if not path.is_absolute():
-        path = (report_path.parent / path).resolve()
-    return path.read_text() if path.is_file() else None
+    return path if path.is_absolute() else (report_path.parent / path).resolve()
+
+
+def _corner_log(corner: dict, report_path: Path) -> str | None:
+    path = corner_log_path(corner, report_path)
+    return path.read_text() if path is not None and path.is_file() else None
 
 
 def collect(tb, points, jobs: list[KltJob], parse: Callable[[str], dict]) -> tuple[list, dict]:

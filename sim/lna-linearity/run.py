@@ -161,12 +161,9 @@ def read_unit(report: Path) -> tuple[dict, str]:
     if "corners" not in data or len(data["corners"]) != 1:
         raise CollectionError(f"{report.name}: expected exactly one corner unit ({data.get('error')})")
     corner = data["corners"][0]
-    log = (corner.get("artifacts") or {}).get("log")
-    if not log:
+    path = klt_driver.corner_log_path(corner, report)
+    if path is None:
         raise CollectionError(f"{report.name}: no log returned ({corner.get('diagnostics')})")
-    path = Path(log)
-    if not path.is_absolute():
-        path = (report.parent / path).resolve()
     return data, path.read_text()
 
 

@@ -492,13 +492,10 @@ def ingest(tb, sweep, reports: list[tuple[float, Path]], args, work: Path) -> in
         for corner in report["corners"]:
             point = PvtPoint(corner=CORNERS[corner["process"]], temp_c=float(corner["temperature_c"]),
                              vdd=float(vdd))
-            log = (corner.get("artifacts") or {}).get("log")
-            if not log:
+            log_path = klt_driver.corner_log_path(corner, resp_path)
+            if log_path is None:
                 problems.append(f"{point.corner_id}: klt returned no log ({corner.get('diagnostics')})")
                 continue
-            log_path = Path(log)
-            if not log_path.is_absolute():
-                log_path = (resp_path.parent / log_path).resolve()
             text = log_path.read_text()
             rows, log_problems = kaband.analyze_log(text, sweep, point.temp_c)
             problems += [f"{point.corner_id}: {p}" for p in log_problems]
