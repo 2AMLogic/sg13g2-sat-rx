@@ -31,13 +31,13 @@ _None._
 
 Issues currently being built (`loom:building`).
 
-- **#68**: spec: decision-record proposal after #61 (no acceptable LO drive at any declared mixer-core sizing)
+- **#204**: Consolidate six copies of klt corner-log resolution into klt_driver
 
 ## PRs Awaiting Review
 
 PRs waiting on Judge (`loom:review-requested`).
 
-- **#201**: docs(spec): propose DR-0008 comparing mixer LO-drive paths (Part of #68)
+- **#206**: refactor(sim): share klt corner-log resolution via klt_driver.corner_log_path
 
 ## Approved (Awaiting Merge)
 
@@ -50,7 +50,6 @@ _None._
 Issues carrying `loom:curated`.
 
 - **#38**: Auditor Capability Request: Python runtime for local harness smoke validation *(curated)*
-- **#68**: spec: decision-record proposal after #61 (no acceptable LO drive at any declared mixer-core sizing) *(curated)*
 - **#79**: design: choose the first-stage core change that lets NF and input match close together *(curated)*
 - **#132**: sim: refine headroom shortlist (C08/C05) - convergence, two-tone IIP3, gain/NF/stability vs baseline *(curated)*
 - **#135**: mixer-conversion-iip3: FFT-bin metrics depend on the ngspice FFT build (local zero-padded vs batch unpadded) *(curated)*
@@ -74,7 +73,7 @@ _None._
 | In Progress (`loom:building`) | 1 |
 | PRs awaiting review | 1 |
 | Approved PRs awaiting merge | 0 |
-| Curated | 5 |
+| Curated | 4 |
 | Architect / Hermit proposals | 0 |
 | Active epics | 0 |
 <!-- guide:plan-body:end -->
