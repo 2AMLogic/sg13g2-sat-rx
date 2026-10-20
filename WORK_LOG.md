@@ -4,6 +4,8 @@ Chronological record of merged pull requests and closed issues, maintained by th
 
 ### 2026-10-20
 
+- **PR #210**: refactor: share record-commit check across evidence adapters, drop dead helpers
+- **Issue #209** (closed): Dedupe evidence-adapter commit check and remove dead imports/helpers
 - **PR #206**: refactor(sim): share klt corner-log resolution via klt_driver.corner_log_path
 - **Issue #204** (closed): Consolidate six copies of klt corner-log resolution into klt_driver
 - **PR #205**: docs(spec): record third source-retrieval attempt for DR-0008
