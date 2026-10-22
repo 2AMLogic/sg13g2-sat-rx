@@ -232,3 +232,28 @@ def test_drivers_do_not_redefine_the_shared_helpers(rel):
     assert not defined, f"{rel} redefines {defined}; import from harness.provenance instead"
     if rel.endswith("run_probe.py"):
         assert "from harness.provenance import" in text
+
+
+def test_parse_marks_rejects_non_finite_and_non_numeric():
+    from harness.provenance import finite_float, parse_marks
+    out = "noise\nMARK a=1.5 b=inf c=nan d=x e=\nMARK a=2\nMARK done\n"
+    assert parse_marks(out) == {"a": 2.0, "b": None, "c": None, "d": None, "e": None}
+    assert finite_float(None) is None and finite_float("-1e3") == -1000.0
+
+
+def test_pdk_integrity_gate_string_names_require_ngspice(monkeypatch):
+    from harness import pdk, pdkartifact
+    from harness.provenance import pdk_integrity
+    seen = {}
+
+    def fake_verify(p, sim_dir, banner=None, require_ngspice=False):
+        seen.update(banner=banner, req=require_ngspice)
+        return SimpleNamespace(ok=True, problems=[], notes=["n"])
+
+    monkeypatch.setattr(pdk, "find_pdk", lambda d: "PDK")
+    monkeypatch.setattr(pdkartifact, "verify", fake_verify)
+    rec = pdk_integrity(SIM, "b", require_ngspice=True)
+    assert rec == {"gate": "sim/harness/pdkartifact.py verify(require_ngspice=True)", "ok": True,
+                   "problems": [], "notes": ["n"]}
+    assert seen == {"banner": "b", "req": True}
+    assert "require_ngspice=False" in pdk_integrity(SIM, require_ngspice=False)["gate"]

@@ -63,6 +63,7 @@ sys.path.insert(0, str(SIM_DIR))
 
 import pumped as P  # noqa: E402
 from harness.provenance import (  # noqa: E402
+    pdk_integrity as _pdk_integrity,
     git_info,
     git_out,
     new_record_id,
@@ -94,11 +95,7 @@ REFERENCES = {
 
 
 def pdk_integrity(banner: str) -> dict:
-    from harness import pdkartifact  # noqa: WPS433
-    from harness.pdk import find_pdk  # noqa: WPS433
-    rep = pdkartifact.verify(find_pdk(SIM_DIR), SIM_DIR, banner, require_ngspice=True)
-    return {"gate": "sim/harness/pdkartifact.py verify(require_ngspice=True)", "ok": rep.ok,
-            "problems": list(rep.problems), "notes": list(rep.notes)}
+    return _pdk_integrity(SIM_DIR, banner, require_ngspice=True)
 
 
 def thresholds_provenance() -> dict:
