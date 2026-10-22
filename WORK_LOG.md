@@ -2,6 +2,11 @@
 
 Chronological record of merged pull requests and closed issues, maintained by the Loom Guide role.
 
+### 2026-10-22
+
+- **PR #224**: refactor(sim): share MARK-log parsing and pdk_integrity in harness.provenance
+- **Issue #223** (closed): Consolidate MARK-log parser and pdk_integrity duplicated across sim probe drivers
+
 ### 2026-10-20
 
 - **PR #220**: refactor: drop unreachable hbt-mismatch-pair statuses and evaluate_failure
