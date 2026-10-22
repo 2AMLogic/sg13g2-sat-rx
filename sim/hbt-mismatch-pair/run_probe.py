@@ -74,6 +74,7 @@ import mcpair as M  # noqa: E402
 from harness.provenance import (  # noqa: E402
     git_info,
     new_record_id,
+    pdk_integrity as _pdk_integrity,
     sha256_file,
     write_excl,
 )
@@ -187,11 +188,7 @@ def pdk_integrity() -> dict:
     pinned local ngspice: the fleet leg runs the runner image's engine and the
     local agreement leg is deliberately cross-build (the #165 precedent) --
     both engine majors are stated in the record instead."""
-    from harness import pdkartifact  # noqa: WPS433
-    from harness.pdk import find_pdk  # noqa: WPS433
-    rep = pdkartifact.verify(find_pdk(SIM_DIR), SIM_DIR, require_ngspice=False)
-    return {"gate": "sim/harness/pdkartifact.py verify(require_ngspice=False)", "ok": rep.ok,
-            "problems": list(rep.problems), "notes": list(rep.notes)}
+    return _pdk_integrity(SIM_DIR, require_ngspice=False)
 
 
 # ---------------------------------------------------------------------------

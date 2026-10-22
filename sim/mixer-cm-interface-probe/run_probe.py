@@ -54,6 +54,7 @@ sys.path.insert(0, str(SIM_DIR))
 
 import cmprobe as C  # noqa: E402
 from harness.provenance import (  # noqa: E402
+    pdk_integrity as _pdk_integrity,
     git_info,
     new_record_id,
     ngspice_info,
@@ -93,11 +94,7 @@ REFERENCES = {
 
 def pdk_integrity(banner: str) -> dict:
     """Run the harness model-integrity gate against sim/pdk-artifact.json (no simulator involved)."""
-    from harness import pdkartifact  # noqa: WPS433
-    from harness.pdk import find_pdk  # noqa: WPS433
-    rep = pdkartifact.verify(find_pdk(SIM_DIR), SIM_DIR, banner, require_ngspice=True)
-    return {"gate": "sim/harness/pdkartifact.py verify(require_ngspice=True)", "ok": rep.ok,
-            "problems": list(rep.problems), "notes": list(rep.notes)}
+    return _pdk_integrity(SIM_DIR, banner, require_ngspice=True)
 
 
 # ---- deck composition ------------------------------------------------------------------------

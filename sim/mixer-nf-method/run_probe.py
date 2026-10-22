@@ -44,9 +44,12 @@ sys.path.insert(0, str(HERE))
 
 import nfmethod as M  # noqa: E402
 from harness.provenance import (  # noqa: E402
+    MARK_RE,
+    finite_float,
     git_info,
     new_record_id,
     ngspice_info,
+    parse_marks,
     pdk_info,
     sha256,
     write_excl,
@@ -94,33 +97,19 @@ SOURCE = {
     ],
 }
 
-MARK_RE = re.compile(r"^MARK\s+(.*)$")
-KV_RE = re.compile(r"(\w+)=(\S*)")
 ONOISE_RE = re.compile(r"^(onoise_total\S*)\s*=\s*(\S+)\s*$")
-
-
-def _float(s: str | None) -> float | None:
-    if s is None or s == "":
-        return None
-    try:
-        return float(s)
-    except ValueError:
-        return None
 
 
 def parse_log(stdout: str, stderr: str) -> dict:
     """Extract MARK key=value pairs, per-generator integrated noise, pss reply."""
-    marks: dict[str, float | None] = {}
+    marks = parse_marks(stdout)
     noise: dict[str, float] = {}
     for line in stdout.splitlines():
-        m = MARK_RE.match(line.strip())
-        if m:
-            for k, v in KV_RE.findall(m.group(1)):
-                marks[k] = _float(v)
+        if MARK_RE.match(line.strip()):
             continue
         n = ONOISE_RE.match(line.strip())
         if n:
-            val = _float(n.group(2))
+            val = finite_float(n.group(2))
             if val is not None:
                 noise[n.group(1)] = val
     both = stdout + "\n" + stderr

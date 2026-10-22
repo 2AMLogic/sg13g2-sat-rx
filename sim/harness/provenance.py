@@ -25,6 +25,7 @@ from __future__ import annotations
 import datetime as _dt
 import hashlib
 import json
+import math
 import re
 import subprocess
 from pathlib import Path
@@ -39,6 +40,11 @@ __all__ = [
     "pinned_major",
     "new_record_id",
     "write_excl",
+    "MARK_RE",
+    "KV_RE",
+    "finite_float",
+    "parse_marks",
+    "pdk_integrity",
 ]
 
 
@@ -135,3 +141,40 @@ def write_excl(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "x") as fh:
         fh.write(text)
+
+
+# ---- MARK-log parsing and PDK integrity gate (shared by the probe drivers) ------------
+
+MARK_RE = re.compile(r"^MARK\s+(.*)$")
+KV_RE = re.compile(r"(\w+)=(\S*)")
+
+
+def finite_float(s: str | None) -> float | None:
+    """``float(s)``, or ``None`` when *s* is missing, non-numeric or not finite."""
+    if s is None or s == "":
+        return None
+    try:
+        v = float(s)
+    except ValueError:
+        return None
+    return v if math.isfinite(v) else None
+
+
+def parse_marks(stdout: str) -> dict[str, float | None]:
+    """All ``MARK key=value`` pairs of an ngspice log (later keys win)."""
+    marks: dict[str, float | None] = {}
+    for line in stdout.splitlines():
+        m = MARK_RE.match(line.strip())
+        if m:
+            for k, v in KV_RE.findall(m.group(1)):
+                marks[k] = finite_float(v)
+    return marks
+
+
+def pdk_integrity(sim_dir: Path, banner: str | None = None, *, require_ngspice: bool) -> dict:
+    """Run the harness model-integrity gate against ``sim/pdk-artifact.json``."""
+    from harness import pdkartifact  # noqa: WPS433
+    from harness.pdk import find_pdk  # noqa: WPS433
+    rep = pdkartifact.verify(find_pdk(sim_dir), sim_dir, banner, require_ngspice=require_ngspice)
+    return {"gate": f"sim/harness/pdkartifact.py verify(require_ngspice={require_ngspice})",
+            "ok": rep.ok, "problems": list(rep.problems), "notes": list(rep.notes)}
