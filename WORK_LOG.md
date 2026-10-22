@@ -4,6 +4,8 @@ Chronological record of merged pull requests and closed issues, maintained by th
 
 ### 2026-10-20
 
+- **PR #220**: refactor: drop unreachable hbt-mismatch-pair statuses and evaluate_failure
+- **Issue #219** (closed): Remove unreachable hbt-mismatch-pair statuses and the unused evaluate_failure()
 - **PR #216**: test: share run/commit/edit_json/assertFails helpers across evidence-checker tests
 - **Issue #215** (closed): Share duplicated run/commit/edit_json/assertFails helpers across evidence-checker tests
 - **PR #214**: test: surface git output when evidence-format fixture commands fail
