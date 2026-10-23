@@ -78,6 +78,7 @@ def test_characterize_hands_its_verified_identity_to_ingest(monkeypatch, tmp_pat
 
     monkeypatch.setattr(run.subprocess, "run", lambda *a, **k: Done())
     monkeypatch.setattr(run, "SCRATCH", tmp_path)
+    monkeypatch.setattr(run.store_mod, "preflight", lambda *a, **k: None)
 
     def fake_ingest(tb, reports, args, verified=None):
         seen["v"] = verified
@@ -114,7 +115,18 @@ import copy  # noqa: E402
 import json  # noqa: E402
 
 from harness.corners import resolve_corners, supply_points  # noqa: E402
+from harness import evidence_store as _es  # noqa: E402
+
+REAL_PUT = _es.put_files  # captured before any test patches it
 from harness.testbench import load as load_tb  # noqa: E402
+
+import importlib.util as _ilu  # noqa: E402
+
+_spec = _ilu.spec_from_file_location(
+    "harness_test_evidence_store", SIM / "harness" / "tests" / "test_evidence_store.py")
+_mod = _ilu.module_from_spec(_spec)
+_spec.loader.exec_module(_mod)
+fake_klt = _mod.fake_klt
 
 MANIFEST = json.loads((SIM / "pdk-artifact.json").read_text())
 PINNED = MANIFEST["files"]
@@ -279,7 +291,23 @@ def local_install_matches(monkeypatch, tmp_path):
     monkeypatch.setattr(run, "git_provenance", lambda root: {"commit": "0" * 40, "short": "0000000"})
     tb = _TbIn(load_tb(BENCH), tmp_path / "exp")
     (tb.experiment_dir / "records").mkdir(parents=True)
+    # Stored evidence (issue #226): a private repo root / scratch tree and a
+    # fake `klt artifact put`; nothing reaches a broker.
+    monkeypatch.delenv("KLT_ARTIFACT_BROKER", raising=False)  # never the real store
+    monkeypatch.setattr(run.harness_cli, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(run.harness_cli, "STAGE_DIR", tmp_path / "stage")
+    monkeypatch.setattr(run.store_mod, "preflight", lambda *a, **k: None)
+    objects = {}
+    monkeypatch.setattr(
+        run.store_mod, "put_files",
+        lambda files, root, klt="klt": REAL_PUT(files, root, klt=klt, run=fake_klt(objects)))
     return tb
+
+
+def _stored_log_names(tb):
+    """Names of the corner logs in the (only) manifest this run committed."""
+    (mpath,) = (tb.experiment_dir.parent / "manifests" / "artifacts").glob("*.manifest.json")
+    return [e["name"] for e in json.loads(mpath.read_text())["entries"] if "/corners/" in e["name"]]
 
 
 def _args():
@@ -367,6 +395,7 @@ def test_ingest_binds_record_to_offhost_models_not_local_install(local_install_m
 
     def fake_write_record(record, exp):
         p = exp / "records" / "TESTID.md"
+        p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text("")
         return p
 
@@ -387,7 +416,8 @@ def test_ingest_binds_record_to_offhost_models_not_local_install(local_install_m
     pdkartifact.validate_identity(art)
     notes = "\n".join(seen["extensions"].notes)
     assert "ingest host" in notes and "says nothing about the runner" in notes
-    assert len(list((tb.experiment_dir / "corners" / "TESTID").glob("*.log"))) == 27
+    assert len(_stored_log_names(tb)) == 27
+    assert not (tb.experiment_dir / "corners").exists()  # logs are stored, not committed
 
 
 def test_characterize_refuses_unstaged_submission(monkeypatch):
@@ -475,4 +505,5 @@ def test_valid_stage1_package_keeps_tables(local_install_matches, monkeypatch, t
         assert "POTENTIALLY UNSTABLE" in text and "Cells labelled POTENTIALLY UNSTABLE: **27 of 27**" in text
     else:
         assert "Cells labelled POTENTIALLY UNSTABLE: **0 of 27**" in text
-    assert len(list((tb.experiment_dir / "corners" / rec.stem).glob("*.log"))) == 27
+    assert len(_stored_log_names(tb)) == 27
+    assert not (tb.experiment_dir / "corners").exists()

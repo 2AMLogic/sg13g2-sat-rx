@@ -9,9 +9,9 @@ sends any multi-point harness grid to the batch fleet the same way; it is kept
 for this bench's correction/new-design notes and stage-1 tables. It expresses
 the 27-point grid as `klt sim` requests (one per supply
 value, 9 process x temperature corners each), then ingests the returned
-per-corner logs into an ordinary harness-native record (corners/<id>/*.log,
-netlist-snapshots/<id>.spice, records/<id>.md), exactly the layout
-check_evidence_formats.py expects for this bench. The pattern is the one
+per-corner logs into an ordinary harness-native record (records/<id>.md; the logs and
+netlist snapshots go to the artifact store, named by
+manifests/artifacts/lna-sparam-nf-<id>.manifest.json -- issue #226). The pattern is the one
 sim/hbt-kaband-characterization/run.py established.
 
 Ingest refuses to write unless all 27 points are present with finite values
@@ -52,7 +52,9 @@ sys.path.insert(0, str(BENCH_DIR))
 
 import lna_nf  # noqa: E402
 import stage1_tables  # noqa: E402
+from harness import cli as harness_cli  # noqa: E402
 from harness import evidence as evidence_mod  # noqa: E402
+from harness import evidence_store as store_mod  # noqa: E402
 from harness.corners import CORNERS, PvtPoint, build_grid, resolve_corners, supply_points  # noqa: E402
 from harness import klt_driver  # noqa: E402
 from harness import pdkartifact  # noqa: E402
@@ -116,6 +118,18 @@ def _verified_pdk():
         return pdk, None
 
 
+def _store_preflight(klt_cmd: str) -> int:
+    """0, or the exit code after refusing: new evidence goes to the artifact
+    store only (issue #226), so a run that could not be stored is not started."""
+    try:
+        store_mod.preflight(REPO_ROOT, klt=klt_cmd)
+    except store_mod.StoreError as exc:
+        print(f"EVIDENCE STORE UNAVAILABLE -- nothing submitted or written: {exc}",
+              file=sys.stderr)
+        return harness_cli.EXIT_STORE
+    return 0
+
+
 def cmd_characterize(args) -> int:
     tb = load(BENCH_DIR)
     verified = None
@@ -131,6 +145,8 @@ def cmd_characterize(args) -> int:
             print("characterize: PDK artifact not verified; nothing submitted, no record written",
                   file=sys.stderr)
             return 3
+        if code := _store_preflight(args.klt_cmd):
+            return code
     corners = resolve_corners(list(tb.corners))
     supplies = supply_points(tb.nominal_supply_v, tb.supply_tolerance)
     temps = list(tb.temperatures_c)
@@ -388,7 +404,12 @@ def ingest(tb, reports, args, verified=None) -> int:
             return 4
 
     record_id = allocate_record_id(REPO_ROOT, tb.experiment_dir / "records", started, git)
-    log_dir = tb.experiment_dir / "corners" / record_id
+    if code := _store_preflight(args.klt_cmd):
+        return code
+    # Stage in the git-ignored scratch tree; only the manifest and the record
+    # are committed (issue #226).
+    stage_exp = harness_cli.STAGE_DIR / BENCH_DIR.name / "sim" / BENCH_DIR.name
+    log_dir = stage_exp / "corners" / record_id
     if log_dir.exists():
         raise RecordExists(f"{log_dir} exists; append-only evidence is never rewritten")
     log_dir.mkdir(parents=True)
@@ -402,12 +423,18 @@ def ingest(tb, reports, args, verified=None) -> int:
         f"(ingested on {ngspice_version()})", REPO_ROOT, record_id, started.isoformat(), wall,
         claim=args.claim or tb.claim, supersedes=args.supersedes or "", git=git,
         extensions=extensions, pdk_artifact=pdk_artifact)
-    write_netlist_snapshot(tb, tb.experiment_dir, record_id)
-    write_manifest_snapshot(tb, tb.experiment_dir, record_id)
-    path = write_record(record, tb.experiment_dir)
-    if extra:
-        with path.open("a") as fh:
-            fh.write(extra)
+    write_netlist_snapshot(tb, stage_exp, record_id)
+    write_manifest_snapshot(tb, stage_exp, record_id)
+    staged = write_record(record, stage_exp)
+    try:
+        path = harness_cli.store_evidence(
+            tb.experiment_dir, stage_exp, record_id,
+            staged.read_text(encoding="utf-8") + extra, klt=args.klt_cmd)
+    except store_mod.StoreError as exc:
+        print(f"EVIDENCE NOT STORED -- nothing committed (fail closed): {exc}. The staged "
+              f"bytes are kept, uncommitted, under {stage_exp}/ (record id {record_id}).",
+              file=sys.stderr)
+        return harness_cli.EXIT_STORE
     print(f"wrote {path}")
     return 0 if record["status"] == "pass" else 1
 

@@ -179,6 +179,7 @@ import os
 import sys
 from pathlib import Path
 
+from .artifact_manifests import MANIFEST_DIR, check_artifact_manifests, check_manifest_append_only
 from .common import PROTECTED_RE, Problems, RECORD_ID_PREFIX_RE, git, rel
 from .hbt_mismatch_pair import check_hbt_mismatch_pair
 from .kaband import check_kaband_record
@@ -235,6 +236,7 @@ def check_format(root: Path) -> Problems:
     if not exps:
         problems.add("sim/", "no sim/*/testbench/tb.json benches found")
     check_bench_readmes(problems, root)
+    check_artifact_manifests(problems, root)
     bench_names = {e.name for e in exps}
     for d in sorted(p for p in sim.iterdir() if p.is_dir()):
         if d.name in bench_names:
@@ -334,6 +336,8 @@ def check_append_only(root: Path, base: str | None, require_base: bool) -> tuple
     if diff.returncode != 0:
         problems.add("append-only", f"git diff against {mb[:12]} failed: {diff.stderr.strip()}")
         return problems, note
+    check_manifest_append_only(
+        problems, git(root, "diff", "--name-status", "--no-renames", mb, "--", MANIFEST_DIR).stdout.splitlines(), mb)
     base_files = git(root, "ls-tree", "-r", "--name-only", mb, "--", "sim").stdout.splitlines()
     base_ids = {
         m.group(1)
