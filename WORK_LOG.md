@@ -2,6 +2,11 @@
 
 Chronological record of merged pull requests and closed issues, maintained by the Loom Guide role.
 
+### 2026-10-23
+
+- **PR #227**: feat(sim): store new harness evidence in the artifact store, commit manifests
+- **Issue #226** (closed): Adopt the common artifact store for sim evidence (manifests in git, bytes via klt artifact)
+
 ### 2026-10-22
 
 - **PR #224**: refactor(sim): share MARK-log parsing and pdk_integrity in harness.provenance
