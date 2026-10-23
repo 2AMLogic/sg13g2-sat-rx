@@ -31,3 +31,7 @@ sessions on fleet workers; optionally `$KLT_ARTIFACT_REPO`), never from a file.
   and treats manifests as append-only. It never contacts the broker.
 
 Evidence committed before this change stays where it is (manifest-forward only).
+
+Known tool gap: `klt artifact` has no delete/prune verb, so unreferenced objects (such as
+the synthetic test objects from #226) cannot be removed from the store;
+tracked at `2AMLogic/klayout-tools#4101`.
