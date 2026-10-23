@@ -43,3 +43,13 @@ def _no_klt_submission(monkeypatch):
         raise AssertionError("a unit test tried to submit a real klt sim request")
 
     monkeypatch.setattr(klt_driver, "submit", refuse)
+
+
+@pytest.fixture(autouse=True)
+def _no_real_artifact_broker(monkeypatch):
+    """Issue #226: an evidence-writing ``cli run`` stores bytes through the real
+    artifact store when ``$KLT_ARTIFACT_BROKER`` is set (it is, on fleet
+    workers). No test may do that: drop the variable so the real store path
+    fails closed instead; tests of the write path patch ``preflight`` and
+    ``put_files`` themselves."""
+    monkeypatch.delenv("KLT_ARTIFACT_BROKER", raising=False)

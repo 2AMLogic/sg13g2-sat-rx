@@ -15,7 +15,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-for _m in ("common", "native", "kaband", "passive_p1", "mixer_nf", "mixer_cm", "mixer_pra",
+for _m in ("common", "artifact_manifests", "native", "kaband", "passive_p1", "mixer_nf", "mixer_cm", "mixer_pra",
            "mixer_feas", "lna_match", "lna_linearity", "lna_headroom", "hbt_mismatch_pair",
            "readmes", "spec_rows", "core"):
     _mod = importlib.import_module(f"evidence_checks.{_m}")

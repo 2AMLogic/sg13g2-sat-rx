@@ -16,12 +16,14 @@ from types import SimpleNamespace
 
 import pytest
 
-from harness import cli, klt_driver as kd, report as R
+from harness import cli, evidence_store as es, klt_driver as kd, report as R
 from harness import corners as C
 from harness import testbench as T
 from harness.runner import PointResult, compose_deck
+from test_evidence_store import fake_klt
 
 SIM = Path(__file__).resolve().parents[2]
+REAL_PUT = es.put_files  # captured before any test patches it
 REAL_SUBMIT = kd.submit  # captured before conftest's autouse guard patches it
 COMMIT = "a" * 40
 IDENTITY = {"status": "verified", "verified_scope": "offhost-job-model-inputs",
@@ -361,7 +363,7 @@ def test_cli_refuses_a_supply_aliasing_grid_before_dispatch(run, bench):
 # ---------------------------------------------------------------------------
 
 @pytest.fixture
-def run(monkeypatch, bench, pdk, capsys):
+def run(monkeypatch, bench, pdk, capsys, tmp_path):
     monkeypatch.setattr(cli, "load", lambda _e: bench)
     monkeypatch.setattr(cli, "_resolve_pdk", lambda: pdk)
     monkeypatch.setattr(cli, "ngspice_version", lambda: "ngspice-46")
@@ -369,6 +371,14 @@ def run(monkeypatch, bench, pdk, capsys):
     monkeypatch.setattr(cli.pdkartifact, "verified_identity", lambda p, s: dict(IDENTITY, jobs=None,
                                                                                   verified_scope=None))
     monkeypatch.setattr(cli.klt_driver, "klt_client_version", lambda cmd: "klt 0.7.0")
+    # Stored evidence (issue #226): private repo root / scratch tree, fake put.
+    monkeypatch.setattr(cli, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(cli, "STAGE_DIR", tmp_path / "stage")
+    monkeypatch.setattr(cli.store_mod, "preflight", lambda *a, **k: None)
+    stored_objects = {}
+    monkeypatch.setattr(
+        cli.store_mod, "put_files",
+        lambda files, root, klt="klt": REAL_PUT(files, root, klt=klt, run=fake_klt(stored_objects)))
     calls = SimpleNamespace(local=0, klt=[])
 
     def local(*a, **k):
@@ -423,7 +433,7 @@ def test_sabotage_cannot_go_to_batch(run):
     assert rc == 2 and calls.klt == [] and calls.local == 0 and "--backend local" in out.err
 
 
-def test_batch_write_records_backend_job_ids_and_logs(run, bench, monkeypatch):
+def test_batch_write_records_backend_job_ids_and_logs(run, bench, monkeypatch, tmp_path):
     seen = {}
     monkeypatch.setattr(cli.pdkartifact, "offhost_identity",
                         lambda jobs, sim: seen.setdefault("jobs", jobs) and IDENTITY)
@@ -433,8 +443,11 @@ def test_batch_write_records_backend_job_ids_and_logs(run, bench, monkeypatch):
                                                    "report_2.75v.json"]
     (record,) = (bench.experiment_dir / "records").glob("*.md")
     rid = record.stem
-    logs = sorted(p.name for p in (bench.experiment_dir / "corners" / rid).iterdir())
+    manifest = json.loads((tmp_path / "manifests" / "artifacts" / (
+        f"{bench.experiment_dir.name}-{rid}.manifest.json")).read_text())
+    logs = sorted(e["name"].rsplit("/", 1)[-1] for e in manifest["entries"] if "/corners/" in e["name"])
     assert len(logs) == 27 and all(n.endswith(".log") for n in logs)
+    assert not (bench.experiment_dir / "corners").exists()  # stored, not committed
     text = record.read_text()
     assert "**Status**: pass" in text
     assert "- Execution: backend `batch` via klt sim (client `klt 0.7.0`), 3 request(s)" in text

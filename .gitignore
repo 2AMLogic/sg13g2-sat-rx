@@ -110,3 +110,8 @@ sim/*/corners/_scratch/
 # re-creatable scratch -- the committed evidence is the reports, the compact
 # per-sample JSON and the kept sample logs under probe-logs/<id>/.
 sim/hbt-mismatch-pair/probe-logs/*/out_*/
+
+# Stored evidence (issue #226): sim/harness/cli.py stages a run's raw outputs
+# (per-point logs, frozen snapshots) here before `klt artifact put`. Scratch,
+# never committed; only manifests/artifacts/*.manifest.json and the record are.
+sim/.work/

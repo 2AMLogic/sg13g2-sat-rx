@@ -411,8 +411,30 @@ python3 -m harness.cli selftest lna-sparam-nf --corners hbt
 python3 -m harness.cli selftest mixer-conversion-iip3 --corners hbt
 ```
 
-`sim/*/corners/<record-id>/*.log` (the raw ngspice output per PVT point) is
-committed evidence alongside each Markdown record — `.gitignore` carves an
+### Stored evidence (new runs)
+
+A new evidence-writing `harness.cli run` (and `lna-sparam-nf/run.py ingest`)
+no longer commits its raw bytes. The per-point logs and the frozen netlist /
+testbench-manifest snapshots are staged in the git-ignored `sim/.work/.stage/`,
+stored with `klt artifact put`, and git keeps only
+`manifests/artifacts/<bench>-<record-id>.manifest.json` plus
+`sim/<bench>/records/<record-id>.md`, whose `## Stored evidence` table lists
+name, size and sha256 per object (see `manifests/README.md`). Configuration is
+environment-only: `$KLT_ARTIFACT_BROKER` (set for agent sessions on fleet
+workers; never write its value into the repo) and optionally
+`$KLT_ARTIFACT_REPO`. The run is **fail closed** and exits 10: broker unset,
+`klt` without `artifact put` or older than the `artifact:<key>` contract, or an
+unreachable broker refuses before anything is simulated; a failed put after the
+run writes no manifest or record and keeps the staged bytes under
+`sim/.work/.stage/` (nothing is lost, nothing is committed). `--no-write` and
+`--sabotage` runs touch neither the broker nor the repo. Verify a manifest with
+`klt artifact verify manifests/artifacts/<bench>-<record-id>.manifest.json`.
+Bespoke collectors (`mixer-topology-feasibility`, `lna-match-tradeoff`,
+`hbt-kaband-characterization`, `lna-headroom`, `lna-linearity`) still write as
+before.
+
+Records committed before this change keep their layout: `sim/*/corners/<record-id>/*.log`
+(the raw ngspice output per PVT point) is committed evidence alongside each Markdown record — `.gitignore` carves an
 exception for it out of the general `*.log` rule. `sim/*/_build/` and
 `sim/*/_selftest/` are disposable scratch directories (generated decks,
 `--no-write`/self-test scratch runs) and are `.gitignore`d.

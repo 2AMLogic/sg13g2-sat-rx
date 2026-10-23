@@ -42,6 +42,7 @@ from .corners import (
     sabotage,
     supply_points,
 )
+from . import evidence_store as store_mod
 from . import klt_driver
 from . import pdkartifact
 from .pdk import Pdk, PdkConfigError, PdkNotFound, find_pdk
@@ -62,6 +63,14 @@ from .runner import DEFAULT_TIMEOUT_S, NgspiceMissing, ngspice_version, run_grid
 from .testbench import discover, load
 
 SIM_DIR = Path(__file__).resolve().parent.parent
+REPO_ROOT = SIM_DIR.parent
+#: Git-ignored scratch tree where an evidence-writing run stages its raw
+#: outputs (per-point logs, frozen snapshots) before they are stored through
+#: ``klt artifact put``. Nothing here is ever committed.
+STAGE_DIR = SIM_DIR / ".work" / ".stage"
+#: Exit code: the artifact store could not take the evidence; nothing was
+#: committed (and, for a preflight refusal, nothing was simulated).
+EXIT_STORE = 10
 
 
 def cmd_list(args: argparse.Namespace) -> int:
@@ -170,6 +179,38 @@ SMOKE_SUBSET_REJECTION = (
 )
 
 
+def store_evidence(experiment_dir: Path, stage_exp: Path, record_id: str,
+                   record_text: str, *, klt: str = "klt", put=None) -> Path:
+    """Store a staged run's bytes and commit only its manifest and record.
+
+    ``stage_exp`` holds the run's per-point logs, frozen netlist snapshot and
+    frozen testbench manifest; they go to the artifact store under the names
+    they would have had in ``experiment_dir`` (``sim/<bench>/...``). The
+    record text gets its "Stored evidence" section and is written to
+    ``experiment_dir/records/<id>.md``. On success the staged copy is removed;
+    on :class:`store_mod.StoreError` nothing is committed and the staged bytes
+    stay put. Returns the record path.
+    """
+    bench = experiment_dir.name
+    prefix = f"sim/{bench}"
+    files = []
+    for sub in (f"netlist-snapshots/{record_id}.spice", f"netlist-snapshots/{record_id}.tb.json"):
+        if (stage_exp / sub).is_file():
+            files.append((stage_exp / sub, f"{prefix}/{sub}"))
+    files += store_mod.stage_files(stage_exp / "corners" / record_id,
+                                   f"{prefix}/corners/{record_id}")
+    record_path = experiment_dir / "records" / f"{record_id}.md"
+    store_mod.store_files(
+        files, repo_root=REPO_ROOT, bench=bench, rid=record_id, summary_text=record_text,
+        summary_path=record_path,
+        klt=klt, put=put)
+    shutil.rmtree(stage_exp / "corners" / record_id, ignore_errors=True)
+    for sub in (f"netlist-snapshots/{record_id}.spice", f"netlist-snapshots/{record_id}.tb.json",
+                f"records/{record_id}.md"):
+        (stage_exp / sub).unlink(missing_ok=True)
+    return record_path
+
+
 def cmd_run(args: argparse.Namespace) -> int:
     # An evidence-writing run must keep every complete-axis check. --sabotage
     # forces --no-write later, but it is not a smoke subset, so require the
@@ -238,6 +279,19 @@ def cmd_run(args: argparse.Namespace) -> int:
         return 2
     points = build_grid(corners, temperatures, supplies)
 
+    # Stored-evidence gate (issue #226): an evidence-writing run must be
+    # storable before any simulation time is spent. No broker, no `klt
+    # artifact put`, a klt older than the artifact: uri contract or an
+    # unreachable broker: refuse now. There is no fallback that commits bytes.
+    if not args.no_write:
+        try:
+            store_mod.preflight(REPO_ROOT, klt=args.klt_cmd)
+        except store_mod.StoreError as exc:
+            print(f"EVIDENCE STORE UNAVAILABLE -- refusing to simulate: {exc}. Evidence "
+                  "bytes go to the artifact store only (sim/README.md, \"Stored evidence\"); "
+                  "--no-write runs need no store.", file=sys.stderr)
+            return EXIT_STORE
+
     # Artifact-identity gate (issue #150): distinct points whose corner_id
     # formats to the same string would overwrite each other's decks and logs.
     # Refused before anything is allocated, written or submitted; the local
@@ -288,9 +342,13 @@ def cmd_run(args: argparse.Namespace) -> int:
     record_id = allocate_record_id(SIM_DIR.parent, tb.experiment_dir / "records", started, git)
 
     workdir = Path(args.workdir) if args.workdir else tb.experiment_dir / "_build"
+    # A real run stages its logs and snapshots in the git-ignored scratch tree
+    # (STAGE_DIR/<bench>/sim/<bench>/..., mirroring the logical `sim/<bench>/`
+    # names the store records); only the manifest and the record are committed.
+    stage_exp = STAGE_DIR / tb.experiment_dir.name / "sim" / tb.experiment_dir.name
     log_dir = (
         tb.experiment_dir / "corners" / "_scratch" if args.no_write
-        else tb.experiment_dir / "corners" / record_id
+        else stage_exp / "corners" / record_id
     )
     execution = {"backend": "local"}
     record_ngspice = ngspice
@@ -386,13 +444,21 @@ def cmd_run(args: argparse.Namespace) -> int:
         pdk_artifact=pdk_artifact, execution=execution,
     )
     try:
-        write_netlist_snapshot(tb, tb.experiment_dir, record_id)
-        write_manifest_snapshot(tb, tb.experiment_dir, record_id)
-        path = write_record(record, tb.experiment_dir)
+        write_netlist_snapshot(tb, stage_exp, record_id)
+        write_manifest_snapshot(tb, stage_exp, record_id)
+        staged_record = write_record(record, stage_exp)
+        path = store_evidence(tb.experiment_dir, stage_exp, record_id,
+                              staged_record.read_text(encoding="utf-8"), klt=args.klt_cmd)
     except RecordExists as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
+    except store_mod.StoreError as exc:
+        print(f"EVIDENCE NOT STORED -- nothing committed (fail closed): {exc}. The staged "
+              f"bytes are kept, uncommitted, under {stage_exp}/ (record id {record_id}).",
+              file=sys.stderr)
+        return EXIT_STORE
     print(f"wrote {path}")
+    print(f"manifest: {store_mod.manifest_path(REPO_ROOT, tb.experiment_dir.name, record_id)}")
     return 1 if failures or n_ok != len(results) else 0
 
 

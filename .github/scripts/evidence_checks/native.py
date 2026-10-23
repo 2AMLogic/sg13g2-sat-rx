@@ -7,6 +7,7 @@ import json
 import re
 from pathlib import Path
 
+from .artifact_manifests import check_stored_native_record
 from .common import (NATIVE_SECTIONS, NATIVE_SNAPSHOT_NOTE, NATIVE_STATUSES, Problems, RECORD_ID_RE, check_supersedes, compare_identities, expand_matrix, has_section, header_field, numbers, rel)
 
 
@@ -92,8 +93,13 @@ def check_native_record(problems: Problems, root: Path, exp_dir: Path, md: Path)
         if status == "pass" and n_done is not None and n_done != n_total:
             problems.add(where, f"Status is pass but only {n_done}/{n_total} points are declared completed")
 
+    stored = has_section(text, "Stored evidence")
     corners_dir = exp_dir / "corners" / rid
-    if not corners_dir.is_dir():
+    if stored:
+        # Stored form (issue #226): logs and snapshots are artifact-store
+        # objects named by manifests/artifacts/<bench>-<rid>.manifest.json.
+        check_stored_native_record(problems, root, exp_dir, rid, where, text, expected)
+    elif not corners_dir.is_dir():
         problems.add(where, f"missing corner directory {rel(root, corners_dir)}/")
     elif expected is not None:
         logs = sorted(p for p in corners_dir.iterdir() if p.is_file())
@@ -108,16 +114,22 @@ def check_native_record(problems: Problems, root: Path, exp_dir: Path, md: Path)
                 problems.add(rel(root, p), "corner log is empty")
 
     snap = exp_dir / "netlist-snapshots" / f"{rid}.spice"
-    if not snap.is_file():
+    if stored:
+        pass
+    elif not snap.is_file():
         problems.add(where, f"missing netlist snapshot {rel(root, snap)}")
     else:
         check_native_snapshot(problems, rel(root, snap), snap.read_bytes(), rid)
     extra_snap_dir = exp_dir / "netlist-snapshots" / rid
-    if extra_snap_dir.exists():
+    if extra_snap_dir.exists() and not stored:
         problems.add(rel(root, extra_snap_dir), "directory-style snapshot in a harness-native bench")
 
     manifest_line = header_field(text, "Manifest")
-    if manifest_line is not None:
+    if manifest_line is not None and stored:
+        if not NATIVE_MANIFEST_LINE_RE.fullmatch(manifest_line):
+            problems.add(where, "'**Manifest**:' must be '`netlist-snapshots/<record-id>.tb.json` "
+                         "sha256 `<64-hex>`'")
+    elif manifest_line is not None:
         check_native_manifest_snapshot(problems, root, exp_dir, rid, where, manifest_line)
 
 
