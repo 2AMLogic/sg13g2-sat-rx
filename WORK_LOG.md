@@ -4,6 +4,8 @@ Chronological record of merged pull requests and closed issues, maintained by th
 
 ### 2026-10-23
 
+- **PR #231**: docs(manifests): record klt artifact delete/prune gap with upstream link
+- **Issue #229** (closed): Follow-on from PR #227: live-verify stored harness evidence with klt artifact verify
 - **PR #227**: feat(sim): store new harness evidence in the artifact store, commit manifests
 - **Issue #226** (closed): Adopt the common artifact store for sim evidence (manifests in git, bytes via klt artifact)
 
