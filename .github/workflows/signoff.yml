@@ -24,7 +24,9 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install pinned klt
-        run: pip install klayout-tools==0.7.0
+        run: |
+          pip install klayout-tools==0.8.0
+          klt --version
       - name: Re-grade the committed block manifest
         run: |
           set +e

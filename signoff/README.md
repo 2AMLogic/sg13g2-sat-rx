@@ -90,17 +90,17 @@ item (this block's expected exit today), `1`/`2` = the manifest, a cited
 evidence file, or the tiers doc could not be read/parsed. Exit `3` is a
 rendered, usable report — not an error.
 
-**Grader pin: `klayout-tools==0.7.0`** (`.github/workflows/signoff.yml`),
-raised from 0.5.0 in the same change that cited item 1: klt 0.5.0 has no
-artifact-anchored generic evidence and renders such a citation
-`unmet`/`wrong_kind`, so the pin had to move for the item-1 citation to grade.
+**Grader pin: `klayout-tools==0.8.0`** (`.github/workflows/signoff.yml`),
+raised from 0.7.0 (issue #234); history: 0.5.0 -> 0.7.0 was done in the same
+change that cited item 1, because klt 0.5.0 has no artifact-anchored generic
+evidence and renders such a citation `unmet`/`wrong_kind`.
 Regenerate the report with the pinned release, not a dev build (a dev build
 writes its commit into the report's `build` block and would not compare equal
 to CI's re-grade). A throwaway venv does it without touching host tools:
-`uv venv /tmp/klt070 && uv pip install --python /tmp/klt070/bin/python
-klayout-tools==0.7.0 && /tmp/klt070/bin/klt signoff ...` (checked: `uvx --from
-klayout-tools==0.7.0` resolved to the host's already-installed dev build, whose
-`build` block differs).
+`uv venv /tmp/klt080 && uv pip install --python /tmp/klt080/bin/python
+klayout-tools==0.8.0 && /tmp/klt080/bin/klt signoff ...` (checked at 0.7.0:
+`uvx --from klayout-tools==0.7.0` resolved to the host's already-installed dev
+build, whose `build` block differs).
 
 ## Regenerating the verdict of record
 

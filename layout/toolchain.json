@@ -64,10 +64,23 @@
     "0.30.12). klt_required_commands grew from [drc] to the five commands",
     "the probe invokes; layout/probe-readiness/generate_probe.py is, for",
     "now, the one runner that checks this list before doing anything.",
-    "Per-command outcomes: layout/probe-readiness/README.md."
+    "Per-command outcomes: layout/probe-readiness/README.md.",
+    "",
+    "PIN BUMP 2026-10-27 (issue #234, klt 0.7.0 -> 0.8.0 release pin):",
+    "klayout-tools now has PyPI releases, so klt_install moves from the",
+    "b770c86e0e96 VCS URL to the release pin `klayout-tools==0.8.0`, and",
+    "klt_last_verified_commit is the full sha of tag v0.8.0",
+    "(c572046be644e0407f693f2410f3abb799d68a3a). The two field-reference",
+    "lines above that describe klt_install as a VCS URL `(no PyPI release",
+    "yet)` are superseded by this paragraph: klt_install is now a PyPI",
+    "requirement string, and klt_last_verified_commit is the commit that",
+    "release tag resolves to. This is the same pin signoff.yml installs.",
+    "The 2026-10-12 probe records (layout/probe-readiness/runs/) were taken",
+    "at the earlier build and are NOT re-run or rewritten by this bump;",
+    "re-running the probe at 0.8.0 would be a separate, later record."
   ],
-  "klt_install": "git+https://github.com/2AMLogic/klayout-tools@b770c86e0e963600d27c6403d838c06d9b25cd88",
+  "klt_install": "klayout-tools==0.8.0",
   "klt_required_commands": ["drc", "extract", "lvs", "ring-check", "economy"],
-  "klt_last_verified_commit": "b770c86e0e963600d27c6403d838c06d9b25cd88",
+  "klt_last_verified_commit": "c572046be644e0407f693f2410f3abb799d68a3a",
   "klayout_package_min": "0.30"
 }
