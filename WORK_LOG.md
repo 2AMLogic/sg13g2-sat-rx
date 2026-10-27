@@ -2,6 +2,11 @@
 
 Chronological record of merged pull requests and closed issues, maintained by the Loom Guide role.
 
+### 2026-10-27
+
+- **PR #235**: chore: pin klayout-tools 0.8.0 for signoff grading and toolchain record
+- **Issue #234** (closed): Bump klayout-tools pin 0.5.0, 0.7.0, b770c86e0e96 → 0.8.0
+
 ### 2026-10-23
 
 - **PR #231**: docs(manifests): record klt artifact delete/prune gap with upstream link
