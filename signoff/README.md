@@ -25,59 +25,34 @@ T1: 3/11 items met
 
 **Items 1 (Design sources), 9 (Testbenches shipped) and 10 (Repo hygiene) are
 `met`; items 2-8 and 11 are
-`unmet` with `reason: "no_evidence"`.** Item 1 cites `evidence/item1-design-sources.json`, an
-artifact-anchored `generic` attestation (issue #28): it declares `t1_item: 1`,
-binds the derived netlist `design/netlist/lna_stage1.spice` by path and content
-hash, lists the xschem sources (`design/lna_stage1.sch`, `.sym`) with their
-hashes in `metrics`, and is `pass` only if `design/export_netlist.sh --check`
-says the committed netlist is what those sources export now. Regenerate it
-with `python3 signoff/make_item1_evidence.py` (it prints the manifest entry to
-paste, including the pinned `content_hash`) whenever the schematic or netlist
-changes; a stale pin renders `stale_evidence`, never a false pass. Item 1 currently attests the LNA first stage only; the mixer has no committed design source. The graded
-`met` is "the item is bound to an audited artifact", not a judgment that the
-design is any good. Item 10 cites `evidence/item10-repo-hygiene.json` (issue #71), a `generic`
-attestation that is `pass` only if `README.md`, `LICENSE` and
-`spec/target-spec.md` exist, the README's Reproduce section links
-`sim/README.md` and names `sim/characterize.sh`, and the non-comment lines of
-`.github/workflows/ci.yml` invoke `check_evidence_formats.py` and
-`sim/characterize.sh smoke`. It binds the CI workflow by content hash;
-regenerate with `python3 signoff/make_item10_evidence.py` (exits non-zero if
-any check fails, e.g. LICENSE removed). These are presence/invocation checks,
-not a quality judgment. **Item 9 (Testbenches shipped)** cites
-`evidence/item9-testbenches-shipped.json` (issue #182), a `generic` attestation
-written by `python3 signoff/make_item9_evidence.py`. **It attests that the
-testbenches are shipped and reproducible; it does NOT attest that any spec row
-is met**, nor that any bench's full PVT grid was re-run. It is `pass` only if
-(a) every `sim/<dir>/` holding `records/` (all 11 today) has a cold-start
-README whose invocation section has a fenced command block (the rule of
-`.github/scripts/check_evidence_formats.py`, imported rather than copied), and
-(b) the newest `sim/lna-sparam-nf` record carries a `- PDK artifact:
-**verified**` line whose commit and digest match `sim/pdk-artifact.json`, does
-not name the PDK `unknown`, completed every point it declared, and, if its
-Result is FAIL, fails only on "axis was never swept" sensitivity checks. The
-generator exits non-zero (and writes status `fail`) otherwise; negative
-controls (missing README, README without a fenced block, no artifact line,
-PDK `unknown`, mismatched pin, unexplained FAIL) are in
-`signoff/tests/test_make_item9_evidence.py`, which CI runs, and which also
-fails if the committed envelope no longer equals what the generator writes
-from the tree (the grader itself re-hashes only the bound record; the README
-hashes and the PDK pin are fenced by that test). The bound record is
-`sim/lna-sparam-nf/records/20261012-073327-c8afc00.md`: a declared
-**single-point** local subset (hbt_typ, 27 C, 2.50 V, one `ngspice -b`, ngspice
-42 vs the tested 46) because off-host `klt sim` batch ingest is still refused
-(2AMLogic/klayout-tools#3071) and a local grid is not permitted on the shared
-dispatch host. Its own Result is FAIL, solely because a one-point run cannot
-satisfy the axis-spread checks; that is visible in the record and is not
-hidden by the attestation. Only two benches (`lna-sparam-nf`,
-`mixer-conversion-iip3`) currently have a newest record with a pinned
-artifact line; the others' status is listed in the envelope's
-`newest_record_pinned_pdk_by_bench` metric and is not claimed. Re-run those
-benches in follow-up work. Records stay append-only; the older `unknown`-PDK
-records remain grandfathered by id in the checker. Regenerate the envelope
-(and re-pin the manifest `content_hash`) whenever the bound record, a bench
-README or `sim/pdk-artifact.json` changes. Because item 10 binds
-`.github/workflows/ci.yml`, a change to that file also requires
-`python3 signoff/make_item10_evidence.py` and a re-pin.
+`unmet` with `reason: "no_evidence"`.** Their envelopes are **tool-produced**
+by `klt signoff --attest {1,9,10} --inventory <file>` (issue #237), as the
+checklist requires, from the versioned inventories in `inventories/`. The
+envelope's `status` is derived from the mechanical checks it lists in
+`attestation.checks[]`, each with the content hash of the file it ran on:
+
+| Item | Inventory | What is checked |
+|---|---|---|
+| 1 | `inventories/item1.json` | `design/lna_stage1.sch`, `.sym` and `export_netlist.sh` exist; the derived netlist exists and `design/export_netlist.sh --check` exits 0. **LNA first stage only**; the mixer has no committed design source (#170). The freshness command needs xschem and the PDK, so it is `local_only`: `--attest` runs it, CI's `--check` carries the committed outcome. |
+| 9 | `inventories/item9.json` | Every `sim/<bench>/README.md` of a bench with `records/`, `sim/README.md`, `sim/characterize.sh` and `sim/pdk-artifact.json` exist; the cold-start command (`python3 -m pytest sim/lna-sparam-nf/tests -q`, simulator-free) exits 0; the PDK and tool versions are pinned. It does **not** attest that any spec row is met nor that any PVT grid was re-run. |
+| 10 | `inventories/item10.json` | README, LICENSE, spec, `sim/README.md`, CI workflow and the evidence checker exist; `check_evidence_formats.py --skip-history` exits 0; `ci.yml` invokes the checker and `sim/characterize.sh smoke`; the README names `sim/characterize.sh`. |
+
+The graded `met` is "bound to an audited artifact", not a judgment that the
+design is any good. Regenerate after editing an inventory or any inventoried
+file, with the pinned klt and the repo's test dependencies on `PATH` (item 9's
+cold start imports numpy and pytest):
+
+```
+klt signoff --attest N --inventory signoff/inventories/itemN.json \
+            -o signoff/evidence/<item N envelope>.json
+```
+
+then copy the envelope's `provenance.input.content_hash` (the inventory hash)
+into `block-manifest.json` and re-render the report below. `signoff.yml` runs
+`--attest N --check` for each, so an edited member (e.g. `design/lna_stage1.sch`
+without a netlist re-export) is drift in CI. Klt 0.8.0's manifest grader
+re-hashes only the inventory, not its members; the `--check` steps are what
+fence the members. The old `make_item*_evidence.py` generators are removed.
 The remainder is the correct, honest result for a block
 whose layout and verification evidence has not started. The per-item *human*
 context stays in the gap-to-T1 tracker
@@ -93,7 +68,8 @@ rendered, usable report — not an error.
 **Grader pin: `klayout-tools==0.8.0`** (`.github/workflows/signoff.yml`),
 raised from 0.7.0 (issue #234); history: 0.5.0 -> 0.7.0 was done in the same
 change that cited item 1, because klt 0.5.0 has no artifact-anchored generic
-evidence and renders such a citation `unmet`/`wrong_kind`.
+evidence and renders such a citation `unmet`/`wrong_kind`. The attestation
+inventories need 0.8.0 (`--attest`).
 Regenerate the report with the pinned release, not a dev build (a dev build
 writes its commit into the report's `build` block and would not compare equal
 to CI's re-grade). A throwaway venv does it without touching host tools:
@@ -121,31 +97,25 @@ comparison turns that into a red build rather than silent rot).
 
 ## Why the checklist is pinned in-repo
 
-T1 grew an **eleventh item** ("Power delivery (structural)",
-[klayout-tools#2025](https://github.com/2AMLogic/klayout-tools/issues/2025))
-on 2026-09-19 — after the released `klt` 0.5.0, which bundles the ten-item
-checklist. `--tiers-doc` is the supported override: pinning the checklist
-here makes the rendered item set deterministic regardless of the installed
-`klt` release, and keeps item 11 in the report as the issue requires.
-
-`klt` 0.5.0 parses this 11-item doc correctly but has **no grading rules for
-item 11** — an *uncited* item 11 renders honestly as
-`unmet`/`no_evidence` either way. When evidence for item 11 eventually
-exists (a `klt erc` supply-spec run plus an LVS report whose reference
-carried the supply nets), upgrade the `klt` pin in
-`.github/workflows/signoff.yml` to a release that grades item 11, regenerate
-the report, and update the pinned checklist in the same change.
+`--tiers-doc` pins the checklist so the rendered item set is deterministic
+and the report states which checklist graded it. The pinned copy is the
+checklist bundled in the klt wheel of the grader pin (11 items, including
+item 11 "Power delivery (structural)",
+[klayout-tools#2025](https://github.com/2AMLogic/klayout-tools/issues/2025)),
+which klt 0.8.0 grades. An *uncited* item 11 renders honestly as
+`unmet`/`no_evidence`. A report counts only against current inputs, and that
+includes the checklist it was graded against, so `tier-report.json`'s
+`source_doc_content_hash` must equal the SHA-256 below.
 
 Provenance of the pinned copy:
 
-- Source: `2AMLogic/klayout-tools` — `docs/design-evidence-tiers.md`
-- Commit: `b15edf5e3a2e56467a3406c98a2555eb1a5ae45c` (2026-09-21)
-- SHA-256: `c7a1e7e10627fae396007e0ff951734f37d95028b8f49f2e21e802e9f552f318`
+- Source: `klayout-tools==0.8.0` wheel, `klayout_tools/data/design-evidence-tiers.md`
+- SHA-256: `a26b90262320d0fbd32b3f549a02b6300832706041797a559d8bf6bdb62efdc7`
 - License: MIT (klayout-tools); copied verbatim, unmodified.
+- Previously: klayout-tools commit `b15edf5` (2026-09-21), SHA-256 `c7a1e7e1…f318`.
 
-Re-pin deliberately: update the doc, the commit/SHA lines, and the tier
-report together, so the verdict of record always states which checklist
-graded it (`source_doc` in the report names this path).
+Re-pin deliberately with every grader pin bump: update the doc, this
+provenance block, and the tier report together.
 
 ## Adding a citation (the discipline that keeps the verdict honest)
 

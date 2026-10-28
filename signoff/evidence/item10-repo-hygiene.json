@@ -3,29 +3,125 @@
   "kind": "generic",
   "status": "pass",
   "t1_item": 10,
-  "summary": "Repo hygiene: README (with a Reproduce section linking sim/README.md), LICENSE and spec/target-spec.md are present; CI (.github/workflows/ci.yml) runs the evidence-format check and the harness smoke test. Presence/invocation checks only; they do not judge the content's quality.",
-  "source": "signoff/make_item10_evidence.py",
-  "metrics": {
-    "checks": {
-      "exists:README.md": true,
-      "exists:LICENSE": true,
-      "exists:spec/target-spec.md": true,
-      "exists:.github/workflows/ci.yml": true,
-      "ci:evidence-format-check": true,
-      "ci:harness-smoke": true,
-      "readme:reproduce-links-sim-README": true,
-      "readme:reproduce-names-characterize.sh": true
-    },
-    "files": {
-      "README.md": "sha256:51ae1b3b9aa25f571e82a6e0855e1f286138bf15919a10bee09f54202a0c83f4",
-      "LICENSE": "sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
-      "spec/target-spec.md": "sha256:a561baf0ee9ad4a0bb696f8ecf4313e04506217fe5389cedc62954938a297c59"
-    }
+  "summary": "T1 item 10 (Repo hygiene): 10/10 attestation checks passed (klt signoff --attest)",
+  "source": "signoff/inventories/item10.json",
+  "attestation": {
+    "producer": "klt signoff --attest",
+    "inventory_schema_version": 1,
+    "hash_algorithm": "sha256-raw-bytes",
+    "check_count": 10,
+    "passed_count": 10,
+    "checks": [
+      {
+        "check": "present",
+        "role": "hygiene",
+        "path": ".github/scripts/check_evidence_formats.py",
+        "passed": true,
+        "content_hash": "sha256:d45f5e0b65cad8bd5d1041b5e3c0a534cf72ac5175ef6bc4715c138491653225"
+      },
+      {
+        "check": "present",
+        "role": "hygiene",
+        "path": ".github/workflows/ci.yml",
+        "passed": true,
+        "content_hash": "sha256:93d79eefbe5ad2cf5f4cceae190a2ed317265a69fb40eb236414b01c6ac969b6"
+      },
+      {
+        "check": "present",
+        "role": "hygiene",
+        "path": "LICENSE",
+        "passed": true,
+        "content_hash": "sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+      },
+      {
+        "check": "present",
+        "role": "hygiene",
+        "path": "README.md",
+        "passed": true,
+        "content_hash": "sha256:51ae1b3b9aa25f571e82a6e0855e1f286138bf15919a10bee09f54202a0c83f4"
+      },
+      {
+        "check": "present",
+        "role": "hygiene",
+        "path": "sim/README.md",
+        "passed": true,
+        "content_hash": "sha256:b58fc3b6a627ed953ae9d29080db6e60b2e573333e3f02c4c97b9e0441ee26c5"
+      },
+      {
+        "check": "present",
+        "role": "hygiene",
+        "path": "spec/target-spec.md",
+        "passed": true,
+        "content_hash": "sha256:a561baf0ee9ad4a0bb696f8ecf4313e04506217fe5389cedc62954938a297c59"
+      },
+      {
+        "check": "command",
+        "role": "audit",
+        "name": "evidence-formats",
+        "argv": [
+          "python3",
+          ".github/scripts/check_evidence_formats.py",
+          "--skip-history"
+        ],
+        "cwd": ".",
+        "exit_status": 0,
+        "passed": true
+      },
+      {
+        "check": "command",
+        "role": "audit",
+        "name": "ci-runs-evidence-format-check",
+        "argv": [
+          "grep",
+          "-q",
+          "^ *python3\\? \\.github/scripts/check_evidence_formats\\.py",
+          ".github/workflows/ci.yml"
+        ],
+        "cwd": ".",
+        "exit_status": 0,
+        "passed": true
+      },
+      {
+        "check": "command",
+        "role": "audit",
+        "name": "ci-runs-harness-smoke",
+        "argv": [
+          "grep",
+          "-q",
+          "run: sim/characterize\\.sh smoke$",
+          ".github/workflows/ci.yml"
+        ],
+        "cwd": ".",
+        "exit_status": 0,
+        "passed": true
+      },
+      {
+        "check": "command",
+        "role": "audit",
+        "name": "readme-reproduce-names-characterize",
+        "argv": [
+          "grep",
+          "-q",
+          "sim/characterize\\.sh",
+          "README.md"
+        ],
+        "cwd": ".",
+        "exit_status": 0,
+        "passed": true
+      }
+    ]
   },
   "provenance": {
+    "klt_version": "0.8.0",
+    "klayout_version": null,
+    "pdk": null,
+    "deck": null,
     "input": {
-      "path": ".github/workflows/ci.yml",
-      "content_hash": "sha256:dd4303f8d181a633e3ec3f5ddae9feb693eeeb3836adf8846efe7b49c670cf49"
+      "path": {
+        "path": "signoff/inventories/item10.json",
+        "scope": "repo"
+      },
+      "content_hash": "sha256:52fbf0d3116862858925be654e8f0ca8467b050bf5c1d377ea28952f7d70e8cb"
     }
   }
 }
