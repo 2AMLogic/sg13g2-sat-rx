@@ -53,6 +53,9 @@ into `block-manifest.json` and re-render the report below. `signoff.yml` runs
 without a netlist re-export) is drift in CI. Klt 0.8.0's manifest grader
 re-hashes only the inventory, not its members; the `--check` steps are what
 fence the members. The old `make_item*_evidence.py` generators are removed.
+Item 1's LNA-stage-only coverage claim (#170) lives in `block-coverage.json`, not the
+envelope (klt 0.8.0's `--attest` emits no free-form metrics); `evidence_checks/block_coverage.py`
+cross-checks it against `design/`.
 The remainder is the correct, honest result for a block
 whose layout and verification evidence has not started. The per-item *human*
 context stays in the gap-to-T1 tracker

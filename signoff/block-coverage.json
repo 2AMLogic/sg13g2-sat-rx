@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "t1_item": 1,
+  "note": "Which blocks the item-1 attestation (signoff/inventories/item1.json) covers (#170). klt signoff --attest (0.8.0) emits a fixed envelope with no free-form metrics, so this claim lives here and is cross-checked against design/ by .github/scripts/evidence_checks/block_coverage.py.",
+  "block_coverage": {
+    "lna_stage1": "sources_committed",
+    "mixer": "no_design_source"
+  }
+}
