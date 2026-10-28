@@ -6,6 +6,7 @@ Chronological record of merged pull requests and closed issues, maintained by th
 
 - **PR #235**: chore: pin klayout-tools 0.8.0 for signoff grading and toolchain record
 - **Issue #234** (closed): Bump klayout-tools pin 0.5.0, 0.7.0, b770c86e0e96 → 0.8.0
+- **Issue #68** (closed): spec: decision-record proposal after #61 (no acceptable LO drive at any declared mixer-core sizing)
 
 ### 2026-10-23
 
