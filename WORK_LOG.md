@@ -2,6 +2,11 @@
 
 Chronological record of merged pull requests and closed issues, maintained by the Loom Guide role.
 
+### 2026-10-28
+
+- **PR #239**: feat: attest signoff items 1, 9, 10 via klt signoff --attest inventories
+- **Issue #237** (closed): T1 grading: replace hand-rolled single-file envelopes for items 1/9/10 with klt signoff --attest inventories and re-vendor the v0.8.0 checklist
+
 ### 2026-10-27
 
 - **PR #235**: chore: pin klayout-tools 0.8.0 for signoff grading and toolchain record
