@@ -1,7 +1,8 @@
 """evidence_checks.block_coverage: item-1 coverage honesty (issue #170).
 
-signoff/evidence/item1-design-sources.json carries ``metrics.block_coverage``.
-If it says the mixer is ``no_design_source`` while design/ holds a mixer source,
+signoff/block-coverage.json carries ``block_coverage`` for the item-1 attestation
+(the klt-generated envelope signoff/evidence/item1-design-sources.json has no
+free-form metrics to hold it). If it says the mixer is ``no_design_source`` while design/ holds a mixer source,
 the attestation has rotted into understating the design; if it claims
 ``sources_committed`` with no mixer source, it overstates it. Stdlib only.
 """
@@ -11,7 +12,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-EVIDENCE = "signoff/evidence/item1-design-sources.json"
+EVIDENCE = "signoff/block-coverage.json"
 SOURCE_SUFFIXES = (".sch", ".sym", ".spice", ".cir", ".py", ".sh")
 NO_SOURCE = "no_design_source"
 HAVE_SOURCE = "sources_committed"
@@ -38,11 +39,11 @@ def mixer_sources(root: Path) -> list[str]:
 def block_coverage_problems(root: Path) -> list[str]:
     path = root / EVIDENCE
     try:
-        cov = json.loads(path.read_text())["metrics"]["block_coverage"]
+        cov = json.loads(path.read_text())["block_coverage"]
     except (OSError, ValueError, KeyError, TypeError):
-        return [f"{EVIDENCE}: missing metrics.block_coverage"]
+        return [f"{EVIDENCE}: missing block_coverage"]
     if not isinstance(cov, dict) or "mixer" not in cov:
-        return [f"{EVIDENCE}: metrics.block_coverage must name the mixer"]
+        return [f"{EVIDENCE}: block_coverage must name the mixer"]
     state, srcs, out = cov["mixer"], mixer_sources(root), []
     if state not in (NO_SOURCE, HAVE_SOURCE):
         out.append(f"{EVIDENCE}: block_coverage.mixer={state!r} is not {NO_SOURCE!r} or {HAVE_SOURCE!r}")

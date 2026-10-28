@@ -64,13 +64,49 @@ evidence of nothing.
 
 **Not every item has a tool behind it.** Items 3-7 each name a `klt` verb
 that can mechanically grade them, and item 8 has a purpose-built generic
-evidence envelope — but items **1**, **2**, **9**, and **10** have none.
-`klt signoff --manifest` therefore grades those four on whether *some*
-passing envelope was cited at all, not on whether the cited evidence is
-topically relevant to the claim; see
-[`docs/cli/signoff.md`](cli/signoff.md)'s "Items 1, 2, 9, and 10: `klt
-signoff` cannot check topical relevance". Citing them honestly is the
-claimant's responsibility, not something the tool verifies.
+evidence envelope — but items **1**, **2**, **9**, and **10** are claims
+about what a repository contains. For those four, the evidence the tool can
+read is an **artifact-anchored generic envelope** (issue #2718). The
+envelope declares the item it attests (`"t1_item": <id>`) and pins the
+audited artifact by path and content hash, and the manifest pins the same
+hash. The row is `met` only when the artifact still re-hashes to that value.
+The artifact per item:
+
+- item 1: the design-source inventory;
+- item 2: the committed layout stream;
+- item 9: the testbench inventory;
+- item 10: the repo-hygiene inventory.
+
+For items 1, 9 and 10 that envelope is **tool-produced**, not hand-rolled:
+`klt signoff --attest {1,9,10} --inventory <file>` (issue #2844) reads a
+versioned inventory and derives `status` from item-specific mechanical
+checks it records in the envelope — item 1, every source and derived
+netlist exists and each derived netlist passes its declared freshness check
+(e.g. `klt netlist --check`); item 9, every testbench exists, the declared
+cold-start invocation succeeds, and the PDK revision and tool versions are
+pinned; item 10, every hygiene artifact exists and every declared CI/audit
+command succeeds. `--check` re-attests and fails on any drift of the
+inventory, an inventoried file, or a check outcome. A passing native
+envelope (a clean DRC report, say) **no longer satisfies items 1, 9 or
+10**. Item 2 still accepts one, for compatibility; its citation carries no
+`artifact_binding`, which marks it as a cited pass the tool could not judge
+for relevance. See [`docs/cli/signoff.md`](cli/signoff.md)'s "Items 1, 2,
+9, and 10" and "Attesting items 1, 9 and 10".
+
+Where the claim is about a set of files (item 1's sources plus the derived
+netlist; item 9's or 10's several files), the envelope may bind the set with
+`provenance.input.paths` (issue #3044) so that editing any member turns the
+row stale; see [`docs/cli/signoff.md`](cli/signoff.md).
+
+For items 1 and 2, whose artifacts are usually *generated* (a netlist from
+its schematic, a stream from its generator), the attestation may also carry
+a regeneration claim (issue #2887): the generator command and the hash the
+attester's CI got by re-running it. The tool never runs the generator. It
+checks only that the claimed hash equals the bound artifact's, and renders
+`stale_artifact` when they differ, which means the committed artifact is not
+what its generator produces. This states freshness in the manifest instead
+of in a separate CI gate, but the regeneration itself remains the
+attester's word.
 
 ### What a T1 claim is scoped to
 
@@ -133,7 +169,17 @@ written to every block.
   within the same repo and satisfy **both** columns, one per partition. The
   claim must state the partition boundary explicitly (which nets/pins/cells
   belong to which side) so a reviewer can tell which evidence covers which
-  silicon.
+  silicon. A block manifest states it in its optional `partition_boundary`
+  field (issue #2278 — `{"analog": "...", "digital": "..."}`), which `klt
+  signoff --manifest` echoes onto the report and onto every row of the
+  partition it names, so the statement travels with the evidence instead of
+  living only in a prose file a reader has to find and trust is current. It
+  is **reported, not graded**: `klt signoff` cannot check free text against
+  silicon, so a manifest that declares nothing still grades identically —
+  what it loses is a reviewer's ability to answer this paragraph's question
+  from the report alone. See
+  [`docs/cli/signoff.md`](cli/signoff.md)'s "The declared partition
+  boundary" section for the field's exact rules.
 
 1. **Design sources**
    - *Analog* — committed schematic sources (or generator) plus the
@@ -213,10 +259,37 @@ written to every block.
    is not covered. Warnings-only mismatches must be listed with the claim.
    A second, independent engine's concurring verdict (#343) strengthens this
    from "one toolchain agrees with itself" to a cross-checked result.
+   **PDK-runset path (issue #2870, operator ruling of 2026-10-08).** For
+   device families the PDK's own open KLayout LVS runset recognises and the
+   curated extraction deck does not, a `klt lvs` report with
+   `"engine": "klayout-runset"` is accepted evidence for this item, on four
+   conditions: (1) the runset is the PDK's own at a pinned revision — `klt
+   signoff` checks `provenance.runset.content_hash` against a signoff-side
+   allowlist (`signoff_runset.PINNED_RUNSETS`, hash → PDK revision), not against
+   a field the block declares, and the runset file named by the report must
+   still re-hash to that value; (2) the report is a `klt` envelope with the
+   same `--check` re-hash guarantees as a curated-deck report (layout hash,
+   reference netlist hash, plus the runset hash); (3) the report names its
+   engine, and `klt signoff` carries `engine` and the runset hash distinctly in
+   the check detail and the `met` citation; (4) every device is recognised — a
+   non-empty `coverage.declared_not_recognized`, or a `device_census` whose
+   per-class layout and reference counts differ, is a failure
+   (`runset_unrecognised_device`), never a warning, even when `status` reads
+   `match`. A report from a runset that is not in the allowlist is refused
+   `runset_not_pinned`; one whose runset file changed since the run,
+   `runset_hash_mismatch`. **This does not change** the default: curated decks
+   stay the route wherever they recognise every device in the block, and a
+   block may not choose the runset to avoid a curated-deck finding. The
+   allowlist is empty as of this change (2026-10-17) until a published runset's
+   digest is reviewed into it, so no runset report grades `met` before then.
 5. **Full corner verification vs a ratified spec**
    - *Analog* — PVT corner-matrix simulation results covering every spec
      row at its bound corners, with per-row pass/fail and the binding
-     corner recorded.
+     corner recorded. A spec needing several testbenches cites several
+     `klt sim` envelopes, optionally naming the rows each covers and
+     declaring the full row set; the item is met only when every cited
+     envelope passes and every declared row is covered, and rows no
+     envelope can express are declared gaps that keep it unmet.
    - *Digital* — multi-corner static timing analysis (setup and hold
      across the PVT corner set) plus a bit-exact functional test suite,
      with per-corner and per-test pass/fail recorded. For the full-custom
@@ -250,7 +323,56 @@ written to every block.
    — a yield estimate with its confidence interval, sample-size verdict, and
    Cpk/sigma-to-spec against the row's own limits — is the machine-checkable
    evidence for this item (`klt signoff`'s tier-verdict mode grades it the
-   same way it grades the deterministic items above).
+   same way it grades the deterministic items above). **The campaign's own
+   self-report is a grading input, not just a footnote** (issue #2467): a
+   cited report whose `sample_size.verdict` is `insufficient` on any
+   measurement renders `unmet` with `reason: "undersized_sample"`, and one
+   whose declared negative control did not show the seeded degradation
+   renders `unmet` with `reason: "negative_control_not_detected"` — the
+   report's passing `status` answers only "did every declared `target_yield`
+   hold", which a campaign declaring none can never fail. A campaign that
+   declared **no** negative control at all is still `met`, but says so:
+   `citation.yield_campaign.negative_control` reads `"not_declared"`, since
+   `klt yield` itself treats that as a warning rather than a failure and
+   whether it is acceptable for a given spec row is the claimant's call. See
+   [`cli/signoff.md`](cli/signoff.md)'s "Campaign discipline on item 6".
+   **This item's evidence
+   verb needs the `yield` extra.** Unlike every other T1 item's
+   evidence verb (`drc`, `lvs`, `extract`, `sim`, `pex`, `sta`,
+   `functional-verification`, `erc`, `place-and-route`), `klt yield`
+   requires the `klt_yield_native` Rust extension. It is published as the
+   prebuilt `klt-yield-native` wheel (Linux x86_64, macOS arm64), reached by
+   `pip install 'klayout-tools[yield]'`; a bare `pip install klayout-tools`
+   and the git-pinned form do not include it. A consumer pinning a release
+   that predates the first `klt-yield-native` publication, or on another
+   platform, still needs a repo checkout with a Rust toolchain; see
+   `docs/cli/yield.md`'s "What the extra does and does not reach" callout and
+   `docs/releasing-native.md`.
+   **When "not applicable" is legitimate** (issue #2865): a block whose
+   ratified spec has *no* statistical row passes this item by a recorded
+   "not applicable", not by a waiver at grant time and not by inventing a
+   statistical claim. That holds only when the spec is ratified, a committed
+   statement accounts for every spec row with the reason its row class is
+   not statistical (for example "timing rows are corner-bounded by STA at the
+   PDK's characterised corners"), and both are bound by content hash so
+   editing either invalidates the claim. Any accuracy, offset, matching or
+   yield row is statistical by definition: a spec carrying one — or a sigma,
+   yield, Cpk or `3σ`-style bound — cannot use the outcome and needs `klt
+   yield` evidence for that row. The outcome is available to a digital
+   partition only; an analog partition (including the analog half of a
+   mixed-signal block) always requires Monte Carlo evidence. `klt signoff`
+   reports it as `not_applicable`, never as `met`.
+   **Several statistical rows, only some evidenced** (issue #2908): item 6
+   is a claim about *every* statistical row, so a manifest may declare the
+   row set under `spec_rows."6"` and cite one `klt yield` report per row set
+   (`rows` on each citation). Item 6 grades `met` only when every declared
+   row is covered by a passing citation against a ratified target. A row with
+   no citation (`uncovered_rows`), a row declared a `gap` because no evidence
+   can exist yet (`declared_gaps`), or a row declared `ratified: false`
+   (`unratified_rows`, evidence against a proposed limit is provisional)
+   grades `unmet` / `partial_coverage`, never `met`. Without a declaration
+   the item grades as before; a `not_applicable` entry contradicts a declared
+   row set and is `invalid_evidence`.
 7. **Post-layout verification**
    - *Analog* — the spec suite re-run against the netlist extracted from
      the layout, not only the drawn schematic (#252). Parasitic extraction
@@ -318,11 +440,14 @@ written to every block.
    report) rather than one `klt` verb's own JSON output. `klt signoff
    --manifest` grades it via an opt-in **generic evidence envelope**
    (`"kind": "generic"`, issue #1152) — a minimal, hand-rolled JSON wrapper
-   asserting `status: "pass"|"fail"` for whatever record backs it — and,
-   unlike every other item, item 8 is the *only* T1 item this generic kind
-   may satisfy: see `docs/cli/signoff.md`'s "Generic evidence (opt-in,
-   non-`klt`-native)" section for the envelope shape and why items 3–7 keep
-   rejecting it.
+   asserting `status: "pass"|"fail"` for whatever record backs it. Item 8
+   is the only T1 item that accepts a *bare* generic envelope. Items 1, 2,
+   9 and 10 accept only the artifact-anchored form (issue #2718), and items
+   3–7 and 11 reject the generic kind entirely: see `docs/cli/signoff.md`'s
+   "Generic evidence (opt-in, non-`klt`-native)" section for the envelope
+   shape. The full opt-in kind -> item mapping (including kinds
+   whose scope is currently empty) is published by `klt signoff
+   --describe-grader` and the `klt signoff --help` epilog.
 9. **Testbenches shipped** — every claimed measurement's testbench
    committed, with a documented cold-start invocation a third party can
    run; pinned PDK revision.
@@ -338,6 +463,32 @@ written to every block.
       reference satisfies this by construction; a signal-only
       `gate-level-verilog` reference does not, which is why the Digital
       column asks for `power_connectivity` instead.
+      **That pairing check is not independent of the compare's own verdict**
+      (issue #2495), and a claimant should read it as a participation test,
+      not as a second opinion. `net_correspondence` lists only the nets the
+      comparer *matched*, so for a SPICE reference — which declares its
+      supplies by construction — "every declared supply appears paired" is
+      implied by any `match` and destroyed by any `mismatch`, including one
+      with no bearing on a rail: a restated device parameter or a moved
+      signal-net connection collapses the pairing along with everything
+      else. This item's LVS half is therefore **gated on item 4 passing**:
+      an analog block cannot reach `met` here while its compare is
+      mismatched, however complete its `klt erc` supply evidence is, because
+      no reading of a mismatched compare can say the supplies took part in
+      it. What the report does distinguish is *which half* is missing —
+      `klt signoff` renders `lvs_did_not_pass` (not the plain
+      `check_failed`) when the ERC supply evidence is complete and
+      continuous and only the LVS half is unavailable, naming in
+      `detail.power_delivery` the supplies the ERC run did prove. Produce
+      the ERC supply spec anyway — it is the half that survives an unrelated
+      LVS defect, and it is what makes the distinction visible.
+      A `klayout-runset` report (item 4's PDK-runset path) can be this LVS
+      half under the same pin and re-hash conditions: the engine lists the
+      nets its compare paired in `net_correspondence` (issue #2870), so the
+      supply-pairing test above reads the same way, with the same
+      "participation test, not a second opinion" caveat. An unpinned or
+      modified runset renders `runset_not_pinned` / `runset_hash_mismatch`
+      here too.
     - *Digital* — the `klt erc` supply evidence below, plus the routed
       artifact having actually been produced with a power grid, plus item
       4's power/ground verdict having actually run. Concretely: the `klt
@@ -358,11 +509,55 @@ written to every block.
       entry with `"kind": "supply"`, a stackup covering the layers the
       supply is routed on, and the `ties[]` declarations for the
       well/substrate taps. Every declared supply must resolve to exactly
-      **one** electrical island — no `erc.unconnected_net` and no
-      `erc.supply_short` naming it — and the run must report zero
+      **one** electrical island — or, when the entry declares
+      `nets[].islands` (issue #2400), to exactly that declared count of
+      deliberately separate domains, so a legitimately multi-domain
+      supply (one library PG pin name on independent islands) can satisfy
+      this item instead of being unreachable by construction — with no
+      `erc.unconnected_net` and no
+      `erc.supply_short` naming it. A spec whose supplies include a
+      **deliberate tie between two names** (a sub-block port name and the
+      assembly's name for one node) declares it with
+      `nets[].same_net_as` (issue #2463): the tie then grades as a pass
+      instead of a permanent `erc.supply_short`, and its *absence* —
+      `erc.expected_short_missing` naming a declared supply — blocks this
+      item in the short's place, so declaring the tie converts a false
+      blocking finding into a real check rather than into no evidence.
+      **The severed-rail half of "exactly one island" is gradeable too,
+      where the spec declares the roles a supply owns** (issue #2524).
+      `erc.unconnected_net` counts islands *carrying the declared label*,
+      so a single-label supply rail severed into a labelled piece and an
+      unlabelled orphan grades clean (`docs/cli/erc.md` →
+      "`erc.unconnected_net` counts labelled islands, not conductor
+      islands") — the ordinary shape for hand-built or generated analog,
+      where the label names a port rather than annotating every rail
+      segment. Before this rule existed, a met item 11 on such a block
+      rested on a negative the evidence could not actually state. A supply
+      that declares `nets[].roles` (issue #2510) turns the measurement on,
+      and conductor on those owned roles reachable from no label is
+      `erc.unlabelled_conductor`, which blocks this item under the same
+      declared-name filter `erc.unconnected_net` uses. The **negative** is
+      what a met item now carries: `power_delivery.supply_unlabelled_islands`
+      names each declared supply that owns its roles and that net's
+      `nets[].unlabelled_islands` — all `0` for a met item — so a grader can
+      see the clean verdict was measured over the whole conductor, not only
+      over what carried a label. It is `{}` for a cited run whose supplies
+      declared no `roles` (and for every pre-#2510 envelope): the honest
+      "not measured", never a fabricated zero, so "checked, and it is zero"
+      stays distinguishable from "nobody asked". **Declaring `nets[].roles`
+      is therefore optional but strictly better evidence** — and where an
+      owned role legitimately carries unlabelled fill or a floating shield,
+      `nets[].unlabelled_allowed_boxes` declares that away with the carve-out
+      echoed in `provenance.net_exclusions`, rather than forcing the role to
+      be left unowned and the severed-rail question unasked.
+      The run must also report zero
       `erc.missing_tie`, from a tie the run actually *checked*: a `ties[]`
       entry `klt erc` reports as degenerate (`erc_coverage.skipped[]`,
-      reason `degenerate_tap_declaration`, issue #2199) returns zero for a
+      reason `degenerate_tap_declaration`, issue #2199,
+      `degenerate_well_assertion`, issue #2255,
+      `degenerate_well_selection`, issue #2339, or `empty_well_region`,
+      issue #2377 — a drawn `well_layer` with no geometry at all in the
+      stream) returns zero for a
       reason that has nothing to do with taps, and renders
       `supply_spec_incomplete` rather than a met item — the same rule that
       already rejects a spec declaring no `ties[]` at all. **A stream with
@@ -373,12 +568,143 @@ written to every block.
       tap-geometry boxes, graded under its own
       `erc_coverage.checked_by_assertion` classification and held to the
       same degenerate/falsifiability test as every other narrowing form.
+      **A block sitting in a native substrate** — NMOS-in-bulk, with no
+      *drawn* well/tub layer anywhere in the stream — can likewise declare
+      its substrate tie with `ties[].well_layer: null` +
+      `ties[].well_boxes` (issue #2255), asserting the substrate region
+      rather than naming one. Before that, one half of this item was
+      unreachable by construction for such a block: `well_layer` required
+      drawn geometry, and a `ties_disclosure` describes only *undeclared*
+      work, so a design that declared its n-well tie could not even
+      disclose the missing substrate half. It reaches **met** on the same
+      terms as a drawn-well tie, because the assertion is falsifiable and
+      `klt erc` falsifies it where it can: each asserted polygon must
+      independently hold a tap that reaches the declared net, and an
+      asserted region indistinguishable from the whole top-cell extent is
+      skipped as `degenerate_well_assertion` (which this item already
+      refuses to read as a clean missing-tie verdict, via the same gate
+      that catches a degenerate tap). What a grader gains is the
+      provenance, not a weaker bar: a met citation's
+      `power_delivery.ties_checked_by_well_assertion` names which ties
+      rested on the caller's word about the well side, beside
+      `ties_checked_by_assertion` for the tap side — two distinct claims,
+      reported distinctly, so "the well itself was the caller's word" never
+      hides inside "a tap box was asserted".
+      **A block whose one drawn tub layer carries two differently-biased
+      well classes** — device-body wells on one rail beside a vertical
+      bipolar's base tub on the other, ordinary for a bandgap/bias block on
+      any PDK with a single n-tub layer — reaches **met** by declaring each
+      class as its own `ties[]` entry, scoped by
+      `ties[].well_requires`/`well_excludes` (issue #2339). Before that,
+      this item was unreachable by construction for such a block in the
+      opposite way to the native-substrate case: each entry graded *every*
+      shape of the shared `well_layer` against its own single `net`, so
+      whichever class was not declared reported a false `erc.missing_tie`
+      — the layout demonstrably correct, no single report able to say so,
+      and `supply_spec_disclosed_tool_limitation` (unmet) the best a
+      careful spec could reach. A selection narrows *drawn* geometry, so it
+      earns no assertion list and no weaker bar: it is graded as an
+      ordinary geometrically-derived pass, and a declared selection that
+      kept every shape of the layer or none of them is skipped as
+      `degenerate_well_selection` — caught by the same gate, which matches
+      on the `erc.missing_tie:` work-identity prefix rather than on the
+      reason token.
+      **…and when no drawn layer separates those two classes** — a PDK with
+      a single n-tub layer and no per-class marker, ordinary in analog bias,
+      charge-pump and level-shifter circuits — the selection above has
+      nothing to name, and every route (one unselected entry, a selection
+      built from a layer present in both classes or in neither, or
+      `well_boxes` beside a drawn well) ended in a false finding or skipped
+      work. Such a block reaches **met** by scoping each class with
+      `ties[].well_requires_boxes`/`well_excludes_boxes` (issue #2540): the
+      same selection, expressed in literal micrometre boxes instead of a
+      marker layer — the well-side counterpart of `tap_boxes`. The well is
+      still drawn and still measured, and each selected shape is still
+      independently graded, so the bar is unchanged: the same
+      `degenerate_well_selection` skip catches a box selection that kept
+      every shape of the layer or none of them. What differs from the
+      marker form is the provenance, and it is stated: because *which
+      shapes belong to this entry* rests on the caller's word, the tie is
+      named in the met citation's
+      `power_delivery.ties_checked_by_well_assertion` beside the
+      native-substrate form. That list therefore answers one question —
+      "did the well side of this verdict rest on the caller's word?" — with
+      a marker-layer selection (the stream draws its own partition) staying
+      out of it.
       When a stream genuinely cannot express a tap at all, a top-level
       `ties_disclosure` declares that explicitly; the item still renders
       `supply_spec_disclosed_unexpressible` rather than a met item — a
       disclosure proves nothing about the tap's actual connectivity — but
       that reason is distinguishable from a spec that omitted `ties[]`
-      without ever considering the question. Those are the
+      without ever considering the question. **A second obstacle is
+      disclosable the same way** (issue #2247): `ties_disclosure.kind:
+      "tool_limitation"` says the tap *is* expressible, but the `klt` build
+      this evidence had to be produced on cannot grade a declared tie
+      safely — the reported instance being issue #2169, where a declared
+      tie on an affected build joins the well/tap regions into the primary
+      connectivity graph and reports a false `erc.supply_short` on any
+      routed design. The item renders
+      `supply_spec_disclosed_tool_limitation`: a third reason, still
+      **unmet** on the same principle (a disclosure is the caller's word
+      about their toolchain, never a computed `erc.missing_tie` result),
+      but kept distinct because the remedy differs — re-run against a
+      build whose tie extraction is isolated and declare the tie, rather
+      than go looking for a tap that is already drawn. The report's own
+      `provenance.klt_version` is what a grader checks to see whether a
+      disclosed tool limitation applies to the run in front of them.
+      So the three zero-`ties[]` states this item can render are
+      mechanically distinguishable: `supply_spec_incomplete` (nobody asked
+      the question), `supply_spec_disclosed_unexpressible` (no tap to
+      name), and `supply_spec_disclosed_tool_limitation` (a tap, and a
+      build that cannot be trusted to grade it).
+      **A disclosure now reaches a partial declaration too** (issue #2541).
+      All three states above describe a spec declaring *zero* ties, because
+      the disclosure's reason token was recorded only against the
+      entirely-undeclared `erc.missing_tie` work — so a spec that declared
+      the one well class it could express and honestly could not express
+      the other produced an `erc_coverage` byte-identical to one that
+      declared the same tie and never considered the second class, and
+      declaring real, checkable work made the record *less* machine-readable
+      than declaring nothing. `ties_disclosure.undeclared_classes` names
+      those classes, and `klt erc` records one
+      `erc.missing_tie:["<class>"]` **inapplicable** entry per name carrying
+      the same disclosed reason token. The declared class is graded
+      exactly as before — a partial declaration is not downgraded, and its
+      checked tie still carries this item on its own terms — and the
+      disclosed class is still the caller's word, so it establishes
+      nothing; what it establishes is *legibility*, which is the whole
+      point of the disclosure vocabulary.
+      **An asserted substrate region must be re-measured, not trusted**
+      (issue #2427): when a cited tie rests on `well_boxes`, quote that
+      tie's `erc_coverage.well_assertion_coverage` entry
+      (`uncovered_tap_area_um2` / `uncovered_tap_fraction`). Zero
+      `erc.missing_tie` covers only what the assertion covers; tap geometry
+      outside it was never examined, and a non-zero uncovered fraction means
+      the assertion no longer spans the drawn device contacts. Reporting
+      only — `klt signoff` does not grade it.
+      **The spec's own coverage of the layout must be disclosed, not
+      assumed** (issue #2389), on the same principle item 3 applies to a
+      DRC deck's rule-free layers: `klt erc` scopes its connectivity model
+      down to the layers the cited spec declares, so a clean supply read is
+      only as wide as that declaration, and a spec is a committed artifact
+      graded against a layout that gets re-routed under it. The report
+      states its own gap — quote
+      `erc_coverage.layers_in_stream_without_declaration` (the layers this
+      stream draws that the spec declares nowhere) from the cited envelope,
+      alongside `provenance.deck`, which says whether that list was narrowed
+      to a curated deck's routing stack or is the unfiltered drawn-layer
+      list. A claim that leaves a non-empty
+      `layers_in_stream_without_declaration` unstated has not satisfied this
+      item however clean `erc_status` is: a rail that *moved* onto an
+      undeclared level reports loudly as extra `erc.unconnected_net`
+      islands, but one that merely *gained* routing there while staying
+      connected through the declared stack reports clean from a model
+      narrower than the layout. **This disclosure is claimant-enforced, not
+      tool-enforced**, exactly as item 3's is: `klt signoff` grades this
+      item on the rules below, and a spec with undeclared drawn layers
+      grades the same as a fully-declaring one — the field is reported so
+      the claimant can quote it, not so the tool can refuse on it.
+      Those are the
       rules this item grades, not the
       report's overall `status`: an antenna verdict or a floating-gate
       finding is a real defect, but it is not this item's subject and does
@@ -426,6 +752,33 @@ written to every block.
       `provenance.devices` before treating a clean `erc.supply_short` read
       as covered by auto-detection rather than a hand-declaration that
       happens to be present.
+    - **Port accessibility — PROVISIONAL, not yet in force** (issue #2839;
+      operator ruling 2AMLogic/product#134, amendment text drafted in
+      2AMLogic/product PR #168 and awaiting the two-key ratification). Every
+      supply the cited `klt erc` spec declares must be published as an
+      **edge-accessible boundary port** and named in a **machine-readable
+      abstract**: (1) a `klt socket-check` envelope whose `power_ports`
+      facts show, for each declared supply, a `POWER`/`GROUND` pin of that
+      name with drawn conductor under its label lying within the edge band
+      of a counted outline edge with a clear approach channel (no other
+      conductor on its layer between it and the edge), on an allowed layer;
+      and (2) a `klt lef-abstract` envelope whose LEF carries a `PIN` of the
+      same name with `USE POWER`/`USE GROUND` matching the port, a drawn
+      `PORT` on the same layer touching the port, and a `SIZE` equal to the
+      outline. Parameters, with their provisional defaults, are set per
+      block in the `klt signoff` manifest's `power_ports` object: the edge
+      band (`edge_band_um`, default `0` — the port must touch the outline;
+      the draft proposes one minimum metal pitch), the counted edges (all
+      four), and the allowed layers (default: any layer that resolves to a
+      LEF routing layer, the draft's recommendation). Until ratification
+      `klt signoff` grades this clause only for a block that opts in
+      (`power_ports.required: true`, or port evidence cited in item 11's
+      list), after the ERC/LVS rules above are proven, rendering
+      `power_port_unproven`, `no_edge_power_port`,
+      `power_port_interior_only`, `power_port_layer_disallowed`,
+      `lef_power_pin_missing` or `lef_power_pin_mismatch` when it fails —
+      see `docs/cli/signoff.md` → "Item 11 port accessibility". Not graded
+      yet: one port per declared island of a multi-island supply.
 
 ## Power/IR-drop + EM evidence (not yet a T1 item)
 

@@ -22,7 +22,7 @@ FENCE_RE = re.compile(r"^\s*(?:```|~~~)", re.M)
 #: so these are grandfathered BY ID and the set is closed: any record not listed
 #: here that names the PDK ``unknown`` fails. Note the last entry post-dates the
 #: model-artifact pin (sim/pdk-artifact.json); item 9 binds a later, pinned
-#: record instead (signoff/make_item9_evidence.py).
+#: record instead (signoff/inventories/item9.json).
 LEGACY_UNKNOWN_PDK = frozenset({
     "sim/lna-sparam-nf/records/20260912-034726-9204518.md",
     "sim/mixer-conversion-iip3/records/20260912-034727-9204518.md",

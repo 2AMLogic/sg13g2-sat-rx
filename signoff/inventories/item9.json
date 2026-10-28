@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "kind": "t1-attestation-inventory",
+  "t1_item": 9,
+  "description": "T1 item 9 (Testbenches shipped): every sim/<bench>/ holding records/ ships a cold-start README. Attests the benches are shipped and reproducible, NOT that any spec row is met nor that any PVT grid was re-run. The cold-start command is the simulator-free unit-test step of the lna-sparam-nf README; grids go through klt sim.",
+  "testbenches": [
+    "sim/hbt-kaband-characterization/README.md",
+    "sim/hbt-mismatch-pair/README.md",
+    "sim/lna-headroom/README.md",
+    "sim/lna-linearity/README.md",
+    "sim/lna-match-tradeoff/README.md",
+    "sim/lna-sparam-nf/README.md",
+    "sim/mixer-cm-interface-probe/README.md",
+    "sim/mixer-conversion-iip3/README.md",
+    "sim/mixer-nf-method/README.md",
+    "sim/mixer-pumped-rf-admittance/README.md",
+    "sim/mixer-topology-feasibility/README.md",
+    "sim/passive-p1/README.md",
+    "sim/README.md",
+    "sim/characterize.sh",
+    "sim/pdk-artifact.json"
+  ],
+  "cold_start": {
+    "argv": [
+      "python3",
+      "-m",
+      "pytest",
+      "sim/lna-sparam-nf/tests",
+      "-q"
+    ]
+  },
+  "pins": {
+    "pdk": {
+      "name": "IHP-Open-PDK ihp-sg13g2",
+      "revision": "v0.3.0 5cccb161f7492697cfa52eb14dc03beb00bdca9e"
+    },
+    "tools": {
+      "ngspice": "46",
+      "klayout-tools": "0.8.0"
+    }
+  }
+}

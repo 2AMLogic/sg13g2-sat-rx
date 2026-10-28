@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "kind": "t1-attestation-inventory",
+  "t1_item": 10,
+  "description": "T1 item 10 (Repo hygiene): presence/invocation checks only, not a quality judgment.",
+  "hygiene": [
+    "README.md",
+    "LICENSE",
+    "spec/target-spec.md",
+    "sim/README.md",
+    ".github/workflows/ci.yml",
+    ".github/scripts/check_evidence_formats.py"
+  ],
+  "checks": [
+    {
+      "name": "evidence-formats",
+      "argv": [
+        "python3",
+        ".github/scripts/check_evidence_formats.py",
+        "--skip-history"
+      ]
+    },
+    {
+      "name": "ci-runs-evidence-format-check",
+      "argv": [
+        "grep",
+        "-q",
+        "^ *python3\\? \\.github/scripts/check_evidence_formats\\.py",
+        ".github/workflows/ci.yml"
+      ]
+    },
+    {
+      "name": "ci-runs-harness-smoke",
+      "argv": [
+        "grep",
+        "-q",
+        "run: sim/characterize\\.sh smoke$",
+        ".github/workflows/ci.yml"
+      ]
+    },
+    {
+      "name": "readme-reproduce-names-characterize",
+      "argv": [
+        "grep",
+        "-q",
+        "sim/characterize\\.sh",
+        "README.md"
+      ]
+    }
+  ]
+}

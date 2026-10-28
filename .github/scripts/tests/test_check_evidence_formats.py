@@ -662,8 +662,8 @@ def test_block_coverage_current_tree_passes():
 
 def test_mixer_source_with_no_design_source_claim_fails(tmp_path):
     from evidence_checks.block_coverage import block_coverage_problems
-    (tmp_path / "signoff" / "evidence").mkdir(parents=True)
-    shutil.copy(REPO / "signoff/evidence/item1-design-sources.json", tmp_path / "signoff/evidence")
+    (tmp_path / "signoff").mkdir()
+    shutil.copy(REPO / "signoff/block-coverage.json", tmp_path / "signoff")
     (tmp_path / "design").mkdir()
     assert block_coverage_problems(tmp_path) == []
     (tmp_path / "design" / "mixer_core.sch").write_text("v {xschem version=3.4.5}\n")

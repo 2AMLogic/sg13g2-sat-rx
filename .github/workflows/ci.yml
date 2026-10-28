@@ -72,8 +72,6 @@ jobs:
         run: pip install pytest
       - name: Checker self-test (negative controls on broken fixtures and temporary git histories)
         run: python -m pytest .github/scripts/tests -q
-      - name: Signoff evidence generator negative controls + committed envelope freshness (items 1, 9, 10)
-        run: python -m pytest signoff/tests -q
       # The spec-row coverage check (spec/row-coverage.json vs the table in
       # spec/target-spec.md; issue #50) runs inside the next step as the
       # "row-coverage:" line, and its negative controls are in the self-test
