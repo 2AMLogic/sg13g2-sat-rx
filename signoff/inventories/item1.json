@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "kind": "t1-attestation-inventory",
+  "t1_item": 1,
+  "description": "T1 item 1 (Design sources) for the LNA first stage only (#170): the mixer has no committed design source (gated on DR-0008). Editing a source without re-exporting the netlist fails the freshness check locally and changes the committed content hashes in CI.",
+  "sources": [
+    "design/lna_stage1.sch",
+    "design/lna_stage1.sym",
+    "design/export_netlist.sh"
+  ],
+  "derived": [
+    {
+      "path": "design/netlist/lna_stage1.spice",
+      "generator": "klt netlist",
+      "check": {
+        "argv": [
+          "design/export_netlist.sh",
+          "--check"
+        ],
+        "local_only": true
+      }
+    }
+  ]
+}

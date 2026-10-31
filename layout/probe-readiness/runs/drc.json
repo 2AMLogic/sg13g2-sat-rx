@@ -1,0 +1,423 @@
+{
+  "schema_version": 2,
+  "file": "probe.gds",
+  "deck": "sg13g2",
+  "dbu_um": 0.001,
+  "status": "violations",
+  "violation_count": 4,
+  "rule_counts": {
+    "cont.width.1": 4
+  },
+  "metrics": {
+    "drc__error__count": 4
+  },
+  "violations": [
+    {
+      "rule": "cont.width.1",
+      "description": "min/max Cont size (fixed 0.16 x 0.16 um square)",
+      "check": "width",
+      "layer": "Cont.drawing",
+      "cell": "probe_readiness",
+      "source_cell": "npn13G2_base_CDNS_675179387640",
+      "source_path": [
+        "npn13G2",
+        "npn13G2_base_CDNS_675179387640"
+      ],
+      "bbox": {
+        "left": -825,
+        "bottom": 1050,
+        "right": 825,
+        "top": 1210
+      },
+      "polygon": [
+        [
+          -825,
+          1050
+        ],
+        [
+          -825,
+          1210
+        ],
+        [
+          825,
+          1210
+        ],
+        [
+          825,
+          1050
+        ]
+      ]
+    },
+    {
+      "rule": "cont.width.1",
+      "description": "min/max Cont size (fixed 0.16 x 0.16 um square)",
+      "check": "width",
+      "layer": "Cont.drawing",
+      "cell": "probe_readiness",
+      "source_cell": "npn13G2_base_CDNS_675179387640",
+      "source_path": [
+        "npn13G2",
+        "npn13G2_base_CDNS_675179387640"
+      ],
+      "bbox": {
+        "left": -760,
+        "bottom": -1220,
+        "right": 760,
+        "top": -1060
+      },
+      "polygon": [
+        [
+          -760,
+          -1220
+        ],
+        [
+          -760,
+          -1060
+        ],
+        [
+          760,
+          -1060
+        ],
+        [
+          760,
+          -1220
+        ]
+      ]
+    },
+    {
+      "rule": "cont.width.1",
+      "description": "min/max Cont size (fixed 0.16 x 0.16 um square)",
+      "check": "width",
+      "layer": "Cont.drawing",
+      "cell": "probe_readiness",
+      "source_cell": "rsil",
+      "source_path": [
+        "rsil"
+      ],
+      "bbox": {
+        "left": 30070,
+        "bottom": -280,
+        "right": 30430,
+        "top": -120
+      },
+      "polygon": [
+        [
+          30070,
+          -280
+        ],
+        [
+          30070,
+          -120
+        ],
+        [
+          30430,
+          -120
+        ],
+        [
+          30430,
+          -280
+        ]
+      ]
+    },
+    {
+      "rule": "cont.width.1",
+      "description": "min/max Cont size (fixed 0.16 x 0.16 um square)",
+      "check": "width",
+      "layer": "Cont.drawing",
+      "cell": "probe_readiness",
+      "source_cell": "rsil",
+      "source_path": [
+        "rsil"
+      ],
+      "bbox": {
+        "left": 30070,
+        "bottom": 620,
+        "right": 30430,
+        "top": 780
+      },
+      "polygon": [
+        [
+          30070,
+          620
+        ],
+        [
+          30070,
+          780
+        ],
+        [
+          30430,
+          780
+        ],
+        [
+          30430,
+          620
+        ]
+      ]
+    }
+  ],
+  "coverage": {
+    "deck_layers": [
+      "1/0",
+      "5/0",
+      "6/0",
+      "8/0",
+      "10/0",
+      "19/0",
+      "29/0",
+      "30/0",
+      "36/0",
+      "49/0",
+      "50/0",
+      "66/0",
+      "67/0",
+      "125/0",
+      "126/0",
+      "133/0",
+      "134/0"
+    ],
+    "layers_checked": [
+      "1/0",
+      "5/0",
+      "6/0",
+      "8/0",
+      "10/0",
+      "19/0",
+      "36/0",
+      "67/0",
+      "126/0"
+    ],
+    "layers_in_stream_without_rules": [
+      "1/20",
+      "7/21",
+      "8/2",
+      "8/25",
+      "10/2",
+      "10/25",
+      "14/0",
+      "24/0",
+      "26/0",
+      "33/0",
+      "51/0",
+      "52/0",
+      "63/0",
+      "67/2",
+      "67/25",
+      "111/0",
+      "126/2",
+      "126/25",
+      "128/0",
+      "129/0"
+    ],
+    "rules_checked": [
+      "activ.enclosing.cont.1",
+      "activ.space.1",
+      "activ.width.1",
+      "cont.space.1",
+      "cont.width.1",
+      "gatpoly.enclosing.cont.1",
+      "gatpoly.separation.activ.1",
+      "gatpoly.space.1",
+      "gatpoly.width.1",
+      "metal1.enclosing.via1.1",
+      "metal1.space.1",
+      "metal1.width.1",
+      "metal2.space.1",
+      "metal2.width.1",
+      "metal5.enclosing.mim.1",
+      "metal5.space.1",
+      "metal5.width.1",
+      "topmetal1.space.1",
+      "topmetal1.width.1",
+      "via1.space.1",
+      "via1.width.1"
+    ],
+    "rules_skipped": [
+      "metal2.enclosing.via2.1",
+      "metal3.enclosing.via3.1",
+      "metal3.space.1",
+      "metal3.width.1",
+      "metal4.enclosing.via4.1",
+      "metal4.space.1",
+      "metal4.width.1",
+      "metal5.enclosing.topvia1.1",
+      "mim.enclosing.topvia1.1",
+      "topmetal1.enclosing.topvia1.1",
+      "topmetal1.enclosing.topvia2.1",
+      "topmetal2.enclosing.topvia2.1",
+      "topmetal2.space.1",
+      "topmetal2.width.1",
+      "topvia1.space.1",
+      "topvia1.width.1",
+      "topvia2.space.1",
+      "topvia2.width.1",
+      "via2.space.1",
+      "via2.width.1",
+      "via3.space.1",
+      "via3.width.1",
+      "via4.space.1",
+      "via4.width.1"
+    ],
+    "voltage_domain_warnings": [],
+    "deck_scope": [
+      "Act",
+      "Cnt",
+      "Gat",
+      "M1",
+      "M2",
+      "M3",
+      "M4",
+      "M5",
+      "MIM",
+      "TM1",
+      "TM2",
+      "TV1",
+      "TV2",
+      "V1",
+      "V2",
+      "V3",
+      "V4"
+    ],
+    "schema_version": 1,
+    "known": true,
+    "checked": [
+      "activ.enclosing.cont.1",
+      "activ.space.1",
+      "activ.width.1",
+      "cont.space.1",
+      "cont.width.1",
+      "gatpoly.enclosing.cont.1",
+      "gatpoly.separation.activ.1",
+      "gatpoly.space.1",
+      "gatpoly.width.1",
+      "metal1.enclosing.via1.1",
+      "metal1.space.1",
+      "metal1.width.1",
+      "metal2.space.1",
+      "metal2.width.1",
+      "metal5.enclosing.mim.1",
+      "metal5.space.1",
+      "metal5.width.1",
+      "topmetal1.space.1",
+      "topmetal1.width.1",
+      "via1.space.1",
+      "via1.width.1"
+    ],
+    "skipped": [],
+    "inapplicable": [
+      {
+        "id": "metal2.enclosing.via2.1",
+        "reason": "no_applicable_geometry"
+      },
+      {
+        "id": "metal3.enclosing.via3.1",
+        "reason": "no_applicable_geometry"
+      },
+      {
+        "id": "metal3.space.1",
+        "reason": "no_applicable_geometry"
+      },
+      {
+        "id": "metal3.width.1",
+        "reason": "no_applicable_geometry"
+      },
+      {
+        "id": "metal4.enclosing.via4.1",
+        "reason": "no_applicable_geometry"
+      },
+      {
+        "id": "metal4.space.1",
+        "reason": "no_applicable_geometry"
+      },
+      {
+        "id": "metal4.width.1",
+        "reason": "no_applicable_geometry"
+      },
+      {
+        "id": "metal5.enclosing.topvia1.1",
+        "reason": "no_applicable_geometry"
+      },
+      {
+        "id": "mim.enclosing.topvia1.1",
+        "reason": "no_applicable_geometry"
+      },
+      {
+        "id": "topmetal1.enclosing.topvia1.1",
+        "reason": "no_applicable_geometry"
+      },
+      {
+        "id": "topmetal1.enclosing.topvia2.1",
+        "reason": "no_applicable_geometry"
+      },
+      {
+        "id": "topmetal2.enclosing.topvia2.1",
+        "reason": "no_applicable_geometry"
+      },
+      {
+        "id": "topmetal2.space.1",
+        "reason": "no_applicable_geometry"
+      },
+      {
+        "id": "topmetal2.width.1",
+        "reason": "no_applicable_geometry"
+      },
+      {
+        "id": "topvia1.space.1",
+        "reason": "no_applicable_geometry"
+      },
+      {
+        "id": "topvia1.width.1",
+        "reason": "no_applicable_geometry"
+      },
+      {
+        "id": "topvia2.space.1",
+        "reason": "no_applicable_geometry"
+      },
+      {
+        "id": "topvia2.width.1",
+        "reason": "no_applicable_geometry"
+      },
+      {
+        "id": "via2.space.1",
+        "reason": "no_applicable_geometry"
+      },
+      {
+        "id": "via2.width.1",
+        "reason": "no_applicable_geometry"
+      },
+      {
+        "id": "via3.space.1",
+        "reason": "no_applicable_geometry"
+      },
+      {
+        "id": "via3.width.1",
+        "reason": "no_applicable_geometry"
+      },
+      {
+        "id": "via4.space.1",
+        "reason": "no_applicable_geometry"
+      },
+      {
+        "id": "via4.width.1",
+        "reason": "no_applicable_geometry"
+      }
+    ],
+    "unknown": [],
+    "nothing_checked": false,
+    "nothing_checked_reasons": []
+  },
+  "provenance": {
+    "klt_version": "0.7.0+gb770c86e0e96",
+    "klayout_version": "0.30.12",
+    "pdk": null,
+    "deck": {
+      "name": "sg13g2",
+      "content_hash": "sha256:bf483105cb17948270f0cad45d9418787654bfc0a5ffd04a2e2413d8c7d3b6e7",
+      "released": true
+    },
+    "input": {
+      "content_hash": "sha256:9759f9eeb84b259ab2579d147a7f485315fc9da7291fcabd1ec34ddb6a62db0b",
+      "role": "layout"
+    },
+    "klayout_version_mismatch": false
+  }
+}

@@ -46,9 +46,13 @@ import cmath
 import json
 import math
 import re
+import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE.parent))  # sim/ -> harness
+from harness.provenance import parse_marks  # noqa: E402
+
 THRESHOLDS_PATH = HERE / "thresholds.json"
 
 # ---- probe constants (must match the .spice sources) ------------------------------
@@ -186,27 +190,8 @@ def fixture_signals(fx: str) -> tuple[str, ...]:
 
 # ---- parsing --------------------------------------------------------------------------------
 
-MARK_RE = re.compile(r"^MARK\s+(.*)$")
-KV_RE = re.compile(r"(\w+)=(\S*)")
-
-
-def _float(s: str | None) -> float | None:
-    if s is None or s == "":
-        return None
-    try:
-        v = float(s)
-    except ValueError:
-        return None
-    return v if math.isfinite(v) else None
-
-
 def parse_log(stdout: str, stderr: str) -> dict:
-    marks: dict[str, float | None] = {}
-    for line in stdout.splitlines():
-        m = MARK_RE.match(line.strip())
-        if m:
-            for k, v in KV_RE.findall(m.group(1)):
-                marks[k] = _float(v)
+    marks = parse_marks(stdout)
     both = stdout + "\n" + stderr
     return {"marks": marks, "completed": "MARK done" in stdout,
             "has_dut": any(k.startswith("dut_") for k in marks),

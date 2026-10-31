@@ -14,7 +14,9 @@ import linearity as L
 
 
 def fake_log(plan: dict, key: str, *, a1: float, a3: float, floor_v: float = 1e-7, excursion_per_v: float | None = None,
-             quiescent_vce2: float = 1.25, only_variant: str | None = None, im3_scale: float = 1.0) -> str:
+             quiescent_vce2: float = 1.25, only_variant: str | None = None, im3_scale: float = 1.0,
+             ic_swing_a_per_v: float = 0.0, ic_quiescent_a: float = 0.012, omit_current: bool = False,
+             bad_current: float | None = None) -> str:
     lines = ["ngspice fake log"]
     for run in A.runs_for_key(plan, key):
         rid = run["id"]
@@ -36,6 +38,12 @@ def fake_log(plan: dict, key: str, *, a1: float, a3: float, floor_v: float = 1e-
                 sw = swing if name.startswith("vce") else 0.0
                 vals[f"m_{rid}_{name}_max"] = nom + sw
                 vals[f"m_{rid}_{name}_min"] = nom - sw
+        if run.get("currents") and not omit_current:
+            top = max(v for k, v in am.items() if not k.startswith("fl"))
+            for name, _ in run["currents"]:
+                sw = ic_swing_a_per_v * top
+                vals[f"m_{rid}_{name}_max"] = ic_quiescent_a + sw if bad_current is None else bad_current
+                vals[f"m_{rid}_{name}_min"] = ic_quiescent_a - sw
         for k, v in vals.items():
             lines.append(f"{k} = {v:.12e}")
     lines.append("LNLIN_DONE")

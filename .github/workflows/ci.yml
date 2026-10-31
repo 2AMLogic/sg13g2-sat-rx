@@ -22,6 +22,7 @@ jobs:
   harness-tests:
     name: harness + Ka-band unit tests (no PDK, no simulator)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -30,7 +31,7 @@ jobs:
       - name: Install test dependencies (pinned ranges in requirements-test.txt)
         run: pip install -r requirements-test.txt
       - name: Byte-compile every Python file
-        run: python -m compileall -q sim .github/scripts
+        run: python -m compileall -q sim .github/scripts signoff
       - name: Harness unit tests (corners, evidence, report, testbench manifests)
         run: python -m pytest sim/harness/tests -q
       - name: Ka-band postprocessor unit tests
@@ -47,14 +48,19 @@ jobs:
         run: python -m pytest sim/mixer-nf-method/tests/test_nfmethod.py -v
       - name: mixer-cm-interface-probe closed-form control / sabotage / status tests (no simulator; interface feasibility only)
         run: python -m pytest sim/mixer-cm-interface-probe/tests -q
+      - name: hbt-mismatch-pair Monte Carlo method-probe ingestion / gate / sabotage tests (no simulator; method feasibility only)
+        run: python -m pytest sim/hbt-mismatch-pair/tests -q
       - name: mixer-pumped-rf-admittance extraction / known-answer / sabotage / classification tests (no simulator; method feasibility only)
         run: python -m pytest sim/mixer-pumped-rf-admittance/tests -q
       - name: lna-linearity analytic controls / negative controls / convergence / record round-trip tests (closed-form fake klt; no simulator)
         run: python -m pytest sim/lna-linearity/tests -q
+      - name: lna-headroom variant / gate / ranking / baseline-reproduction tests (closed-form fake klt; no simulator)
+        run: python -m pytest sim/lna-headroom/tests -q
 
   evidence-formats:
     name: evidence formats + append-only history
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:

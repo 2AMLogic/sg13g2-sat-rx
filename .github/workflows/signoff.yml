@@ -17,13 +17,30 @@ permissions:
 jobs:
   tier-report:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       - name: Install pinned klt
-        run: pip install klayout-tools==0.7.0
+        run: |
+          pip install klayout-tools==0.8.0
+          klt --version
+      - name: Install item 9 cold-start dependencies
+        run: pip install -r requirements-test.txt
+      # T1 items 1, 9, 10 are tool-produced (klt signoff --attest) from the
+      # inventories in signoff/inventories/. --check re-attests and fails on any
+      # drift: an edited inventory or inventoried file, or a changed check
+      # outcome. Item 1's freshness command (design/export_netlist.sh --check)
+      # is local_only because it needs xschem + the PDK; CI carries its
+      # committed outcome, and the .sch/.sym content hashes still move.
+      - name: Attestation envelopes for items 1, 9, 10 must be current
+        run: |
+          for n in 1 9 10; do
+            f=$(ls signoff/evidence/item${n}-*.json)
+            klt signoff --attest "$n" --inventory "signoff/inventories/item${n}.json" --check "$f"
+          done
       - name: Re-grade the committed block manifest
         run: |
           set +e

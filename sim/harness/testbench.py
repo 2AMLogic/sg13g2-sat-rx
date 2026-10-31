@@ -35,6 +35,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -106,6 +107,15 @@ class Testbench:
     checks: dict[str, dict] = field(default_factory=dict)
     options: tuple[str, ...] = ()
     evidence: evidence_mod.BaseExtensions = field(default_factory=evidence_mod.BaseExtensions)
+    #: The exact ``tb.json`` bytes this Testbench was loaded from, captured
+    #: once at load time (:func:`load` always sets them; the defaults only
+    #: serve hand-built instances). Every digest, provenance block and frozen
+    #: manifest snapshot describes THESE bytes, so a later edit of the
+    #: working manifest can neither change a record's declared digest nor
+    #: what its frozen settings were.
+    manifest_bytes: bytes = field(default=b"", repr=False)
+    #: The netlist fragment bytes captured at the same moment (see above).
+    netlist_bytes: bytes = field(default=b"", repr=False)
 
     @property
     def experiment(self) -> str:
@@ -118,12 +128,49 @@ class Testbench:
         return self.directory.parent
 
     @property
+    def netlist_data(self) -> bytes:
+        """The netlist fragment bytes this Testbench was loaded with."""
+        if self.netlist_bytes:
+            return self.netlist_bytes
+        return self.netlist.read_bytes()
+
+    @property
+    def manifest_data(self) -> bytes:
+        """The ``tb.json`` bytes this Testbench was loaded with."""
+        if self.manifest_bytes:
+            return self.manifest_bytes
+        return (self.directory / MANIFEST_NAME).read_bytes()
+
+    @property
     def netlist_sha256(self) -> str:
-        return hashlib.sha256(self.netlist.read_bytes()).hexdigest()
+        return hashlib.sha256(self.netlist_data).hexdigest()
 
     @property
     def manifest_sha256(self) -> str:
-        return hashlib.sha256((self.directory / MANIFEST_NAME).read_bytes()).hexdigest()
+        return hashlib.sha256(self.manifest_data).hexdigest()
+
+    def working_input_drift(self) -> str:
+        """How the working testbench inputs have changed since load, or ``""``.
+
+        Publication gate: a grid is simulated from the state captured at load
+        time, so if the working manifest or fragment has changed (or
+        disappeared) since, the results must not be recorded at all -- a
+        frozen manifest snapshot taken afterwards would not describe the
+        state the numbers came from.
+        """
+        drift: list[str] = []
+        for label, path, captured in (
+            ("manifest", self.directory / MANIFEST_NAME, self.manifest_data),
+            ("netlist fragment", self.netlist, self.netlist_data),
+        ):
+            try:
+                changed = path.read_bytes() != captured
+                why = "changed" if changed else ""
+            except OSError:
+                why = "is no longer readable"
+            if why:
+                drift.append(f"working {label} {path} {why} since the run started")
+        return "; ".join(drift)
 
     def provenance(self) -> dict:
         return {
@@ -145,6 +192,56 @@ def _require(manifest: dict, key: str, path: Path):
     if key not in manifest:
         raise ValueError(f"{path}: missing required key {key!r}")
     return manifest[key]
+
+
+def _finite_limit(value, where: str) -> float:
+    """Return ``value`` if it is a finite real number, else raise ValueError.
+
+    Rejects bool (an ``int`` subclass), strings, None-like junk, NaN and
+    +/-inf (including JSON overflow literals such as ``1e999``): a NaN limit
+    makes every ordered comparison false and would silently disable the bound.
+    """
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"{where}: limit must be a finite number, got {value!r}")
+    try:
+        finite = math.isfinite(value)
+    except OverflowError:
+        finite = False
+    if not finite:
+        raise ValueError(f"{where}: limit must be a finite number, got {value!r}")
+    return value
+
+
+def validate_check_limits(name: str, spec: dict, where: str = "") -> None:
+    """Validate the numeric limits of one ``checks`` entry (fail closed).
+
+    Shared by manifest loading and direct grading callers
+    (``report.evaluate_checks``). ``min``/``max`` stay optional.
+    """
+    prefix = f"{where}: " if where else ""
+    for key in ("min", "max", "max_spread_pct", "min_spread_pct"):
+        if key in spec and spec[key] is not None:
+            _finite_limit(spec[key], f"{prefix}check {name!r} key {key!r}")
+    low, high = spec.get("min"), spec.get("max")
+    if low is not None and high is not None and low > high:
+        raise ValueError(
+            f"{prefix}check {name!r}: min ({low!r}) is greater than max ({high!r})"
+        )
+    for key in ("max_spread_pct", "min_spread_pct"):
+        if spec.get(key) is not None and spec[key] < 0:
+            raise ValueError(f"{prefix}check {name!r} key {key!r}: spread percentage must be >= 0, got {spec[key]!r}")
+    for axis_key in ("min_spread_pct_by_axis", "max_spread_pct_by_axis"):
+        axes = spec.get(axis_key)
+        if not axes:
+            continue
+        if not isinstance(axes, dict):
+            raise ValueError(f"{prefix}check {name!r}: {axis_key} must be an object")
+        for axis, limit in axes.items():
+            _finite_limit(limit, f"{prefix}check {name!r} {axis_key}[{axis!r}]")
+            if limit < 0:
+                raise ValueError(
+                    f"{prefix}check {name!r} {axis_key}[{axis!r}]: spread percentage must be >= 0, got {limit!r}"
+                )
 
 
 def _validate_checks(checks: dict[str, dict], measure: dict[str, str], path: Path) -> None:
@@ -174,6 +271,7 @@ def _validate_checks(checks: dict[str, dict], measure: dict[str, str], path: Pat
                     f"{path}: check {name!r}: unknown axis/axes {', '.join(unknown_axes)} in "
                     f"{axis_key}; known: {', '.join(AXES)}"
                 )
+        validate_check_limits(name, spec, str(path))
 
 
 def load(directory: str | Path) -> Testbench:
@@ -191,11 +289,16 @@ def load(directory: str | Path) -> Testbench:
     if not manifest_path.is_file():
         raise FileNotFoundError(f"no {MANIFEST_NAME} in {directory}")
 
-    manifest = json.loads(manifest_path.read_text())
+    # Capture the exact input bytes BEFORE parsing them: everything downstream
+    # (digests, provenance, the frozen manifest snapshot) describes this
+    # captured state, never a later re-read of the working files.
+    manifest_bytes = manifest_path.read_bytes()
+    manifest = json.loads(manifest_bytes)
 
     netlist = directory / _require(manifest, "netlist", manifest_path)
     if not netlist.is_file():
         raise FileNotFoundError(f"{manifest_path}: netlist {netlist} does not exist")
+    netlist_bytes = netlist.read_bytes()
 
     measure = dict(_require(manifest, "measure", manifest_path))
     if not measure:
@@ -245,6 +348,8 @@ def load(directory: str | Path) -> Testbench:
         checks=checks,
         options=tuple(manifest.get("options", ())),
         evidence=extensions,
+        manifest_bytes=manifest_bytes,
+        netlist_bytes=netlist_bytes,
     )
     validate_netlist(tb)
     return tb

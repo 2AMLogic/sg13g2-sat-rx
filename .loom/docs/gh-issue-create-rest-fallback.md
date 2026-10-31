@@ -18,6 +18,22 @@ link here rather than repeating it. If the recipe needs to change, change it
 here (and in `forge_gh_create_issue_rl_safe` / `create-issue.sh`, its
 executable equivalents), not in nine separate files.
 
+## The create step is `loom-daemon forge create-issue` (#12504)
+
+The create call itself (label guard, `gh issue create`, rate-limit → REST POST,
+5xx reconcile) lives in Rust: `loom-daemon forge create-issue --title T
+(--body B | --body-file PATH|-) [--label L]... [--repo OWNER/REPO] [--json]`.
+It prints the URL (or `{"number":N,"url":"..."}` with `--json`) and exits `0`.
+Every failure exits non-zero: `2` for a refused label / bad arguments (no forge
+call), `1` for a failed creation; with `--json`, stdout is
+`{"error":"<kind>","message":"...","may_exist":bool}` where kind is one of
+`refused_label`, `rate_limited`, `auth`, `rest_failed`, `may_exist`. Exit `0`
+with an empty URL is never reported as success. Scripts should check `$?` or
+parse `number`, never scrape text. `create-issue.sh` (below) is the back-compat
+shim: it keeps the filing lock, duplicate backstop, `--parent` and footer, and
+calls this subcommand for the create (falling back to the shell function on a
+daemon that predates it).
+
 ## Use `./.loom/scripts/create-issue.sh`, never a bare `gh issue create` (#5077)
 
 A role prompt can only teach an executable command, not a bash function
@@ -129,14 +145,14 @@ outage alert — so those three call sites file with `--force`.
 
 ## The five-signature table
 
-A rejection whose text contains one of these (case-insensitive) is a rate
-limit, not a real failure — retry the same creation over REST instead of
-giving up:
+A rejection whose text contains one of these (case-insensitive; `·` is a
+space, #11411) is a rate limit, not a real failure — retry the same creation
+over REST instead of giving up:
 
 | Signature | Seen as |
 |---|---|
-| `api rate limit exceeded` | REST itself throttling (rare on the fallback path) |
-| `api rate limit already exceeded` | GraphQL: `GraphQL: API rate limit already exceeded for user ID …` |
+| `api rate limit·exceeded` | REST itself throttling (rare on the fallback path) |
+| `api rate limit·already exceeded` | GraphQL, as `GraphQL: … for user ID …` |
 | `secondary rate limit` | either transport, burst throttling |
 | `abuse detection mechanism` | either transport, burst throttling |
 | `was submitted too quickly` | either transport, burst throttling |

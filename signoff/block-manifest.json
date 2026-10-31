@@ -4,11 +4,15 @@
   "evidence": {
     "1": {
       "file": "signoff/evidence/item1-design-sources.json",
-      "content_hash": "sha256:ad4fe1be5754f21fc4b2dd67863234858dc399e2a8232d3b20cf530014b8c447"
+      "content_hash": "sha256:c2bb7fdb69593ca15c61189187c18bf95a20e513f36d611a4a0e9f5171b93e20"
+    },
+    "9": {
+      "file": "signoff/evidence/item9-testbenches-shipped.json",
+      "content_hash": "sha256:9e4be5f59e6e5775f05bceeb4fbd7917251dab95fc28a9262df655522a46fa3a"
     },
     "10": {
       "file": "signoff/evidence/item10-repo-hygiene.json",
-      "content_hash": "sha256:81493be5615b6442b5b2d3bd3ad7f4e7012b886ac290ad196a9a284df8bd6161"
+      "content_hash": "sha256:52fbf0d3116862858925be654e8f0ca8467b050bf5c1d377ea28952f7d70e8cb"
     }
   }
 }

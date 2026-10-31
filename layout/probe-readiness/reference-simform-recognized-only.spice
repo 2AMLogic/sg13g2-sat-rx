@@ -1,0 +1,7 @@
+* probe-readiness reference, PDK xschem simulation form (issue #185 probe)
+* Recognised-devices-only subset: only the cmim capacitor, the one device
+* `klt extract --deck sg13g2` recognises from this probe cell.
+.SUBCKT probe_readiness CB CT E RB C B RA GND
+XC1 CB CT cap_cmim w=6.99e-6 l=6.99e-6 m=1
+.ENDS probe_readiness
+.END

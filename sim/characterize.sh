@@ -16,10 +16,17 @@
 #
 #   sim/characterize.sh smoke
 #       The hbt_typ process corner only, writing NO evidence: for the two
-#       harness-native benches that is hbt_typ x 3 temperatures x 3 supplies
-#       (9 small points each -- harness.cli has no temperature/supply subset
-#       flag); for the Ka-band bench one PVT point (hbt_typ / 27 C / nominal
-#       supply) on its reduced bias sweep. Seconds, not minutes -- proof that
+#       harness-native benches that is hbt_typ x the smoke PVT axes, run
+#       sequentially with --backend local (hosted CI has no batch
+#       credentials) -- lna-sparam-nf: 3 temperatures x 3 supplies = 9 small
+#       points; mixer-conversion-iip3: -40/27 C x 3 supplies = 6 points,
+#       because its static two-tone fit window has no valid 1:3-slope region
+#       at the 125 C corners (the record's measured finding: hot compression
+#       inside the window; the slope gates fail there by design and no IIP3
+#       is published -- record 20261012-061538-2bdb5be, follow-up #181) and a
+#       smoke run cannot express per-corner expected failures; for the
+#       Ka-band bench one PVT point (hbt_typ /
+#       27 C / nominal supply) on its reduced bias sweep. Seconds, not minutes -- proof that
 #       the whole command surface runs from a clean checkout AND produces its
 #       measurements (see "smoke failure semantics" below).
 #
@@ -28,12 +35,14 @@
 #       hbt_wcs x (-40, 27, 125) C x (2.25, 2.50, 2.75) V = 27 points per
 #       bench. Mints a new, dated, append-only record per bench under
 #       sim/<experiment>/records/ -- a genuinely new record, never an
-#       overwrite of one already committed. The two harness-native benches run
-#       their 27 points as a LOCAL sequential ngspice loop (workstation only; on a
-#       shared dispatch host use sim/lna-sparam-nf/run.py characterize, which
-#       submits to the batch fleet). The Ka-band bench submits its
-#       grid as `klt sim` requests (backend from $KABAND_BACKEND, default
-#       "batch"; see its README.md "Running the full grid").
+#       overwrite of one already committed. The two harness-native benches
+#       submit their 27 points as `klt sim` requests through
+#       `harness.cli run --backend` (backend from $HARNESS_BACKEND, default
+#       "batch"; "local" is a sequential ngspice loop on this host --
+#       workstation only). The Ka-band bench likewise submits its grid as
+#       `klt sim` requests (backend from $KABAND_BACKEND, default "batch";
+#       see its README.md "Running the full grid"). A failed submit fails the
+#       campaign; it never falls back to a local grid.
 #
 #   sim/characterize.sh selftest
 #       The negative controls: `harness.cli selftest` for the two
@@ -41,7 +50,8 @@
 #       docstring), and run.py selftest for the Ka-band bench (source-noise
 #       normalization probe, process sensitivity, sabotage collapse, and a
 #       deliberately invalid deck that must be rejected) on its REDUCED bias
-#       sweep.
+#       sweep. `harness.cli selftest` is local-only (a sabotaged corner set
+#       has no klt sim form), sequential by default.
 #
 # lna-sparam-nf is a schematic-backed first-stage feasibility circuit with IDEAL
 # lossless matching; mixer-conversion-iip3 is a PLACEHOLDER circuit. Each
@@ -101,7 +111,17 @@ for exp in "${HARNESS_EXPERIMENTS[@]}"; do
       # sensitivity check (the single process corner). Every other failure --
       # violated bound, stuck swept temperature/supply axis, missing
       # measurement, simulator error -- is the harness's own non-zero exit.
-      python3 -m harness.cli run "${exp}" --corners hbt_typ --no-write --smoke-subset
+      # mixer-conversion-iip3 drops the 125 C smoke points (--temperatures is
+      # legal under --no-write): its static fit window has no valid 1:3
+      # region at those corners, the slope gates fail there BY DESIGN (record
+      # 20261012-061538-2bdb5be; per-corner-adaptive window is follow-up
+      # #181), and a smoke run has no per-corner expected-failure mechanism.
+      # This narrows which corners the smoke exercises; it loosens no bound --
+      # the full grid still runs every corner in `characterize` mode, where a
+      # gate failure refuses the record.
+      SMOKE_TEMPS=()
+      [ "${exp}" = "mixer-conversion-iip3" ] && SMOKE_TEMPS=(--temperatures=-40.0,27.0)
+      python3 -m harness.cli run "${exp}" --corners hbt_typ "${SMOKE_TEMPS[@]}" --no-write --smoke-subset --backend local
       status=$?
       if [ "${status}" -ne 0 ]; then
         echo "--- ${exp}: smoke FAILED (exit ${status}) ---" >&2
@@ -112,7 +132,7 @@ for exp in "${HARNESS_EXPERIMENTS[@]}"; do
     characterize)
       # No --claim: harness.cli records the bench own tb.json claim (LNA:
       # ideal-matching feasibility; mixer: PLACEHOLDER disclaimer).
-      python3 -m harness.cli run "${exp}" --corners hbt
+      python3 -m harness.cli run "${exp}" --corners hbt --backend "${HARNESS_BACKEND:-batch}"
       ;;
     selftest)
       python3 -m harness.cli selftest "${exp}" --corners hbt

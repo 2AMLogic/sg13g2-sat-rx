@@ -25,10 +25,10 @@ repo does not itself carry a `release_tag`/`tarball_sha256` pin the way
 own `environment.pdk` block is the self-describing provenance instead).
 
 The PDK's own version marker (`Pdk.version` in `sim/harness/pdk.py`) reads
-the SOURCES file convention some other PDK distributions use; IHP-Open-PDK
-ships `.fetched-version` instead, so every record's `environment.pdk.version`
-currently reads `"unknown"` — a known, documented gap in the generic core's
-version-detection convention for this specific PDK, not a broken install
+the install's `.fetched-version` first line (what IHP-Open-PDK ships), then a
+`SOURCES` file, then `"unknown"`. Records written before this change
+(#155) show `"unknown"` in `environment.pdk.version` because the reader
+only knew `SOURCES`; they are not edited. New records carry the marker value.
 (confirmed working: `sim/pdk.json`'s model_lib resolves and every bench below
 runs against real device data).
 
@@ -55,9 +55,9 @@ What is checked, and when (`harness/pdkartifact.py`):
 - Only the file hashes establish a match. The install's `.fetched-version`
   marker is provenance: a missing marker is reported as `unknown` and the
   hashes alone decide; a marker equal to the pin never rescues wrong hashes;
-  a marker that disagrees with the pin fails. (This is also why
-  `Pdk.version` stays `"unknown"` for IHP -- see above -- and is not used as
-  an integrity signal.)
+  a marker that disagrees with the pin fails. (`Pdk.version` now
+  reports the `.fetched-version` marker -- see above -- but it is provenance
+  only, never an integrity signal.)
 - A model file that is missing, differs, is reachable but not listed, or is
   listed but no longer reachable fails. A missing PDK, a missing manifest or
   (with `--require-ngspice`, which hosted CI sets via
@@ -136,6 +136,11 @@ deliberate pin change (next section).
 | `mixer-nf-method` | Feasibility of a mixer SSB-NF method without pnoise (issue #27): ngspice noise-capability inventory, SSB/image estimator and status gates | **`MODEL_ABSENT`** — no intrinsic device noise in `.tran`; no mixer NF number — see below |
 | `mixer-pumped-rf-admittance` | Method feasibility (issue #111) for the LO-on mixer RF-port admittance DR-0004 row 5 needs: two-phase transient extraction of the sideband-coupled 2×2 admittance, qualified on RC and ideal-modulated known answers | **`SCALAR_ADEQUATE` at one nominal point of the placeholder at its probe LO drive; method feasibility only, no row-5 claim** — see [its README](mixer-pumped-rf-admittance/README.md) |
 | `mixer-topology-feasibility` | Mixer-core topology comparison under row 17 (issue #35): stacked Gilbert vs folded single-balanced vs the placeholder floor; per-device V_CE/V_BE/Ic stress, gain into a physical 50 Ω IF load, LO-drive selection rule, DC power, mismatch-card leakage, swept-region IIP3 | **record exists: all three topologies `no acceptable drive in declared sweep` at the declared sizing; no recommendation** — see below |
+| `lna-headroom` | Bounded headroom feasibility study (issue #123) for `design/lna_stage1`: whether the Q2 base divider ratio and collector damping resistor `Rd` alone buy output-swing headroom under the unchanged row 17 limit (V_CE <= 1.4 V) so a stress-valid single-tone P1dB (row 8) can be determined; nominal corner only | **study variants only, ideal lossless L/C, placeholder circuit; production schematic unchanged, ratified limits and targets unchanged, no row claimed met** — see [its README](lna-headroom/README.md) |
+| `lna-match-tradeoff` | NF vs input return loss vs gain for ideal lossless input networks on the frozen `design/lna_stage1` cascode, at the declared PVT grid (issue #74) | **ideal-element feasibility screen; no spec row is claimed met** (no PDK inductor model; row 1 band open) — see [its README](lna-match-tradeoff/README.md) |
+| `mixer-cm-interface-probe` | Interface feasibility (issue #89) for a mixer conversion-matrix NF solver: which interfaces (LO-period trajectory, wanted/image sideband transfer, noise intensities, ib/ic covariance) are reachable on the pinned simulator/model, at one nominal point | **capability probe only: builds no solver and reports no active-mixer NF; not evidence for row 10 or row 12** — see [its README](mixer-cm-interface-probe/README.md) |
+| `hbt-mismatch-pair` | Monte Carlo mismatch-card method probe (issue #186): whether a `klt sim` `monte_carlo` request runs the pinned HBT mismatch/stat cards at all, on a known-answer matched `npn13G2` pair (batch + fixed-seed rerun + local agreement) | **method probe only: qualifies the Monte Carlo method, reports no design figure and no row-15 evidence** — see [its README](hbt-mismatch-pair/README.md) |
+| `passive-p1` | Bounded p1-only single-turn spiral campaign (issue #25, DR-0005): geometry check and L/Q/SRF extraction chain with known-answer controls | **feasibility evidence for one geometry; openEMS stages `CAPABILITY_UNAVAILABLE` on the authoring host, no qualified p1 model, DR-0005 deferred; no spec row claimed met** — see [its README](passive-p1/README.md) |
 
 **`lna-sparam-nf` is a schematic-backed first-stage feasibility circuit; `mixer-conversion-iip3` is still a PLACEHOLDER.**
 The LNA bench's DUT is `design/lna_stage1` (xschem `npn13G2` cascode first
@@ -168,12 +173,14 @@ re-pointed at a real mixer schematic.
 
 | Command | Runs |
 |---|---|
-| `sim/characterize.sh smoke` / `selftest` | local `ngspice -b`, small (single corner or negative controls) |
-| `sim/characterize.sh characterize` — `lna-sparam-nf`, `mixer-conversion-iip3` | **local**: `harness.cli run`, a sequential 27-point `ngspice -b` loop. Workstation only; on a shared dispatch host use the LNA driver below instead |
+| `sim/characterize.sh smoke` / `selftest` | local `ngspice -b`, small (single corner or negative controls); smoke passes `--backend local` explicitly |
+| `sim/characterize.sh characterize` — `lna-sparam-nf`, `mixer-conversion-iip3` | `harness.cli run --backend "${HARNESS_BACKEND:-batch}"`: the 27 points go out as `klt sim` requests (one per supply) and the returned logs land in `corners/<record-id>/`. A failed submit records nothing and never falls back to a local loop. `HARNESS_BACKEND=local` is the old sequential `ngspice -b` loop (workstation only) |
+| `python3 -m harness.cli run <bench>` | more than one PVT point: `klt sim`, backend `batch` by default; exactly one point: local. `--backend local` forces a local run (`--jobs` at most 2 for a multi-point local grid) |
 | `sim/characterize.sh characterize` — `hbt-kaband-characterization` | `klt sim` requests, backend `$KABAND_BACKEND` (default `batch`) |
 | `python3 sim/lna-sparam-nf/run.py characterize` | `klt sim`, `--backend` default `batch` (use `--dry-run` to inspect the request) |
 | `python3 sim/mixer-topology-feasibility/run.py smoke` / `selftest` | local, no evidence written |
 | `python3 sim/lna-linearity/run.py collect` | `klt sim`, explicit `--backend batch` for every request (even single-unit ones); a failed submit writes nothing and never falls back to a local run |
+| `python3 sim/hbt-mismatch-pair/run_probe.py` | `mc`+`rerun` legs: `klt sim`, explicit `--backend batch` (default); `local` leg: one n=1 request on `--backend local` (the cross-build agreement unit); a failed batch submit writes nothing and never falls back to a local grid |
 
 The wrapper passes no `--claim` to `harness.cli run`, so each new record
 carries its own bench's `tb.json` claim (LNA: the ideal-matching feasibility
@@ -226,9 +233,14 @@ carry finite values and, with `--supersedes`, agree with that record's logs.
 
 ### `mixer-conversion-iip3`
 
-Conversion gain, LO-to-RF leakage, and two-tone IIP3 via one transient run's
-coherent-bin FFT (two RF tones at 19.4375/19.4625 GHz, LO at 18.45 GHz —
-low-side, 1 GHz IF per the DRAFT LO-range row). **SSB noise figure is not
+Conversion gain, LO-to-RF leakage, and two-tone IIP3 via a SWEPT two-tone
+transient + coherent-bin FFT (two RF tones at 19.4375/19.4625 GHz stepped over
+a drive list by the deck's control block, LO at 18.45 GHz — low-side, 1 GHz IF
+per the DRAFT LO-range row). IIP3 is extrapolated by intersecting two
+least-squares lines (fundamental ~1, tracked IM3 ~3) fitted over a stated
+sub-region of the sweep, per spec/porting-plan.md S4.1, and a one-tone floor
+control bounds how far above the transient sampler's interpolation-error floor
+the IM3 read sits (issue #165). **SSB noise figure is not
 measured by this bench at all**: ngspice has no periodic-steady-state /
 periodic-noise (pnoise) analysis, so there is no valid way to linearize noise
 about a mixer's LO-pumped operating point with ngspice's plain `.noise`
@@ -392,14 +404,37 @@ corner set explicitly:
 
 ```
 python3 -m harness.cli list
-python3 -m harness.cli run lna-sparam-nf --corners hbt   # local ngspice loop: workstation only; on a shared host use lna-sparam-nf/run.py
+python3 -m harness.cli run lna-sparam-nf --corners hbt   # 27 points -> klt sim batch (default for >1 point)
 python3 -m harness.cli run mixer-conversion-iip3 --corners hbt
+python3 -m harness.cli run mixer-conversion-iip3 --corners hbt --backend local   # workstation only: local ngspice loop
 python3 -m harness.cli selftest lna-sparam-nf --corners hbt
 python3 -m harness.cli selftest mixer-conversion-iip3 --corners hbt
 ```
 
-`sim/*/corners/<record-id>/*.log` (the raw ngspice output per PVT point) is
-committed evidence alongside each Markdown record — `.gitignore` carves an
+### Stored evidence (new runs)
+
+A new evidence-writing `harness.cli run` (and `lna-sparam-nf/run.py ingest`)
+no longer commits its raw bytes. The per-point logs and the frozen netlist /
+testbench-manifest snapshots are staged in the git-ignored `sim/.work/.stage/`,
+stored with `klt artifact put`, and git keeps only
+`manifests/artifacts/<bench>-<record-id>.manifest.json` plus
+`sim/<bench>/records/<record-id>.md`, whose `## Stored evidence` table lists
+name, size and sha256 per object (see `manifests/README.md`). Configuration is
+environment-only: `$KLT_ARTIFACT_BROKER` (set for agent sessions on fleet
+workers; never write its value into the repo) and optionally
+`$KLT_ARTIFACT_REPO`. The run is **fail closed** and exits 10: broker unset,
+`klt` without `artifact put` or older than the `artifact:<key>` contract, or an
+unreachable broker refuses before anything is simulated; a failed put after the
+run writes no manifest or record and keeps the staged bytes under
+`sim/.work/.stage/` (nothing is lost, nothing is committed). `--no-write` and
+`--sabotage` runs touch neither the broker nor the repo. Verify a manifest with
+`klt artifact verify manifests/artifacts/<bench>-<record-id>.manifest.json`.
+Bespoke collectors (`mixer-topology-feasibility`, `lna-match-tradeoff`,
+`hbt-kaband-characterization`, `lna-headroom`, `lna-linearity`) still write as
+before.
+
+Records committed before this change keep their layout: `sim/*/corners/<record-id>/*.log`
+(the raw ngspice output per PVT point) is committed evidence alongside each Markdown record — `.gitignore` carves an
 exception for it out of the general `*.log` rule. `sim/*/_build/` and
 `sim/*/_selftest/` are disposable scratch directories (generated decks,
 `--no-write`/self-test scratch runs) and are `.gitignore`d.

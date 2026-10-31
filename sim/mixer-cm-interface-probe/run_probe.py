@@ -38,12 +38,9 @@ a sabotaged control unexpectedly PASSES.
 from __future__ import annotations
 
 import argparse
-import datetime as _dt
-import hashlib
 import json
 import os
 import platform
-import re
 import shutil
 import subprocess
 import sys
@@ -56,6 +53,16 @@ sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(SIM_DIR))
 
 import cmprobe as C  # noqa: E402
+from harness.provenance import (  # noqa: E402
+    pdk_integrity as _pdk_integrity,
+    git_info,
+    new_record_id,
+    ngspice_info,
+    pinned_major,
+    pdk_info,
+    sha256,
+    write_excl,
+)
 
 TEMPLATE = HERE / "probe" / "interface_probe.spice"
 CONTROL = HERE / "controls" / "ideal_mixer.spice"
@@ -85,69 +92,9 @@ REFERENCES = {
 }
 
 
-def sha256(path: Path) -> str:
-    h = hashlib.sha256()
-    with open(path, "rb") as fh:
-        for chunk in iter(lambda: fh.read(1 << 20), b""):
-            h.update(chunk)
-    return h.hexdigest()
-
-
-def pinned_major() -> int:
-    return int(json.loads(PDK_ARTIFACT.read_text())["ngspice"]["major"])
-
-
-def ngspice_info(exe: str) -> dict:
-    out = subprocess.run([exe, "-v"], capture_output=True, text=True, check=False).stdout
-    line = next((ln.strip(" *") for ln in out.splitlines() if "ngspice-" in ln), "unknown")
-    m = re.search(r"ngspice-(\d+)", line)
-    return {"path": exe, "version": line.strip(), "major": int(m.group(1)) if m else None,
-            "sha256": sha256(Path(exe).resolve())}
-
-
-def pdk_info() -> dict:
-    from harness.pdk import find_pdk  # noqa: WPS433
-    p = find_pdk(SIM_DIR)
-    fv = p.path.parent / ".fetched-version"
-    fv2 = p.path / ".fetched-version"
-    ver = (fv.read_text().strip() if fv.is_file() else
-           fv2.read_text().strip() if fv2.is_file() else "unknown")
-    models = p.model_lib.parent
-    return {"path": str(p.path), "fetched_version": ver, "model_lib": str(p.model_lib),
-            "section": "hbt_typ",
-            "sha256": {"cornerHBT.lib": sha256(p.model_lib),
-                       "sg13g2_hbt_mod.lib": sha256(models / "sg13g2_hbt_mod.lib")},
-            "device": "npn13G2 (subckt) -> npn13G2_NX_vbic, VBIC level=9, Nx=4 in the placeholder"}
-
-
 def pdk_integrity(banner: str) -> dict:
     """Run the harness model-integrity gate against sim/pdk-artifact.json (no simulator involved)."""
-    from harness import pdkartifact  # noqa: WPS433
-    from harness.pdk import find_pdk  # noqa: WPS433
-    rep = pdkartifact.verify(find_pdk(SIM_DIR), SIM_DIR, banner, require_ngspice=True)
-    return {"gate": "sim/harness/pdkartifact.py verify(require_ngspice=True)", "ok": rep.ok,
-            "problems": list(rep.problems), "notes": list(rep.notes)}
-
-
-def git_info() -> dict:
-    def g(*a):
-        return subprocess.run(["git", *a], cwd=REPO, capture_output=True, text=True).stdout.strip()
-    return {"commit": g("rev-parse", "HEAD"), "dirty": bool(g("status", "--porcelain"))}
-
-
-def new_record_id(short: str) -> str:
-    when = _dt.datetime.now(_dt.timezone.utc)
-    while True:
-        rid = f"{when.strftime('%Y%m%d-%H%M%S')}-{short}"
-        if not list(RECORDS.glob(f"{rid}*")) and not (PROBE_LOGS / rid).exists():
-            return rid
-        when += _dt.timedelta(seconds=1)
-
-
-def write_excl(path: Path, text: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "x") as fh:
-        fh.write(text)
+    return _pdk_integrity(SIM_DIR, banner, require_ngspice=True)
 
 
 # ---- deck composition ------------------------------------------------------------------------
@@ -319,18 +266,18 @@ def main(argv=None) -> int:
         return 0
 
     no_write = args.no_write or bool(args.sabotage) or args.allow_unpinned
-    git = git_info()
+    git = git_info(REPO)
     env = {"host": platform.node(), "platform": platform.platform(), "python": sys.version.split()[0],
            "git": git, "placeholder_sha256": sha256(PLACEHOLDER), "pdk_artifact_sha256": sha256(PDK_ARTIFACT)}
-    rid = new_record_id((git["commit"] or "unknown")[:7])
+    rid = new_record_id((git["commit"] or "unknown")[:7], RECORDS, PROBE_LOGS)
 
     exe = shutil.which(args.ngspice)
     info = ngspice_info(exe) if exe else None
     failed = None
     if exe is None:
         failed = f"shutil.which({args.ngspice!r}) is None"
-    elif info["major"] != pinned_major() and not args.allow_unpinned:
-        failed = (f"pinned ngspice-{pinned_major()} (sim/pdk-artifact.json) not found: {args.ngspice!r} "
+    elif info["major"] != pinned_major(PDK_ARTIFACT) and not args.allow_unpinned:
+        failed = (f"pinned ngspice-{pinned_major(PDK_ARTIFACT)} (sim/pdk-artifact.json) not found: {args.ngspice!r} "
                   f"resolves to {exe} = {info['version']!r}; a different version is not the pinned "
                   "executable, so no result from it is evidence for this record")
     if failed:
@@ -346,7 +293,7 @@ def main(argv=None) -> int:
         return 0
 
     env["ngspice"] = info
-    env["pdk"] = pdk_info()
+    env["pdk"] = pdk_info(SIM_DIR)
     # Integrity gate (issue #107): the installed models must match sim/pdk-artifact.json BEFORE any
     # simulator run. A mismatch is a capability blocker, not an interface result.
     integ = pdk_integrity(info["version"])

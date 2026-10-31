@@ -73,7 +73,7 @@ def first_limit_violation(plan: dict, rows: list[dict]) -> dict | None:
     for r in sorted(rows, key=lambda x: x["pin_dbm"]):
         if r.get("sim_failed"):
             continue
-        v = L.limit_violations(r.get("excursion_v"), lim)
+        v = L.limit_violations(r.get("excursion_v"), lim, r.get("current_a"))
         if v:
             return {"pin_dbm": r["pin_dbm"], "violations": v}
     return None
@@ -153,6 +153,9 @@ def analyze(plan: dict, texts: dict[str, str]) -> dict:
                  "first_limit_violation": {"two_tone": first_limit_violation(plan, sweeps["base"]["two"]),
                                            "single_tone": first_limit_violation(plan, sweeps["base"]["one"])},
                  "sweeps": sweeps}
+        if L.current_cfg(lim):
+            entry["current_validity"] = {"two_tone": L.current_validity(sweeps["base"]["two"], lim),
+                                         "single_tone": L.current_validity(sweeps["base"]["one"], lim)}
         final = {}
         for kind, tkey in (("iip3", "iip3_dbm"), ("p1db", "p1db_dbm")):
             cv = conv[kind]
@@ -165,6 +168,10 @@ def analyze(plan: dict, texts: dict[str, str]) -> dict:
                                                        max(deltas) if deltas else 0.0)
                            if converged else {"verdict": "not_determined", "target_dbm": plan["targets"][tkey],
                                               "reason": "convergence checks failed"}}
+        if L.current_cfg(lim):
+            cv = entry["current_validity"]
+            for kind, vk in (("iip3", "two_tone"), ("p1db", "single_tone")):
+                final[kind]["current_validity"] = {"status": cv[vk]["status"], "complete_envelope": cv[vk]["complete_envelope"]}
         entry["final"] = final
         placements[n] = entry
     out["placements"] = placements

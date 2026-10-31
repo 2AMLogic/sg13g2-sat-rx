@@ -47,7 +47,7 @@ from .evidence import BaseExtensions
 from .pdk import Pdk
 from .pdkartifact import validate_identity
 from .runner import PointResult
-from .testbench import AXES, Testbench
+from .testbench import AXES, Testbench, validate_check_limits
 
 #: Subdirectories of ``sim/<experiment-slug>/`` this module writes into.
 SNAPSHOT_DIR = "netlist-snapshots"
@@ -197,6 +197,8 @@ def evaluate_checks(
     sensitivity = sensitivity or {}
     failures: list[dict] = []
     for name, spec in checks.items():
+        validate_check_limits(name, spec)
+    for name, spec in checks.items():
         low = spec.get("min")
         high = spec.get("max")
         if low is not None or high is not None:
@@ -266,6 +268,7 @@ def environment(
     git: dict | None = None,
     toolchain: dict | None = None,
     pdk_artifact: dict | None = None,
+    execution: dict | None = None,
 ) -> dict:
     """Reproducibility provenance for the record.
 
@@ -279,6 +282,12 @@ def environment(
     artifact identity is refused (``ArtifactNotVerified``). ``pdk`` keeps the
     separate, best-effort installation version (``unknown`` on markerless
     installs); the two are never merged.
+
+    ``execution`` (issue #134) says where the points were simulated:
+    ``{"backend": "local"}`` for this host's own ``ngspice -b`` loop, or the
+    ``klt sim`` backend with each remote job id (see
+    ``klt_driver.KltGridResult.execution``). It is an added key of this
+    existing section; records written before it simply lack it (= local).
     """
     pdk_artifact = validate_identity(pdk_artifact)
     try:
@@ -297,6 +306,7 @@ def environment(
         "pdk_artifact": dict(pdk_artifact),
         "git": git if git is not None else git_provenance(repo_root),
         "toolchain": toolchain or {},
+        "execution": execution or {"backend": "local"},
     }
 
 
@@ -398,6 +408,7 @@ def build_record(
     allow_unswept_axes: bool = False,
     toolchain: dict | None = None,
     pdk_artifact: dict | None = None,
+    execution: dict | None = None,
 ) -> dict:
     measure_names = list(tb.measure)
     summary = summarize(results, measure_names)
@@ -437,7 +448,7 @@ def build_record(
         "subset_reason": subset_reason,
         "matrix": matrix_conformance(tb, points),
         "testbench": tb.provenance(),
-        "environment": environment(pdk, ngspice, repo_root, git, toolchain, pdk_artifact),
+        "environment": environment(pdk, ngspice, repo_root, git, toolchain, pdk_artifact, execution),
         "evidence": extensions.as_dict(),
         "grid": {
             "corners": corners,
@@ -497,7 +508,44 @@ def write_netlist_snapshot(tb: Testbench, experiment_dir: Path, record_id: str) 
             "",
         ]
     )
-    path.write_text(header + tb.netlist.read_text())
+    path.write_text(header + tb.netlist_data.decode("utf-8"))
+    return path
+
+
+#: Suffix of the frozen testbench manifest: the verbatim ``tb.json`` bytes a
+#: record's run was configured by, stored next to the frozen netlist snapshot.
+#: The ``**Manifest**:`` record line (see ``render_markdown``) names this
+#: artifact and its sha256; that line is the format discriminator between
+#: frozen-manifest records and legacy records without one.
+MANIFEST_SNAPSHOT_SUFFIX = ".tb.json"
+
+
+def manifest_snapshot_name(record_id: str) -> str:
+    """``<record-id>.tb.json`` -- the frozen manifest of one record."""
+    return f"{record_id}{MANIFEST_SNAPSHOT_SUFFIX}"
+
+
+def manifest_snapshot_path(experiment_dir: Path, record_id: str) -> Path:
+    return experiment_dir / SNAPSHOT_DIR / manifest_snapshot_name(record_id)
+
+
+def write_manifest_snapshot(tb: Testbench, experiment_dir: Path, record_id: str) -> Path:
+    """Freeze the testbench manifest for this record: the exact ``tb.json``
+    bytes the run was loaded with (analyses, measurement expressions, options,
+    parameters, checks, claim), so a later edit under ``testbench/`` can
+    neither change the frozen package nor the interpretation of a record's
+    settings.
+
+    Unlike the netlist snapshot this file carries no header of its own: it is
+    byte-identical to the manifest as loaded, so the digest the record
+    declares (``testbench.manifest_sha256``) covers the whole file and the
+    evidence checker recomputes it directly.
+    """
+    path = manifest_snapshot_path(experiment_dir, record_id)
+    if path.exists():
+        raise RecordExists(f"{path} already exists; append-only evidence is never rewritten")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(tb.manifest_data)
     return path
 
 
@@ -518,6 +566,12 @@ def render_markdown(record: dict) -> str:
         f"**Started (UTC)**: {record['started_utc']}",
         f"**Wall time**: {record['wall_seconds']}s",
     ]
+    manifest_digest = (record.get("testbench") or {}).get("manifest_sha256")
+    if manifest_digest:
+        lines.append(
+            f"**Manifest**: `{SNAPSHOT_DIR}/{manifest_snapshot_name(record['record_id'])}` "
+            f"sha256 `{manifest_digest}`"
+        )
     if record.get("supersedes"):
         lines.append(f"**Supersedes**: {record['supersedes']}")
     lines += ["", f"**Claim**: {record['claim'] or '(none stated)'}", ""]
@@ -584,6 +638,7 @@ def render_markdown(record: dict) -> str:
              "install was not hashed")
             if art.get("verified_scope") == "offhost-job-model-inputs"
             else "in the simulating install before the run")),
+        _execution_line(env.get("execution")),
         f"- Python: {env['python']} on {env['platform']}",
         f"- git: {env['git'].get('short')} on {env['git'].get('branch')}"
         + (" (dirty)" if env["git"].get("dirty") else ""),
@@ -594,6 +649,23 @@ def render_markdown(record: dict) -> str:
         lines.append(f"- Toolchain pins: **{state}**")
     lines.append("")
     return "\n".join(lines)
+
+
+def _execution_line(execution: dict | None) -> str:
+    """``- Execution:`` line: local ngspice loop, or klt sim backend + job ids."""
+    execution = execution or {"backend": "local"}
+    backend = execution.get("backend", "local")
+    if execution.get("via") != "klt sim":
+        return f"- Execution: backend `{backend}` (`ngspice -b` per point on the recording host)"
+    jobs = execution.get("jobs") or []
+    listed = "; ".join(
+        f"{j.get('supply_v'):.2f} V"
+        + (f"/{j.get('temp_c'):g} C" if j.get("temp_c") is not None else "")
+        + f": job `{j.get('job_id')}` status {j.get('status')}, engine ngspice-{j.get('engine_version')}, "
+        f"runner klt {j.get('runner_klt_version')} ({j.get('runner_compatibility')})"
+        for j in jobs)
+    return (f"- Execution: backend `{backend}` via klt sim (client `{execution.get('klt_client')}`), "
+            f"{len(jobs)} request(s): {listed}")
 
 
 def write_record(record: dict, experiment_dir: Path) -> Path:

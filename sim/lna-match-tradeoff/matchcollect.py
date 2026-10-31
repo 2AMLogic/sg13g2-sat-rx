@@ -26,7 +26,6 @@ from __future__ import annotations
 
 import datetime as _dt
 import gzip
-import hashlib
 import json
 import math
 import shlex
@@ -60,8 +59,7 @@ SCOPE = ("ideal-element input-match feasibility screen; no spec row is claimed m
          "are screens, not compliance)")
 
 
-class CollectionError(RuntimeError):
-    """Corrupt or incomplete collection: exit non-zero, write nothing."""
+CollectionError = klt_driver.CollectionError
 
 
 @dataclass
@@ -118,27 +116,8 @@ def write_request(st: ms.Study, spec: RequestSpec, work: Path, args) -> tuple[Pa
 def submit(spec: RequestSpec, req: Path, work: Path, args) -> Path:
     """Run one klt request; reuse an existing complete report (resume).
     Raises CollectionError on any klt failure (never a local fallback)."""
-    report = work / f"report_{spec.key}.json"
-    if report.is_file():
-        try:
-            if "corners" in json.loads(report.read_text()):
-                print(f"  reuse {report.name}", flush=True)
-                return report
-        except ValueError:
-            pass
-    backend = backend_for(spec, args)
-    out = (work / f"out_{spec.key}").resolve()
-    cmd = shlex.split(args.klt_cmd) + ["sim", str(req), "--backend", backend, "-o", str(out), "--format", "json"]
-    print("$ " + " ".join(cmd), flush=True)
-    with report.open("w") as fh:
-        proc = subprocess.run(cmd, stdout=fh, stderr=subprocess.PIPE, text=True)
-    if proc.stderr:
-        (work / f"stderr_{spec.key}.log").write_text(proc.stderr)
-    if proc.returncode != 0:
-        report.rename(work / f"report_{spec.key}.failed.json")
-        raise CollectionError(f"klt sim failed for {spec.key} (exit {proc.returncode}, backend {backend}): "
-                              f"{proc.stderr[-3000:]}")
-    return report
+    return klt_driver.submit_request(req, work / f"report_{spec.key}.json", spec.key,
+                                     backend_for(spec, args), args.klt_cmd, work)
 
 
 def read_units(report: Path) -> tuple[dict, list[dict]]:
@@ -147,13 +126,10 @@ def read_units(report: Path) -> tuple[dict, list[dict]]:
         raise CollectionError(f"{report.name}: no corners in klt report ({data.get('error')})")
     units = []
     for corner in data["corners"]:
-        log = (corner.get("artifacts") or {}).get("log")
-        if not log:
+        path = klt_driver.corner_log_path(corner, report)
+        if path is None:
             raise CollectionError(f"{report.name}: {corner.get('process')}/{corner.get('temperature_c')}: "
                                   f"no log ({corner.get('diagnostics')})")
-        path = Path(log)
-        if not path.is_absolute():
-            path = (report.parent / path).resolve()
         units.append({"process": corner["process"], "temp_c": float(corner["temperature_c"]),
                       "status": corner.get("status"), "text": path.read_text()})
     meta = {k: data.get(k) for k in ("status", "environment", "provenance")}
@@ -601,7 +577,3 @@ def collect(args) -> int:
         return 1
     print(f"wrote records/{rid}.md")
     return 0
-
-
-def sha256_text(text: str) -> str:
-    return hashlib.sha256(text.encode()).hexdigest()

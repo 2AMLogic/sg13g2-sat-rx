@@ -1,0 +1,41 @@
+{
+  "netlist": "pair_body.spice",
+  "backend": "batch",
+  "models": {
+    "pdk": "ihp-sg13g2",
+    "lib": "libs.tech/ngspice/models/cornerHBT.lib"
+  },
+  "corners": {
+    "process": [
+      "hbt_typ_mismatch",
+      "hbt_typ_stat",
+      "hbt_typ"
+    ],
+    "temperature_c": [
+      27
+    ]
+  },
+  "monte_carlo": {
+    "n": 100,
+    "seed": 186,
+    "vary": "both"
+  },
+  "analysis": {
+    "kind": "tran",
+    "args": "1p 2p"
+  },
+  "measurements": [
+    {
+      "name": "harness_rail_v",
+      "spice": ".meas tran harness_rail_v AVG v(vdd)",
+      "unit": "V"
+    }
+  ],
+  "options": {
+    "timeout_s": 600,
+    "keep_artifacts": true
+  },
+  "batch": {
+    "runner_version_check": "warn"
+  }
+}

@@ -2,6 +2,128 @@
 
 Chronological record of merged pull requests and closed issues, maintained by the Loom Guide role.
 
+### 2026-10-28
+
+- **PR #239**: feat: attest signoff items 1, 9, 10 via klt signoff --attest inventories
+- **Issue #237** (closed): T1 grading: replace hand-rolled single-file envelopes for items 1/9/10 with klt signoff --attest inventories and re-vendor the v0.8.0 checklist
+
+### 2026-10-27
+
+- **PR #235**: chore: pin klayout-tools 0.8.0 for signoff grading and toolchain record
+- **Issue #234** (closed): Bump klayout-tools pin 0.5.0, 0.7.0, b770c86e0e96 → 0.8.0
+- **Issue #68** (closed): spec: decision-record proposal after #61 (no acceptable LO drive at any declared mixer-core sizing)
+
+### 2026-10-23
+
+- **PR #231**: docs(manifests): record klt artifact delete/prune gap with upstream link
+- **Issue #229** (closed): Follow-on from PR #227: live-verify stored harness evidence with klt artifact verify
+- **PR #227**: feat(sim): store new harness evidence in the artifact store, commit manifests
+- **Issue #226** (closed): Adopt the common artifact store for sim evidence (manifests in git, bytes via klt artifact)
+
+### 2026-10-22
+
+- **PR #224**: refactor(sim): share MARK-log parsing and pdk_integrity in harness.provenance
+- **Issue #223** (closed): Consolidate MARK-log parser and pdk_integrity duplicated across sim probe drivers
+
+### 2026-10-20
+
+- **PR #220**: refactor: drop unreachable hbt-mismatch-pair statuses and evaluate_failure
+- **Issue #219** (closed): Remove unreachable hbt-mismatch-pair statuses and the unused evaluate_failure()
+- **PR #216**: test: share run/commit/edit_json/assertFails helpers across evidence-checker tests
+- **Issue #215** (closed): Share duplicated run/commit/edit_json/assertFails helpers across evidence-checker tests
+- **PR #214**: test: surface git output when evidence-format fixture commands fail
+- **Issue #213** (closed): test flake: test_history_deleting_corner_log_fails errors in fixture git clone on evidence-formats job
+- **PR #210**: refactor: share record-commit check across evidence adapters, drop dead helpers
+- **Issue #209** (closed): Dedupe evidence-adapter commit check and remove dead imports/helpers
+- **PR #206**: refactor(sim): share klt corner-log resolution via klt_driver.corner_log_path
+- **Issue #204** (closed): Consolidate six copies of klt corner-log resolution into klt_driver
+- **PR #205**: docs(spec): record third source-retrieval attempt for DR-0008
+- **PR #203**: docs(spec): record second citation retrieval attempt for DR-0008 sources
+
+### 2026-10-19
+
+- **PR #201**: docs(spec): propose DR-0008 comparing mixer LO-drive paths (Part of #68)
+
+### 2026-10-17
+
+- **PR #199**: docs(layout): re-run klt readiness probe at klt 44cc423; DRC clean, rsil extracts, HBT blocked
+- **Issue #197** (closed): layout: re-run the klt layout-chain readiness probe at a klt release with the resistor and contact-rule fixes (T1 items 2-4, 11)
+
+### 2026-10-14
+
+- **Issue #15** (closed): README: embed the fleet burndown chart (one line)
+
+### 2026-10-13
+
+- **PR #192**: signoff: negative controls for item 1/10 evidence generators (#191)
+- **Issue #191** (closed): signoff: negative-control tests and byte-compile coverage for the item-1 and item-10 evidence generators
+
+### 2026-10-12
+
+- **PR #190**: sim/mixer-conversion-iip3: publish iip3_dbm as slope-3-constrained top-of-fit read
+- **PR #189**: sim(hbt-mismatch-pair): Monte Carlo mismatch-card method probe on a matched npn13G2 pair
+- **PR #188**: feat(layout): non-claiming klt layout-chain readiness probe (npn13G2 + cmim + rsil)
+- **Issue #186** (closed): sim: Monte Carlo mismatch-card method probe on a matched npn13G2 pair (prepares T1 item 6 / row 15)
+- **Issue #185** (closed): layout: non-claiming klt layout-chain readiness probe (npn13G2 + MIM + resistor) before the LNA layout
+- **Issue #181** (closed): mixer-conversion-iip3: iip3_dbm local-vs-batch agreement is ~1.4 dB, not the 0.1 dB criterion (low-drive IM3 tolerance fragility)
+- **PR #184**: evidence(signoff): attest T1 item 9 (testbenches shipped) with pinned-PDK lna-sparam-nf record
+- **Issue #183** (closed): spec: cascade gain/NF margin analysis (Friis cross-check) for open rows 12-13
+- **Issue #182** (closed): signoff: attest T1 item 9 (testbenches shipped) with a pinned-PDK bench record
+- **PR #180**: mixer-conversion-iip3: swept two-tone IIP3 bench with one-tone floor control, convergence study and backend evidence
+- **Issue #165** (closed): mixer-conversion-iip3: a method that actually resolves IM3/IIP3 (current IM3 read sits on the transient interpolation-error floor)
+- **PR #177**: docs+ci: index every bench in sim/README.md Benches table (#175)
+- **Issue #175** (closed): docs: sim/README.md Benches table omits lna-headroom and lna-linearity
+- **PR #174**: test: make evidence-format marker-record fixtures glob-order independent
+- **Issue #171** (closed): Test fixture _marker_record in test_check_evidence_formats.py depends on glob order of mixer-conversion-iip3 records
+- **PR #173**: signoff: state item 1 attests LNA stage only (block_coverage)
+- **Issue #170** (closed): signoff: state that T1 item 1 attests the LNA stage only (mixer has no design source)
+- **PR #172**: Consolidate duplicated klt submit/CollectionError/provenance helpers in sim drivers
+- **Issue #169** (closed): Consolidate duplicated klt submit/CollectionError/provenance helpers in sim drivers
+- **PR #167**: Split check_evidence_formats.py into evidence_checks package (#163)
+- **Issue #163** (closed): ci: split the 2,930-line check_evidence_formats.py into per-bench modules behind the same CLI
+- **PR #164**: mixer-conversion-iip3: power-of-two FFT window, corrected FFT notes, supersession record (#135)
+
+### 2026-10-11
+
+- **PR #166**: docs: fix stale Pdk.version 'unknown' claim in sim/README.md
+- **Issue #162** (closed): docs: sim/README.md still says Pdk.version stays 'unknown' for IHP (stale after #155)
+- **PR #160**: refactor: consolidate probe provenance helpers into harness.provenance
+- **Issue #144** (closed): Consolidate duplicated provenance helpers in mixer probe drivers into the harness
+- **PR #159**: spec: per-row statistical classification and DR-0007 (#156)
+- **Issue #156** (closed): spec: classify each target-spec row as statistical or deterministic for T1 item 6
+- **PR #158**: harness: Pdk.version reads the installed .fetched-version marker
+- **Issue #155** (closed): harness: report the installed PDK revision from .fetched-version instead of 'unknown'
+- **PR #154**: harness: refuse PVT grids whose points alias one artifact id, before dispatch
+- **PR #153**: harness: reject non-finite and malformed numeric grading bounds
+- **PR #151**: harness: freeze the testbench manifest next to each record's DUT snapshot
+- **PR #148**: ci: bound every workflow job with timeout-minutes
+- **PR #147**: fix: reject duplicate PVT identities in klt batch report collection
+- **PR #146**: sim(passive-p1): make the pipeline control immune to same-second record ids (#97)
+- **PR #145**: docs: reproduce guard classification of inert source and executed cleanup
+- **PR #142**: harness: local grading requires clean execution and finite values (#138)
+- **PR #137**: ingest: validate stage1 tables before publishing record (#130)
+- **PR #136**: harness: route multi-point grids through klt sim batch (#134)
+- **PR #133**: sim(lna-headroom): cascode bias/load headroom screening, stage 1 (#123)
+- **PR #131**: sim(mixer-pumped-rf-admittance): replay frozen logs with their recorded thresholds
+- **PR #128**: sim: qualify collector-current diagnostics for nonlinear LNA fits (plan v2)
+- **Issue #150** (closed): harness: reject artifact filename collisions before PVT dispatch
+- **Issue #149** (closed): harness: reject non-finite and malformed numeric grading bounds
+- **Issue #143** (closed): ci: bound every workflow job with timeout-minutes and guard it in test_ci_pins
+- **Issue #141** (closed): harness: freeze native testbench manifests with each evidence record
+- **Issue #140** (closed): docs: reproduce guard classification of inert source and executed cleanup
+- **Issue #139** (closed): harness: reject duplicate PVT identities in batch reports
+- **Issue #138** (closed): harness: reject failed local simulator runs with complete measurements
+- **Issue #134** (closed): harness: route multi-point grids through klt sim batch instead of a local ngspice loop
+- **Issue #130** (closed): sim: preflight LNA stability tables before publishing evidence
+- **Issue #129** (closed): sim: replay pumped-admittance logs with their recorded thresholds
+- **Issue #123** (closed): sim: map cascode bias and output-load headroom before a stress-valid P1dB claim
+- **Issue #121** (closed): sim: qualify collector-current diagnostics for nonlinear LNA fits
+- **Issue #120** (closed): Auditor guard review: retain scoped stash protection
+- **Issue #106** (closed): passive-p1 pipeline control flakes: same-second record-id collision on rerun
+- **Issue #100** (closed): Flaky: passive-p1 controls.py 'pipeline' control failed once in CI (rerun_digest_equal=false)
+- **Issue #97** (closed): ci: passive-p1 synthetic pipeline control is intermittently failing (rerun_digest_equal false)
+- **Issue #91** (closed): Auditor: keep git clean -fd guarded against uncommitted loss
+
 ### 2026-10-10
 
 - **PR #118**: ci: guard that every sim bench tests file is run by ci.yml

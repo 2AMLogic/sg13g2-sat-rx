@@ -110,14 +110,14 @@ def main(argv=None) -> int:
     ap.add_argument("--timeout", type=int, default=900)
     args = ap.parse_args(argv)
 
-    pinned = R.pinned_major()
+    pinned = R.pinned_major(R.PDK_ARTIFACT)
     exe = shutil.which(args.ngspice)
     info = R.ngspice_info(exe) if exe else None
     problems: list[str] = []
     if info is None or info.get("major") != pinned:
         problems += assess("preflight", None, info, pinned, "", "")
     else:
-        model_lib = R.pdk_info()["model_lib"]
+        model_lib = R.pdk_info(R.SIM_DIR)["model_lib"]
         print(f"pinned executable: {info['version']} ({info['path']})")
         for sab in (None, *sorted(C.SABOTAGES)):
             label = f"sabotage {sab}" if sab else "positive control"

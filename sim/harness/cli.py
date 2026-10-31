@@ -6,7 +6,10 @@ this file:
     list      discover(sim/) and print every experiment with a testbench
     run       load a testbench, resolve the PDK, check toolchain pins,
               build the PVT grid, run it, and (unless --no-write) write an
-              append-only Markdown record
+              append-only Markdown record. --backend picks where the points
+              simulate: a multi-point grid defaults to `batch` (klt sim
+              requests through harness/klt_driver.py, the same path the study
+              drivers use), a single point to `local` (this host's ngspice).
     selftest  run a testbench's default corner set twice -- once normally,
               once sabotaged (corners.sabotage) -- and fail if the sabotaged
               run's per-axis sensitivity does not collapse. This is the
@@ -25,12 +28,22 @@ from __future__ import annotations
 
 import argparse
 import datetime as _dt
+import shutil
 import sys
 from pathlib import Path
 
 from . import HARNESS_VERSION
 from . import toolchain as toolchain_mod
-from .corners import build_grid, resolve_corners, sabotage, supply_points
+from .corners import (
+    CornerIdCollision,
+    build_grid,
+    require_unique_corner_ids,
+    resolve_corners,
+    sabotage,
+    supply_points,
+)
+from . import evidence_store as store_mod
+from . import klt_driver
 from . import pdkartifact
 from .pdk import Pdk, PdkConfigError, PdkNotFound, find_pdk
 from .report import (
@@ -42,13 +55,22 @@ from .report import (
     evaluate_checks,
     git_provenance,
     summarize,
+    write_manifest_snapshot,
     write_netlist_snapshot,
     write_record,
 )
-from .runner import NgspiceMissing, ngspice_version, run_grid
+from .runner import DEFAULT_TIMEOUT_S, NgspiceMissing, ngspice_version, run_grid
 from .testbench import discover, load
 
 SIM_DIR = Path(__file__).resolve().parent.parent
+REPO_ROOT = SIM_DIR.parent
+#: Git-ignored scratch tree where an evidence-writing run stages its raw
+#: outputs (per-point logs, frozen snapshots) before they are stored through
+#: ``klt artifact put``. Nothing here is ever committed.
+STAGE_DIR = SIM_DIR / ".work" / ".stage"
+#: Exit code: the artifact store could not take the evidence; nothing was
+#: committed (and, for a preflight refusal, nothing was simulated).
+EXIT_STORE = 10
 
 
 def cmd_list(args: argparse.Namespace) -> int:
@@ -95,10 +117,98 @@ def cmd_verify_pdk(args: argparse.Namespace) -> int:
     return 0 if rep.ok else 1
 
 
+#: ``--jobs`` above this is refused for a multi-point LOCAL grid: this harness
+#: runs on shared hosts, and a wider grid belongs on the batch fleet.
+MAX_LOCAL_JOBS = 2
+BACKENDS = ("local", "batch")
+
+
+def resolve_backend(requested: str | None, n_points: int) -> str:
+    """``--backend`` as given, else ``batch`` for a multi-point grid and
+    ``local`` for a single point (issue #134)."""
+    if requested:
+        return requested
+    return "batch" if n_points > 1 else "local"
+
+
+def local_jobs_problem(jobs: int, n_points: int) -> str | None:
+    """Why ``--jobs`` is refused for a local grid of ``n_points``, or None."""
+    if n_points > 1 and jobs > MAX_LOCAL_JOBS:
+        return (f"error: --jobs {jobs} would run {min(jobs, n_points)} ngspice processes at once "
+                f"on this host; a local multi-point grid allows at most --jobs {MAX_LOCAL_JOBS}. "
+                "Send the grid to the batch fleet instead (--backend batch, the default for "
+                "more than one point).")
+    return None
+
+
+def select_axis(declared: list[float], requested: str, axis: str) -> list[float]:
+    """``--temperatures``/``--supplies``: narrow one PVT axis to a subset of
+    the testbench's OWN declared levels (empty ``requested`` keeps them all).
+
+    A level the testbench does not declare is refused (ValueError), so a
+    subset run can only drop points of the bench's grid, never invent one.
+    """
+    if not requested.strip():
+        return list(declared)
+    chosen: list[float] = []
+    for raw in requested.split(","):
+        raw = raw.strip()
+        try:
+            value = float(raw)
+        except ValueError:
+            raise ValueError(f"--{axis}: {raw!r} is not a number") from None
+        match = [d for d in declared if abs(d - value) <= 1e-9 * max(1.0, abs(d))]
+        if not match:
+            raise ValueError(f"--{axis}: {raw} is not one of the testbench's declared levels "
+                             f"({', '.join(f'{d:g}' for d in declared)})")
+        if match[0] not in chosen:
+            chosen.append(match[0])
+    return chosen
+
+
+SUBSET_REASON_REQUIRED = (
+    "error: --temperatures/--supplies narrow the grid to a subset of the testbench's matrix; "
+    "an evidence-writing subset run needs --subset-reason saying why (it is printed as the "
+    "record's subset Justification)"
+)
+
+
 SMOKE_SUBSET_REJECTION = (
     "error: --smoke-subset only applies to non-recording runs; it requires "
     "--no-write and cannot be combined with an evidence-writing run"
 )
+
+
+def store_evidence(experiment_dir: Path, stage_exp: Path, record_id: str,
+                   record_text: str, *, klt: str = "klt", put=None) -> Path:
+    """Store a staged run's bytes and commit only its manifest and record.
+
+    ``stage_exp`` holds the run's per-point logs, frozen netlist snapshot and
+    frozen testbench manifest; they go to the artifact store under the names
+    they would have had in ``experiment_dir`` (``sim/<bench>/...``). The
+    record text gets its "Stored evidence" section and is written to
+    ``experiment_dir/records/<id>.md``. On success the staged copy is removed;
+    on :class:`store_mod.StoreError` nothing is committed and the staged bytes
+    stay put. Returns the record path.
+    """
+    bench = experiment_dir.name
+    prefix = f"sim/{bench}"
+    files = []
+    for sub in (f"netlist-snapshots/{record_id}.spice", f"netlist-snapshots/{record_id}.tb.json"):
+        if (stage_exp / sub).is_file():
+            files.append((stage_exp / sub, f"{prefix}/{sub}"))
+    files += store_mod.stage_files(stage_exp / "corners" / record_id,
+                                   f"{prefix}/corners/{record_id}")
+    record_path = experiment_dir / "records" / f"{record_id}.md"
+    store_mod.store_files(
+        files, repo_root=REPO_ROOT, bench=bench, rid=record_id, summary_text=record_text,
+        summary_path=record_path,
+        klt=klt, put=put)
+    shutil.rmtree(stage_exp / "corners" / record_id, ignore_errors=True)
+    for sub in (f"netlist-snapshots/{record_id}.spice", f"netlist-snapshots/{record_id}.tb.json",
+                f"records/{record_id}.md"):
+        (stage_exp / sub).unlink(missing_ok=True)
+    return record_path
 
 
 def cmd_run(args: argparse.Namespace) -> int:
@@ -156,9 +266,65 @@ def cmd_run(args: argparse.Namespace) -> int:
             print(str(exc), file=sys.stderr)
             return 3
 
-    temperatures = tb.temperatures_c
-    supplies = supply_points(tb.nominal_supply_v, tb.supply_tolerance)
+    try:
+        temperatures = select_axis(list(tb.temperatures_c), args.temperatures, "temperatures")
+        supplies = select_axis(supply_points(tb.nominal_supply_v, tb.supply_tolerance),
+                               args.supplies, "supplies")
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    narrowed = bool(args.temperatures.strip() or args.supplies.strip())
+    if narrowed and not args.no_write and not args.subset_reason.strip():
+        print(SUBSET_REASON_REQUIRED, file=sys.stderr)
+        return 2
     points = build_grid(corners, temperatures, supplies)
+
+    # Stored-evidence gate (issue #226): an evidence-writing run must be
+    # storable before any simulation time is spent. No broker, no `klt
+    # artifact put`, a klt older than the artifact: uri contract or an
+    # unreachable broker: refuse now. There is no fallback that commits bytes.
+    if not args.no_write:
+        try:
+            store_mod.preflight(REPO_ROOT, klt=args.klt_cmd)
+        except store_mod.StoreError as exc:
+            print(f"EVIDENCE STORE UNAVAILABLE -- refusing to simulate: {exc}. Evidence "
+                  "bytes go to the artifact store only (sim/README.md, \"Stored evidence\"); "
+                  "--no-write runs need no store.", file=sys.stderr)
+            return EXIT_STORE
+
+    # Artifact-identity gate (issue #150): distinct points whose corner_id
+    # formats to the same string would overwrite each other's decks and logs.
+    # Refused before anything is allocated, written or submitted; the local
+    # and batch grid paths re-check so their direct callers are covered too.
+    try:
+        require_unique_corner_ids(points)
+    except CornerIdCollision as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+
+    backend = resolve_backend(args.backend, len(points))
+    if backend != "local" and args.no_stage_models and not args.no_write:
+        # Without staging the runner simulates with its image-baked models and
+        # the reports carry no hash of them: the record would be refused after
+        # the fleet time was spent, so refuse before submitting anything.
+        print("error: --no-stage-models leaves the runner's models unhashed, so no record could "
+              "be written; use it only with --no-write", file=sys.stderr)
+        return 3
+    if backend == "local":
+        problem = local_jobs_problem(args.jobs, len(points))
+        if problem:
+            print(problem, file=sys.stderr)
+            return 2
+    else:
+        try:  # refuse an unexpressible corner set before anything is submitted
+            klt_driver.klt_process_names(points)
+        except klt_driver.KltGridError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 2
+        if args.jobs != 1 or args.num_threads:
+            print("note: --jobs/--num-threads are local-only knobs; ignored for --backend "
+                  f"{backend}", file=sys.stderr)
+    print(f"backend: {backend} ({len(points)} point(s))")
 
     started = _dt.datetime.now(_dt.timezone.utc)
     git = git_provenance(SIM_DIR.parent)
@@ -176,13 +342,62 @@ def cmd_run(args: argparse.Namespace) -> int:
     record_id = allocate_record_id(SIM_DIR.parent, tb.experiment_dir / "records", started, git)
 
     workdir = Path(args.workdir) if args.workdir else tb.experiment_dir / "_build"
+    # A real run stages its logs and snapshots in the git-ignored scratch tree
+    # (STAGE_DIR/<bench>/sim/<bench>/..., mirroring the logical `sim/<bench>/`
+    # names the store records); only the manifest and the record are committed.
+    stage_exp = STAGE_DIR / tb.experiment_dir.name / "sim" / tb.experiment_dir.name
     log_dir = (
         tb.experiment_dir / "corners" / "_scratch" if args.no_write
-        else tb.experiment_dir / "corners" / record_id
+        else stage_exp / "corners" / record_id
     )
-    results = run_grid(
-        tb, pdk, points, workdir, jobs=args.jobs, log_dir=log_dir, num_threads=args.num_threads
-    )
+    execution = {"backend": "local"}
+    record_ngspice = ngspice
+    if backend == "local":
+        timeout_s = args.timeout_s or DEFAULT_TIMEOUT_S
+        results = run_grid(
+            tb, pdk, points, workdir, jobs=args.jobs, timeout_s=timeout_s, log_dir=log_dir,
+            num_threads=args.num_threads,
+        )
+    else:
+        klt_work = (workdir / f"klt-{started.strftime('%Y%m%d-%H%M%S')}").resolve()
+        try:
+            grid = klt_driver.run_grid_klt(
+                tb, pdk, points, klt_work, backend=backend,
+                timeout_s=args.timeout_s or klt_driver.DEFAULT_KLT_TIMEOUT_S,
+                klt_cmd=args.klt_cmd, runner_version_check=args.runner_version_check,
+                stage_models=not args.no_stage_models,
+            )
+        except klt_driver.KltGridError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            print(f"klt sim ({backend}) did not complete; nothing recorded, no local fallback",
+                  file=sys.stderr)
+            return 1
+        results = grid.results
+        engines = grid.engine_versions()
+        record_ngspice = (f"{', '.join('ngspice-' + e for e in engines)} via klt sim {backend} "
+                          f"(recording host: {ngspice})")
+        execution = grid.execution(backend, klt_driver.klt_client_version(args.klt_cmd))
+        # The off-host engine is the one that produced the numbers: it must
+        # satisfy the same pins the local one was checked against.
+        remote_drifts = [d for e in engines for d in toolchain_mod.check(
+            pdk.version, f"ngspice-{e}", sys.version.split()[0], pins) if d.tool == "ngspice"]
+        if remote_drifts and not args.allow_toolchain_drift:
+            print(toolchain_mod.format_drifts(remote_drifts), file=sys.stderr)
+            print("off-host engine drifts from the pins; nothing recorded", file=sys.stderr)
+            return 3
+        if not args.no_write:
+            # The record's artifact identity is that of the models the off-host
+            # jobs received, proven from the reports (issue #103) -- checked
+            # BEFORE a single log is copied into corners/<record-id>/.
+            try:
+                pdk_artifact = pdkartifact.offhost_identity(
+                    [(j.report_path.name, j.environment) for j in grid.jobs], SIM_DIR)
+            except pdkartifact.ArtifactNotVerified as exc:
+                print(str(exc), file=sys.stderr)
+                return 3
+        log_dir.mkdir(parents=True, exist_ok=True)
+        for cid, text in grid.logs.items():
+            (log_dir / f"{cid}.log").write_text(text)
 
     n_ok = sum(1 for r in results if r.status == "ok")
     print(f"{n_ok}/{len(results)} points ok")
@@ -195,25 +410,55 @@ def cmd_run(args: argparse.Namespace) -> int:
     )
     for failure in failures:
         print(f"FAIL: {describe_failure(failure)}", file=sys.stderr)
+    for result in results:
+        if result.status != "ok":
+            print(f"POINT {result.status.upper()}: {result.point.corner_id}: {result.message}",
+                  file=sys.stderr)
 
     if args.no_write:
         print("--no-write (or --sabotage): nothing recorded")
         return 1 if failures or n_ok != len(results) else 0
 
+    # Publication gate: the grid was simulated from the input state captured
+    # at load time. If the working manifest or fragment changed (or vanished)
+    # meanwhile, refuse to record at all rather than attach a later manifest
+    # -- or a mismatched frozen snapshot -- to earlier results.
+    drift = tb.working_input_drift()
+    if drift:
+        print(f"error: {drift}", file=sys.stderr)
+        print("refusing to record: the inputs these results were simulated from are no longer "
+              "the working ones; restore them (or start a fresh run) so the frozen manifest "
+              "snapshot describes the simulated state", file=sys.stderr)
+        # corners/<record-id>/ was minted by this run and holds only its
+        # per-point logs: on a refusal it was never evidence, and leaving it
+        # behind would publish an orphan log package the evidence checker
+        # flags. (The _scratch no-write path returns before this gate.)
+        shutil.rmtree(log_dir, ignore_errors=True)
+        return 1
+
     wall_seconds = (_dt.datetime.now(_dt.timezone.utc) - started).total_seconds()
     record = build_record(
-        tb, pdk, points, results, ngspice, SIM_DIR.parent, record_id,
+        tb, pdk, points, results, record_ngspice, SIM_DIR.parent, record_id,
         started.isoformat(), wall_seconds, claim=args.claim or tb.claim,
-        supersedes=args.supersedes or "", git=git, toolchain=tc_summary,
-        pdk_artifact=pdk_artifact,
+        supersedes=args.supersedes or "", subset_reason=args.subset_reason.strip(), git=git, toolchain=tc_summary,
+        pdk_artifact=pdk_artifact, execution=execution,
     )
     try:
-        write_netlist_snapshot(tb, tb.experiment_dir, record_id)
-        path = write_record(record, tb.experiment_dir)
+        write_netlist_snapshot(tb, stage_exp, record_id)
+        write_manifest_snapshot(tb, stage_exp, record_id)
+        staged_record = write_record(record, stage_exp)
+        path = store_evidence(tb.experiment_dir, stage_exp, record_id,
+                              staged_record.read_text(encoding="utf-8"), klt=args.klt_cmd)
     except RecordExists as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
+    except store_mod.StoreError as exc:
+        print(f"EVIDENCE NOT STORED -- nothing committed (fail closed): {exc}. The staged "
+              f"bytes are kept, uncommitted, under {stage_exp}/ (record id {record_id}).",
+              file=sys.stderr)
+        return EXIT_STORE
     print(f"wrote {path}")
+    print(f"manifest: {store_mod.manifest_path(REPO_ROOT, tb.experiment_dir.name, record_id)}")
     return 1 if failures or n_ok != len(results) else 0
 
 
@@ -237,6 +482,10 @@ def cmd_selftest(args: argparse.Namespace) -> int:
 
     normal_points = build_grid(normal, temperatures, supplies)
     sabotaged_points = build_grid(sabotaged, temperatures, supplies)
+    problem = local_jobs_problem(args.jobs, len(normal_points))
+    if problem:  # selftest is local-only (a sabotage set has no klt form)
+        print(problem, file=sys.stderr)
+        return 2
 
     workdir = Path(args.workdir) if args.workdir else tb.experiment_dir / "_selftest"
     normal_results = run_grid(tb, pdk, normal_points, workdir / "normal", jobs=args.jobs)
@@ -282,8 +531,36 @@ def build_parser() -> argparse.ArgumentParser:
         "--corners", default="",
         help="comma-separated corner or corner-set names (default: the testbench's own tb.json 'corners' field)",
     )
-    p_run.add_argument("--jobs", type=int, default=1)
-    p_run.add_argument("--num-threads", type=int, default=0)
+    p_run.add_argument(
+        "--backend", choices=BACKENDS, default=None,
+        help="where the points simulate: 'batch' submits klt sim requests (default for a "
+             "multi-point grid; a failed submit records nothing and never falls back to local), "
+             "'local' runs ngspice -b on this host (default for a single point; debug probes)",
+    )
+    p_run.add_argument("--jobs", type=int, default=1,
+                       help=f"local backend only: concurrent ngspice processes (max "
+                            f"{MAX_LOCAL_JOBS} for a multi-point grid)")
+    p_run.add_argument("--num-threads", type=int, default=0, help="local backend only")
+    p_run.add_argument("--timeout-s", type=int, default=0,
+                       help=f"per-point timeout (default {DEFAULT_TIMEOUT_S} s local, "
+                            f"{klt_driver.DEFAULT_KLT_TIMEOUT_S} s per klt corner)")
+    p_run.add_argument("--runner-version-check", default="", choices=("", "enforce", "warn"),
+                       help="batch only: klt runner/client version-skew policy for the requests. "
+                            "'warn' runs on a skewed runner, but an evidence-writing run is then "
+                            "refused (the staged models cannot be proven), so use it with --no-write")
+    p_run.add_argument("--no-stage-models", action="store_true",
+                       help="batch only, requires --no-write: do not ship this host's models with "
+                            "the requests (the runner uses its image's own, unhashed)")
+    p_run.add_argument("--temperatures", default="",
+                       help="comma-separated subset of the testbench's temperatures_c (default: all)")
+    p_run.add_argument("--supplies", default="",
+                       help="comma-separated subset of the testbench's supply points in V "
+                            "(default: all)")
+    p_run.add_argument("--subset-reason", default="",
+                       help="why the grid is a subset of the testbench's matrix; required for an "
+                            "evidence-writing run with --temperatures/--supplies")
+    p_run.add_argument("--klt-cmd", default="klt",
+                       help="klt client command (e.g. 'uvx --from klayout-tools==X klt')")
     p_run.add_argument("--workdir", default="")
     p_run.add_argument("--claim", default="")
     p_run.add_argument("--supersedes", default="")
@@ -307,7 +584,8 @@ def build_parser() -> argparse.ArgumentParser:
         "--corners", default="",
         help="comma-separated corner or corner-set names (default: the testbench's own tb.json 'corners' field)",
     )
-    p_selftest.add_argument("--jobs", type=int, default=1)
+    p_selftest.add_argument("--jobs", type=int, default=1,
+                            help=f"concurrent local ngspice processes (max {MAX_LOCAL_JOBS})")
     p_selftest.add_argument("--workdir", default="")
     p_selftest.set_defaults(func=cmd_selftest)
 

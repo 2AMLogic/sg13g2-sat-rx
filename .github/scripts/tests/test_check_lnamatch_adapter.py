@@ -30,6 +30,7 @@ sys.path.insert(0, str(BENCH))
 sys.path.insert(0, str(BENCH / "tests"))
 
 import check_evidence_formats as chk  # noqa: E402
+from _helpers import edit_json  # noqa: E402
 import matchcollect as collect  # noqa: E402
 import matchfakes as fakes  # noqa: E402
 import matchstudy as ms  # noqa: E402
@@ -82,12 +83,6 @@ def problems(root: Path) -> str:
     p = chk.Problems()
     chk.ADAPTERS["lna-match-tradeoff"](p, root, root / EXP)
     return "\n".join(p.items)
-
-
-def edit_json(path: Path, fn) -> None:
-    d = json.loads(path.read_text())
-    fn(d)
-    path.write_text(json.dumps(d))
 
 
 def edit_cells(exp: Path, rid: str, fn) -> None:

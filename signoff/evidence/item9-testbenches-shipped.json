@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "kind": "generic",
+  "status": "pass",
+  "t1_item": 9,
+  "summary": "T1 item 9 (Testbenches shipped): 18/18 attestation checks passed (klt signoff --attest)",
+  "source": "signoff/inventories/item9.json",
+  "attestation": {
+    "producer": "klt signoff --attest",
+    "inventory_schema_version": 1,
+    "hash_algorithm": "sha256-raw-bytes",
+    "check_count": 18,
+    "passed_count": 18,
+    "checks": [
+      {
+        "check": "present",
+        "role": "testbench",
+        "path": "sim/README.md",
+        "passed": true,
+        "content_hash": "sha256:b58fc3b6a627ed953ae9d29080db6e60b2e573333e3f02c4c97b9e0441ee26c5"
+      },
+      {
+        "check": "present",
+        "role": "testbench",
+        "path": "sim/characterize.sh",
+        "passed": true,
+        "content_hash": "sha256:7f4eb4d33affe9a7acc669ad554a38988027cec8766fb8db04a17e69c7497361"
+      },
+      {
+        "check": "present",
+        "role": "testbench",
+        "path": "sim/hbt-kaband-characterization/README.md",
+        "passed": true,
+        "content_hash": "sha256:31409c0422cfc9f8814f24df1f7a4292b750301c3aa184d93b62c7bc50aa5d7e"
+      },
+      {
+        "check": "present",
+        "role": "testbench",
+        "path": "sim/hbt-mismatch-pair/README.md",
+        "passed": true,
+        "content_hash": "sha256:8b82c78696198a1c1319b6c13b572014238589145134bf72552ff095c46f443c"
+      },
+      {
+        "check": "present",
+        "role": "testbench",
+        "path": "sim/lna-headroom/README.md",
+        "passed": true,
+        "content_hash": "sha256:f523dfadc91a379d3c5fa26aec6c8cf4471ee7dc5271c8d91cd7b39b0c6576d6"
+      },
+      {
+        "check": "present",
+        "role": "testbench",
+        "path": "sim/lna-linearity/README.md",
+        "passed": true,
+        "content_hash": "sha256:df5efc063f8980fe6c0b6da0f5bfa14d7fa525a6f29051e1050cc8acb849e2a8"
+      },
+      {
+        "check": "present",
+        "role": "testbench",
+        "path": "sim/lna-match-tradeoff/README.md",
+        "passed": true,
+        "content_hash": "sha256:ade3fe9718fd395089f58246daf9c08276ac6d1d3ad32bc04f31bc7510c1308b"
+      },
+      {
+        "check": "present",
+        "role": "testbench",
+        "path": "sim/lna-sparam-nf/README.md",
+        "passed": true,
+        "content_hash": "sha256:1ae5f41c76c3b941838dc4111c60c005857a0a7561b5e00466ad31a15892d2bd"
+      },
+      {
+        "check": "present",
+        "role": "testbench",
+        "path": "sim/mixer-cm-interface-probe/README.md",
+        "passed": true,
+        "content_hash": "sha256:7b146013b8d707f1a98729c89856cfd0940c62729767ae1632da9942949aa31e"
+      },
+      {
+        "check": "present",
+        "role": "testbench",
+        "path": "sim/mixer-conversion-iip3/README.md",
+        "passed": true,
+        "content_hash": "sha256:93b6b4e30370a497aa9371cdcdbb01f20ce9c9495f44d852187dd709737d36bc"
+      },
+      {
+        "check": "present",
+        "role": "testbench",
+        "path": "sim/mixer-nf-method/README.md",
+        "passed": true,
+        "content_hash": "sha256:962be16ffb6e3680d8074196f9d654532444427981b72c6388a216c95a247f67"
+      },
+      {
+        "check": "present",
+        "role": "testbench",
+        "path": "sim/mixer-pumped-rf-admittance/README.md",
+        "passed": true,
+        "content_hash": "sha256:46fa18ebdca944b37977db1497c06524b4066705c74e2c6524e433a1fde15e15"
+      },
+      {
+        "check": "present",
+        "role": "testbench",
+        "path": "sim/mixer-topology-feasibility/README.md",
+        "passed": true,
+        "content_hash": "sha256:02da4d8fc2f23bcb0992dc7c62ca136a7891ed5853e9aa4700159c8722b2c8bd"
+      },
+      {
+        "check": "present",
+        "role": "testbench",
+        "path": "sim/passive-p1/README.md",
+        "passed": true,
+        "content_hash": "sha256:83f083e2e2a08fbf4e613dbc2b3775f16b245fd82fe03a2afa9dabc74a4ae3bc"
+      },
+      {
+        "check": "present",
+        "role": "testbench",
+        "path": "sim/pdk-artifact.json",
+        "passed": true,
+        "content_hash": "sha256:2ca42a292eeef18dc0da32004bb2cfa66dfead21c73b4f77d4609d60dadeabf1"
+      },
+      {
+        "check": "command",
+        "role": "cold_start",
+        "argv": [
+          "python3",
+          "-m",
+          "pytest",
+          "sim/lna-sparam-nf/tests",
+          "-q"
+        ],
+        "cwd": ".",
+        "exit_status": 0,
+        "passed": true
+      },
+      {
+        "check": "pin",
+        "role": "pdk",
+        "passed": true,
+        "value": {
+          "name": "IHP-Open-PDK ihp-sg13g2",
+          "revision": "v0.3.0 5cccb161f7492697cfa52eb14dc03beb00bdca9e"
+        }
+      },
+      {
+        "check": "pin",
+        "role": "tools",
+        "passed": true,
+        "value": {
+          "klayout-tools": "0.8.0",
+          "ngspice": "46"
+        }
+      }
+    ]
+  },
+  "provenance": {
+    "klt_version": "0.8.0",
+    "klayout_version": null,
+    "pdk": null,
+    "deck": null,
+    "input": {
+      "path": {
+        "path": "signoff/inventories/item9.json",
+        "scope": "repo"
+      },
+      "content_hash": "sha256:9e4be5f59e6e5775f05bceeb4fbd7917251dab95fc28a9262df655522a46fa3a"
+    }
+  }
+}

@@ -179,8 +179,9 @@ def test_explicit_required_override_is_recorded(tmp_path):
 
 
 class FakePdk(Pdk):
-    """A Pdk with a stated revision: the real ``Pdk.version`` reads a SOURCES
-    file that the synthetic tree does not have and would print 'unknown', which
+    """A Pdk with a stated revision: the real ``Pdk.version`` reads the
+    install's ``.fetched-version`` (then SOURCES), which the synthetic tree does
+    not have, so it would print 'unknown', which
     the evidence checker rejects for any non-grandfathered record (#85)."""
 
     @property
@@ -276,6 +277,94 @@ def test_writers_are_append_only(tmp_path):
     assert md.read_bytes() == before
 
 
+def test_manifest_snapshot_is_verbatim_append_only_and_declared(tmp_path):
+    """The frozen manifest is the exact loaded ``tb.json`` bytes (no writer
+    header, so the declared digest covers the whole file), named by the
+    record's ``**Manifest**:`` line, and never rewritten."""
+    exp, tb, pts, rec = build_synthetic_record(tmp_path)
+    md = R.write_record(rec, exp)
+    R.write_netlist_snapshot(tb, exp, rec["record_id"])
+    snap = R.write_manifest_snapshot(tb, exp, rec["record_id"])
+    assert snap.read_bytes() == (tb.directory / T.MANIFEST_NAME).read_bytes()
+    assert f"**Manifest**: `netlist-snapshots/{rec['record_id']}.tb.json` sha256 `{tb.manifest_sha256}`" \
+        in md.read_text()
+    with pytest.raises(R.RecordExists):
+        R.write_manifest_snapshot(tb, exp, rec["record_id"])
+
+
+def test_manifest_snapshot_survives_a_later_working_edit(tmp_path):
+    """Editing the working manifest after the run changes neither the digest a
+    record declares nor the bytes its frozen package holds."""
+    exp, tb, pts, rec = build_synthetic_record(tmp_path)
+    digest = tb.manifest_sha256
+    (tb.directory / T.MANIFEST_NAME).write_text(
+        json.dumps({"netlist": "d.spice", "measure": {"gain": "tampered"}}))
+    assert tb.manifest_sha256 == digest
+    snap = R.write_manifest_snapshot(tb, exp, rec["record_id"])
+    assert json.loads(snap.read_text())["measure"] == {"gain": "1"}
+    md = R.write_record(rec, exp)
+    assert tb.manifest_sha256 in md.read_text()
+
+
+def test_checker_rejects_missing_altered_or_misnamed_frozen_manifest(tmp_path):
+    """Simulator-free negative controls on the frozen-manifest contract: a
+    record that declares the artifact must carry it, unaltered, under the
+    name it declares."""
+    spec = importlib.util.spec_from_file_location("check_evidence_formats", CHECKER)
+    chk = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(chk)
+
+    def frozen_bench(root):
+        exp, tb, pts, rec = build_synthetic_record(root)
+        R.write_record(rec, exp)
+        R.write_netlist_snapshot(tb, exp, rec["record_id"])
+        R.write_manifest_snapshot(tb, exp, rec["record_id"])
+        logs = exp / "corners" / rec["record_id"]
+        logs.mkdir(parents=True)
+        for p in pts:
+            (logs / f"{p.corner_id}.log").write_text("log\n")
+        return exp, tb, rec
+
+    rid = "20260101-000000-abc1234"
+    snap = tmp_path / "sim" / "synthetic-bench" / "netlist-snapshots" / f"{rid}.tb.json"
+    md = tmp_path / "sim" / "synthetic-bench" / "records" / f"{rid}.md"
+
+    exp, tb, rec = frozen_bench(tmp_path)
+    snap.unlink()  # missing
+    assert any("missing frozen testbench manifest" in m for m in chk.check_format(tmp_path).items)
+
+    exp, tb, rec = frozen_bench(tmp_path / "b")
+    snap_b = tmp_path / "b" / "sim" / "synthetic-bench" / "netlist-snapshots" / f"{rid}.tb.json"
+    snap_b.write_bytes(snap_b.read_bytes() + b" ")  # altered -> digest mismatch
+    assert any("does not match declared" in m for m in chk.check_format(tmp_path / "b").items)
+
+    exp, tb, rec = frozen_bench(tmp_path / "c")
+    md_c = tmp_path / "c" / "sim" / "synthetic-bench" / "records" / f"{rid}.md"
+    md_c.write_text(md_c.read_text().replace(f"{rid}.tb.json", "20200101-000000-0000000.tb.json"))
+    assert any("not this record's own frozen manifest" in m
+               for m in chk.check_format(tmp_path / "c").items)
+
+
+def test_legacy_record_without_manifest_line_still_passes_checker(tmp_path):
+    """Historical contract unchanged: a record without the ``**Manifest**:``
+    line requires (and gets) no frozen-manifest artifact."""
+    spec = importlib.util.spec_from_file_location("check_evidence_formats", CHECKER)
+    chk = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(chk)
+
+    exp, tb, pts, rec = build_synthetic_record(tmp_path)
+    R.write_record(rec, exp)
+    R.write_netlist_snapshot(tb, exp, rec["record_id"])
+    logs = exp / "corners" / rec["record_id"]
+    logs.mkdir(parents=True)
+    for p in pts:
+        (logs / f"{p.corner_id}.log").write_text("log\n")
+    md = exp / "records" / f"{rec['record_id']}.md"
+    md.write_text("\n".join(l for l in md.read_text().splitlines()
+                            if not l.startswith("**Manifest**:")) + "\n")
+    assert chk.check_format(tmp_path).items == []
+
+
 def test_rendered_harness_record_satisfies_the_evidence_format_checker(tmp_path):
     """Renderer and checker must agree: a record freshly produced by the
     harness, with its snapshot and one log per grid point, passes."""
@@ -286,6 +375,7 @@ def test_rendered_harness_record_satisfies_the_evidence_format_checker(tmp_path)
     exp, tb, pts, rec = build_synthetic_record(tmp_path)
     R.write_record(rec, exp)
     R.write_netlist_snapshot(tb, exp, rec["record_id"])
+    R.write_manifest_snapshot(tb, exp, rec["record_id"])
     logs = exp / "corners" / rec["record_id"]
     logs.mkdir(parents=True)
     for p in pts:
@@ -312,6 +402,7 @@ def test_rendered_subset_record_satisfies_the_evidence_format_checker(tmp_path):
     assert chk.declared_native_matrix(R.render_markdown(rec)) == (["hbt_typ"], [27.0], [2.5], 1, 1)
     R.write_record(rec, exp)
     R.write_netlist_snapshot(tb, exp, rec["record_id"])
+    R.write_manifest_snapshot(tb, exp, rec["record_id"])
     logs = exp / "corners" / rec["record_id"]
     logs.mkdir(parents=True)
     (logs / f"{pts[0].corner_id}.log").write_text("log\n")
@@ -350,6 +441,7 @@ def test_markerless_unknown_install_still_passes_checker_with_verified_identity(
     rec["environment"]["pdk"]["version"] = "unknown"
     R.write_record(rec, exp)
     R.write_netlist_snapshot(tb, exp, rec["record_id"])
+    R.write_manifest_snapshot(tb, exp, rec["record_id"])
     logs = exp / "corners" / rec["record_id"]
     logs.mkdir(parents=True)
     for p in pts:
@@ -376,3 +468,36 @@ def test_offhost_identity_renders_what_was_verified_and_passes_checker(tmp_path)
     assert chk.PDK_ARTIFACT_RE.search(md)
     local = R.render_markdown(build_synthetic_record(tmp_path / "b")[3])
     assert "hash-verified in the simulating install before the run" in local
+
+
+@pytest.mark.parametrize("spec", [
+    {"min": float("nan")},
+    {"max": float("nan")},
+    {"max": float("inf")},
+    {"min": True},
+    {"max": "5"},
+    {"min": 5, "max": 1},
+    {"max_spread_pct": float("nan")},
+    {"min_spread_pct": -1},
+    {"max_spread_pct_by_axis": {"supply": float("nan")}},
+    {"min_spread_pct_by_axis": {"supply": "1"}},
+])
+def test_evaluate_checks_rejects_malformed_limits(spec):
+    pts = grid()
+    res = results_for(pts, gain)
+    summ = R.summarize(res, ["gain"])
+    with pytest.raises(ValueError, match="gain"):
+        R.evaluate_checks({"gain": spec}, res, summ)
+
+
+def test_nan_bound_cannot_yield_empty_failure_list():
+    res = results_for(grid(), gain)
+    with pytest.raises(ValueError):
+        R.evaluate_checks({"gain": {"min": float("nan"), "max": 0}}, res, {})
+
+
+def test_finite_bounds_still_grade_points():
+    res = results_for(grid(), gain)
+    assert R.evaluate_checks({"gain": {"min": 0, "max": 100}}, res, {}) == []
+    fails = R.evaluate_checks({"gain": {"max": 5}}, res, {})
+    assert fails and all(f["kind"] == "max" for f in fails)

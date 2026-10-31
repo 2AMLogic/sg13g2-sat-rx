@@ -26,8 +26,6 @@ Exit status 0 when a record (any status) was produced or --no-write printed;
 from __future__ import annotations
 
 import argparse
-import datetime as _dt
-import hashlib
 import json
 import math
 import os
@@ -45,6 +43,17 @@ sys.path.insert(0, str(SIM_DIR))
 sys.path.insert(0, str(HERE))
 
 import nfmethod as M  # noqa: E402
+from harness.provenance import (  # noqa: E402
+    MARK_RE,
+    finite_float,
+    git_info,
+    new_record_id,
+    ngspice_info,
+    parse_marks,
+    pdk_info,
+    sha256,
+    write_excl,
+)
 
 TEMPLATE = HERE / "probe" / "capability_probe.spice"
 PLACEHOLDER = SIM_DIR / "mixer-conversion-iip3" / "testbench" / "mixer_ce_placeholder.spice"
@@ -88,41 +97,19 @@ SOURCE = {
     ],
 }
 
-MARK_RE = re.compile(r"^MARK\s+(.*)$")
-KV_RE = re.compile(r"(\w+)=(\S*)")
 ONOISE_RE = re.compile(r"^(onoise_total\S*)\s*=\s*(\S+)\s*$")
-
-
-def sha256(path: Path) -> str:
-    h = hashlib.sha256()
-    with open(path, "rb") as fh:
-        for chunk in iter(lambda: fh.read(1 << 20), b""):
-            h.update(chunk)
-    return h.hexdigest()
-
-
-def _float(s: str | None) -> float | None:
-    if s is None or s == "":
-        return None
-    try:
-        return float(s)
-    except ValueError:
-        return None
 
 
 def parse_log(stdout: str, stderr: str) -> dict:
     """Extract MARK key=value pairs, per-generator integrated noise, pss reply."""
-    marks: dict[str, float | None] = {}
+    marks = parse_marks(stdout)
     noise: dict[str, float] = {}
     for line in stdout.splitlines():
-        m = MARK_RE.match(line.strip())
-        if m:
-            for k, v in KV_RE.findall(m.group(1)):
-                marks[k] = _float(v)
+        if MARK_RE.match(line.strip()):
             continue
         n = ONOISE_RE.match(line.strip())
         if n:
-            val = _float(n.group(2))
+            val = finite_float(n.group(2))
             if val is not None:
                 noise[n.group(1)] = val
     both = stdout + "\n" + stderr
@@ -270,49 +257,6 @@ def controls_from_inventory(inv: dict) -> M.Controls:
                       omission_detected=False, periodic_coverage=False)
 
 
-def ngspice_info(exe: str) -> dict:
-    out = subprocess.run([exe, "-v"], capture_output=True, text=True, check=False).stdout
-    line = next((l.strip(" *") for l in out.splitlines() if "ngspice-" in l), "unknown")
-    return {"path": exe, "version": line.strip(), "sha256": sha256(Path(exe))}
-
-
-def pdk_info() -> dict:
-    from harness.pdk import find_pdk  # noqa: WPS433
-    p = find_pdk(SIM_DIR)
-    fv = p.path.parent / ".fetched-version"
-    fv2 = p.path / ".fetched-version"
-    ver = (fv.read_text().strip() if fv.is_file() else
-           fv2.read_text().strip() if fv2.is_file() else "unknown")
-    models = p.model_lib.parent
-    return {"path": str(p.path), "fetched_version": ver, "model_lib": str(p.model_lib),
-            "section": "hbt_typ",
-            "sha256": {"cornerHBT.lib": sha256(p.model_lib),
-                       "sg13g2_hbt_mod.lib": sha256(models / "sg13g2_hbt_mod.lib")},
-            "device": "npn13G2 (subckt) -> npn13G2_NX_vbic, VBIC level=9, Nx=4 in the placeholder"}
-
-
-def git_info() -> dict:
-    def g(*a):
-        r = subprocess.run(["git", *a], cwd=REPO, capture_output=True, text=True)
-        return r.stdout.strip()
-    return {"commit": g("rev-parse", "HEAD"), "dirty": bool(g("status", "--porcelain"))}
-
-
-def new_record_id(short: str) -> str:
-    when = _dt.datetime.now(_dt.timezone.utc)
-    while True:
-        rid = f"{when.strftime('%Y%m%d-%H%M%S')}-{short}"
-        if not list(RECORDS.glob(f"{rid}*")) and not (PROBE_LOGS / rid).exists():
-            return rid
-        when += _dt.timedelta(seconds=1)
-
-
-def write_excl(path: Path, text: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "x") as fh:
-        fh.write(text)
-
-
 def render_md(rid: str, status: str, reasons: list, inv: dict, controls: M.Controls,
               env: dict) -> str:
     s = inv["sizing"]
@@ -425,11 +369,11 @@ def main(argv=None) -> int:
         print(json.dumps({"status": status, "reasons": reasons, "inventory": inv}, indent=2, default=str))
         return 0
 
-    git = git_info()
+    git = git_info(REPO)
     exe = shutil.which(args.ngspice)
     env = {"host": platform.node(), "platform": platform.platform(), "python": sys.version.split()[0],
            "git": git, "placeholder_sha256": sha256(PLACEHOLDER), "template_sha256": sha256(TEMPLATE)}
-    rid = new_record_id((git["commit"] or "unknown")[:7])
+    rid = new_record_id((git["commit"] or "unknown")[:7], RECORDS, PROBE_LOGS)
 
     if exe is None:
         status, reasons = M.decide_status(False, None)
@@ -446,7 +390,7 @@ def main(argv=None) -> int:
         return 0
 
     env["ngspice"] = ngspice_info(exe)
-    env["pdk"] = pdk_info()
+    env["pdk"] = pdk_info(SIM_DIR)
     deck = (TEMPLATE.read_text()
             .replace("{model_lib}", env["pdk"]["model_lib"])
             .replace("{placeholder}", str(PLACEHOLDER)))

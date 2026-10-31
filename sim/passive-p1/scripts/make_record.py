@@ -14,7 +14,11 @@ Statuses (exactly one per record):
                           absent.  The failed command/check is recorded; no
                           number from any other source is substituted.
 A record is NEVER overwritten: files are opened exclusively; a re-run writes a
-new record (the earlier one stays).  With --synthetic the status is prefixed
+new record (the earlier one stays).  The record id is
+<UTC second>-<git short>-<status>; a run whose id already exists (same second,
+commit and status) is refused with "record id collision", exit 4, nothing
+overwritten and only the files that run created removed.  The numerical digest
+covers status/metrics/compare only, never the id or time.  With --synthetic the status is prefixed
 `SYNTHETIC-` and the record says so in its first line: it exercises the
 pipeline on generated data and is not campaign evidence.
 
@@ -38,6 +42,7 @@ import hashlib
 import json
 import os
 import platform
+import re
 import shutil
 import subprocess
 import sys
@@ -166,6 +171,15 @@ def load(p):
     return json.load(open(p)) if os.path.isfile(p) else None
 
 
+def _utcnow():
+    """Wall clock for the record id/utc.  A function so a control can hold the
+    clock (controls.py `collision`); nothing in this script overrides it."""
+    return datetime.datetime.now(datetime.timezone.utc)
+
+
+EXIT_ID_COLLISION = 4
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dir", required=True)
@@ -195,9 +209,12 @@ def main():
     if args.synthetic:
         status = "SYNTHETIC-" + status
 
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = _utcnow()
     env = environment()
-    gitshort = (env["git_commit"] or "nogit")[:7]
+    # sh() returns git's error text outside a checkout ("fatal: ..."); only a
+    # real commit hash may enter the id/filename
+    gc = env["git_commit"] or ""
+    gitshort = gc[:7] if re.fullmatch(r"[0-9a-f]{40,64}", gc) else "nogit"
     rid = "%s-%s-%s" % (now.strftime("%Y%m%d-%H%M%S"), gitshort, status)
 
     digest_src = {"status": status, "metrics_band": metrics and metrics["band"],
@@ -355,12 +372,8 @@ def main():
 
     base = os.path.join(recdir, rid)
     written = []
-    try:
-        for path, text in ((base + ".md", "\n".join(L)), (base + ".json", json.dumps(rec, indent=2, sort_keys=True, default=str) + "\n")):
-            with open(path, "x") as fh:  # exclusive: never overwrite a record
-                written.append(path)
-                fh.write(text)
-    except BaseException:
+
+    def undo():
         for path in written:  # only files this run created
             try:
                 os.remove(path)
@@ -368,6 +381,21 @@ def main():
                 pass
         if pkg_info:
             shutil.rmtree(pkg_info["dir"], ignore_errors=True)
+
+    try:
+        for path, text in ((base + ".md", "\n".join(L)), (base + ".json", json.dumps(rec, indent=2, sort_keys=True, default=str) + "\n")):
+            with open(path, "x") as fh:  # exclusive: never overwrite a record
+                written.append(path)
+                fh.write(text)
+    except FileExistsError as exc:
+        undo()
+        print("REFUSED: record id collision: %s already exists. Record ids have one-second "
+              "resolution (UTC), so this run landed in the same second as an earlier record with "
+              "the same commit and status. Nothing was overwritten; files this run created were "
+              "removed. Re-run after the second has passed." % exc.filename, file=sys.stderr)
+        return EXIT_ID_COLLISION
+    except BaseException:
+        undo()
         raise
     print("record: %s" % (base + ".md"))
     if pkg_info:

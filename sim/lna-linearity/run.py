@@ -26,12 +26,12 @@ from __future__ import annotations
 import argparse
 import datetime as _dt
 import gzip
-import hashlib
 import json
 import shlex
 import shutil
 import subprocess
 import sys
+from functools import partial
 from pathlib import Path
 
 BENCH_DIR = Path(__file__).resolve().parent
@@ -43,6 +43,7 @@ sys.path.insert(0, str(BENCH_DIR))
 import analysis as A  # noqa: E402
 import linearity as L  # noqa: E402
 from harness import klt_driver  # noqa: E402
+from harness.provenance import git_out as _git_out, sha256_file  # noqa: E402
 from harness.report import RecordExists, allocate_record_id, git_provenance  # noqa: E402
 
 PLAN_PATH = BENCH_DIR / "testbench" / "plan.json"
@@ -61,20 +62,8 @@ SCOPE = ("nominal-corner (hbt_typ, 27 C, 2.5 V) nonlinear characterization of de
          "(row 1) still a DRAFT")
 
 
-class CollectionError(RuntimeError):
-    pass
-
-
-def sha256_bytes(b: bytes) -> str:
-    return hashlib.sha256(b).hexdigest()
-
-
-def sha256_file(p: Path) -> str:
-    return sha256_bytes(p.read_bytes())
-
-
-def git_out(*args: str) -> str:
-    return subprocess.run(["git", *args], cwd=REPO_ROOT, capture_output=True, text=True).stdout.strip()
+CollectionError = klt_driver.CollectionError
+git_out = partial(_git_out, cwd=REPO_ROOT)
 
 
 # ---------------------------------------------------------------------------
@@ -164,25 +153,7 @@ def write_requests(plan: dict, work: Path, backend: str, args) -> dict[str, Path
 def submit(key: str, req: Path, work: Path, backend: str, args) -> Path:
     """One klt request on an explicit backend; reuses a complete report (resume).
     Any failure raises: there is no local fallback."""
-    report = work / f"report_{key}.json"
-    if report.is_file():
-        try:
-            if "corners" in json.loads(report.read_text()):
-                print(f"  reuse {report.name}", flush=True)
-                return report
-        except ValueError:
-            pass
-    out = (work / f"out_{key}").resolve()
-    cmd = shlex.split(args.klt_cmd) + ["sim", str(req), "--backend", backend, "-o", str(out), "--format", "json"]
-    print("$ " + " ".join(cmd), flush=True)
-    with report.open("w") as fh:
-        proc = subprocess.run(cmd, stdout=fh, stderr=subprocess.PIPE, text=True)
-    if proc.stderr:
-        (work / f"stderr_{key}.log").write_text(proc.stderr)
-    if proc.returncode != 0:
-        report.rename(work / f"report_{key}.failed.json")
-        raise CollectionError(f"klt sim failed for {key} (exit {proc.returncode}, backend {backend}): {proc.stderr[-3000:]}")
-    return report
+    return klt_driver.submit_request(req, work / f"report_{key}.json", key, backend, args.klt_cmd, work)
 
 
 def read_unit(report: Path) -> tuple[dict, str]:
@@ -190,12 +161,9 @@ def read_unit(report: Path) -> tuple[dict, str]:
     if "corners" not in data or len(data["corners"]) != 1:
         raise CollectionError(f"{report.name}: expected exactly one corner unit ({data.get('error')})")
     corner = data["corners"][0]
-    log = (corner.get("artifacts") or {}).get("log")
-    if not log:
+    path = klt_driver.corner_log_path(corner, report)
+    if path is None:
         raise CollectionError(f"{report.name}: no log returned ({corner.get('diagnostics')})")
-    path = Path(log)
-    if not path.is_absolute():
-        path = (report.parent / path).resolve()
     return data, path.read_text()
 
 
@@ -281,7 +249,9 @@ def render_md(rid: str, status: str, rec: dict) -> str:
         "(2f1-f2 minus 50 MHz, 2f2-f1 plus 50 MHz; single tone: f0 -/+ 50 MHz), per run.",
         f"- Operating limits (spec row 17 + card box), instantaneous over the window: V_CE <= {plan['extraction']['operating_limits']['vce_max_v']} V, "
         f"V_CE in {plan['extraction']['operating_limits']['vce_window_v']}, V_BE in {plan['extraction']['operating_limits']['vbe_window_v']}; "
-        "the card Ic box is not monitored. Points breaking a limit are classified and excluded, never fitted through.",
+        + (current_line(plan) if L.current_cfg(plan) else
+           "the card Ic box is not monitored. ")
+        + "Points breaking a limit are classified and excluded, never fitted through.",
         "",
         "## DUT identity",
         f"- `{rec['dut']['file']}` sha256 `{rec['dut']['sha256']}`, last changed at commit `{rec['dut']['last_commit']}`; "
@@ -401,6 +371,15 @@ def render_md(rid: str, status: str, rec: dict) -> str:
         "",
     ]
     return "\n".join(lines)
+
+
+def current_line(plan: dict) -> str:
+    c = L.current_cfg(plan)
+    return (f"collector current monitored per device (signed, A and fraction of I_C/({c['box_a_per_nx'] * 1e3:g} mA x Nx)); "
+            f"card-box applicability to transient terminal current: {c['applicability'].upper()}"
+            + ("; ENFORCED. " if c.get("enforce") else
+               "; extrema are published and flagged, the envelope is NOT claimed complete, over-box points are not excluded on that basis. ")
+            + "Missing or non-finite diagnostics reject the point. ")
 
 
 def collect(args) -> int:
@@ -572,8 +551,10 @@ def cmd_verify(args) -> int:
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
-    sub.add_parser("check-plan").set_defaults(fn=cmd_check_plan)
-    sub.add_parser("controls").set_defaults(fn=cmd_controls)
+    for name, fn in (("check-plan", cmd_check_plan), ("controls", cmd_controls)):
+        p = sub.add_parser(name)
+        p.add_argument("--plan", default="", help="plan file (default testbench/plan.json, the frozen version 1)")
+        p.set_defaults(fn=fn)
     for name, fn in (("build", cmd_build), ("collect", collect)):
         p = sub.add_parser(name)
         p.add_argument("--klt-cmd", default="klt")
@@ -581,6 +562,7 @@ def build_parser() -> argparse.ArgumentParser:
         p.add_argument("--timeout-s", type=int, default=7200)
         p.add_argument("--no-stage-models", action="store_true")
         p.add_argument("--runner-version-check", default="", choices=("", "enforce", "warn"))
+        p.add_argument("--plan", default="", help="plan file (default testbench/plan.json, the frozen version 1)")
         p.add_argument("--workdir", default="")
         p.add_argument("--dry-run", action="store_true")
         p.add_argument("--allow-dirty", action="store_true", help=argparse.SUPPRESS)
@@ -593,6 +575,9 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv=None) -> int:
     args = build_parser().parse_args(argv)
+    global PLAN_PATH
+    if getattr(args, "plan", ""):
+        PLAN_PATH = Path(args.plan).resolve()
     try:
         return args.fn(args)
     except (CollectionError, RecordExists) as exc:

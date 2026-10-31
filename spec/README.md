@@ -23,6 +23,8 @@ spec/
     0004-lna-mixer-interface-convention.md   LNA-mixer interface (proposed)
     0005-passive-p1-feasibility.md   p1 spiral feasibility; passive-family
                               choice deferred (no EM result yet)
+    0008-lo-drive-path-after-no-acceptable-drive.md   mixer LO-drive path
+                              after #61 (proposed; comparative, selects nothing)
 ```
 
 ## Status: partially ratified — targets, not compliance
@@ -112,3 +114,9 @@ that sits downstream of ratification. T1 items 5 (full corner verification),
 **ratified** spec. Since DR-0003 they grade against **eleven binding target
 rows**; verdicts against the nine OPEN rows remain provisional by
 construction until each row's gate closes.
+
+T1 item 6 (statistical / Monte Carlo evidence) is scoped per row by
+[DR-0007](decision-records/0007-statistical-row-classification.md) (proposed):
+`spec/row-coverage.json` carries a `statistical` flag, rationale and card
+source on every row. Only row 15 is classed statistical; no Monte Carlo run
+exists yet.

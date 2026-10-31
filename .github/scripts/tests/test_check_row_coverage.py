@@ -51,6 +51,36 @@ class RowCoverage(unittest.TestCase):
         d = json.loads(self.man.read_text())
         self.assertEqual([r["row"] for r in d["rows"]], list(range(1, 21)))
         self.assertEqual(sum(r["status"] == "ratified-target" for r in d["rows"]), 11)
+        # DR-0007: only row 15 is classified statistical.
+        self.assertEqual([r["row"] for r in d["rows"] if r["statistical"]], [15])
+
+    def test_statistical_missing(self) -> None:
+        self.edit(lambda d: self.row(d, 6).pop("statistical"))
+        self.assertIn("row 6", self.messages())
+        self.assertIn("'statistical' must be a JSON bool", self.messages())
+
+    def test_statistical_string_not_bool(self) -> None:
+        self.edit(lambda d: self.row(d, 15).update(statistical="true"))
+        self.assertIn("row 15", self.messages())
+        self.assertIn("JSON bool", self.messages())
+
+    def test_statistical_rationale_blank_or_missing(self) -> None:
+        self.edit(lambda d: self.row(d, 4).update(statistical_rationale="  "))
+        self.assertIn("row 4", self.messages())
+        self.edit(lambda d: self.row(d, 5).pop("statistical_rationale"))
+        self.assertIn("row 5", self.messages())
+
+    def test_statistical_true_needs_card(self) -> None:
+        self.edit(lambda d: self.row(d, 15).pop("statistical_card"))
+        self.assertIn("row 15", self.messages())
+        self.assertIn("statistical_card", self.messages())
+        self.edit(lambda d: self.row(d, 15).update(statistical_card=" \t"))
+        self.assertIn("row 15", self.messages())
+
+    def test_statistical_false_rejects_card(self) -> None:
+        self.edit(lambda d: self.row(d, 6).update(statistical_card="sg13g2_hbt_stat.lib"))
+        self.assertIn("row 6", self.messages())
+        self.assertIn("must be absent", self.messages())
 
     def test_missing_row(self) -> None:
         self.edit(lambda d: d["rows"].remove(self.row(d, 12)))

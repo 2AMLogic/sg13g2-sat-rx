@@ -4,13 +4,14 @@
     python3 sim/lna-sparam-nf/run.py characterize --supersedes ID [--dry-run]
     python3 sim/lna-sparam-nf/run.py ingest REPORT.json [...] --supersedes ID
 
-`harness.cli run` simulates the 27-point grid as a LOCAL loop of `ngspice -b`
-processes. On a shared dispatch host that grid goes to the off-host batch
-fleet instead: this driver expresses it as `klt sim` requests (one per supply
+This driver predates `harness.cli run --backend batch` (issue #134), which now
+sends any multi-point harness grid to the batch fleet the same way; it is kept
+for this bench's correction/new-design notes and stage-1 tables. It expresses
+the 27-point grid as `klt sim` requests (one per supply
 value, 9 process x temperature corners each), then ingests the returned
-per-corner logs into an ordinary harness-native record (corners/<id>/*.log,
-netlist-snapshots/<id>.spice, records/<id>.md), exactly the layout
-check_evidence_formats.py expects for this bench. The pattern is the one
+per-corner logs into an ordinary harness-native record (records/<id>.md; the logs and
+netlist snapshots go to the artifact store, named by
+manifests/artifacts/lna-sparam-nf-<id>.manifest.json -- issue #226). The pattern is the one
 sim/hbt-kaband-characterization/run.py established.
 
 Ingest refuses to write unless all 27 points are present with finite values
@@ -22,6 +23,14 @@ It also refuses (exit 3, before a record id or any log is written) unless the
 klt reports themselves bind the simulation models to sim/pdk-artifact.json:
 see harness.pdkartifact.verify_job_models. The ingesting host's own install
 check is separate provenance and is never the record's artifact identity.
+And it refuses (exit 1, equally before anything is written) if the working
+testbench inputs changed after the run loaded them (issue #141): the record's
+frozen netlist + manifest snapshots must describe the state the numbers came
+from. A bare `ingest` reloads fresh (its drift is empty by construction), so
+it additionally refuses unless every report's body deck is exactly what the
+reloaded testbench would generate -- decks written by an earlier `characterize`
+from a since-changed tb.json or netlist fragment must not have the ingest-time
+manifest attached to their results.
 """
 
 from __future__ import annotations
@@ -43,12 +52,15 @@ sys.path.insert(0, str(BENCH_DIR))
 
 import lna_nf  # noqa: E402
 import stage1_tables  # noqa: E402
+from harness import cli as harness_cli  # noqa: E402
 from harness import evidence as evidence_mod  # noqa: E402
+from harness import evidence_store as store_mod  # noqa: E402
 from harness.corners import CORNERS, PvtPoint, build_grid, resolve_corners, supply_points  # noqa: E402
 from harness import klt_driver  # noqa: E402
 from harness import pdkartifact  # noqa: E402
 from harness.report import (  # noqa: E402
-    RecordExists, allocate_record_id, build_record, git_provenance, write_netlist_snapshot,
+    RecordExists, allocate_record_id, build_record, git_provenance, write_manifest_snapshot,
+    write_netlist_snapshot,
     write_record,
 )
 from harness.runner import PointResult, ngspice_version  # noqa: E402
@@ -67,7 +79,7 @@ def klt_body(tb, vdd: float) -> str:
         f".param vdd_val={vdd!r}",
     ]
     lines += [f".param {k}={v}" for k, v in tb.params.items()]
-    lines += ["", tb.netlist.read_text(), "", ".control", "set numdgt=10", "set noaskquit"]
+    lines += ["", tb.netlist_data.decode("utf-8"), "", ".control", "set numdgt=10", "set noaskquit"]
     lines += [f"  {a}" for a in tb.analyses]
     lines += [f"  let m_{n} = {e}" for n, e in tb.measure.items()]
     lines += [f"  print m_{n}" for n in tb.measure]
@@ -106,6 +118,18 @@ def _verified_pdk():
         return pdk, None
 
 
+def _store_preflight(klt_cmd: str) -> int:
+    """0, or the exit code after refusing: new evidence goes to the artifact
+    store only (issue #226), so a run that could not be stored is not started."""
+    try:
+        store_mod.preflight(REPO_ROOT, klt=klt_cmd)
+    except store_mod.StoreError as exc:
+        print(f"EVIDENCE STORE UNAVAILABLE -- nothing submitted or written: {exc}",
+              file=sys.stderr)
+        return harness_cli.EXIT_STORE
+    return 0
+
+
 def cmd_characterize(args) -> int:
     tb = load(BENCH_DIR)
     verified = None
@@ -121,6 +145,8 @@ def cmd_characterize(args) -> int:
             print("characterize: PDK artifact not verified; nothing submitted, no record written",
                   file=sys.stderr)
             return 3
+        if code := _store_preflight(args.klt_cmd):
+            return code
     corners = resolve_corners(list(tb.corners))
     supplies = supply_points(tb.nominal_supply_v, tb.supply_tolerance)
     temps = list(tb.temperatures_c)
@@ -162,12 +188,23 @@ def cmd_characterize(args) -> int:
 _body_supply = klt_driver.body_supply
 
 
+def body_for(report_path: Path) -> Path:
+    """The generated body deck a klt report was simulated from: characterize
+    writes `body_<tag>.spice` beside every `report_<tag>.json`."""
+    return report_path.with_name(
+        report_path.name.replace("report_", "body_").replace(".json", ".spice"))
+
+
 def cmd_ingest(args) -> int:
     tb = load(BENCH_DIR)
     reports = []
     for path in args.reports:
         path = Path(path).resolve()
-        body = path.with_name(path.name.replace("report_", "body_").replace(".json", ".spice"))
+        body = body_for(path)
+        if not body.is_file():
+            print(f"ingest: {body} is missing; the inputs the reports were simulated from "
+                  "cannot be verified; NO record written", file=sys.stderr)
+            return 1
         reports.append((_body_supply(body), path))
     return ingest(tb, reports, args)
 
@@ -186,6 +223,37 @@ def _offhost_artifact(loaded):
 
 
 def ingest(tb, reports, args, verified=None) -> int:
+    # Publication gate (issue #141): characterize loaded the testbench before
+    # the klt jobs ran and the frozen manifest snapshot must describe the
+    # state the numbers came from, so refuse if the working inputs moved
+    # meanwhile -- before a record id, log or snapshot is written. (A bare
+    # `ingest` reloads fresh, so its drift is empty by construction; the
+    # body-deck check below is what covers it.)
+    drift = tb.working_input_drift()
+    if drift:
+        print(f"ingest: {drift}", file=sys.stderr)
+        print("refusing to record: restore the working testbench inputs (or re-run "
+              "characterize) so the frozen manifest snapshot describes the simulated state",
+              file=sys.stderr)
+        return 1
+    # The bare-`ingest` half of the same gate (issue #141): its reports were
+    # simulated from body decks an earlier `characterize` wrote, so a fresh
+    # reload never shows drift -- but if tb.json or the netlist fragment
+    # changed in between, the decks no longer match what this load would
+    # generate, and the record would present the ingest-time manifest and
+    # netlist as the inputs the numbers came from. Refuse unless every
+    # report's body is exactly that deck.
+    for vdd, resp_path in reports:
+        body = body_for(resp_path)
+        if not body.is_file():
+            print(f"ingest: {body} is missing; the inputs the reports were simulated from "
+                  "cannot be verified; NO record written", file=sys.stderr)
+            return 1
+        if body.read_text() != klt_body(tb, vdd):
+            print(f"ingest: {body} was generated from different testbench inputs than the "
+                  "working ones (tb.json or the netlist fragment changed after characterize); "
+                  "re-run characterize; NO record written", file=sys.stderr)
+            return 1
     # Ingest-host install: must itself be on the pin, but it is provenance of
     # THIS host only and never becomes the record's artifact identity.
     pdk, host_artifact = verified if verified is not None else _verified_pdk()
@@ -219,13 +287,10 @@ def ingest(tb, reports, args, verified=None) -> int:
         for corner in report["corners"]:
             point = PvtPoint(corner=CORNERS[corner["process"]],
                              temp_c=float(corner["temperature_c"]), vdd=float(vdd))
-            log = (corner.get("artifacts") or {}).get("log")
-            if not log:
+            log_path = klt_driver.corner_log_path(corner, resp_path)
+            if log_path is None:
                 problems.append(f"{point.corner_id}: klt returned no log ({corner.get('diagnostics')})")
                 continue
-            log_path = Path(log)
-            if not log_path.is_absolute():
-                log_path = (resp_path.parent / log_path).resolve()
             text = log_path.read_text()
             meas = lna_nf.parse_log(text)
             missing = [n for n in tb.measure if n not in meas]
@@ -321,8 +386,30 @@ def ingest(tb, reports, args, verified=None) -> int:
         extra=dict(tb.evidence.extra), notes=notes)
     extensions.validate()
 
+    # Supplemental stage1 tables: rendered and validated in memory BEFORE any
+    # permanent write (issue #130), so a measurement package without a usable
+    # printed sweep, or whose sweep disagrees with the bench scalars, leaves no
+    # record, corner directory or snapshot behind. Exit 4 = invalid package
+    # (distinct from 1 = status/grid failure and 3 = provenance refusal).
+    extra = ""
+    if all(f"{d}_vce" in next(iter(results.values())).measurements for d in ("q1", "q2", "qr")):
+        try:
+            extra = stage1_tables.render(
+                {cid: r.measurements for cid, r in results.items()}, texts,
+                {cid: r.point.vdd for cid, r in results.items()},
+                {cid: (r.point.corner.name, r.point.temp_c) for cid, r in results.items()})
+        except ValueError as exc:
+            print(f"error: invalid stage1 measurement package: {exc}", file=sys.stderr)
+            print("ingest: NO record, corner logs or snapshot written", file=sys.stderr)
+            return 4
+
     record_id = allocate_record_id(REPO_ROOT, tb.experiment_dir / "records", started, git)
-    log_dir = tb.experiment_dir / "corners" / record_id
+    if code := _store_preflight(args.klt_cmd):
+        return code
+    # Stage in the git-ignored scratch tree; only the manifest and the record
+    # are committed (issue #226).
+    stage_exp = harness_cli.STAGE_DIR / BENCH_DIR.name / "sim" / BENCH_DIR.name
+    log_dir = stage_exp / "corners" / record_id
     if log_dir.exists():
         raise RecordExists(f"{log_dir} exists; append-only evidence is never rewritten")
     log_dir.mkdir(parents=True)
@@ -336,15 +423,18 @@ def ingest(tb, reports, args, verified=None) -> int:
         f"(ingested on {ngspice_version()})", REPO_ROOT, record_id, started.isoformat(), wall,
         claim=args.claim or tb.claim, supersedes=args.supersedes or "", git=git,
         extensions=extensions, pdk_artifact=pdk_artifact)
-    write_netlist_snapshot(tb, tb.experiment_dir, record_id)
-    path = write_record(record, tb.experiment_dir)
-    if all(f"{d}_vce" in next(iter(results.values())).measurements for d in ("q1", "q2", "qr")):
-        meas = {cid: r.measurements for cid, r in results.items()}
-        extra = stage1_tables.render(
-            meas, texts, {cid: r.point.vdd for cid, r in results.items()},
-            {cid: (r.point.corner.name, r.point.temp_c) for cid, r in results.items()})
-        with path.open("a") as fh:
-            fh.write(extra)
+    write_netlist_snapshot(tb, stage_exp, record_id)
+    write_manifest_snapshot(tb, stage_exp, record_id)
+    staged = write_record(record, stage_exp)
+    try:
+        path = harness_cli.store_evidence(
+            tb.experiment_dir, stage_exp, record_id,
+            staged.read_text(encoding="utf-8") + extra, klt=args.klt_cmd)
+    except store_mod.StoreError as exc:
+        print(f"EVIDENCE NOT STORED -- nothing committed (fail closed): {exc}. The staged "
+              f"bytes are kept, uncommitted, under {stage_exp}/ (record id {record_id}).",
+              file=sys.stderr)
+        return harness_cli.EXIT_STORE
     print(f"wrote {path}")
     return 0 if record["status"] == "pass" else 1
 

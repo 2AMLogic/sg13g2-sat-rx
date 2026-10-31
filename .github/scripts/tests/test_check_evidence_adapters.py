@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import json
 import shutil
-import subprocess
 import sys
 import tempfile
 import unittest
@@ -24,6 +23,7 @@ sys.path.insert(0, str(SCRIPTS))
 sys.path.insert(0, str(REPO / "sim" / "passive-p1" / "scripts"))
 
 import check_evidence_formats as chk  # noqa: E402
+from _helpers import CheckerCase, commit, edit_json, run  # noqa: E402
 import freeze_package as fz  # noqa: E402
 
 PASSIVE = "passive-p1"
@@ -45,21 +45,6 @@ def copy_sim(dst: Path) -> Path:
     for name in COPIED:
         shutil.copytree(REPO / "sim" / name, dst / "sim" / name, symlinks=False, ignore=IGNORE)
     return dst
-
-
-def run(cwd: Path, *args: str) -> str:
-    return subprocess.run(args, cwd=cwd, check=True, capture_output=True, text=True).stdout
-
-
-def commit(cwd: Path, msg: str = "c") -> None:
-    run(cwd, "git", "add", "-A")
-    run(cwd, "git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", msg)
-
-
-def edit_json(path: Path, fn) -> None:
-    data = json.loads(path.read_text())
-    fn(data)
-    path.write_text(json.dumps(data, indent=2) + "\n")
 
 
 def upgrade_to_v2(root: Path, rid: str, status: str) -> None:
@@ -103,23 +88,13 @@ def clone_mixer_run(root: Path, new_ts: str = "20261010-000000") -> str:
     return new_id
 
 
-class FormatBase(unittest.TestCase):
+class FormatBase(CheckerCase):
     def setUp(self):
         self._tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self._tmp.cleanup)
         self.root = copy_sim(Path(self._tmp.name))
         self.passive = self.root / "sim" / PASSIVE
         self.mixer = self.root / "sim" / MIXER
-
-    def problems(self) -> list[str]:
-        return chk.check_format(self.root).items
-
-    def assertFails(self, *needles: str):
-        found = self.problems()
-        self.assertTrue(found, "checker passed a deliberately broken tree")
-        for needle in needles:
-            self.assertTrue(any(needle in p for p in found),
-                            f"no problem mentioning {needle!r} in:\n" + "\n".join(found))
 
 
 class CommittedEvidence(FormatBase):
@@ -130,7 +105,9 @@ class CommittedEvidence(FormatBase):
         self.assertEqual(self.problems(), [])
 
     def test_adapters_are_registered_explicitly(self):
-        self.assertEqual(set(chk.ADAPTERS), {PASSIVE, MIXER, LNAMATCH, CMPROBE, PRA, "lna-linearity"})
+        self.assertEqual(set(chk.ADAPTERS), {PASSIVE, MIXER, LNAMATCH, CMPROBE, PRA,
+                                             "lna-linearity", "lna-headroom",
+                                             "hbt-mismatch-pair"})
 
     def test_adapters_actually_run(self):
         # if discovery silently skipped these layouts this would stay green

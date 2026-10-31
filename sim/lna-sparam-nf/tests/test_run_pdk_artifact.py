@@ -60,7 +60,7 @@ def test_characterize_refuses_before_submitting_on_unverified_install(unverified
 def test_ingest_refuses_before_any_log_dir_on_unverified_install(unverified, tmp_path, capsys):
     report = tmp_path / "report_2.50v.json"
     report.write_text("{}")
-    (tmp_path / "body_2.50v.spice").write_text(".param vdd_val=2.5\n")
+    (tmp_path / "body_2.50v.spice").write_text(run.klt_body(load_tb(BENCH), 2.5))
     corners_before = sorted((BENCH / "corners").iterdir()) if (BENCH / "corners").exists() else []
     assert run.main(["ingest", str(report)]) == 3
     assert "NO record written" in capsys.readouterr().err
@@ -78,6 +78,7 @@ def test_characterize_hands_its_verified_identity_to_ingest(monkeypatch, tmp_pat
 
     monkeypatch.setattr(run.subprocess, "run", lambda *a, **k: Done())
     monkeypatch.setattr(run, "SCRATCH", tmp_path)
+    monkeypatch.setattr(run.store_mod, "preflight", lambda *a, **k: None)
 
     def fake_ingest(tb, reports, args, verified=None):
         seen["v"] = verified
@@ -114,7 +115,18 @@ import copy  # noqa: E402
 import json  # noqa: E402
 
 from harness.corners import resolve_corners, supply_points  # noqa: E402
+from harness import evidence_store as _es  # noqa: E402
+
+REAL_PUT = _es.put_files  # captured before any test patches it
 from harness.testbench import load as load_tb  # noqa: E402
+
+import importlib.util as _ilu  # noqa: E402
+
+_spec = _ilu.spec_from_file_location(
+    "harness_test_evidence_store", SIM / "harness" / "tests" / "test_evidence_store.py")
+_mod = _ilu.module_from_spec(_spec)
+_spec.loader.exec_module(_mod)
+fake_klt = _mod.fake_klt
 
 MANIFEST = json.loads((SIM / "pdk-artifact.json").read_text())
 PINNED = MANIFEST["files"]
@@ -239,9 +251,10 @@ class _TbIn:
         return getattr(self._tb, name)
 
 
-def _write_reports(tmp_path, tb, env_for):
+def _write_reports(tmp_path, tb, env_for, log_text=None):
     """One klt report per supply, 9 corners each, logs with every measurement."""
-    log_text = "\n".join(f"m_{n} = 1.0" for n in tb.measure) + "\n"
+    if log_text is None:
+        log_text = "\n".join(f"m_{n} = 1.0" for n in tb.measure) + "\n"
     reports = []
     for vdd in supply_points(tb.nominal_supply_v, tb.supply_tolerance):
         tag = f"{vdd:.2f}v"
@@ -257,6 +270,9 @@ def _write_reports(tmp_path, tb, env_for):
         path = tmp_path / f"report_{tag}.json"
         path.write_text(json.dumps({"status": "ok", "corners": corners,
                                     "environment": env_for(tag)}))
+        # The body deck characterize writes beside every report; ingest's
+        # issue-#141 gate compares it against the reloaded testbench.
+        (tmp_path / f"body_{tag}.spice").write_text(run.klt_body(tb, vdd))
         reports.append((vdd, path))
     return reports
 
@@ -275,7 +291,23 @@ def local_install_matches(monkeypatch, tmp_path):
     monkeypatch.setattr(run, "git_provenance", lambda root: {"commit": "0" * 40, "short": "0000000"})
     tb = _TbIn(load_tb(BENCH), tmp_path / "exp")
     (tb.experiment_dir / "records").mkdir(parents=True)
+    # Stored evidence (issue #226): a private repo root / scratch tree and a
+    # fake `klt artifact put`; nothing reaches a broker.
+    monkeypatch.delenv("KLT_ARTIFACT_BROKER", raising=False)  # never the real store
+    monkeypatch.setattr(run.harness_cli, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(run.harness_cli, "STAGE_DIR", tmp_path / "stage")
+    monkeypatch.setattr(run.store_mod, "preflight", lambda *a, **k: None)
+    objects = {}
+    monkeypatch.setattr(
+        run.store_mod, "put_files",
+        lambda files, root, klt="klt": REAL_PUT(files, root, klt=klt, run=fake_klt(objects)))
     return tb
+
+
+def _stored_log_names(tb):
+    """Names of the corner logs in the (only) manifest this run committed."""
+    (mpath,) = (tb.experiment_dir.parent / "manifests" / "artifacts").glob("*.manifest.json")
+    return [e["name"] for e in json.loads(mpath.read_text())["entries"] if "/corners/" in e["name"]]
 
 
 def _args():
@@ -306,6 +338,52 @@ def test_ingest_refuses_unbound_runner_models_before_record_id(local_install_mat
     assert not (tb.experiment_dir / "corners").exists()  # no log copied
 
 
+# --- issue #141, bare ingest: a later manifest may not be attached to results
+# --- simulated from decks an earlier characterize wrote from other inputs ---
+
+def test_ingest_refuses_body_deck_from_other_inputs(local_install_matches, monkeypatch, tmp_path,
+                                                    capsys):
+    tb = local_install_matches
+    monkeypatch.setattr(run, "allocate_record_id", _boom)
+    monkeypatch.setattr(run, "build_record", _boom)
+    monkeypatch.setattr(run, "write_record", _boom)
+    monkeypatch.setattr(run, "write_netlist_snapshot", _boom)
+    reports = _write_reports(tmp_path, tb, lambda tag: _good_env(f"klt-sim-{tag}"))
+    # The tb.json/fragment changed after the deck was written: the deck on
+    # disk is no longer what the reloaded testbench would generate.
+    stale = run.body_for(reports[0][1])
+    stale.write_text(run.klt_body(tb, reports[0][0]) + "* edited after characterize\n")
+    assert run.ingest(tb, reports, _args()) == 1
+    err = capsys.readouterr().err
+    assert stale.name in err and "different testbench inputs" in err
+    assert "NO record written" in err
+    _nothing_published(tb)
+
+
+def test_ingest_refuses_missing_body_deck(local_install_matches, monkeypatch, tmp_path, capsys):
+    tb = local_install_matches
+    monkeypatch.setattr(run, "allocate_record_id", _boom)
+    monkeypatch.setattr(run, "build_record", _boom)
+    monkeypatch.setattr(run, "write_record", _boom)
+    monkeypatch.setattr(run, "write_netlist_snapshot", _boom)
+    reports = _write_reports(tmp_path, tb, lambda tag: _good_env(f"klt-sim-{tag}"))
+    run.body_for(reports[-1][1]).unlink()
+    assert run.ingest(tb, reports, _args()) == 1
+    assert "NO record written" in capsys.readouterr().err
+    _nothing_published(tb)
+
+
+def test_cmd_ingest_refuses_missing_body_before_ingest(monkeypatch, tmp_path, capsys):
+    # CLI path: cmd_ingest refuses before _body_supply ever reads the deck
+    # (a missing file must not surface as a traceback) and before ingest runs.
+    monkeypatch.setattr(run, "ingest", _boom)
+    report = tmp_path / "report_2.50v.json"
+    report.write_text("{}")
+    assert run.main(["ingest", str(report)]) == 1
+    err = capsys.readouterr().err
+    assert "body_2.50v.spice is missing" in err and "NO record written" in err
+
+
 def test_ingest_binds_record_to_offhost_models_not_local_install(local_install_matches, monkeypatch,
                                                                   tmp_path):
     tb = local_install_matches
@@ -317,6 +395,7 @@ def test_ingest_binds_record_to_offhost_models_not_local_install(local_install_m
 
     def fake_write_record(record, exp):
         p = exp / "records" / "TESTID.md"
+        p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text("")
         return p
 
@@ -337,10 +416,94 @@ def test_ingest_binds_record_to_offhost_models_not_local_install(local_install_m
     pdkartifact.validate_identity(art)
     notes = "\n".join(seen["extensions"].notes)
     assert "ingest host" in notes and "says nothing about the runner" in notes
-    assert len(list((tb.experiment_dir / "corners" / "TESTID").glob("*.log"))) == 27
+    assert len(_stored_log_names(tb)) == 27
+    assert not (tb.experiment_dir / "corners").exists()  # logs are stored, not committed
 
 
 def test_characterize_refuses_unstaged_submission(monkeypatch):
     monkeypatch.setattr(run, "_pdk", _boom)
     monkeypatch.setattr(run.subprocess, "run", _boom)
     assert run.main(["characterize", "--no-stage-models"]) == 3
+
+
+# --- stage1 tables are validated before anything is published (issue #130) ---
+
+def _stage1_log(tb, *, markers=True, unstable=False, sw_kmin_scale=1.0):
+    """A corner log whose scalars agree with its printed 3-point sweep."""
+    ks, ds, mus = ([5.0, 3.0, 2.0], [0.5, 0.6, 0.7], [1.5, 1.2, 1.1])
+    if unstable:
+        ks[1], ds[1] = 0.8, 1.2
+    vals = {n: 1.0 for n in tb.measure}
+    vals.update({f"{d}_vce": 1.0 for d in ("q1", "q2", "qr")})
+    vals.update({f"{d}_vbe": 0.8 for d in ("q1", "q2", "qr")})
+    vals.update({f"{d}_icfrac": 0.5 for d in ("q1", "q2", "qr")})
+    vals.update({f"{d}_ft": 100.0 for d in ("q1", "q2", "qr")})
+    for s in ("lo", "mid", "hi"):
+        vals.update({f"k_{s}": 5.0, f"d_{s}": 0.5})
+    nunst = sum(1 for k, d in zip(ks, ds) if k <= 1.0 or d >= 1.0)
+    vals.update({"sw_n": 3.0, "sw_kmin": min(ks) * sw_kmin_scale, "sw_dmax": max(ds),
+                 "sw_mumin": min(mus), "sw_nunst": float(nunst)})
+    if unstable:
+        vals["k_mid"] = 0.8
+        vals["sw_fkmin_ghz"] = 1.0
+    lines = [f"m_{n} = {vals[n]!r}" for n in tb.measure]
+    if markers:
+        lines.append("SWEEP_BEGIN")
+        lines.append("Index frequency wf wk wd wmu")
+        for i, (k, d, mu) in enumerate(zip(ks, ds, mus)):
+            f = 1e9 * 10 ** (i / 100)
+            lines.append(f"{i}\t{f:.10e}\t{f:.10e}\t{k:.10e}\t{d:.10e}\t{mu:.10e}\t")
+        lines.append("SWEEP_END")
+    return "\n".join(lines) + "\n"
+
+
+def _ingest_real(tb, tmp_path, log_text):
+    reports = _write_reports(tmp_path, tb, lambda tag: _good_env(f"klt-sim-{tag}"), log_text)
+    return run.ingest(tb, reports, _args())
+
+
+def _nothing_published(tb):
+    assert list((tb.experiment_dir / "records").iterdir()) == []
+    assert not (tb.experiment_dir / "corners").exists()
+    assert not (tb.experiment_dir / "snapshots").exists()
+
+
+@pytest.mark.parametrize("case", ["missing_markers", "scalar_disagreement"])
+def test_invalid_stage1_package_publishes_nothing(local_install_matches, tmp_path, capsys, case):
+    tb = local_install_matches
+    log = (_stage1_log(tb, markers=False) if case == "missing_markers"
+           else _stage1_log(tb, sw_kmin_scale=1.5))
+    rc = _ingest_real(tb, tmp_path, log)
+    assert rc == 4 and rc not in (1, 3)
+    err = capsys.readouterr().err
+    assert "invalid stage1 measurement package" in err and "NO record" in err
+    if case == "missing_markers":
+        assert "SWEEP_BEGIN" in err
+    else:
+        assert "disagree" in err
+    _nothing_published(tb)
+
+
+@pytest.mark.parametrize("unstable", [False, True])
+def test_valid_stage1_package_keeps_tables(local_install_matches, monkeypatch, tmp_path, unstable):
+    tb = local_install_matches
+
+    class _Pdk:
+        def provenance(self):
+            return {"pdk": "fake"}
+
+    monkeypatch.setattr(run, "_pdk", lambda: _Pdk())
+    rc = _ingest_real(tb, tmp_path, _stage1_log(tb, unstable=unstable))
+    assert rc in (0, 1)  # status verdict is independent of the tables
+    (rec,) = (tb.experiment_dir / "records").glob("*.md")
+    text = rec.read_text()
+    assert "## Operating points per device and grid cell" in text
+    assert "## Stability: k, |Delta|, mu" in text
+    assert "### Sweep statistics cross-check" in text
+    assert text.index("## How to read this record") > text.index("Status")
+    if unstable:
+        assert "POTENTIALLY UNSTABLE" in text and "Cells labelled POTENTIALLY UNSTABLE: **27 of 27**" in text
+    else:
+        assert "Cells labelled POTENTIALLY UNSTABLE: **0 of 27**" in text
+    assert len(_stored_log_names(tb)) == 27
+    assert not (tb.experiment_dir / "corners").exists()

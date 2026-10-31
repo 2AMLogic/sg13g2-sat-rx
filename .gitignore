@@ -52,14 +52,18 @@ sim/*/corners/_scratch/
 .loom/claims/
 .loom/locks/
 .loom/signals/
+.loom/sweep-dispatch-tap/
 .loom/status/
 .loom/retry-state/
 .loom/exit-codes/
 .loom/sweep-checkpoint/
+.loom/private-jobs/
 .loom/sweep-run/
 .loom/targets/
 .loom/target*/
 .cargo-target*/
+.loom-target/
+/target-*/
 .loom/state/*
 !.loom/state/detect-unlabeled-epics-dismissed
 .loom/stats/
@@ -101,3 +105,13 @@ sim/*/corners/_scratch/
 .loom/gh-config-by-owner-*/
 .loom-local/
 # <<< loom-managed <<<
+
+# hbt-mismatch-pair (issue #186): raw per-unit klt artifact trees are
+# re-creatable scratch -- the committed evidence is the reports, the compact
+# per-sample JSON and the kept sample logs under probe-logs/<id>/.
+sim/hbt-mismatch-pair/probe-logs/*/out_*/
+
+# Stored evidence (issue #226): sim/harness/cli.py stages a run's raw outputs
+# (per-point logs, frozen snapshots) here before `klt artifact put`. Scratch,
+# never committed; only manifests/artifacts/*.manifest.json and the record are.
+sim/.work/

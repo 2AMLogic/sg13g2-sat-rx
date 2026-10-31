@@ -21,6 +21,8 @@ from __future__ import annotations
 import cmath
 import math
 import re
+import sys
+from pathlib import Path
 
 # ---- probe constants (must match the .spice sources) -------------------------
 F_LO = 18.45e9
@@ -100,19 +102,10 @@ def integrals_from_phasor(x: complex, t_window: float) -> tuple[float, float]:
 
 # ---- parsing -----------------------------------------------------------------------
 
-MARK_RE = re.compile(r"^MARK\s+(.*)$")
-KV_RE = re.compile(r"(\w+)=(\S*)")
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # sim/ -> harness
+from harness.provenance import KV_RE, MARK_RE, finite_float  # noqa: E402
+
 NOISE_RE = re.compile(r"^(onoise_total\S*)\s*=\s*(\S+)\s*$")
-
-
-def _float(s: str | None) -> float | None:
-    if s is None or s == "":
-        return None
-    try:
-        v = float(s)
-    except ValueError:
-        return None
-    return v if math.isfinite(v) else None
 
 
 def parse_log(stdout: str, stderr: str) -> dict:
@@ -133,11 +126,11 @@ def parse_log(stdout: str, stderr: str) -> dict:
                 section = None
             else:
                 for k, v in kv.items():
-                    marks[k] = _float(v)
+                    marks[k] = finite_float(v)
             continue
         n = NOISE_RE.match(s)
         if n and section is not None:
-            val = _float(n.group(2))
+            val = finite_float(n.group(2))
             if val is not None:
                 noise[section][n.group(1)] = val
     both = stdout + "\n" + stderr
