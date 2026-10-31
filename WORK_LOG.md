@@ -2,6 +2,10 @@
 
 Chronological record of merged pull requests and closed issues, maintained by the Loom Guide role.
 
+### 2026-10-31
+
+- **Issue #135** (closed): mixer-conversion-iip3: FFT-bin metrics depend on the ngspice FFT build (local zero-padded vs batch unpadded)
+
 ### 2026-10-28
 
 - **PR #239**: feat: attest signoff items 1, 9, 10 via klt signoff --attest inventories
