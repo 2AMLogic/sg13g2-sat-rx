@@ -4,6 +4,8 @@ Chronological record of merged pull requests and closed issues, maintained by th
 
 ### 2026-10-31
 
+- **PR #242**: sim: lna-headroom stage-2 refinement record for C08/C05 vs C00
+- **Issue #132** (closed): sim: refine headroom shortlist (C08/C05) - convergence, two-tone IIP3, gain/NF/stability vs baseline
 - **Issue #135** (closed): mixer-conversion-iip3: FFT-bin metrics depend on the ngspice FFT build (local zero-padded vs batch unpadded)
 
 ### 2026-10-28
