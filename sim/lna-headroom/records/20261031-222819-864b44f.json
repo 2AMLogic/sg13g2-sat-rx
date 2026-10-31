@@ -1,0 +1,5180 @@
+{
+  "record_id": "20261031-222819-864b44f",
+  "status": "COLLECTED",
+  "stage": 2,
+  "started_utc": "2026-10-31T21:43:52.898436+00:00",
+  "spec_rows_claimed_met": [],
+  "plan": {
+    "file": "sim/lna-headroom/testbench/plan.json",
+    "sha256": "7b97cdf0eafa5404f3cb5f80d1c73213589b229b9257a74eb176b30802ac0f46",
+    "commit": "a81e6dcdd9d9b7cc72e299bbcf755acf17838f8b",
+    "dirty": false
+  },
+  "dut": {
+    "file": "design/netlist/lna_stage1.spice",
+    "sha256": "ad4fe1be5754f21fc4b2dd67863234858dc399e2a8232d3b20cf530014b8c447"
+  },
+  "ngspice_control": {
+    "pass": true,
+    "evaluations": {
+      "one": {
+        "expected_dbm": -21.3966574,
+        "expected_gain_db": 13.9794001,
+        "error_db": 0.00227046721,
+        "gain_error_db": -0.0136335517,
+        "tol_db": 0.1,
+        "gain_tol_db": 0.05,
+        "pass": true
+      },
+      "two": {
+        "expected_dbm": -11.7609126,
+        "expected_gain_db": 13.9794001,
+        "error_db": -0.0113648371,
+        "gain_error_db": -0.0142701837,
+        "tol_db": 0.15,
+        "gain_tol_db": 0.05,
+        "pass": true
+      }
+    }
+  },
+  "baseline_reproduction": {
+    "reproduced": true,
+    "record": "sim/lna-headroom/records/20261011-053527-d60e79a",
+    "tolerances": {
+      "pin_tolerance_db": 2.0,
+      "vce_q2_peak_tol_v": 0.005,
+      "gain_tol_db": 0.05
+    },
+    "per_placement": {
+      "low": {
+        "historical_first_violation_pin_dbm": -36.0,
+        "first_violation_pin_dbm": -36.0,
+        "historical_identity": "q2 V_CE peak",
+        "identity": "q2 V_CE peak",
+        "max_vce_q2_peak_delta_v": 4.85500018e-09,
+        "max_delivered_power_delta_db": 4.98303514e-08,
+        "reproduced": true
+      },
+      "mid": {
+        "historical_first_violation_pin_dbm": -36.0,
+        "first_violation_pin_dbm": -36.0,
+        "historical_identity": "q2 V_CE peak",
+        "identity": "q2 V_CE peak",
+        "max_vce_q2_peak_delta_v": 4.73999995e-09,
+        "max_delivered_power_delta_db": 4.19371986e-08,
+        "reproduced": true
+      },
+      "high": {
+        "historical_first_violation_pin_dbm": -34.0,
+        "first_violation_pin_dbm": -34.0,
+        "historical_identity": "q2 V_CE peak",
+        "identity": "q2 V_CE peak",
+        "max_vce_q2_peak_delta_v": 4.68999994e-09,
+        "max_delivered_power_delta_db": 4.57015403e-08,
+        "reproduced": true
+      }
+    }
+  },
+  "candidates": {
+    "C08": {
+      "candidate": {
+        "id": "C08",
+        "r1b_ohm": 1200,
+        "r2b_ohm": 7300,
+        "rd_ohm": 200
+      },
+      "dc": {
+        "vc1_v": 1.33521918,
+        "vb2_v": 2.14500804,
+        "voc_v": 2.5,
+        "ve1_v": 0.00474123215,
+        "vce_q1_v": 1.33047795,
+        "vce_q2_v": 1.16478082,
+        "vbe_q2_v": 0.809788858,
+        "vbe_q1_v": 0.809385821,
+        "ic_q1_ma_from_re1": 1.58041072,
+        "idd_ma": 2.08263155
+      },
+      "placements": {
+        "low": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -28.0,
+            "bracket": null,
+            "reason": "sweep step at -26 dBm is rejected (outside DUT operating limits: q2 V_CE peak 1.4585 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 17.1159641,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -26.0,
+            "violations": [
+              "q2 V_CE peak 1.4585 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q2 V_CE peak",
+            "stress_free_pin_dbm": -28.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.109877343,
+          "gap_to_row8_target_db": 3.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.649728921,
+                "min": -0.00126311997
+              },
+              "q2": {
+                "max": 0.690185686,
+                "min": -0.00719519724
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.17453485,
+            "-54": 1.17704935,
+            "-52": 1.18020319,
+            "-50": 1.18417496,
+            "-48": 1.18915449,
+            "-46": 1.1953965,
+            "-44": 1.20321938,
+            "-42": 1.2130134,
+            "-40": 1.22525634,
+            "-38": 1.24054757,
+            "-36": 1.25963492,
+            "-34": 1.28346874,
+            "-32": 1.31328153,
+            "-30": 1.35073912,
+            "-28": 1.39812647,
+            "-26": 1.45854272,
+            "-24": 1.536202,
+            "-22": 1.63754664,
+            "-20": 1.77225311,
+            "-18": 1.95413389,
+            "-16": 2.20537191
+          }
+        },
+        "mid": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -28.0,
+            "bracket": null,
+            "reason": "sweep step at -26 dBm is rejected (outside DUT operating limits: q2 V_CE peak 1.4481 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 17.9978706,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -26.0,
+            "violations": [
+              "q2 V_CE peak 1.4481 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q2 V_CE peak",
+            "stress_free_pin_dbm": -28.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.153979176,
+          "gap_to_row8_target_db": 3.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.718071224,
+                "min": -0.00173770847
+              },
+              "q2": {
+                "max": 0.704127896,
+                "min": -0.00673165516
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.17475494,
+            "-54": 1.17732134,
+            "-52": 1.1805418,
+            "-50": 1.18458101,
+            "-48": 1.18964192,
+            "-46": 1.19597137,
+            "-44": 1.20388368,
+            "-42": 1.21374358,
+            "-40": 1.22600244,
+            "-38": 1.24120791,
+            "-36": 1.26000726,
+            "-34": 1.28318048,
+            "-32": 1.31172537,
+            "-30": 1.34703459,
+            "-28": 1.39128589,
+            "-26": 1.44806782,
+            "-24": 1.52309305,
+            "-22": 1.62534071,
+            "-20": 1.76743334,
+            "-18": 1.96242496,
+            "-16": 2.21258162
+          }
+        },
+        "high": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -26.0,
+            "bracket": null,
+            "reason": "sweep step at -24 dBm is rejected (outside DUT operating limits: q2 V_CE peak 1.4350 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 16.4280594,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -24.0,
+            "violations": [
+              "q2 V_CE peak 1.4350 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q2 V_CE peak",
+            "stress_free_pin_dbm": -26.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.0588053435,
+          "gap_to_row8_target_db": 1.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.662735448,
+                "min": -0.00137039628
+              },
+              "q2": {
+                "max": 0.61383579,
+                "min": -0.00454469141
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.17254293,
+            "-54": 1.17453998,
+            "-52": 1.17704991,
+            "-50": 1.180195,
+            "-48": 1.18414316,
+            "-46": 1.18907982,
+            "-44": 1.19525162,
+            "-42": 1.2029493,
+            "-40": 1.21252595,
+            "-38": 1.22440511,
+            "-36": 1.23908513,
+            "-34": 1.25712714,
+            "-32": 1.27921222,
+            "-30": 1.30614536,
+            "-28": 1.33909885,
+            "-26": 1.38041839,
+            "-24": 1.43502343,
+            "-22": 1.51180436,
+            "-20": 1.62423677,
+            "-18": 1.78810728,
+            "-16": 2.00037879
+          }
+        }
+      },
+      "convergence": {
+        "low": [
+          {
+            "variant": "half_step",
+            "estimator": {
+              "estimator": "p1db",
+              "tol_db": 0.1,
+              "base_status": "bounded",
+              "other_status": "bounded",
+              "ok": true,
+              "delta_db": 0.0,
+              "reason": ""
+            },
+            "pointwise_fundamental": {
+              "p_f0_dbm": {
+                "max_abs_delta_db": 0.00373361719,
+                "n_compared": 3,
+                "n_inconsistent": 0
+              }
+            },
+            "pointwise_im3": {},
+            "pointwise_ok": true,
+            "ok": true
+          },
+          {
+            "variant": "double_window",
+            "estimator": {
+              "estimator": "p1db",
+              "tol_db": 0.1,
+              "base_status": "bounded",
+              "other_status": "bounded",
+              "ok": true,
+              "delta_db": 0.0,
+              "reason": ""
+            },
+            "pointwise_fundamental": {
+              "p_f0_dbm": {
+                "max_abs_delta_db": 1.71215363e-05,
+                "n_compared": 3,
+                "n_inconsistent": 0
+              }
+            },
+            "pointwise_im3": {},
+            "pointwise_ok": true,
+            "ok": true
+          }
+        ],
+        "mid": [
+          {
+            "variant": "half_step",
+            "estimator": {
+              "estimator": "p1db",
+              "tol_db": 0.1,
+              "base_status": "bounded",
+              "other_status": "bounded",
+              "ok": true,
+              "delta_db": 0.0,
+              "reason": ""
+            },
+            "pointwise_fundamental": {
+              "p_f0_dbm": {
+                "max_abs_delta_db": 0.00545388219,
+                "n_compared": 3,
+                "n_inconsistent": 0
+              }
+            },
+            "pointwise_im3": {},
+            "pointwise_ok": true,
+            "ok": true
+          },
+          {
+            "variant": "double_window",
+            "estimator": {
+              "estimator": "p1db",
+              "tol_db": 0.1,
+              "base_status": "bounded",
+              "other_status": "bounded",
+              "ok": true,
+              "delta_db": 0.0,
+              "reason": ""
+            },
+            "pointwise_fundamental": {
+              "p_f0_dbm": {
+                "max_abs_delta_db": 6.87828593e-05,
+                "n_compared": 3,
+                "n_inconsistent": 0
+              }
+            },
+            "pointwise_im3": {},
+            "pointwise_ok": true,
+            "ok": true
+          }
+        ],
+        "high": [
+          {
+            "variant": "half_step",
+            "estimator": {
+              "estimator": "p1db",
+              "tol_db": 0.1,
+              "base_status": "bounded",
+              "other_status": "bounded",
+              "ok": true,
+              "delta_db": 0.0,
+              "reason": ""
+            },
+            "pointwise_fundamental": {
+              "p_f0_dbm": {
+                "max_abs_delta_db": 0.0140072071,
+                "n_compared": 3,
+                "n_inconsistent": 0
+              }
+            },
+            "pointwise_im3": {},
+            "pointwise_ok": true,
+            "ok": true
+          },
+          {
+            "variant": "double_window",
+            "estimator": {
+              "estimator": "p1db",
+              "tol_db": 0.1,
+              "base_status": "bounded",
+              "other_status": "bounded",
+              "ok": true,
+              "delta_db": 0.0,
+              "reason": ""
+            },
+            "pointwise_fundamental": {
+              "p_f0_dbm": {
+                "max_abs_delta_db": 7.53736045e-05,
+                "n_compared": 3,
+                "n_inconsistent": 0
+              }
+            },
+            "pointwise_im3": {},
+            "pointwise_ok": true,
+            "ok": true
+          }
+        ]
+      },
+      "two_tone": {
+        "low": {
+          "iip3": {
+            "status": "ok",
+            "iip3_dbm": -13.0245967,
+            "sidebands": {
+              "low": {
+                "baseline": {
+                  "first_index": 0,
+                  "n_points": 3,
+                  "pin_dbm": [
+                    -56.0,
+                    -55.0,
+                    -54.0
+                  ],
+                  "gain_db": 17.0467795,
+                  "spread_db": 0.000405597267
+                },
+                "excluded_points": {},
+                "rejected_intervals": [
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -53.0
+                    ],
+                    "reason": "fixed-slope IIP3 -12.45 and free-slope intersection -10.75 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -52.0
+                    ],
+                    "reason": "fixed-slope IIP3 -12.44 and free-slope intersection -11.16 dBm disagree"
+                  }
+                ],
+                "interval_dbm": [
+                  -56.0,
+                  -36.0
+                ],
+                "n_points": 21,
+                "slope_fund": 0.997290232,
+                "slope_im3": 2.97000468,
+                "residual_fund_db": 0.0255942264,
+                "residual_im3_db": 0.158178437,
+                "iip3_dbm": -12.3457592,
+                "iip3_free_slope_dbm": -11.8802714,
+                "per_point_iip3_dbm": [
+                  -12.5329595,
+                  -12.4288513,
+                  -12.4229452,
+                  -12.4056838,
+                  -12.3958495,
+                  -12.3906357,
+                  -12.3946769,
+                  -12.3926758,
+                  -12.3933678,
+                  -12.3923927,
+                  -12.367384,
+                  -12.3592352,
+                  -12.3496647,
+                  -12.331673,
+                  -12.3188237,
+                  -12.2989221,
+                  -12.2778402,
+                  -12.251634,
+                  -12.2247584,
+                  -12.1879309,
+                  -12.1430394
+                ],
+                "extrapolation_db": 23.6542408,
+                "status": "ok"
+              },
+              "high": {
+                "baseline": {
+                  "first_index": 0,
+                  "n_points": 3,
+                  "pin_dbm": [
+                    -56.0,
+                    -55.0,
+                    -54.0
+                  ],
+                  "gain_db": 17.1701324,
+                  "spread_db": 0.000430470051
+                },
+                "excluded_points": {},
+                "rejected_intervals": [
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -53.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.00 and free-slope intersection -14.87 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -52.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.02 and free-slope intersection -14.61 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -51.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.03 and free-slope intersection -14.56 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -50.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.05 and free-slope intersection -14.32 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -49.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.06 and free-slope intersection -14.17 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -55.0,
+                      -51.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.06 and free-slope intersection -14.20 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -54.0,
+                      -51.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.08 and free-slope intersection -14.16 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -42.0,
+                      -36.0
+                    ],
+                    "reason": "fixed-slope IIP3 -12.93 and free-slope intersection -11.87 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -41.0,
+                      -37.0
+                    ],
+                    "reason": "fixed-slope IIP3 -12.93 and free-slope intersection -11.92 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -41.0,
+                      -36.0
+                    ],
+                    "reason": "fixed-slope IIP3 -12.91 and free-slope intersection -11.78 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -40.0,
+                      -37.0
+                    ],
+                    "reason": "fixed-slope IIP3 -12.92 and free-slope intersection -11.82 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -40.0,
+                      -36.0
+                    ],
+                    "reason": "fixed-slope IIP3 -12.89 and free-slope intersection -11.67 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -39.0,
+                      -36.0
+                    ],
+                    "reason": "fixed-slope IIP3 -12.87 and free-slope intersection -11.53 dBm disagree"
+                  }
+                ],
+                "interval_dbm": [
+                  -56.0,
+                  -36.0
+                ],
+                "n_points": 21,
+                "slope_fund": 0.997206385,
+                "slope_im3": 2.98049766,
+                "residual_fund_db": 0.0263293004,
+                "residual_im3_db": 0.421401457,
+                "iip3_dbm": -13.0245967,
+                "iip3_free_slope_dbm": -12.7467874,
+                "per_point_iip3_dbm": [
+                  -12.9036181,
+                  -12.9994059,
+                  -13.0462838,
+                  -13.0458085,
+                  -13.0822368,
+                  -13.1280898,
+                  -13.1138272,
+                  -13.1304318,
+                  -13.139171,
+                  -13.1279851,
+                  -13.1034574,
+                  -13.0924903,
+                  -13.0727785,
+                  -13.0471128,
+                  -13.0263416,
+                  -13.0012996,
+                  -12.9743529,
+                  -12.9416122,
+                  -12.9023411,
+                  -12.8505383,
+                  -12.7873482
+                ],
+                "extrapolation_db": 22.9754033,
+                "status": "ok"
+              }
+            },
+            "sideband_spread_db": 0.678837494,
+            "convention": "per-tone available input power at the 50 ohm source; lower of the two sidebands"
+          },
+          "first_violation": null
+        },
+        "mid": {
+          "iip3": {
+            "status": "ok",
+            "iip3_dbm": -13.5799983,
+            "sidebands": {
+              "low": {
+                "baseline": {
+                  "first_index": 0,
+                  "n_points": 3,
+                  "pin_dbm": [
+                    -56.0,
+                    -55.0,
+                    -54.0
+                  ],
+                  "gain_db": 18.0141319,
+                  "spread_db": 0.000614165902
+                },
+                "excluded_points": {},
+                "rejected_intervals": [],
+                "interval_dbm": [
+                  -56.0,
+                  -36.0
+                ],
+                "n_points": 21,
+                "slope_fund": 0.996051303,
+                "slope_im3": 2.97492601,
+                "residual_fund_db": 0.0359069713,
+                "residual_im3_db": 0.205670051,
+                "iip3_dbm": -13.5646519,
+                "iip3_free_slope_dbm": -13.2183912,
+                "per_point_iip3_dbm": [
+                  -13.6000021,
+                  -13.6206866,
+                  -13.6393162,
+                  -13.6330036,
+                  -13.6352762,
+                  -13.6140174,
+                  -13.6140973,
+                  -13.6103935,
+                  -13.6143121,
+                  -13.6044224,
+                  -13.5976324,
+                  -13.5915238,
+                  -13.5768064,
+                  -13.5668749,
+                  -13.5524808,
+                  -13.536142,
+                  -13.5121549,
+                  -13.487015,
+                  -13.4554785,
+                  -13.421909,
+                  -13.3741438
+                ],
+                "extrapolation_db": 22.4353481,
+                "status": "ok"
+              },
+              "high": {
+                "baseline": {
+                  "first_index": 0,
+                  "n_points": 3,
+                  "pin_dbm": [
+                    -56.0,
+                    -55.0,
+                    -54.0
+                  ],
+                  "gain_db": 17.9935461,
+                  "spread_db": 0.000625246808
+                },
+                "excluded_points": {},
+                "rejected_intervals": [
+                  {
+                    "interval_dbm": [
+                      -54.0,
+                      -51.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.67 and free-slope intersection -12.64 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -43.0,
+                      -36.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.47 and free-slope intersection -12.43 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -42.0,
+                      -37.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.48 and free-slope intersection -12.48 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -42.0,
+                      -36.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.46 and free-slope intersection -12.33 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -41.0,
+                      -37.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.46 and free-slope intersection -12.38 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -41.0,
+                      -36.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.44 and free-slope intersection -12.22 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -40.0,
+                      -37.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.45 and free-slope intersection -12.27 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -40.0,
+                      -36.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.42 and free-slope intersection -12.09 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -39.0,
+                      -36.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.39 and free-slope intersection -11.95 dBm disagree"
+                  }
+                ],
+                "interval_dbm": [
+                  -56.0,
+                  -36.0
+                ],
+                "n_points": 21,
+                "slope_fund": 0.995992494,
+                "slope_im3": 2.96393008,
+                "residual_fund_db": 0.0363432135,
+                "residual_im3_db": 0.270353322,
+                "iip3_dbm": -13.5799983,
+                "iip3_free_slope_dbm": -13.051799,
+                "per_point_iip3_dbm": [
+                  -13.6769823,
+                  -13.7050003,
+                  -13.7110323,
+                  -13.674445,
+                  -13.641231,
+                  -13.6362488,
+                  -13.6545769,
+                  -13.6421772,
+                  -13.6388767,
+                  -13.6215151,
+                  -13.6144387,
+                  -13.6028494,
+                  -13.5937318,
+                  -13.5806432,
+                  -13.560869,
+                  -13.5381487,
+                  -13.5086994,
+                  -13.4734991,
+                  -13.427925,
+                  -13.3743939,
+                  -13.3026812
+                ],
+                "extrapolation_db": 22.4200017,
+                "status": "ok"
+              }
+            },
+            "sideband_spread_db": 0.0153464883,
+            "convention": "per-tone available input power at the 50 ohm source; lower of the two sidebands"
+          },
+          "first_violation": null
+        },
+        "high": {
+          "iip3": {
+            "status": "ok",
+            "iip3_dbm": -11.7476708,
+            "sidebands": {
+              "low": {
+                "baseline": {
+                  "first_index": 0,
+                  "n_points": 3,
+                  "pin_dbm": [
+                    -56.0,
+                    -55.0,
+                    -54.0
+                  ],
+                  "gain_db": 16.5388138,
+                  "spread_db": 0.000261798015
+                },
+                "excluded_points": {},
+                "rejected_intervals": [
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -53.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.87 and free-slope intersection -9.22 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -52.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.85 and free-slope intersection -9.52 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -51.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.83 and free-slope intersection -9.87 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -50.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.82 and free-slope intersection -10.43 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -49.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.81 and free-slope intersection -10.62 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -48.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.81 and free-slope intersection -10.80 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -55.0,
+                      -52.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.82 and free-slope intersection -9.99 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -55.0,
+                      -51.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.80 and free-slope intersection -10.27 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -54.0,
+                      -51.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.78 and free-slope intersection -10.75 dBm disagree"
+                  }
+                ],
+                "interval_dbm": [
+                  -56.0,
+                  -36.0
+                ],
+                "n_points": 21,
+                "slope_fund": 0.998292165,
+                "slope_im3": 2.97715447,
+                "residual_fund_db": 0.0150836859,
+                "residual_im3_db": 0.233449053,
+                "iip3_dbm": -11.7476708,
+                "iip3_free_slope_dbm": -11.3817963,
+                "per_point_iip3_dbm": [
+                  -11.9738235,
+                  -11.8960235,
+                  -11.8074324,
+                  -11.8080569,
+                  -11.7560943,
+                  -11.7426159,
+                  -11.7874337,
+                  -11.7453128,
+                  -11.747916,
+                  -11.7351591,
+                  -11.7362497,
+                  -11.7259511,
+                  -11.7286216,
+                  -11.7173425,
+                  -11.7062644,
+                  -11.7016284,
+                  -11.6976785,
+                  -11.687095,
+                  -11.677386,
+                  -11.6666503,
+                  -11.6563503
+                ],
+                "extrapolation_db": 24.2523292,
+                "status": "ok"
+              },
+              "high": {
+                "baseline": {
+                  "first_index": 0,
+                  "n_points": 3,
+                  "pin_dbm": [
+                    -56.0,
+                    -55.0,
+                    -54.0
+                  ],
+                  "gain_db": 16.3689912,
+                  "spread_db": 0.000265287328
+                },
+                "excluded_points": {},
+                "rejected_intervals": [],
+                "interval_dbm": [
+                  -56.0,
+                  -36.0
+                ],
+                "n_points": 21,
+                "slope_fund": 0.998302605,
+                "slope_im3": 2.99348818,
+                "residual_fund_db": 0.0149546965,
+                "residual_im3_db": 0.11435733,
+                "iip3_dbm": -10.9760527,
+                "iip3_free_slope_dbm": -10.8915391,
+                "per_point_iip3_dbm": [
+                  -10.9900519,
+                  -10.9546393,
+                  -10.9641632,
+                  -10.9907357,
+                  -10.9771786,
+                  -11.0033885,
+                  -10.9710737,
+                  -11.0021319,
+                  -11.0157556,
+                  -11.0007795,
+                  -10.9979304,
+                  -11.0026185,
+                  -10.9906416,
+                  -10.9898708,
+                  -10.9866382,
+                  -10.9759101,
+                  -10.9649718,
+                  -10.9547152,
+                  -10.9397683,
+                  -10.921864,
+                  -10.9022792
+                ],
+                "extrapolation_db": 25.0239473,
+                "status": "ok"
+              }
+            },
+            "sideband_spread_db": 0.771618089,
+            "convention": "per-tone available input power at the 50 ohm source; lower of the two sidebands"
+          },
+          "first_violation": null
+        }
+      },
+      "gates": {
+        "G_dc": true,
+        "G_gain": true,
+        "G_base": true,
+        "failed": [],
+        "gain_loss_db": {
+          "low": 4.36745714,
+          "mid": 4.34841474,
+          "high": 3.8045983
+        },
+        "dc_window_v": [
+          0.4,
+          1.37
+        ]
+      },
+      "metrics": {
+        "stress_free_pin_dbm": {
+          "low": -28.0,
+          "mid": -28.0,
+          "high": -26.0
+        },
+        "worst_stress_free_pin_dbm": -28.0,
+        "headroom_gain_db": 10.0,
+        "net_output_headroom_db": 5.63254286
+      },
+      "validity": {
+        "V_conv": true,
+        "failed": []
+      },
+      "small_signal": {
+        "measurements": {
+          "s11_db_lo": -6.275773,
+          "s11_db_mid": -27.665494,
+          "s11_db_hi": -5.00533508,
+          "s21_db_lo": 16.7827702,
+          "s21_db_mid": 18.0066095,
+          "s21_db_hi": 16.0149896,
+          "s22_db_lo": -6.23927827,
+          "s22_db_mid": -8.49088603,
+          "s22_db_hi": -8.62817938,
+          "s12_db_lo": -54.5078905,
+          "s12_db_mid": -51.6823917,
+          "s12_db_hi": -52.2047063,
+          "k_lo": 22.6180321,
+          "k_mid": 20.7118804,
+          "k_hi": 19.2506872,
+          "nf_db_lo": 3.34033783,
+          "nf_db_mid": 3.57524536,
+          "nf_db_hi": 3.98205819,
+          "q1_vce": 1.33047794,
+          "q1_vbe": 0.809385818,
+          "q1_ic": 0.00157853148,
+          "q1_icfrac": 0.0657721449,
+          "q1_dtj": 3.67170342,
+          "q1_ft": 183.642942,
+          "q2_vce": 1.16478082,
+          "q2_vbe": 0.809788862,
+          "q2_ic": 0.00157654156,
+          "q2_icfrac": 0.0656892317,
+          "q2_dtj": 3.21086559,
+          "q2_ft": 185.440363,
+          "qr_vce": 0.812885855,
+          "qr_vbe": 0.812885855,
+          "qr_ic": 0.00020812016,
+          "qr_icfrac": 0.0693733867,
+          "qr_dtj": 1.92291508,
+          "qr_ft": 171.542452,
+          "idd_ma": 2.08263232,
+          "pdc_mw": 5.20658079,
+          "d_lo": 0.247500967,
+          "mu_lo": 2.00875701,
+          "msg_db_lo": 71.2906607,
+          "d_mid": 0.0347734208,
+          "mu_mid": 2.52357558,
+          "msg_db_mid": 69.6890012,
+          "d_hi": 0.223623087,
+          "mu_hi": 2.62973187,
+          "msg_db_hi": 68.2196959,
+          "sw_n": 201.0,
+          "sw_kmin": 13.0004076,
+          "sw_fkmin_ghz": 61.6595002,
+          "sw_kmin_hi": 13.0004076,
+          "sw_kmin_lo": 23.0311362,
+          "sw_dmax": 0.95003993,
+          "sw_mumin": 1.00000242,
+          "sw_nunst": 0.0
+        },
+        "vs_baseline": {
+          "s21_db": {
+            "s21_db_lo": -4.29567878,
+            "s21_db_mid": -4.35133755,
+            "s21_db_hi": -3.70983929
+          },
+          "s11_db": {
+            "s11_db_lo": -0.084707254,
+            "s11_db_mid": -4.36050945,
+            "s11_db_hi": -0.284736128
+          },
+          "s22_db": {
+            "s22_db_lo": 2.73298819,
+            "s22_db_mid": 17.6732299,
+            "s22_db_hi": 1.19579014
+          },
+          "s12_db": {
+            "s12_db_lo": -4.32139715,
+            "s12_db_mid": -4.37670283,
+            "s12_db_hi": -3.73491976
+          },
+          "msg_db": {
+            "msg_db_lo": 0.02571837,
+            "msg_db_mid": 0.025365279,
+            "msg_db_hi": 0.025080472
+          },
+          "nf_db": {
+            "nf_db_lo": 0.0819888703,
+            "nf_db_mid": 0.0567410614,
+            "nf_db_hi": 0.0712940088
+          },
+          "k": {
+            "k_lo": 12.9848849,
+            "k_mid": 11.909528,
+            "k_hi": 11.0829629
+          },
+          "delta": {
+            "d_lo": 0.0420267528,
+            "d_mid": -0.0204548581,
+            "d_hi": 0.0280418118
+          },
+          "mu": {
+            "mu_lo": -0.603624579,
+            "mu_mid": -6.75348339,
+            "mu_hi": -0.0354613092
+          },
+          "stability_sweep": {
+            "sw_n": 0.0,
+            "sw_kmin": 7.24708535,
+            "sw_fkmin_ghz": 10.3733618,
+            "sw_kmin_hi": 7.24708535,
+            "sw_kmin_lo": 13.217675,
+            "sw_dmax": 7.574e-07,
+            "sw_mumin": 1.3785e-06,
+            "sw_nunst": 0.0
+          }
+        }
+      }
+    },
+    "C05": {
+      "candidate": {
+        "id": "C05",
+        "r1b_ohm": 1350,
+        "r2b_ohm": 7150,
+        "rd_ohm": 200
+      },
+      "dc": {
+        "vc1_v": 1.29121168,
+        "vb2_v": 2.10071134,
+        "voc_v": 2.5,
+        "ve1_v": 0.0047152131,
+        "vce_q1_v": 1.28649647,
+        "vce_q2_v": 1.20878832,
+        "vbe_q2_v": 0.809499652,
+        "vbe_q1_v": 0.809332229,
+        "ic_q1_ma_from_re1": 1.5717377,
+        "idd_ma": 2.07389183
+      },
+      "placements": {
+        "low": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -30.0,
+            "bracket": null,
+            "reason": "sweep step at -28 dBm is rejected (outside DUT operating limits: q2 V_CE peak 1.4411 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 17.0866648,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -28.0,
+            "violations": [
+              "q2 V_CE peak 1.4411 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q2 V_CE peak",
+            "stress_free_pin_dbm": -30.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.0697455851,
+          "gap_to_row8_target_db": 5.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.65004628,
+                "min": -0.00126087724
+              },
+              "q2": {
+                "max": 0.686626666,
+                "min": -0.00716704549
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.21850122,
+            "-54": 1.22100501,
+            "-52": 1.22415008,
+            "-50": 1.22810013,
+            "-48": 1.23305776,
+            "-46": 1.23927236,
+            "-44": 1.2470649,
+            "-42": 1.25681219,
+            "-40": 1.2690036,
+            "-38": 1.28422355,
+            "-36": 1.30322435,
+            "-34": 1.32694376,
+            "-32": 1.35661864,
+            "-30": 1.39390609,
+            "-28": 1.44107318,
+            "-26": 1.50120592,
+            "-24": 1.57852279,
+            "-22": 1.67941413,
+            "-20": 1.81358885,
+            "-18": 1.9946962,
+            "-16": 2.24435765
+          }
+        },
+        "mid": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -30.0,
+            "bracket": null,
+            "reason": "sweep step at -28 dBm is rejected (outside DUT operating limits: q2 V_CE peak 1.4337 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 17.9487214,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -28.0,
+            "violations": [
+              "q2 V_CE peak 1.4337 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q2 V_CE peak",
+            "stress_free_pin_dbm": -30.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.101097299,
+          "gap_to_row8_target_db": 5.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.71835938,
+                "min": -0.00174698578
+              },
+              "q2": {
+                "max": 0.706261397,
+                "min": -0.00675483482
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.2186971,
+            "-54": 1.22124648,
+            "-52": 1.22444625,
+            "-50": 1.22845853,
+            "-48": 1.23348511,
+            "-46": 1.23977299,
+            "-44": 1.24763196,
+            "-42": 1.25742669,
+            "-40": 1.26960005,
+            "-38": 1.28470213,
+            "-36": 1.30337033,
+            "-34": 1.3263784,
+            "-32": 1.35472125,
+            "-30": 1.38977508,
+            "-28": 1.43372574,
+            "-26": 1.49012434,
+            "-24": 1.56469482,
+            "-22": 1.66636057,
+            "-20": 1.80778508,
+            "-18": 2.00289601,
+            "-16": 2.25581451
+          }
+        },
+        "high": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -28.0,
+            "bracket": null,
+            "reason": "sweep step at -26 dBm is rejected (outside DUT operating limits: q2 V_CE peak 1.4225 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 16.3614161,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -26.0,
+            "violations": [
+              "q2 V_CE peak 1.4225 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q2 V_CE peak",
+            "stress_free_pin_dbm": -28.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.0457957363,
+          "gap_to_row8_target_db": 3.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.663667898,
+                "min": -0.00138154612
+              },
+              "q2": {
+                "max": 0.622023112,
+                "min": -0.00458115916
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.21648393,
+            "-54": 1.21846328,
+            "-52": 1.22095017,
+            "-50": 1.22406978,
+            "-48": 1.22798455,
+            "-46": 1.23287826,
+            "-44": 1.23899568,
+            "-42": 1.24662884,
+            "-40": 1.25612008,
+            "-38": 1.26789853,
+            "-36": 1.28244821,
+            "-34": 1.30031688,
+            "-32": 1.32221897,
+            "-30": 1.34890692,
+            "-28": 1.38155458,
+            "-26": 1.42250396,
+            "-24": 1.4766311,
+            "-22": 1.55276381,
+            "-20": 1.6643685,
+            "-18": 1.82710682,
+            "-16": 2.04384288
+          }
+        }
+      },
+      "convergence": {
+        "low": [
+          {
+            "variant": "half_step",
+            "estimator": {
+              "estimator": "p1db",
+              "tol_db": 0.1,
+              "base_status": "bounded",
+              "other_status": "bounded",
+              "ok": true,
+              "delta_db": 0.0,
+              "reason": ""
+            },
+            "pointwise_fundamental": {
+              "p_f0_dbm": {
+                "max_abs_delta_db": 0.00374689877,
+                "n_compared": 3,
+                "n_inconsistent": 0
+              }
+            },
+            "pointwise_im3": {},
+            "pointwise_ok": true,
+            "ok": true
+          },
+          {
+            "variant": "double_window",
+            "estimator": {
+              "estimator": "p1db",
+              "tol_db": 0.1,
+              "base_status": "bounded",
+              "other_status": "bounded",
+              "ok": true,
+              "delta_db": 0.0,
+              "reason": ""
+            },
+            "pointwise_fundamental": {
+              "p_f0_dbm": {
+                "max_abs_delta_db": 2.25977378e-05,
+                "n_compared": 3,
+                "n_inconsistent": 0
+              }
+            },
+            "pointwise_im3": {},
+            "pointwise_ok": true,
+            "ok": true
+          }
+        ],
+        "mid": [
+          {
+            "variant": "half_step",
+            "estimator": {
+              "estimator": "p1db",
+              "tol_db": 0.1,
+              "base_status": "bounded",
+              "other_status": "bounded",
+              "ok": true,
+              "delta_db": 0.0,
+              "reason": ""
+            },
+            "pointwise_fundamental": {
+              "p_f0_dbm": {
+                "max_abs_delta_db": 0.00540148142,
+                "n_compared": 3,
+                "n_inconsistent": 0
+              }
+            },
+            "pointwise_im3": {},
+            "pointwise_ok": true,
+            "ok": true
+          },
+          {
+            "variant": "double_window",
+            "estimator": {
+              "estimator": "p1db",
+              "tol_db": 0.1,
+              "base_status": "bounded",
+              "other_status": "bounded",
+              "ok": true,
+              "delta_db": 0.0,
+              "reason": ""
+            },
+            "pointwise_fundamental": {
+              "p_f0_dbm": {
+                "max_abs_delta_db": 3.41103313e-05,
+                "n_compared": 3,
+                "n_inconsistent": 0
+              }
+            },
+            "pointwise_im3": {},
+            "pointwise_ok": true,
+            "ok": true
+          }
+        ],
+        "high": [
+          {
+            "variant": "half_step",
+            "estimator": {
+              "estimator": "p1db",
+              "tol_db": 0.1,
+              "base_status": "bounded",
+              "other_status": "bounded",
+              "ok": true,
+              "delta_db": 0.0,
+              "reason": ""
+            },
+            "pointwise_fundamental": {
+              "p_f0_dbm": {
+                "max_abs_delta_db": 0.0140624538,
+                "n_compared": 3,
+                "n_inconsistent": 0
+              }
+            },
+            "pointwise_im3": {},
+            "pointwise_ok": true,
+            "ok": true
+          },
+          {
+            "variant": "double_window",
+            "estimator": {
+              "estimator": "p1db",
+              "tol_db": 0.1,
+              "base_status": "bounded",
+              "other_status": "bounded",
+              "ok": true,
+              "delta_db": 0.0,
+              "reason": ""
+            },
+            "pointwise_fundamental": {
+              "p_f0_dbm": {
+                "max_abs_delta_db": 8.41556133e-06,
+                "n_compared": 3,
+                "n_inconsistent": 0
+              }
+            },
+            "pointwise_im3": {},
+            "pointwise_ok": true,
+            "ok": true
+          }
+        ]
+      },
+      "two_tone": {
+        "low": {
+          "iip3": {
+            "status": "ok",
+            "iip3_dbm": -13.0081085,
+            "sidebands": {
+              "low": {
+                "baseline": {
+                  "first_index": 0,
+                  "n_points": 3,
+                  "pin_dbm": [
+                    -56.0,
+                    -55.0,
+                    -54.0
+                  ],
+                  "gain_db": 17.0179378,
+                  "spread_db": 0.000422840218
+                },
+                "excluded_points": {},
+                "rejected_intervals": [],
+                "interval_dbm": [
+                  -56.0,
+                  -36.0
+                ],
+                "n_points": 21,
+                "slope_fund": 0.99725063,
+                "slope_im3": 2.97037993,
+                "residual_fund_db": 0.0260006767,
+                "residual_im3_db": 0.157101343,
+                "iip3_dbm": -12.3301924,
+                "iip3_free_slope_dbm": -11.8716664,
+                "per_point_iip3_dbm": [
+                  -12.4653751,
+                  -12.4303664,
+                  -12.3804526,
+                  -12.4369929,
+                  -12.4184442,
+                  -12.379704,
+                  -12.3759928,
+                  -12.3629954,
+                  -12.3769223,
+                  -12.3593371,
+                  -12.3537484,
+                  -12.345887,
+                  -12.3284857,
+                  -12.3147907,
+                  -12.300769,
+                  -12.2851918,
+                  -12.2612996,
+                  -12.2386162,
+                  -12.2129627,
+                  -12.175418,
+                  -12.1302886
+                ],
+                "extrapolation_db": 23.6698076,
+                "status": "ok"
+              },
+              "high": {
+                "baseline": {
+                  "first_index": 0,
+                  "n_points": 3,
+                  "pin_dbm": [
+                    -56.0,
+                    -55.0,
+                    -54.0
+                  ],
+                  "gain_db": 17.1404946,
+                  "spread_db": 0.000441787562
+                },
+                "excluded_points": {},
+                "rejected_intervals": [
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -53.0
+                    ],
+                    "reason": "fixed-slope IIP3 -12.94 and free-slope intersection -15.97 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -52.0
+                    ],
+                    "reason": "fixed-slope IIP3 -12.97 and free-slope intersection -15.52 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -51.0
+                    ],
+                    "reason": "fixed-slope IIP3 -12.99 and free-slope intersection -15.06 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -50.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.00 and free-slope intersection -14.77 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -49.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.02 and free-slope intersection -14.48 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -48.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.03 and free-slope intersection -14.27 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -47.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.03 and free-slope intersection -14.08 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -36.0
+                    ],
+                    "reason": "residual 0.528 dB too large"
+                  },
+                  {
+                    "interval_dbm": [
+                      -55.0,
+                      -52.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.01 and free-slope intersection -14.91 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -55.0,
+                      -51.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.03 and free-slope intersection -14.51 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -55.0,
+                      -50.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.04 and free-slope intersection -14.32 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -55.0,
+                      -49.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.05 and free-slope intersection -14.08 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -54.0,
+                      -51.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.04 and free-slope intersection -14.61 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -54.0,
+                      -50.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.06 and free-slope intersection -14.31 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -42.0,
+                      -36.0
+                    ],
+                    "reason": "fixed-slope IIP3 -12.91 and free-slope intersection -11.86 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -41.0,
+                      -37.0
+                    ],
+                    "reason": "fixed-slope IIP3 -12.91 and free-slope intersection -11.91 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -41.0,
+                      -36.0
+                    ],
+                    "reason": "fixed-slope IIP3 -12.89 and free-slope intersection -11.77 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -40.0,
+                      -37.0
+                    ],
+                    "reason": "fixed-slope IIP3 -12.90 and free-slope intersection -11.82 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -40.0,
+                      -36.0
+                    ],
+                    "reason": "fixed-slope IIP3 -12.87 and free-slope intersection -11.66 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -39.0,
+                      -36.0
+                    ],
+                    "reason": "fixed-slope IIP3 -12.85 and free-slope intersection -11.51 dBm disagree"
+                  }
+                ],
+                "interval_dbm": [
+                  -56.0,
+                  -37.0
+                ],
+                "n_points": 20,
+                "slope_fund": 0.99758545,
+                "slope_im3": 2.98991457,
+                "residual_fund_db": 0.0203036106,
+                "residual_im3_db": 0.49254708,
+                "iip3_dbm": -13.0081085,
+                "iip3_free_slope_dbm": -12.8791578,
+                "per_point_iip3_dbm": [
+                  -12.8032076,
+                  -12.9536244,
+                  -12.9464145,
+                  -13.0671184,
+                  -13.0773155,
+                  -13.0813118,
+                  -13.1056818,
+                  -13.0981791,
+                  -13.1043712,
+                  -13.1033076,
+                  -13.0880967,
+                  -13.0753331,
+                  -13.0522255,
+                  -13.0273345,
+                  -13.0063084,
+                  -12.9815087,
+                  -12.9529138,
+                  -12.9226398,
+                  -12.8840761,
+                  -12.8312021
+                ],
+                "extrapolation_db": 23.9918915,
+                "status": "ok"
+              }
+            },
+            "sideband_spread_db": 0.677916141,
+            "convention": "per-tone available input power at the 50 ohm source; lower of the two sidebands"
+          },
+          "first_violation": null
+        },
+        "mid": {
+          "iip3": {
+            "status": "ok",
+            "iip3_dbm": -13.5457795,
+            "sidebands": {
+              "low": {
+                "baseline": {
+                  "first_index": 0,
+                  "n_points": 3,
+                  "pin_dbm": [
+                    -56.0,
+                    -55.0,
+                    -54.0
+                  ],
+                  "gain_db": 17.9659086,
+                  "spread_db": 0.00059924805
+                },
+                "excluded_points": {},
+                "rejected_intervals": [],
+                "interval_dbm": [
+                  -56.0,
+                  -36.0
+                ],
+                "n_points": 21,
+                "slope_fund": 0.996032587,
+                "slope_im3": 2.97721952,
+                "residual_fund_db": 0.0360697294,
+                "residual_im3_db": 0.205369211,
+                "iip3_dbm": -13.5175597,
+                "iip3_free_slope_dbm": -13.2091111,
+                "per_point_iip3_dbm": [
+                  -13.5901013,
+                  -13.5843593,
+                  -13.5130079,
+                  -13.5642596,
+                  -13.5774478,
+                  -13.5707447,
+                  -13.564879,
+                  -13.5551211,
+                  -13.5650463,
+                  -13.558363,
+                  -13.5489255,
+                  -13.5448546,
+                  -13.533822,
+                  -13.5262487,
+                  -13.5107662,
+                  -13.4952963,
+                  -13.4733773,
+                  -13.4482884,
+                  -13.4196808,
+                  -13.3853195,
+                  -13.3388446
+                ],
+                "extrapolation_db": 22.4824403,
+                "status": "ok"
+              },
+              "high": {
+                "baseline": {
+                  "first_index": 0,
+                  "n_points": 3,
+                  "pin_dbm": [
+                    -56.0,
+                    -55.0,
+                    -54.0
+                  ],
+                  "gain_db": 17.9436977,
+                  "spread_db": 0.000619695012
+                },
+                "excluded_points": {},
+                "rejected_intervals": [
+                  {
+                    "interval_dbm": [
+                      -55.0,
+                      -52.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.66 and free-slope intersection -12.32 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -55.0,
+                      -51.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.65 and free-slope intersection -12.58 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -54.0,
+                      -51.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.64 and free-slope intersection -11.89 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -54.0,
+                      -50.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.64 and free-slope intersection -12.47 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -43.0,
+                      -36.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.43 and free-slope intersection -12.42 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -42.0,
+                      -36.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.42 and free-slope intersection -12.32 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -41.0,
+                      -37.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.43 and free-slope intersection -12.38 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -41.0,
+                      -36.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.40 and free-slope intersection -12.22 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -40.0,
+                      -37.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.41 and free-slope intersection -12.27 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -40.0,
+                      -36.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.38 and free-slope intersection -12.10 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -39.0,
+                      -36.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.36 and free-slope intersection -11.96 dBm disagree"
+                  }
+                ],
+                "interval_dbm": [
+                  -56.0,
+                  -36.0
+                ],
+                "n_points": 21,
+                "slope_fund": 0.9959739,
+                "slope_im3": 2.96141923,
+                "residual_fund_db": 0.0365075251,
+                "residual_im3_db": 0.243609713,
+                "iip3_dbm": -13.5457795,
+                "iip3_free_slope_dbm": -12.975199,
+                "per_point_iip3_dbm": [
+                  -13.6962446,
+                  -13.6680325,
+                  -13.7252132,
+                  -13.6615332,
+                  -13.5809478,
+                  -13.6078865,
+                  -13.6043452,
+                  -13.6036761,
+                  -13.5826519,
+                  -13.5845023,
+                  -13.5694589,
+                  -13.5634135,
+                  -13.5492668,
+                  -13.5389184,
+                  -13.5210906,
+                  -13.4978134,
+                  -13.4699039,
+                  -13.4348744,
+                  -13.3925389,
+                  -13.3396028,
+                  -13.2694551
+                ],
+                "extrapolation_db": 22.4542205,
+                "status": "ok"
+              }
+            },
+            "sideband_spread_db": 0.0282198244,
+            "convention": "per-tone available input power at the 50 ohm source; lower of the two sidebands"
+          },
+          "first_violation": null
+        },
+        "high": {
+          "iip3": {
+            "status": "ok",
+            "iip3_dbm": -11.6728604,
+            "sidebands": {
+              "low": {
+                "baseline": {
+                  "first_index": 0,
+                  "n_points": 3,
+                  "pin_dbm": [
+                    -56.0,
+                    -55.0,
+                    -54.0
+                  ],
+                  "gain_db": 16.472566,
+                  "spread_db": 0.000265760522
+                },
+                "excluded_points": {},
+                "rejected_intervals": [
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -53.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.75 and free-slope intersection -9.49 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -52.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.73 and free-slope intersection -10.06 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -51.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.73 and free-slope intersection -10.63 dBm disagree"
+                  }
+                ],
+                "interval_dbm": [
+                  -56.0,
+                  -36.0
+                ],
+                "n_points": 21,
+                "slope_fund": 0.998298841,
+                "slope_im3": 2.98355916,
+                "residual_fund_db": 0.0150241738,
+                "residual_im3_db": 0.216242672,
+                "iip3_dbm": -11.6728604,
+                "iip3_free_slope_dbm": -11.4179966,
+                "per_point_iip3_dbm": [
+                  -11.8584017,
+                  -11.732669,
+                  -11.681856,
+                  -11.7080129,
+                  -11.680719,
+                  -11.7049042,
+                  -11.6870493,
+                  -11.6862043,
+                  -11.6815445,
+                  -11.6773324,
+                  -11.6749763,
+                  -11.6614895,
+                  -11.6640642,
+                  -11.6556528,
+                  -11.6448039,
+                  -11.6415326,
+                  -11.6337859,
+                  -11.6265195,
+                  -11.6188272,
+                  -11.6093988,
+                  -11.6003253
+                ],
+                "extrapolation_db": 24.3271396,
+                "status": "ok"
+              },
+              "high": {
+                "baseline": {
+                  "first_index": 0,
+                  "n_points": 3,
+                  "pin_dbm": [
+                    -56.0,
+                    -55.0,
+                    -54.0
+                  ],
+                  "gain_db": 16.3022157,
+                  "spread_db": 0.000256871332
+                },
+                "excluded_points": {},
+                "rejected_intervals": [
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -53.0
+                    ],
+                    "reason": "fixed-slope IIP3 -10.98 and free-slope intersection -8.88 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -52.0
+                    ],
+                    "reason": "fixed-slope IIP3 -10.97 and free-slope intersection -9.71 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -51.0
+                    ],
+                    "reason": "fixed-slope IIP3 -10.96 and free-slope intersection -9.89 dBm disagree"
+                  }
+                ],
+                "interval_dbm": [
+                  -56.0,
+                  -36.0
+                ],
+                "n_points": 21,
+                "slope_fund": 0.998309827,
+                "slope_im3": 2.9889239,
+                "residual_fund_db": 0.0148866899,
+                "residual_im3_db": 0.24154208,
+                "iip3_dbm": -10.9382027,
+                "iip3_free_slope_dbm": -10.7728831,
+                "per_point_iip3_dbm": [
+                  -11.1096045,
+                  -10.9042329,
+                  -10.9521551,
+                  -10.9403694,
+                  -10.9487951,
+                  -10.9128594,
+                  -10.9440199,
+                  -10.9637922,
+                  -10.959845,
+                  -10.9609151,
+                  -10.9475359,
+                  -10.9484072,
+                  -10.94019,
+                  -10.9389211,
+                  -10.935486,
+                  -10.9286124,
+                  -10.9183225,
+                  -10.9081221,
+                  -10.895791,
+                  -10.8809628,
+                  -10.8633173
+                ],
+                "extrapolation_db": 25.0617973,
+                "status": "ok"
+              }
+            },
+            "sideband_spread_db": 0.73465773,
+            "convention": "per-tone available input power at the 50 ohm source; lower of the two sidebands"
+          },
+          "first_violation": null
+        }
+      },
+      "gates": {
+        "G_dc": true,
+        "G_gain": true,
+        "G_base": true,
+        "failed": [],
+        "gain_loss_db": {
+          "low": 4.39675636,
+          "mid": 4.39756395,
+          "high": 3.87124156
+        },
+        "dc_window_v": [
+          0.4,
+          1.37
+        ]
+      },
+      "metrics": {
+        "stress_free_pin_dbm": {
+          "low": -30.0,
+          "mid": -30.0,
+          "high": -28.0
+        },
+        "worst_stress_free_pin_dbm": -30.0,
+        "headroom_gain_db": 8.0,
+        "net_output_headroom_db": 3.60243605
+      },
+      "validity": {
+        "V_conv": true,
+        "failed": []
+      },
+      "small_signal": {
+        "measurements": {
+          "s11_db_lo": -6.34253973,
+          "s11_db_mid": -26.8131585,
+          "s11_db_hi": -4.96082481,
+          "s21_db_lo": 16.7552305,
+          "s21_db_mid": 17.9574977,
+          "s21_db_hi": 15.9473544,
+          "s22_db_lo": -6.23379116,
+          "s22_db_mid": -8.48701295,
+          "s22_db_hi": -8.63783115,
+          "s12_db_lo": -54.5218218,
+          "s12_db_mid": -51.7180558,
+          "s12_db_hi": -52.2590236,
+          "k_lo": 22.8206245,
+          "k_mid": 20.904461,
+          "k_hi": 19.4355301,
+          "nf_db_lo": 3.34120116,
+          "nf_db_mid": 3.57628855,
+          "nf_db_hi": 3.98436693,
+          "q1_vce": 1.28649647,
+          "q1_vbe": 0.809332251,
+          "q1_ic": 0.00156981817,
+          "q1_icfrac": 0.0654090905,
+          "q1_dtj": 3.53077869,
+          "q1_ft": 182.687661,
+          "q2_vce": 1.20878833,
+          "q2_vbe": 0.809499672,
+          "q2_ic": 0.00156785458,
+          "q2_icfrac": 0.0653272742,
+          "q2_dtj": 3.31358995,
+          "q2_ft": 184.88516,
+          "qr_vce": 0.81288024,
+          "qr_vbe": 0.81288024,
+          "qr_ic": 0.000208084455,
+          "qr_icfrac": 0.0693614848,
+          "qr_dtj": 1.92257262,
+          "qr_ft": 171.521427,
+          "idd_ma": 2.07388888,
+          "pdc_mw": 5.18472221,
+          "d_lo": 0.245766224,
+          "mu_lo": 2.00764713,
+          "msg_db_lo": 71.2770523,
+          "d_mid": 0.0356854161,
+          "mu_mid": 2.52390779,
+          "msg_db_mid": 69.6755535,
+          "d_hi": 0.224243809,
+          "mu_hi": 2.63366348,
+          "msg_db_hi": 68.206378,
+          "sw_n": 201.0,
+          "sw_kmin": 13.1490967,
+          "sw_fkmin_ghz": 61.6595002,
+          "sw_kmin_hi": 13.1490967,
+          "sw_kmin_lo": 23.2358873,
+          "sw_dmax": 0.950033761,
+          "sw_mumin": 1.00000242,
+          "sw_nunst": 0.0
+        },
+        "vs_baseline": {
+          "s21_db": {
+            "s21_db_lo": -4.32321846,
+            "s21_db_mid": -4.40044937,
+            "s21_db_hi": -3.77747448
+          },
+          "s11_db": {
+            "s11_db_lo": -0.151473982,
+            "s11_db_mid": -3.5081739,
+            "s11_db_hi": -0.240225864
+          },
+          "s22_db": {
+            "s22_db_lo": 2.73847529,
+            "s22_db_mid": 17.677103,
+            "s22_db_hi": 1.18613837
+          },
+          "s12_db": {
+            "s12_db_lo": -4.33532845,
+            "s12_db_mid": -4.41236694,
+            "s12_db_hi": -3.78923707
+          },
+          "msg_db": {
+            "msg_db_lo": 0.01210999,
+            "msg_db_mid": 0.011917571,
+            "msg_db_hi": 0.011762593
+          },
+          "nf_db": {
+            "nf_db_lo": 0.0828522053,
+            "nf_db_mid": 0.0577842518,
+            "nf_db_hi": 0.0736027548
+          },
+          "k": {
+            "k_lo": 13.1874773,
+            "k_mid": 12.1021086,
+            "k_hi": 11.2678058
+          },
+          "delta": {
+            "d_lo": 0.0402920096,
+            "d_mid": -0.0195428628,
+            "d_hi": 0.0286625339
+          },
+          "mu": {
+            "mu_lo": -0.604734461,
+            "mu_mid": -6.75315117,
+            "mu_hi": -0.031529692
+          },
+          "stability_sweep": {
+            "sw_n": 0.0,
+            "sw_kmin": 7.39577443,
+            "sw_fkmin_ghz": 10.3733618,
+            "sw_kmin_hi": 7.39577443,
+            "sw_kmin_lo": 13.4224261,
+            "sw_dmax": -5.41123e-06,
+            "sw_mumin": 1.3786e-06,
+            "sw_nunst": 0.0
+          }
+        }
+      }
+    },
+    "C00": {
+      "candidate": {
+        "id": "C00",
+        "r1b_ohm": 1500,
+        "r2b_ohm": 7000,
+        "rd_ohm": 465
+      },
+      "dc": {
+        "vc1_v": 1.24720023,
+        "vb2_v": 2.05643888,
+        "voc_v": 2.5,
+        "ve1_v": 0.00469338151,
+        "vce_q1_v": 1.24250684,
+        "vce_q2_v": 1.25279977,
+        "vbe_q2_v": 0.809238652,
+        "vbe_q1_v": 0.809304286,
+        "ic_q1_ma_from_re1": 1.5644605,
+        "idd_ma": 2.06656348
+      },
+      "placements": {
+        "low": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -38.0,
+            "bracket": null,
+            "reason": "sweep step at -36 dBm is rejected (outside DUT operating limits: q2 V_CE peak 1.4248 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 21.4834212,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -36.0,
+            "violations": [
+              "q2 V_CE peak 1.4248 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q2 V_CE peak",
+            "stress_free_pin_dbm": -38.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.0128203679,
+          "gap_to_row8_target_db": 13.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.636607525,
+                "min": -0.00163447634
+              },
+              "q2": {
+                "max": 0.800877178,
+                "min": -0.0152886568
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.27014349,
+            "-54": 1.27462715,
+            "-52": 1.28026915,
+            "-50": 1.28736615,
+            "-48": 1.2962902,
+            "-46": 1.30751634,
+            "-44": 1.32162668,
+            "-42": 1.33936528,
+            "-40": 1.36164364,
+            "-38": 1.38962514,
+            "-36": 1.42477117,
+            "-34": 1.4689506,
+            "-32": 1.52446798,
+            "-30": 1.59425955,
+            "-28": 1.68219636,
+            "-26": 1.79296311,
+            "-24": 1.93315057,
+            "-22": 2.11338412,
+            "-20": 2.3534719,
+            "-18": 2.68725453,
+            "-16": 3.11522145
+          }
+        },
+        "mid": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -38.0,
+            "bracket": null,
+            "reason": "sweep step at -36 dBm is rejected (outside DUT operating limits: q2 V_CE peak 1.4247 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 22.3462853,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -36.0,
+            "violations": [
+              "q2 V_CE peak 1.4247 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q2 V_CE peak",
+            "stress_free_pin_dbm": -38.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.0162382992,
+          "gap_to_row8_target_db": 13.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.678096829,
+                "min": -0.00190075494
+              },
+              "q2": {
+                "max": 0.727432771,
+                "min": -0.0112094177
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.27049221,
+            "-54": 1.27505575,
+            "-52": 1.28078963,
+            "-50": 1.28799262,
+            "-48": 1.29703355,
+            "-46": 1.30836855,
+            "-44": 1.32257839,
+            "-42": 1.34035619,
+            "-40": 1.3625687,
+            "-38": 1.39026481,
+            "-36": 1.42474259,
+            "-34": 1.46745553,
+            "-32": 1.52036021,
+            "-30": 1.58583928,
+            "-28": 1.66736365,
+            "-26": 1.77032644,
+            "-24": 1.90377739,
+            "-22": 2.08320741,
+            "-20": 2.31505024,
+            "-18": 2.59880046,
+            "-16": 2.93160919
+          }
+        },
+        "high": {
+          "p1db": {
+            "status": "bounded",
+            "p1db_in_dbm": null,
+            "p1db_in_dbm_gt": -36.0,
+            "bracket": null,
+            "reason": "sweep step at -34 dBm is rejected (outside DUT operating limits: q2 V_CE peak 1.4096 V > 1.4 V (row 17)); the 1 dB crossing is not bracketed by usable points"
+          },
+          "baseline_gain_db": 20.2326577,
+          "baseline_pin_dbm": [
+            -56.0,
+            -54.0,
+            -52.0
+          ],
+          "stress": {
+            "first_violation_pin_dbm": -34.0,
+            "violations": [
+              "q2 V_CE peak 1.4096 V > 1.4 V (row 17)"
+            ],
+            "limit_identity": "q2 V_CE peak",
+            "stress_free_pin_dbm": -36.0,
+            "violated": true
+          },
+          "gain_drop_at_stress_free_db": 0.00479809949,
+          "gap_to_row8_target_db": 11.0,
+          "current_diagnostics": {
+            "status": "unresolved",
+            "complete_envelope": false,
+            "extrema_frac_of_box": {
+              "q1": {
+                "max": 0.61640826,
+                "min": -0.00131592194
+              },
+              "q2": {
+                "max": 0.558686305,
+                "min": -0.00683544934
+              }
+            },
+            "points_over_box_pin_dbm": []
+          },
+          "vce_q2_peak_v": {
+            "-56": 1.26572608,
+            "-54": 1.26906226,
+            "-52": 1.27325343,
+            "-50": 1.27851668,
+            "-48": 1.28512475,
+            "-46": 1.29340919,
+            "-44": 1.30378876,
+            "-42": 1.31677869,
+            "-40": 1.33300277,
+            "-38": 1.35324983,
+            "-36": 1.37839441,
+            "-34": 1.40955816,
+            "-32": 1.44802847,
+            "-30": 1.49521491,
+            "-28": 1.55317169,
+            "-26": 1.62504927,
+            "-24": 1.717537,
+            "-22": 1.84378722,
+            "-20": 2.02531591,
+            "-18": 2.25374431,
+            "-16": 2.51935097
+          }
+        }
+      },
+      "convergence": {
+        "low": [
+          {
+            "variant": "half_step",
+            "estimator": {
+              "estimator": "p1db",
+              "tol_db": 0.1,
+              "base_status": "bounded",
+              "other_status": "bounded",
+              "ok": true,
+              "delta_db": 0.0,
+              "reason": ""
+            },
+            "pointwise_fundamental": {
+              "p_f0_dbm": {
+                "max_abs_delta_db": 0.00519198555,
+                "n_compared": 3,
+                "n_inconsistent": 0
+              }
+            },
+            "pointwise_im3": {},
+            "pointwise_ok": true,
+            "ok": true
+          },
+          {
+            "variant": "double_window",
+            "estimator": {
+              "estimator": "p1db",
+              "tol_db": 0.1,
+              "base_status": "bounded",
+              "other_status": "bounded",
+              "ok": true,
+              "delta_db": 0.0,
+              "reason": ""
+            },
+            "pointwise_fundamental": {
+              "p_f0_dbm": {
+                "max_abs_delta_db": 2.32878872e-05,
+                "n_compared": 3,
+                "n_inconsistent": 0
+              }
+            },
+            "pointwise_im3": {},
+            "pointwise_ok": true,
+            "ok": true
+          }
+        ],
+        "mid": [
+          {
+            "variant": "half_step",
+            "estimator": {
+              "estimator": "p1db",
+              "tol_db": 0.1,
+              "base_status": "bounded",
+              "other_status": "bounded",
+              "ok": true,
+              "delta_db": 0.0,
+              "reason": ""
+            },
+            "pointwise_fundamental": {
+              "p_f0_dbm": {
+                "max_abs_delta_db": 0.00676332541,
+                "n_compared": 3,
+                "n_inconsistent": 0
+              }
+            },
+            "pointwise_im3": {},
+            "pointwise_ok": true,
+            "ok": true
+          },
+          {
+            "variant": "double_window",
+            "estimator": {
+              "estimator": "p1db",
+              "tol_db": 0.1,
+              "base_status": "bounded",
+              "other_status": "bounded",
+              "ok": true,
+              "delta_db": 0.0,
+              "reason": ""
+            },
+            "pointwise_fundamental": {
+              "p_f0_dbm": {
+                "max_abs_delta_db": 0.000101547376,
+                "n_compared": 3,
+                "n_inconsistent": 0
+              }
+            },
+            "pointwise_im3": {},
+            "pointwise_ok": true,
+            "ok": true
+          }
+        ],
+        "high": [
+          {
+            "variant": "half_step",
+            "estimator": {
+              "estimator": "p1db",
+              "tol_db": 0.1,
+              "base_status": "bounded",
+              "other_status": "bounded",
+              "ok": true,
+              "delta_db": 0.0,
+              "reason": ""
+            },
+            "pointwise_fundamental": {
+              "p_f0_dbm": {
+                "max_abs_delta_db": 0.0163429711,
+                "n_compared": 3,
+                "n_inconsistent": 0
+              }
+            },
+            "pointwise_im3": {},
+            "pointwise_ok": true,
+            "ok": true
+          },
+          {
+            "variant": "double_window",
+            "estimator": {
+              "estimator": "p1db",
+              "tol_db": 0.1,
+              "base_status": "bounded",
+              "other_status": "bounded",
+              "ok": true,
+              "delta_db": 0.0,
+              "reason": ""
+            },
+            "pointwise_fundamental": {
+              "p_f0_dbm": {
+                "max_abs_delta_db": 2.20505536e-05,
+                "n_compared": 3,
+                "n_inconsistent": 0
+              }
+            },
+            "pointwise_im3": {},
+            "pointwise_ok": true,
+            "ok": true
+          }
+        ]
+      },
+      "two_tone": {
+        "low": {
+          "iip3": {
+            "status": "ok",
+            "iip3_dbm": -13.2871266,
+            "sidebands": {
+              "low": {
+                "baseline": {
+                  "first_index": 0,
+                  "n_points": 3,
+                  "pin_dbm": [
+                    -56.0,
+                    -55.0,
+                    -54.0
+                  ],
+                  "gain_db": 21.3995219,
+                  "spread_db": 0.000462064519
+                },
+                "excluded_points": {
+                  "-43": "outside DUT operating limits: q2 V_CE peak 1.4062 V > 1.4 V (row 17)",
+                  "-42": "outside DUT operating limits: q2 V_CE peak 1.4247 V > 1.4 V (row 17)",
+                  "-41": "outside DUT operating limits: q2 V_CE peak 1.4454 V > 1.4 V (row 17)",
+                  "-40": "outside DUT operating limits: q2 V_CE peak 1.4686 V > 1.4 V (row 17)",
+                  "-39": "outside DUT operating limits: q2 V_CE peak 1.4946 V > 1.4 V (row 17)",
+                  "-38": "outside DUT operating limits: q2 V_CE peak 1.5237 V > 1.4 V (row 17)",
+                  "-37": "outside DUT operating limits: q2 V_CE peak 1.5563 V > 1.4 V (row 17)",
+                  "-36": "outside DUT operating limits: q2 V_CE peak 1.5929 V > 1.4 V (row 17)"
+                },
+                "rejected_intervals": [
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -53.0
+                    ],
+                    "reason": "fixed-slope IIP3 -12.74 and free-slope intersection -10.86 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -52.0
+                    ],
+                    "reason": "fixed-slope IIP3 -12.72 and free-slope intersection -11.23 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -51.0
+                    ],
+                    "reason": "fixed-slope IIP3 -12.71 and free-slope intersection -11.47 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -50.0
+                    ],
+                    "reason": "fixed-slope IIP3 -12.71 and free-slope intersection -11.68 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -55.0,
+                      -52.0
+                    ],
+                    "reason": "fixed-slope IIP3 -12.71 and free-slope intersection -11.28 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -55.0,
+                      -51.0
+                    ],
+                    "reason": "fixed-slope IIP3 -12.70 and free-slope intersection -11.59 dBm disagree"
+                  }
+                ],
+                "interval_dbm": [
+                  -56.0,
+                  -44.0
+                ],
+                "n_points": 13,
+                "slope_fund": 0.999134236,
+                "slope_im3": 2.97239935,
+                "residual_fund_db": 0.00256897266,
+                "residual_im3_db": 0.0993111597,
+                "iip3_dbm": -12.6685977,
+                "iip3_free_slope_dbm": -12.1628112,
+                "per_point_iip3_dbm": [
+                  -12.7968686,
+                  -12.7855827,
+                  -12.6836237,
+                  -12.6873353,
+                  -12.6714356,
+                  -12.6574938,
+                  -12.6547516,
+                  -12.6296869,
+                  -12.6348087,
+                  -12.6275681,
+                  -12.6317571,
+                  -12.6210688,
+                  -12.6097891
+                ],
+                "extrapolation_db": 31.3314023,
+                "status": "ok"
+              },
+              "high": {
+                "baseline": {
+                  "first_index": 0,
+                  "n_points": 3,
+                  "pin_dbm": [
+                    -56.0,
+                    -55.0,
+                    -54.0
+                  ],
+                  "gain_db": 21.5467485,
+                  "spread_db": 0.000476057896
+                },
+                "excluded_points": {
+                  "-43": "outside DUT operating limits: q2 V_CE peak 1.4062 V > 1.4 V (row 17)",
+                  "-42": "outside DUT operating limits: q2 V_CE peak 1.4247 V > 1.4 V (row 17)",
+                  "-41": "outside DUT operating limits: q2 V_CE peak 1.4454 V > 1.4 V (row 17)",
+                  "-40": "outside DUT operating limits: q2 V_CE peak 1.4686 V > 1.4 V (row 17)",
+                  "-39": "outside DUT operating limits: q2 V_CE peak 1.4946 V > 1.4 V (row 17)",
+                  "-38": "outside DUT operating limits: q2 V_CE peak 1.5237 V > 1.4 V (row 17)",
+                  "-37": "outside DUT operating limits: q2 V_CE peak 1.5563 V > 1.4 V (row 17)",
+                  "-36": "outside DUT operating limits: q2 V_CE peak 1.5929 V > 1.4 V (row 17)"
+                },
+                "rejected_intervals": [
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -53.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.19 and free-slope intersection -15.83 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -52.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.21 and free-slope intersection -15.40 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -51.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.23 and free-slope intersection -15.04 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -50.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.25 and free-slope intersection -14.78 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -49.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.26 and free-slope intersection -14.56 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -48.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.27 and free-slope intersection -14.36 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -55.0,
+                      -52.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.24 and free-slope intersection -15.35 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -55.0,
+                      -51.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.26 and free-slope intersection -14.87 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -55.0,
+                      -50.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.27 and free-slope intersection -14.59 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -55.0,
+                      -49.0
+                    ],
+                    "reason": "fixed-slope IIP3 -13.28 and free-slope intersection -14.36 dBm disagree"
+                  }
+                ],
+                "interval_dbm": [
+                  -56.0,
+                  -44.0
+                ],
+                "n_points": 13,
+                "slope_fund": 0.999108994,
+                "slope_im3": 3.0315149,
+                "residual_fund_db": 0.00264229731,
+                "residual_im3_db": 0.184151089,
+                "iip3_dbm": -13.2871266,
+                "iip3_free_slope_dbm": -13.8724989,
+                "per_point_iip3_dbm": [
+                  -13.0986801,
+                  -13.1411163,
+                  -13.2339212,
+                  -13.2951419,
+                  -13.304439,
+                  -13.3171683,
+                  -13.3324555,
+                  -13.3358616,
+                  -13.3348029,
+                  -13.3438759,
+                  -13.3376954,
+                  -13.3390483,
+                  -13.3184397
+                ],
+                "extrapolation_db": 30.7128734,
+                "status": "ok"
+              }
+            },
+            "sideband_spread_db": 0.618528924,
+            "convention": "per-tone available input power at the 50 ohm source; lower of the two sidebands"
+          },
+          "first_violation": {
+            "pin_dbm": -43.0,
+            "violations": [
+              "q2 V_CE peak 1.4062 V > 1.4 V (row 17)"
+            ]
+          }
+        },
+        "mid": {
+          "iip3": {
+            "status": "ok",
+            "iip3_dbm": -13.8787828,
+            "sidebands": {
+              "low": {
+                "baseline": {
+                  "first_index": 0,
+                  "n_points": 3,
+                  "pin_dbm": [
+                    -56.0,
+                    -55.0,
+                    -54.0
+                  ],
+                  "gain_db": 22.3770742,
+                  "spread_db": 0.000666550741
+                },
+                "excluded_points": {
+                  "-43": "outside DUT operating limits: q2 V_CE peak 1.4067 V > 1.4 V (row 17)",
+                  "-42": "outside DUT operating limits: q2 V_CE peak 1.4249 V > 1.4 V (row 17)",
+                  "-41": "outside DUT operating limits: q2 V_CE peak 1.4450 V > 1.4 V (row 17)",
+                  "-40": "outside DUT operating limits: q2 V_CE peak 1.4674 V > 1.4 V (row 17)",
+                  "-39": "outside DUT operating limits: q2 V_CE peak 1.4922 V > 1.4 V (row 17)",
+                  "-38": "outside DUT operating limits: q2 V_CE peak 1.5199 V > 1.4 V (row 17)",
+                  "-37": "outside DUT operating limits: q2 V_CE peak 1.5506 V > 1.4 V (row 17)",
+                  "-36": "outside DUT operating limits: q2 V_CE peak 1.5847 V > 1.4 V (row 17)"
+                },
+                "rejected_intervals": [],
+                "interval_dbm": [
+                  -56.0,
+                  -44.0
+                ],
+                "n_points": 13,
+                "slope_fund": 0.998721705,
+                "slope_im3": 2.98019051,
+                "residual_fund_db": 0.00380674487,
+                "residual_im3_db": 0.0415689581,
+                "iip3_dbm": -13.8787828,
+                "iip3_free_slope_dbm": -13.5409681,
+                "per_point_iip3_dbm": [
+                  -13.9437803,
+                  -13.9185383,
+                  -13.9369098,
+                  -13.8890647,
+                  -13.8991527,
+                  -13.8679454,
+                  -13.8803952,
+                  -13.8704091,
+                  -13.8659157,
+                  -13.8484755,
+                  -13.8420917,
+                  -13.8349038,
+                  -13.8265943
+                ],
+                "extrapolation_db": 30.1212172,
+                "status": "ok"
+              },
+              "high": {
+                "baseline": {
+                  "first_index": 0,
+                  "n_points": 3,
+                  "pin_dbm": [
+                    -56.0,
+                    -55.0,
+                    -54.0
+                  ],
+                  "gain_db": 22.3318621,
+                  "spread_db": 0.000666291028
+                },
+                "excluded_points": {
+                  "-43": "outside DUT operating limits: q2 V_CE peak 1.4067 V > 1.4 V (row 17)",
+                  "-42": "outside DUT operating limits: q2 V_CE peak 1.4249 V > 1.4 V (row 17)",
+                  "-41": "outside DUT operating limits: q2 V_CE peak 1.4450 V > 1.4 V (row 17)",
+                  "-40": "outside DUT operating limits: q2 V_CE peak 1.4674 V > 1.4 V (row 17)",
+                  "-39": "outside DUT operating limits: q2 V_CE peak 1.4922 V > 1.4 V (row 17)",
+                  "-38": "outside DUT operating limits: q2 V_CE peak 1.5199 V > 1.4 V (row 17)",
+                  "-37": "outside DUT operating limits: q2 V_CE peak 1.5506 V > 1.4 V (row 17)",
+                  "-36": "outside DUT operating limits: q2 V_CE peak 1.5847 V > 1.4 V (row 17)"
+                },
+                "rejected_intervals": [],
+                "interval_dbm": [
+                  -56.0,
+                  -44.0
+                ],
+                "n_points": 13,
+                "slope_fund": 0.998707464,
+                "slope_im3": 2.99614294,
+                "residual_fund_db": 0.00385615244,
+                "residual_im3_db": 0.0709537421,
+                "iip3_dbm": -13.8209795,
+                "iip3_free_slope_dbm": -13.774529,
+                "per_point_iip3_dbm": [
+                  -13.8653922,
+                  -13.7959637,
+                  -13.8153298,
+                  -13.8112254,
+                  -13.8239822,
+                  -13.8220332,
+                  -13.8273816,
+                  -13.8290574,
+                  -13.8208776,
+                  -13.8299785,
+                  -13.8170259,
+                  -13.811971,
+                  -13.8025145
+                ],
+                "extrapolation_db": 30.1790205,
+                "status": "ok"
+              }
+            },
+            "sideband_spread_db": 0.0578033374,
+            "convention": "per-tone available input power at the 50 ohm source; lower of the two sidebands"
+          },
+          "first_violation": {
+            "pin_dbm": -43.0,
+            "violations": [
+              "q2 V_CE peak 1.4067 V > 1.4 V (row 17)"
+            ]
+          }
+        },
+        "high": {
+          "iip3": {
+            "status": "ok",
+            "iip3_dbm": -11.7662391,
+            "sidebands": {
+              "low": {
+                "baseline": {
+                  "first_index": 0,
+                  "n_points": 3,
+                  "pin_dbm": [
+                    -56.0,
+                    -55.0,
+                    -54.0
+                  ],
+                  "gain_db": 20.368567,
+                  "spread_db": 0.000223570792
+                },
+                "excluded_points": {
+                  "-40": "outside DUT operating limits: q2 V_CE peak 1.4100 V > 1.4 V (row 17)",
+                  "-39": "outside DUT operating limits: q2 V_CE peak 1.4282 V > 1.4 V (row 17)",
+                  "-38": "outside DUT operating limits: q2 V_CE peak 1.4483 V > 1.4 V (row 17)",
+                  "-37": "outside DUT operating limits: q2 V_CE peak 1.4706 V > 1.4 V (row 17)",
+                  "-36": "outside DUT operating limits: q2 V_CE peak 1.4952 V > 1.4 V (row 17)"
+                },
+                "rejected_intervals": [
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -53.0
+                    ],
+                    "reason": "fixed-slope IIP3 -12.14 and free-slope intersection -6.33 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -52.0
+                    ],
+                    "reason": "fixed-slope IIP3 -12.09 and free-slope intersection -6.69 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -51.0
+                    ],
+                    "reason": "fixed-slope IIP3 -12.04 and free-slope intersection -7.13 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -50.0
+                    ],
+                    "reason": "fixed-slope IIP3 -12.00 and free-slope intersection -7.71 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -49.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.97 and free-slope intersection -8.26 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -48.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.94 and free-slope intersection -8.74 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -47.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.92 and free-slope intersection -9.10 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -46.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.90 and free-slope intersection -9.42 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -45.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.88 and free-slope intersection -9.67 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -44.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.87 and free-slope intersection -9.89 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -43.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.85 and free-slope intersection -10.07 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -42.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.84 and free-slope intersection -10.23 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -41.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.83 and free-slope intersection -10.36 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -55.0,
+                      -52.0
+                    ],
+                    "reason": "fixed-slope IIP3 -12.02 and free-slope intersection -7.47 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -55.0,
+                      -51.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.98 and free-slope intersection -7.74 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -55.0,
+                      -50.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.94 and free-slope intersection -8.28 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -55.0,
+                      -49.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.92 and free-slope intersection -8.79 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -55.0,
+                      -48.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.89 and free-slope intersection -9.24 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -55.0,
+                      -47.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.87 and free-slope intersection -9.55 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -55.0,
+                      -46.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.86 and free-slope intersection -9.82 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -55.0,
+                      -45.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.84 and free-slope intersection -10.03 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -55.0,
+                      -44.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.83 and free-slope intersection -10.22 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -55.0,
+                      -43.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.82 and free-slope intersection -10.37 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -55.0,
+                      -42.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.80 and free-slope intersection -10.49 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -55.0,
+                      -41.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.79 and free-slope intersection -10.60 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -54.0,
+                      -51.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.93 and free-slope intersection -8.04 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -54.0,
+                      -50.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.90 and free-slope intersection -8.65 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -54.0,
+                      -49.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.87 and free-slope intersection -9.19 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -54.0,
+                      -48.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.85 and free-slope intersection -9.63 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -54.0,
+                      -47.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.84 and free-slope intersection -9.90 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -54.0,
+                      -46.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.82 and free-slope intersection -10.14 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -54.0,
+                      -45.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.81 and free-slope intersection -10.32 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -54.0,
+                      -44.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.80 and free-slope intersection -10.48 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -54.0,
+                      -43.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.78 and free-slope intersection -10.60 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -54.0,
+                      -42.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.78 and free-slope intersection -10.70 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -53.0,
+                      -50.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.86 and free-slope intersection -8.86 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -53.0,
+                      -49.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.84 and free-slope intersection -9.51 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -53.0,
+                      -48.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.82 and free-slope intersection -9.97 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -53.0,
+                      -47.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.80 and free-slope intersection -10.21 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -53.0,
+                      -46.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.79 and free-slope intersection -10.42 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -53.0,
+                      -45.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.78 and free-slope intersection -10.57 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -53.0,
+                      -44.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.77 and free-slope intersection -10.70 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -52.0,
+                      -49.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.80 and free-slope intersection -10.24 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -52.0,
+                      -48.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.79 and free-slope intersection -10.56 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -52.0,
+                      -47.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.77 and free-slope intersection -10.67 dBm disagree"
+                  }
+                ],
+                "interval_dbm": [
+                  -54.0,
+                  -41.0
+                ],
+                "n_points": 14,
+                "slope_fund": 0.999045471,
+                "slope_im3": 2.94580555,
+                "residual_fund_db": 0.00344452627,
+                "residual_im3_db": 0.228731955,
+                "iip3_dbm": -11.7662391,
+                "iip3_free_slope_dbm": -10.7889936,
+                "per_point_iip3_dbm": [
+                  -12.0547096,
+                  -11.9826479,
+                  -11.8704377,
+                  -11.8005811,
+                  -11.7715706,
+                  -11.7514631,
+                  -11.7397611,
+                  -11.7117836,
+                  -11.7032668,
+                  -11.6870779,
+                  -11.6795695,
+                  -11.666741,
+                  -11.6584695,
+                  -11.6492683
+                ],
+                "extrapolation_db": 29.2337609,
+                "status": "ok"
+              },
+              "high": {
+                "baseline": {
+                  "first_index": 0,
+                  "n_points": 3,
+                  "pin_dbm": [
+                    -56.0,
+                    -55.0,
+                    -54.0
+                  ],
+                  "gain_db": 20.1584228,
+                  "spread_db": 0.000211413076
+                },
+                "excluded_points": {
+                  "-40": "outside DUT operating limits: q2 V_CE peak 1.4100 V > 1.4 V (row 17)",
+                  "-39": "outside DUT operating limits: q2 V_CE peak 1.4282 V > 1.4 V (row 17)",
+                  "-38": "outside DUT operating limits: q2 V_CE peak 1.4483 V > 1.4 V (row 17)",
+                  "-37": "outside DUT operating limits: q2 V_CE peak 1.4706 V > 1.4 V (row 17)",
+                  "-36": "outside DUT operating limits: q2 V_CE peak 1.4952 V > 1.4 V (row 17)"
+                },
+                "rejected_intervals": [
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -53.0
+                    ],
+                    "reason": "fixed-slope IIP3 -11.02 and free-slope intersection -6.63 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -52.0
+                    ],
+                    "reason": "fixed-slope IIP3 -10.99 and free-slope intersection -7.80 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -51.0
+                    ],
+                    "reason": "fixed-slope IIP3 -10.98 and free-slope intersection -8.72 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -50.0
+                    ],
+                    "reason": "fixed-slope IIP3 -10.97 and free-slope intersection -9.31 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -49.0
+                    ],
+                    "reason": "fixed-slope IIP3 -10.96 and free-slope intersection -9.65 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -56.0,
+                      -48.0
+                    ],
+                    "reason": "fixed-slope IIP3 -10.96 and free-slope intersection -9.91 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -55.0,
+                      -52.0
+                    ],
+                    "reason": "fixed-slope IIP3 -10.95 and free-slope intersection -8.94 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -55.0,
+                      -51.0
+                    ],
+                    "reason": "fixed-slope IIP3 -10.94 and free-slope intersection -9.71 dBm disagree"
+                  },
+                  {
+                    "interval_dbm": [
+                      -54.0,
+                      -51.0
+                    ],
+                    "reason": "fixed-slope IIP3 -10.93 and free-slope intersection -9.76 dBm disagree"
+                  }
+                ],
+                "interval_dbm": [
+                  -56.0,
+                  -41.0
+                ],
+                "n_points": 16,
+                "slope_fund": 0.999193953,
+                "slope_im3": 2.98171519,
+                "residual_fund_db": 0.00405465396,
+                "residual_im3_db": 0.34887204,
+                "iip3_dbm": -10.939885,
+                "iip3_free_slope_dbm": -10.6087388,
+                "per_point_iip3_dbm": [
+                  -11.1810356,
+                  -11.0013879,
+                  -11.0182124,
+                  -10.8699639,
+                  -10.9006936,
+                  -10.9173513,
+                  -10.9217052,
+                  -10.9083834,
+                  -10.9134983,
+                  -10.9237764,
+                  -10.9163223,
+                  -10.921612,
+                  -10.9194867,
+                  -10.9162498,
+                  -10.9065757,
+                  -10.9019055
+                ],
+                "extrapolation_db": 30.060115,
+                "status": "ok"
+              }
+            },
+            "sideband_spread_db": 0.826354141,
+            "convention": "per-tone available input power at the 50 ohm source; lower of the two sidebands"
+          },
+          "first_violation": {
+            "pin_dbm": -40.0,
+            "violations": [
+              "q2 V_CE peak 1.4100 V > 1.4 V (row 17)"
+            ]
+          }
+        }
+      },
+      "gates": {
+        "G_dc": true,
+        "G_gain": true,
+        "G_base": true,
+        "failed": [],
+        "gain_loss_db": {
+          "low": 0.0,
+          "mid": 0.0,
+          "high": 0.0
+        },
+        "dc_window_v": [
+          0.4,
+          1.37
+        ]
+      },
+      "metrics": {
+        "stress_free_pin_dbm": {
+          "low": -38.0,
+          "mid": -38.0,
+          "high": -36.0
+        },
+        "worst_stress_free_pin_dbm": -38.0,
+        "headroom_gain_db": 0.0,
+        "net_output_headroom_db": 0.0
+      },
+      "validity": {
+        "V_conv": true,
+        "failed": []
+      },
+      "small_signal": {
+        "measurements": {
+          "s11_db_lo": -6.19106575,
+          "s11_db_mid": -23.3049846,
+          "s11_db_hi": -4.72059895,
+          "s21_db_lo": 21.078449,
+          "s21_db_mid": 22.357947,
+          "s21_db_hi": 19.7248289,
+          "s22_db_lo": -8.97226646,
+          "s22_db_mid": -26.1641159,
+          "s22_db_hi": -9.82396952,
+          "s12_db_lo": -50.1864933,
+          "s12_db_mid": -47.3056889,
+          "s12_db_hi": -48.4697865,
+          "k_lo": 9.63314718,
+          "k_mid": 8.8023524,
+          "k_hi": 8.16772433,
+          "nf_db_lo": 3.25834896,
+          "nf_db_mid": 3.5185043,
+          "nf_db_hi": 3.91076418,
+          "q1_vce": 1.24250683,
+          "q1_vbe": 0.809304328,
+          "q1_ic": 0.00156251516,
+          "q1_icfrac": 0.0651047983,
+          "q1_dtj": 3.39423365,
+          "q1_ft": 181.832085,
+          "q2_vce": 1.25279981,
+          "q2_vbe": 0.809238697,
+          "q2_ic": 0.00156058474,
+          "q2_icfrac": 0.0650243641,
+          "q2_dtj": 3.41808893,
+          "q2_ft": 184.432507,
+          "qr_vce": 0.812876729,
+          "qr_vbe": 0.812876729,
+          "qr_ic": 0.000208062132,
+          "qr_icfrac": 0.0693540439,
+          "qr_dtj": 1.92235871,
+          "qr_ft": 171.508282,
+          "idd_ma": 2.06655758,
+          "pdc_mw": 5.16639394,
+          "d_lo": 0.205474214,
+          "mu_lo": 2.61238159,
+          "msg_db_lo": 71.2649423,
+          "d_mid": 0.0552282789,
+          "mu_mid": 9.27705896,
+          "msg_db_mid": 69.6636359,
+          "d_hi": 0.195581275,
+          "mu_hi": 2.66519317,
+          "msg_db_hi": 68.1946155,
+          "sw_n": 201.0,
+          "sw_kmin": 5.75332223,
+          "sw_fkmin_ghz": 51.2861384,
+          "sw_kmin_hi": 5.75332223,
+          "sw_kmin_lo": 9.81346124,
+          "sw_dmax": 0.950039172,
+          "sw_mumin": 1.00000104,
+          "sw_nunst": 0.0
+        },
+        "vs_baseline": null
+      }
+    }
+  },
+  "ranking": {
+    "ranked": [
+      "C08",
+      "C05",
+      "C00"
+    ],
+    "outcome_class": "refined_converged_p1db_still_bounded",
+    "validity": {
+      "C08": {
+        "V_conv": true,
+        "failed": []
+      },
+      "C05": {
+        "V_conv": true,
+        "failed": []
+      },
+      "C00": {
+        "V_conv": true,
+        "failed": []
+      }
+    },
+    "not_ranked": {}
+  },
+  "klt_requests": [
+    {
+      "key": "control_one",
+      "backend": "batch",
+      "status": "pass",
+      "engine": "ngspice",
+      "engine_version": "46",
+      "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+      "netlist_sha256": "5ef2972d23aa327a4238d8b162141a3a71edca2ee6dc8f1d1cca8caead184bfc",
+      "remote": {
+        "provider": "aws-batch-fleet",
+        "job_id": "klt-sim-28ccf4ffbaa2",
+        "region": "us-east-1",
+        "instance_id": "i-0a7f0c5344ffa487d",
+        "instance_type": "m6i.4xlarge",
+        "availability_zone": "us-east-1b",
+        "ami_id": "ami-0fa5ef830209100bd",
+        "lifecycle": "spot",
+        "spot": true,
+        "state": "done",
+        "exit_code": "0",
+        "concurrency": "1",
+        "physical_cores": "8",
+        "elapsed_seconds": 20,
+        "client_submitted_at": "2026-10-31T19:36:15.831466Z",
+        "client_launched_at": "2026-10-31T19:36:37.796952Z",
+        "client_status_terminal_at": "2026-10-31T19:37:40.078659Z",
+        "client_collected_at": "2026-10-31T19:37:40.916767Z",
+        "runner_klt_version": "0.8.0",
+        "client_klt_version": "0.8.1.dev971+gb3ab6e5851ca",
+        "runner_compatibility": "match",
+        "runner_request_features": {
+          "required": [
+            "options.stage_model_inputs"
+          ],
+          "missing": [],
+          "status": "supported"
+        },
+        "worker_environment": {
+          "capture": "ok",
+          "simulator": {
+            "requested_binary": "ngspice",
+            "binary_source": "PATH",
+            "selected_path": "/usr/local/bin/ngspice",
+            "version_banner": "******\n** ngspice-46 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2025, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Thu Oct  1 23:51:59 UTC 2026\n******\n",
+            "version_probe": "ok"
+          },
+          "pdk": {
+            "variant": "ihp-sg13g2",
+            "root": "/opt/pdk",
+            "stamp_scheme": null,
+            "stamp_sha256": null,
+            "stamp_text": null,
+            "models_staged": true,
+            "stamp_scope": "image"
+          },
+          "cpu_model": "Intel(R) Xeon(R) Platinum 8375C CPU @ 2.90GHz",
+          "omp_num_threads": null,
+          "image_manifest": null,
+          "model_inputs": [
+            {
+              "name": "cornerHBT.lib",
+              "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+            },
+            {
+              "name": "sg13g2_hbt_mod.lib",
+              "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+            },
+            {
+              "name": "sg13g2_hbt_mod_mismatch.lib",
+              "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+            },
+            {
+              "name": "sg13g2_hbt_stat.lib",
+              "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+            }
+          ],
+          "diagnostics": [
+            "pdk stamp unreadable: FileNotFoundError"
+          ],
+          "pdk_stamp_comparison": {
+            "basis": "staged_model_inputs",
+            "status": "match"
+          },
+          "engine_build_comparison": {
+            "status": "mismatch",
+            "warning": "the worker's ngspice --version banner differs from the local binary's; build options (e.g. FFT linkage) may differ, so results derived from them can differ from a local run"
+          }
+        },
+        "runner_model_inputs": [
+          {
+            "name": "cornerHBT.lib",
+            "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+          },
+          {
+            "name": "sg13g2_hbt_mod.lib",
+            "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+          },
+          {
+            "name": "sg13g2_hbt_mod_mismatch.lib",
+            "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+          },
+          {
+            "name": "sg13g2_hbt_stat.lib",
+            "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+          }
+        ],
+        "job_ceiling": {
+          "basis": "conservative_serial_bound",
+          "unit_count": 1,
+          "per_unit_timeout_s": 7200,
+          "overhead_s": 120.0,
+          "job_bound_s": 7320.0,
+          "max_job_seconds": 3600.0,
+          "max_job_seconds_source": "fleet_config",
+          "exceeds_ceiling": true,
+          "check": "warn",
+          "max_units_per_job": 0,
+          "recommended_hosts": null,
+          "warning": "batch job bound 7320s (options.timeout_s 7200s x 1 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. No remote.hosts value fits: a single unit's bound exceeds the ceiling -- lower options.timeout_s to at most 3480s"
+        }
+      },
+      "klt_version": "0.8.1.dev971+gb3ab6e5851ca"
+    },
+    {
+      "key": "control_two",
+      "backend": "batch",
+      "status": "pass",
+      "engine": "ngspice",
+      "engine_version": "46",
+      "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+      "netlist_sha256": "8c238bd89a67ac50d75254b03524d2cd84e57cce47f6ab81450289389c1c9a2b",
+      "remote": {
+        "provider": "aws-batch-fleet",
+        "job_id": "klt-sim-5fd6328781b5",
+        "region": "us-east-1",
+        "instance_id": "i-062dc6eba47430a34",
+        "instance_type": "c7i.4xlarge",
+        "availability_zone": "us-east-1b",
+        "ami_id": "ami-0fa5ef830209100bd",
+        "lifecycle": "spot",
+        "spot": true,
+        "state": "done",
+        "exit_code": "0",
+        "concurrency": "1",
+        "physical_cores": "8",
+        "elapsed_seconds": 17,
+        "client_submitted_at": "2026-10-31T19:37:41.521998Z",
+        "client_launched_at": "2026-10-31T19:38:04.871152Z",
+        "client_status_terminal_at": "2026-10-31T19:38:36.471293Z",
+        "client_collected_at": "2026-10-31T19:38:37.239996Z",
+        "runner_klt_version": "0.8.0",
+        "client_klt_version": "0.8.1.dev971+gb3ab6e5851ca",
+        "runner_compatibility": "match",
+        "runner_request_features": {
+          "required": [
+            "options.stage_model_inputs"
+          ],
+          "missing": [],
+          "status": "supported"
+        },
+        "worker_environment": {
+          "capture": "ok",
+          "simulator": {
+            "requested_binary": "ngspice",
+            "binary_source": "PATH",
+            "selected_path": "/usr/local/bin/ngspice",
+            "version_banner": "******\n** ngspice-46 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2025, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Thu Oct  1 23:51:59 UTC 2026\n******\n",
+            "version_probe": "ok"
+          },
+          "pdk": {
+            "variant": "ihp-sg13g2",
+            "root": "/opt/pdk",
+            "stamp_scheme": null,
+            "stamp_sha256": null,
+            "stamp_text": null,
+            "models_staged": true,
+            "stamp_scope": "image"
+          },
+          "cpu_model": "Intel(R) Xeon(R) Platinum 8488C",
+          "omp_num_threads": null,
+          "image_manifest": null,
+          "model_inputs": [
+            {
+              "name": "cornerHBT.lib",
+              "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+            },
+            {
+              "name": "sg13g2_hbt_mod.lib",
+              "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+            },
+            {
+              "name": "sg13g2_hbt_mod_mismatch.lib",
+              "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+            },
+            {
+              "name": "sg13g2_hbt_stat.lib",
+              "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+            }
+          ],
+          "diagnostics": [
+            "pdk stamp unreadable: FileNotFoundError"
+          ],
+          "pdk_stamp_comparison": {
+            "basis": "staged_model_inputs",
+            "status": "match"
+          },
+          "engine_build_comparison": {
+            "status": "mismatch",
+            "warning": "the worker's ngspice --version banner differs from the local binary's; build options (e.g. FFT linkage) may differ, so results derived from them can differ from a local run"
+          }
+        },
+        "runner_model_inputs": [
+          {
+            "name": "cornerHBT.lib",
+            "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+          },
+          {
+            "name": "sg13g2_hbt_mod.lib",
+            "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+          },
+          {
+            "name": "sg13g2_hbt_mod_mismatch.lib",
+            "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+          },
+          {
+            "name": "sg13g2_hbt_stat.lib",
+            "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+          }
+        ],
+        "job_ceiling": {
+          "basis": "conservative_serial_bound",
+          "unit_count": 1,
+          "per_unit_timeout_s": 7200,
+          "overhead_s": 120.0,
+          "job_bound_s": 7320.0,
+          "max_job_seconds": 3600.0,
+          "max_job_seconds_source": "fleet_config",
+          "exceeds_ceiling": true,
+          "check": "warn",
+          "max_units_per_job": 0,
+          "recommended_hosts": null,
+          "warning": "batch job bound 7320s (options.timeout_s 7200s x 1 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. No remote.hosts value fits: a single unit's bound exceeds the ceiling -- lower options.timeout_s to at most 3480s"
+        }
+      },
+      "klt_version": "0.8.1.dev971+gb3ab6e5851ca"
+    },
+    {
+      "key": "C08_one",
+      "backend": "batch",
+      "status": "pass",
+      "engine": "ngspice",
+      "engine_version": "46",
+      "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+      "netlist_sha256": "0269c3f87f67a3c6b46d363402485e909ae2b32c1919721201c1de3fc0ab8d91",
+      "remote": {
+        "provider": "aws-batch-fleet",
+        "job_id": "klt-sim-28ed380e42ff",
+        "region": "us-east-1",
+        "instance_id": "i-0a5203b1711ba0f97",
+        "instance_type": "m6i.4xlarge",
+        "availability_zone": "us-east-1d",
+        "ami_id": "ami-0fa5ef830209100bd",
+        "lifecycle": "spot",
+        "spot": true,
+        "state": "done",
+        "exit_code": "0",
+        "concurrency": "1",
+        "physical_cores": "8",
+        "elapsed_seconds": 1212,
+        "client_submitted_at": "2026-10-31T19:38:37.657509Z",
+        "client_launched_at": "2026-10-31T19:38:59.641980Z",
+        "client_status_terminal_at": "2026-10-31T19:59:31.125888Z",
+        "client_collected_at": "2026-10-31T19:59:31.877472Z",
+        "runner_klt_version": "0.8.0",
+        "client_klt_version": "0.8.1.dev971+gb3ab6e5851ca",
+        "runner_compatibility": "match",
+        "runner_request_features": {
+          "required": [
+            "options.stage_model_inputs"
+          ],
+          "missing": [],
+          "status": "supported"
+        },
+        "worker_environment": {
+          "capture": "ok",
+          "simulator": {
+            "requested_binary": "ngspice",
+            "binary_source": "PATH",
+            "selected_path": "/usr/local/bin/ngspice",
+            "version_banner": "******\n** ngspice-46 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2025, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Thu Oct  1 23:51:59 UTC 2026\n******\n",
+            "version_probe": "ok"
+          },
+          "pdk": {
+            "variant": "ihp-sg13g2",
+            "root": "/opt/pdk",
+            "stamp_scheme": null,
+            "stamp_sha256": null,
+            "stamp_text": null,
+            "models_staged": true,
+            "stamp_scope": "image"
+          },
+          "cpu_model": "Intel(R) Xeon(R) Platinum 8375C CPU @ 2.90GHz",
+          "omp_num_threads": null,
+          "image_manifest": null,
+          "model_inputs": [
+            {
+              "name": "cornerHBT.lib",
+              "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+            },
+            {
+              "name": "sg13g2_hbt_mod.lib",
+              "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+            },
+            {
+              "name": "sg13g2_hbt_mod_mismatch.lib",
+              "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+            },
+            {
+              "name": "sg13g2_hbt_stat.lib",
+              "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+            }
+          ],
+          "diagnostics": [
+            "pdk stamp unreadable: FileNotFoundError"
+          ],
+          "pdk_stamp_comparison": {
+            "basis": "staged_model_inputs",
+            "status": "match"
+          },
+          "engine_build_comparison": {
+            "status": "mismatch",
+            "warning": "the worker's ngspice --version banner differs from the local binary's; build options (e.g. FFT linkage) may differ, so results derived from them can differ from a local run"
+          }
+        },
+        "runner_model_inputs": [
+          {
+            "name": "cornerHBT.lib",
+            "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+          },
+          {
+            "name": "sg13g2_hbt_mod.lib",
+            "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+          },
+          {
+            "name": "sg13g2_hbt_mod_mismatch.lib",
+            "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+          },
+          {
+            "name": "sg13g2_hbt_stat.lib",
+            "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+          }
+        ],
+        "job_ceiling": {
+          "basis": "conservative_serial_bound",
+          "unit_count": 1,
+          "per_unit_timeout_s": 7200,
+          "overhead_s": 120.0,
+          "job_bound_s": 7320.0,
+          "max_job_seconds": 3600.0,
+          "max_job_seconds_source": "fleet_config",
+          "exceeds_ceiling": true,
+          "check": "warn",
+          "max_units_per_job": 0,
+          "recommended_hosts": null,
+          "warning": "batch job bound 7320s (options.timeout_s 7200s x 1 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. No remote.hosts value fits: a single unit's bound exceeds the ceiling -- lower options.timeout_s to at most 3480s"
+        }
+      },
+      "klt_version": "0.8.1.dev971+gb3ab6e5851ca"
+    },
+    {
+      "key": "C08_two",
+      "backend": "batch",
+      "status": "pass",
+      "engine": "ngspice",
+      "engine_version": "46",
+      "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+      "netlist_sha256": "5ab24b8ab0a43d88968ae4aa2d3851fa95a4a2f3e5477fb89ce644cb144ae266",
+      "remote": {
+        "provider": "aws-batch-fleet",
+        "job_id": "klt-sim-c1e973a54686",
+        "region": "us-east-1",
+        "instance_id": "i-02fb13d7ad1eb8dea",
+        "instance_type": "c7i.4xlarge",
+        "availability_zone": "us-east-1b",
+        "ami_id": "ami-0fa5ef830209100bd",
+        "lifecycle": "spot",
+        "spot": true,
+        "state": "done",
+        "exit_code": "0",
+        "concurrency": "1",
+        "physical_cores": "8",
+        "elapsed_seconds": 654,
+        "client_submitted_at": "2026-10-31T19:59:32.298313Z",
+        "client_launched_at": "2026-10-31T19:59:54.452407Z",
+        "client_status_terminal_at": "2026-10-31T20:11:12.425435Z",
+        "client_collected_at": "2026-10-31T20:11:13.234418Z",
+        "runner_klt_version": "0.8.0",
+        "client_klt_version": "0.8.1.dev971+gb3ab6e5851ca",
+        "runner_compatibility": "match",
+        "runner_request_features": {
+          "required": [
+            "options.stage_model_inputs"
+          ],
+          "missing": [],
+          "status": "supported"
+        },
+        "worker_environment": {
+          "capture": "ok",
+          "simulator": {
+            "requested_binary": "ngspice",
+            "binary_source": "PATH",
+            "selected_path": "/usr/local/bin/ngspice",
+            "version_banner": "******\n** ngspice-46 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2025, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Thu Oct  1 23:51:59 UTC 2026\n******\n",
+            "version_probe": "ok"
+          },
+          "pdk": {
+            "variant": "ihp-sg13g2",
+            "root": "/opt/pdk",
+            "stamp_scheme": null,
+            "stamp_sha256": null,
+            "stamp_text": null,
+            "models_staged": true,
+            "stamp_scope": "image"
+          },
+          "cpu_model": "Intel(R) Xeon(R) Platinum 8488C",
+          "omp_num_threads": null,
+          "image_manifest": null,
+          "model_inputs": [
+            {
+              "name": "cornerHBT.lib",
+              "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+            },
+            {
+              "name": "sg13g2_hbt_mod.lib",
+              "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+            },
+            {
+              "name": "sg13g2_hbt_mod_mismatch.lib",
+              "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+            },
+            {
+              "name": "sg13g2_hbt_stat.lib",
+              "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+            }
+          ],
+          "diagnostics": [
+            "pdk stamp unreadable: FileNotFoundError"
+          ],
+          "pdk_stamp_comparison": {
+            "basis": "staged_model_inputs",
+            "status": "match"
+          },
+          "engine_build_comparison": {
+            "status": "mismatch",
+            "warning": "the worker's ngspice --version banner differs from the local binary's; build options (e.g. FFT linkage) may differ, so results derived from them can differ from a local run"
+          }
+        },
+        "runner_model_inputs": [
+          {
+            "name": "cornerHBT.lib",
+            "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+          },
+          {
+            "name": "sg13g2_hbt_mod.lib",
+            "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+          },
+          {
+            "name": "sg13g2_hbt_mod_mismatch.lib",
+            "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+          },
+          {
+            "name": "sg13g2_hbt_stat.lib",
+            "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+          }
+        ],
+        "job_ceiling": {
+          "basis": "conservative_serial_bound",
+          "unit_count": 1,
+          "per_unit_timeout_s": 7200,
+          "overhead_s": 120.0,
+          "job_bound_s": 7320.0,
+          "max_job_seconds": 3600.0,
+          "max_job_seconds_source": "fleet_config",
+          "exceeds_ceiling": true,
+          "check": "warn",
+          "max_units_per_job": 0,
+          "recommended_hosts": null,
+          "warning": "batch job bound 7320s (options.timeout_s 7200s x 1 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. No remote.hosts value fits: a single unit's bound exceeds the ceiling -- lower options.timeout_s to at most 3480s"
+        }
+      },
+      "klt_version": "0.8.1.dev971+gb3ab6e5851ca"
+    },
+    {
+      "key": "sparam_C08",
+      "backend": "batch",
+      "status": "pass",
+      "engine": "ngspice",
+      "engine_version": "46",
+      "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+      "netlist_sha256": "476554a353200c4d35a7845f6824015249e50ae80c7541db9bf706f2a7a8e6a4",
+      "remote": {
+        "provider": "aws-batch-fleet",
+        "job_id": "klt-sim-64833cce5450",
+        "region": "us-east-1",
+        "instance_id": "i-048b256d6ea4475de",
+        "instance_type": "m7i.4xlarge",
+        "availability_zone": "us-east-1b",
+        "ami_id": "ami-0fa5ef830209100bd",
+        "lifecycle": "spot",
+        "spot": true,
+        "state": "done",
+        "exit_code": "0",
+        "concurrency": "1",
+        "physical_cores": "8",
+        "elapsed_seconds": 7,
+        "client_submitted_at": "2026-10-31T20:11:14.061366Z",
+        "client_launched_at": "2026-10-31T20:11:35.182021Z",
+        "client_status_terminal_at": "2026-10-31T20:12:06.693443Z",
+        "client_collected_at": "2026-10-31T20:12:07.588761Z",
+        "runner_klt_version": "0.8.0",
+        "client_klt_version": "0.8.1.dev971+gb3ab6e5851ca",
+        "runner_compatibility": "match",
+        "runner_request_features": {
+          "required": [
+            "options.stage_model_inputs"
+          ],
+          "missing": [],
+          "status": "supported"
+        },
+        "worker_environment": {
+          "capture": "ok",
+          "simulator": {
+            "requested_binary": "ngspice",
+            "binary_source": "PATH",
+            "selected_path": "/usr/local/bin/ngspice",
+            "version_banner": "******\n** ngspice-46 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2025, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Thu Oct  1 23:51:59 UTC 2026\n******\n",
+            "version_probe": "ok"
+          },
+          "pdk": {
+            "variant": "ihp-sg13g2",
+            "root": "/opt/pdk",
+            "stamp_scheme": null,
+            "stamp_sha256": null,
+            "stamp_text": null,
+            "models_staged": true,
+            "stamp_scope": "image"
+          },
+          "cpu_model": "Intel(R) Xeon(R) Platinum 8488C",
+          "omp_num_threads": null,
+          "image_manifest": null,
+          "model_inputs": [
+            {
+              "name": "cornerHBT.lib",
+              "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+            },
+            {
+              "name": "sg13g2_hbt_mod.lib",
+              "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+            },
+            {
+              "name": "sg13g2_hbt_mod_mismatch.lib",
+              "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+            },
+            {
+              "name": "sg13g2_hbt_stat.lib",
+              "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+            }
+          ],
+          "diagnostics": [
+            "pdk stamp unreadable: FileNotFoundError"
+          ],
+          "pdk_stamp_comparison": {
+            "basis": "staged_model_inputs",
+            "status": "match"
+          },
+          "engine_build_comparison": {
+            "status": "mismatch",
+            "warning": "the worker's ngspice --version banner differs from the local binary's; build options (e.g. FFT linkage) may differ, so results derived from them can differ from a local run"
+          }
+        },
+        "runner_model_inputs": [
+          {
+            "name": "cornerHBT.lib",
+            "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+          },
+          {
+            "name": "sg13g2_hbt_mod.lib",
+            "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+          },
+          {
+            "name": "sg13g2_hbt_mod_mismatch.lib",
+            "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+          },
+          {
+            "name": "sg13g2_hbt_stat.lib",
+            "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+          }
+        ],
+        "job_ceiling": {
+          "basis": "conservative_serial_bound",
+          "unit_count": 1,
+          "per_unit_timeout_s": 7200,
+          "overhead_s": 120.0,
+          "job_bound_s": 7320.0,
+          "max_job_seconds": 3600.0,
+          "max_job_seconds_source": "fleet_config",
+          "exceeds_ceiling": true,
+          "check": "warn",
+          "max_units_per_job": 0,
+          "recommended_hosts": null,
+          "warning": "batch job bound 7320s (options.timeout_s 7200s x 1 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. No remote.hosts value fits: a single unit's bound exceeds the ceiling -- lower options.timeout_s to at most 3480s"
+        }
+      },
+      "klt_version": "0.8.1.dev971+gb3ab6e5851ca"
+    },
+    {
+      "key": "C05_one",
+      "backend": "batch",
+      "status": "pass",
+      "engine": "ngspice",
+      "engine_version": "46",
+      "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+      "netlist_sha256": "b5556e4396e5767e86e49c635071435aa31c25de608246da28f2815c2df7e461",
+      "remote": {
+        "provider": "aws-batch-fleet",
+        "job_id": "klt-sim-712b786db742",
+        "region": "us-east-1",
+        "instance_id": "i-0fcd224451a4d0072",
+        "instance_type": "m7i.4xlarge",
+        "availability_zone": "us-east-1a",
+        "ami_id": "ami-0fa5ef830209100bd",
+        "lifecycle": "spot",
+        "spot": true,
+        "state": "done",
+        "exit_code": "0",
+        "concurrency": "1",
+        "physical_cores": "8",
+        "elapsed_seconds": 978,
+        "client_submitted_at": "2026-10-31T20:12:08.071438Z",
+        "client_launched_at": "2026-10-31T20:12:29.940879Z",
+        "client_status_terminal_at": "2026-10-31T20:29:26.221016Z",
+        "client_collected_at": "2026-10-31T20:29:26.981887Z",
+        "runner_klt_version": "0.8.0",
+        "client_klt_version": "0.8.1.dev971+gb3ab6e5851ca",
+        "runner_compatibility": "match",
+        "runner_request_features": {
+          "required": [
+            "options.stage_model_inputs"
+          ],
+          "missing": [],
+          "status": "supported"
+        },
+        "worker_environment": {
+          "capture": "ok",
+          "simulator": {
+            "requested_binary": "ngspice",
+            "binary_source": "PATH",
+            "selected_path": "/usr/local/bin/ngspice",
+            "version_banner": "******\n** ngspice-46 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2025, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Thu Oct  1 23:51:59 UTC 2026\n******\n",
+            "version_probe": "ok"
+          },
+          "pdk": {
+            "variant": "ihp-sg13g2",
+            "root": "/opt/pdk",
+            "stamp_scheme": null,
+            "stamp_sha256": null,
+            "stamp_text": null,
+            "models_staged": true,
+            "stamp_scope": "image"
+          },
+          "cpu_model": "Intel(R) Xeon(R) Platinum 8488C",
+          "omp_num_threads": null,
+          "image_manifest": null,
+          "model_inputs": [
+            {
+              "name": "cornerHBT.lib",
+              "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+            },
+            {
+              "name": "sg13g2_hbt_mod.lib",
+              "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+            },
+            {
+              "name": "sg13g2_hbt_mod_mismatch.lib",
+              "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+            },
+            {
+              "name": "sg13g2_hbt_stat.lib",
+              "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+            }
+          ],
+          "diagnostics": [
+            "pdk stamp unreadable: FileNotFoundError"
+          ],
+          "pdk_stamp_comparison": {
+            "basis": "staged_model_inputs",
+            "status": "match"
+          },
+          "engine_build_comparison": {
+            "status": "mismatch",
+            "warning": "the worker's ngspice --version banner differs from the local binary's; build options (e.g. FFT linkage) may differ, so results derived from them can differ from a local run"
+          }
+        },
+        "runner_model_inputs": [
+          {
+            "name": "cornerHBT.lib",
+            "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+          },
+          {
+            "name": "sg13g2_hbt_mod.lib",
+            "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+          },
+          {
+            "name": "sg13g2_hbt_mod_mismatch.lib",
+            "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+          },
+          {
+            "name": "sg13g2_hbt_stat.lib",
+            "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+          }
+        ],
+        "job_ceiling": {
+          "basis": "conservative_serial_bound",
+          "unit_count": 1,
+          "per_unit_timeout_s": 7200,
+          "overhead_s": 120.0,
+          "job_bound_s": 7320.0,
+          "max_job_seconds": 3600.0,
+          "max_job_seconds_source": "fleet_config",
+          "exceeds_ceiling": true,
+          "check": "warn",
+          "max_units_per_job": 0,
+          "recommended_hosts": null,
+          "warning": "batch job bound 7320s (options.timeout_s 7200s x 1 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. No remote.hosts value fits: a single unit's bound exceeds the ceiling -- lower options.timeout_s to at most 3480s"
+        }
+      },
+      "klt_version": "0.8.1.dev971+gb3ab6e5851ca"
+    },
+    {
+      "key": "C05_two",
+      "backend": "batch",
+      "status": "pass",
+      "engine": "ngspice",
+      "engine_version": "46",
+      "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+      "netlist_sha256": "290071685ded0ed3ba3157a71e50d43565c6ec5167172493b28ff32f67a221a8",
+      "remote": {
+        "provider": "aws-batch-fleet",
+        "job_id": "klt-sim-dd07ad6088dc",
+        "region": "us-east-1",
+        "instance_id": "i-028df1652f7431045",
+        "instance_type": "c7i.4xlarge",
+        "availability_zone": "us-east-1a",
+        "ami_id": "ami-0fa5ef830209100bd",
+        "lifecycle": "spot",
+        "spot": true,
+        "state": "done",
+        "exit_code": "0",
+        "concurrency": "1",
+        "physical_cores": "8",
+        "elapsed_seconds": 644,
+        "client_submitted_at": "2026-10-31T21:43:53.290108Z",
+        "client_launched_at": "2026-10-31T21:44:14.720857Z",
+        "client_status_terminal_at": "2026-10-31T21:55:31.811711Z",
+        "client_collected_at": "2026-10-31T21:55:32.590235Z",
+        "runner_klt_version": "0.8.0",
+        "client_klt_version": "0.8.1.dev971+gb3ab6e5851ca",
+        "runner_compatibility": "match",
+        "runner_request_features": {
+          "required": [
+            "options.stage_model_inputs"
+          ],
+          "missing": [],
+          "status": "supported"
+        },
+        "worker_environment": {
+          "capture": "ok",
+          "simulator": {
+            "requested_binary": "ngspice",
+            "binary_source": "PATH",
+            "selected_path": "/usr/local/bin/ngspice",
+            "version_banner": "******\n** ngspice-46 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2025, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Thu Oct  1 23:51:59 UTC 2026\n******\n",
+            "version_probe": "ok"
+          },
+          "pdk": {
+            "variant": "ihp-sg13g2",
+            "root": "/opt/pdk",
+            "stamp_scheme": null,
+            "stamp_sha256": null,
+            "stamp_text": null,
+            "models_staged": true,
+            "stamp_scope": "image"
+          },
+          "cpu_model": "Intel(R) Xeon(R) Platinum 8488C",
+          "omp_num_threads": null,
+          "image_manifest": null,
+          "model_inputs": [
+            {
+              "name": "cornerHBT.lib",
+              "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+            },
+            {
+              "name": "sg13g2_hbt_mod.lib",
+              "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+            },
+            {
+              "name": "sg13g2_hbt_mod_mismatch.lib",
+              "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+            },
+            {
+              "name": "sg13g2_hbt_stat.lib",
+              "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+            }
+          ],
+          "diagnostics": [
+            "pdk stamp unreadable: FileNotFoundError"
+          ],
+          "pdk_stamp_comparison": {
+            "basis": "staged_model_inputs",
+            "status": "match"
+          },
+          "engine_build_comparison": {
+            "status": "mismatch",
+            "warning": "the worker's ngspice --version banner differs from the local binary's; build options (e.g. FFT linkage) may differ, so results derived from them can differ from a local run"
+          }
+        },
+        "runner_model_inputs": [
+          {
+            "name": "cornerHBT.lib",
+            "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+          },
+          {
+            "name": "sg13g2_hbt_mod.lib",
+            "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+          },
+          {
+            "name": "sg13g2_hbt_mod_mismatch.lib",
+            "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+          },
+          {
+            "name": "sg13g2_hbt_stat.lib",
+            "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+          }
+        ],
+        "job_ceiling": {
+          "basis": "conservative_serial_bound",
+          "unit_count": 1,
+          "per_unit_timeout_s": 7200,
+          "overhead_s": 120.0,
+          "job_bound_s": 7320.0,
+          "max_job_seconds": 3600.0,
+          "max_job_seconds_source": "fleet_config",
+          "exceeds_ceiling": true,
+          "check": "warn",
+          "max_units_per_job": 0,
+          "recommended_hosts": null,
+          "warning": "batch job bound 7320s (options.timeout_s 7200s x 1 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. No remote.hosts value fits: a single unit's bound exceeds the ceiling -- lower options.timeout_s to at most 3480s"
+        }
+      },
+      "klt_version": "0.8.1.dev971+gb3ab6e5851ca"
+    },
+    {
+      "key": "sparam_C05",
+      "backend": "batch",
+      "status": "pass",
+      "engine": "ngspice",
+      "engine_version": "46",
+      "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+      "netlist_sha256": "ff450e07e3df4d649f307cb06c631ae4450d5c8c3ce3707d6c126860a54c6da9",
+      "remote": {
+        "provider": "aws-batch-fleet",
+        "job_id": "klt-sim-c93a0bf49488",
+        "region": "us-east-1",
+        "instance_id": "i-04fc6daa41c3f91b9",
+        "instance_type": "c7i.4xlarge",
+        "availability_zone": "us-east-1b",
+        "ami_id": "ami-0fa5ef830209100bd",
+        "lifecycle": "spot",
+        "spot": true,
+        "state": "done",
+        "exit_code": "0",
+        "concurrency": "1",
+        "physical_cores": "8",
+        "elapsed_seconds": 7,
+        "client_submitted_at": "2026-10-31T21:55:32.989628Z",
+        "client_launched_at": "2026-10-31T21:55:53.697965Z",
+        "client_status_terminal_at": "2026-10-31T21:56:25.141131Z",
+        "client_collected_at": "2026-10-31T21:56:25.887948Z",
+        "runner_klt_version": "0.8.0",
+        "client_klt_version": "0.8.1.dev971+gb3ab6e5851ca",
+        "runner_compatibility": "match",
+        "runner_request_features": {
+          "required": [
+            "options.stage_model_inputs"
+          ],
+          "missing": [],
+          "status": "supported"
+        },
+        "worker_environment": {
+          "capture": "ok",
+          "simulator": {
+            "requested_binary": "ngspice",
+            "binary_source": "PATH",
+            "selected_path": "/usr/local/bin/ngspice",
+            "version_banner": "******\n** ngspice-46 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2025, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Thu Oct  1 23:51:59 UTC 2026\n******\n",
+            "version_probe": "ok"
+          },
+          "pdk": {
+            "variant": "ihp-sg13g2",
+            "root": "/opt/pdk",
+            "stamp_scheme": null,
+            "stamp_sha256": null,
+            "stamp_text": null,
+            "models_staged": true,
+            "stamp_scope": "image"
+          },
+          "cpu_model": "Intel(R) Xeon(R) Platinum 8488C",
+          "omp_num_threads": null,
+          "image_manifest": null,
+          "model_inputs": [
+            {
+              "name": "cornerHBT.lib",
+              "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+            },
+            {
+              "name": "sg13g2_hbt_mod.lib",
+              "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+            },
+            {
+              "name": "sg13g2_hbt_mod_mismatch.lib",
+              "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+            },
+            {
+              "name": "sg13g2_hbt_stat.lib",
+              "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+            }
+          ],
+          "diagnostics": [
+            "pdk stamp unreadable: FileNotFoundError"
+          ],
+          "pdk_stamp_comparison": {
+            "basis": "staged_model_inputs",
+            "status": "match"
+          },
+          "engine_build_comparison": {
+            "status": "mismatch",
+            "warning": "the worker's ngspice --version banner differs from the local binary's; build options (e.g. FFT linkage) may differ, so results derived from them can differ from a local run"
+          }
+        },
+        "runner_model_inputs": [
+          {
+            "name": "cornerHBT.lib",
+            "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+          },
+          {
+            "name": "sg13g2_hbt_mod.lib",
+            "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+          },
+          {
+            "name": "sg13g2_hbt_mod_mismatch.lib",
+            "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+          },
+          {
+            "name": "sg13g2_hbt_stat.lib",
+            "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+          }
+        ],
+        "job_ceiling": {
+          "basis": "conservative_serial_bound",
+          "unit_count": 1,
+          "per_unit_timeout_s": 7200,
+          "overhead_s": 120.0,
+          "job_bound_s": 7320.0,
+          "max_job_seconds": 3600.0,
+          "max_job_seconds_source": "fleet_config",
+          "exceeds_ceiling": true,
+          "check": "warn",
+          "max_units_per_job": 0,
+          "recommended_hosts": null,
+          "warning": "batch job bound 7320s (options.timeout_s 7200s x 1 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. No remote.hosts value fits: a single unit's bound exceeds the ceiling -- lower options.timeout_s to at most 3480s"
+        }
+      },
+      "klt_version": "0.8.1.dev971+gb3ab6e5851ca"
+    },
+    {
+      "key": "C00_one",
+      "backend": "batch",
+      "status": "pass",
+      "engine": "ngspice",
+      "engine_version": "46",
+      "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+      "netlist_sha256": "958200803f4f9c9104aabc8a22d27282d0942380cae7231ca0c61ded193f146f",
+      "remote": {
+        "provider": "aws-batch-fleet",
+        "job_id": "klt-sim-c178baf94bcc",
+        "region": "us-east-1",
+        "instance_id": "i-04cd485f5ce70d0b7",
+        "instance_type": "c7i.4xlarge",
+        "availability_zone": "us-east-1d",
+        "ami_id": "ami-0fa5ef830209100bd",
+        "lifecycle": "spot",
+        "spot": true,
+        "state": "done",
+        "exit_code": "0",
+        "concurrency": "1",
+        "physical_cores": "8",
+        "elapsed_seconds": 1047,
+        "client_submitted_at": "2026-10-31T21:56:26.302564Z",
+        "client_launched_at": "2026-10-31T21:56:46.882434Z",
+        "client_status_terminal_at": "2026-10-31T22:14:43.583582Z",
+        "client_collected_at": "2026-10-31T22:14:44.373343Z",
+        "runner_klt_version": "0.8.0",
+        "client_klt_version": "0.8.1.dev971+gb3ab6e5851ca",
+        "runner_compatibility": "match",
+        "runner_request_features": {
+          "required": [
+            "options.stage_model_inputs"
+          ],
+          "missing": [],
+          "status": "supported"
+        },
+        "worker_environment": {
+          "capture": "ok",
+          "simulator": {
+            "requested_binary": "ngspice",
+            "binary_source": "PATH",
+            "selected_path": "/usr/local/bin/ngspice",
+            "version_banner": "******\n** ngspice-46 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2025, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Thu Oct  1 23:51:59 UTC 2026\n******\n",
+            "version_probe": "ok"
+          },
+          "pdk": {
+            "variant": "ihp-sg13g2",
+            "root": "/opt/pdk",
+            "stamp_scheme": null,
+            "stamp_sha256": null,
+            "stamp_text": null,
+            "models_staged": true,
+            "stamp_scope": "image"
+          },
+          "cpu_model": "Intel(R) Xeon(R) Platinum 8488C",
+          "omp_num_threads": null,
+          "image_manifest": null,
+          "model_inputs": [
+            {
+              "name": "cornerHBT.lib",
+              "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+            },
+            {
+              "name": "sg13g2_hbt_mod.lib",
+              "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+            },
+            {
+              "name": "sg13g2_hbt_mod_mismatch.lib",
+              "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+            },
+            {
+              "name": "sg13g2_hbt_stat.lib",
+              "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+            }
+          ],
+          "diagnostics": [
+            "pdk stamp unreadable: FileNotFoundError"
+          ],
+          "pdk_stamp_comparison": {
+            "basis": "staged_model_inputs",
+            "status": "match"
+          },
+          "engine_build_comparison": {
+            "status": "mismatch",
+            "warning": "the worker's ngspice --version banner differs from the local binary's; build options (e.g. FFT linkage) may differ, so results derived from them can differ from a local run"
+          }
+        },
+        "runner_model_inputs": [
+          {
+            "name": "cornerHBT.lib",
+            "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+          },
+          {
+            "name": "sg13g2_hbt_mod.lib",
+            "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+          },
+          {
+            "name": "sg13g2_hbt_mod_mismatch.lib",
+            "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+          },
+          {
+            "name": "sg13g2_hbt_stat.lib",
+            "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+          }
+        ],
+        "job_ceiling": {
+          "basis": "conservative_serial_bound",
+          "unit_count": 1,
+          "per_unit_timeout_s": 7200,
+          "overhead_s": 120.0,
+          "job_bound_s": 7320.0,
+          "max_job_seconds": 3600.0,
+          "max_job_seconds_source": "fleet_config",
+          "exceeds_ceiling": true,
+          "check": "warn",
+          "max_units_per_job": 0,
+          "recommended_hosts": null,
+          "warning": "batch job bound 7320s (options.timeout_s 7200s x 1 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. No remote.hosts value fits: a single unit's bound exceeds the ceiling -- lower options.timeout_s to at most 3480s"
+        }
+      },
+      "klt_version": "0.8.1.dev971+gb3ab6e5851ca"
+    },
+    {
+      "key": "C00_two",
+      "backend": "batch",
+      "status": "pass",
+      "engine": "ngspice",
+      "engine_version": "46",
+      "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+      "netlist_sha256": "e5ea3c51c37e7f1a25109e1519a4b0f844c944928943d1a05e9a70d673239c65",
+      "remote": {
+        "provider": "aws-batch-fleet",
+        "job_id": "klt-sim-7218fe036ccd",
+        "region": "us-east-1",
+        "instance_id": "i-08cb984ef2ee517db",
+        "instance_type": "m7i.4xlarge",
+        "availability_zone": "us-east-1b",
+        "ami_id": "ami-0fa5ef830209100bd",
+        "lifecycle": "spot",
+        "spot": true,
+        "state": "done",
+        "exit_code": "0",
+        "concurrency": "1",
+        "physical_cores": "8",
+        "elapsed_seconds": 719,
+        "client_submitted_at": "2026-10-31T22:14:44.796681Z",
+        "client_launched_at": "2026-10-31T22:15:06.134123Z",
+        "client_status_terminal_at": "2026-10-31T22:27:24.345573Z",
+        "client_collected_at": "2026-10-31T22:27:25.106195Z",
+        "runner_klt_version": "0.8.0",
+        "client_klt_version": "0.8.1.dev971+gb3ab6e5851ca",
+        "runner_compatibility": "match",
+        "runner_request_features": {
+          "required": [
+            "options.stage_model_inputs"
+          ],
+          "missing": [],
+          "status": "supported"
+        },
+        "worker_environment": {
+          "capture": "ok",
+          "simulator": {
+            "requested_binary": "ngspice",
+            "binary_source": "PATH",
+            "selected_path": "/usr/local/bin/ngspice",
+            "version_banner": "******\n** ngspice-46 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2025, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Thu Oct  1 23:51:59 UTC 2026\n******\n",
+            "version_probe": "ok"
+          },
+          "pdk": {
+            "variant": "ihp-sg13g2",
+            "root": "/opt/pdk",
+            "stamp_scheme": null,
+            "stamp_sha256": null,
+            "stamp_text": null,
+            "models_staged": true,
+            "stamp_scope": "image"
+          },
+          "cpu_model": "Intel(R) Xeon(R) Platinum 8488C",
+          "omp_num_threads": null,
+          "image_manifest": null,
+          "model_inputs": [
+            {
+              "name": "cornerHBT.lib",
+              "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+            },
+            {
+              "name": "sg13g2_hbt_mod.lib",
+              "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+            },
+            {
+              "name": "sg13g2_hbt_mod_mismatch.lib",
+              "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+            },
+            {
+              "name": "sg13g2_hbt_stat.lib",
+              "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+            }
+          ],
+          "diagnostics": [
+            "pdk stamp unreadable: FileNotFoundError"
+          ],
+          "pdk_stamp_comparison": {
+            "basis": "staged_model_inputs",
+            "status": "match"
+          },
+          "engine_build_comparison": {
+            "status": "mismatch",
+            "warning": "the worker's ngspice --version banner differs from the local binary's; build options (e.g. FFT linkage) may differ, so results derived from them can differ from a local run"
+          }
+        },
+        "runner_model_inputs": [
+          {
+            "name": "cornerHBT.lib",
+            "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+          },
+          {
+            "name": "sg13g2_hbt_mod.lib",
+            "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+          },
+          {
+            "name": "sg13g2_hbt_mod_mismatch.lib",
+            "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+          },
+          {
+            "name": "sg13g2_hbt_stat.lib",
+            "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+          }
+        ],
+        "job_ceiling": {
+          "basis": "conservative_serial_bound",
+          "unit_count": 1,
+          "per_unit_timeout_s": 7200,
+          "overhead_s": 120.0,
+          "job_bound_s": 7320.0,
+          "max_job_seconds": 3600.0,
+          "max_job_seconds_source": "fleet_config",
+          "exceeds_ceiling": true,
+          "check": "warn",
+          "max_units_per_job": 0,
+          "recommended_hosts": null,
+          "warning": "batch job bound 7320s (options.timeout_s 7200s x 1 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. No remote.hosts value fits: a single unit's bound exceeds the ceiling -- lower options.timeout_s to at most 3480s"
+        }
+      },
+      "klt_version": "0.8.1.dev971+gb3ab6e5851ca"
+    },
+    {
+      "key": "sparam_C00",
+      "backend": "batch",
+      "status": "pass",
+      "engine": "ngspice",
+      "engine_version": "46",
+      "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+      "netlist_sha256": "8d7da40765e659a5540b6069c024d868c067dad07406ea9590598a92958d34db",
+      "remote": {
+        "provider": "aws-batch-fleet",
+        "job_id": "klt-sim-62166532f40f",
+        "region": "us-east-1",
+        "instance_id": "i-027e7ce168eb59f51",
+        "instance_type": "m7i.4xlarge",
+        "availability_zone": "us-east-1a",
+        "ami_id": "ami-0fa5ef830209100bd",
+        "lifecycle": "spot",
+        "spot": true,
+        "state": "done",
+        "exit_code": "0",
+        "concurrency": "1",
+        "physical_cores": "8",
+        "elapsed_seconds": 6,
+        "client_submitted_at": "2026-10-31T22:27:25.508402Z",
+        "client_launched_at": "2026-10-31T22:27:46.824511Z",
+        "client_status_terminal_at": "2026-10-31T22:28:18.282870Z",
+        "client_collected_at": "2026-10-31T22:28:19.045837Z",
+        "runner_klt_version": "0.8.0",
+        "client_klt_version": "0.8.1.dev971+gb3ab6e5851ca",
+        "runner_compatibility": "match",
+        "runner_request_features": {
+          "required": [
+            "options.stage_model_inputs"
+          ],
+          "missing": [],
+          "status": "supported"
+        },
+        "worker_environment": {
+          "capture": "ok",
+          "simulator": {
+            "requested_binary": "ngspice",
+            "binary_source": "PATH",
+            "selected_path": "/usr/local/bin/ngspice",
+            "version_banner": "******\n** ngspice-46 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2025, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Thu Oct  1 23:51:59 UTC 2026\n******\n",
+            "version_probe": "ok"
+          },
+          "pdk": {
+            "variant": "ihp-sg13g2",
+            "root": "/opt/pdk",
+            "stamp_scheme": null,
+            "stamp_sha256": null,
+            "stamp_text": null,
+            "models_staged": true,
+            "stamp_scope": "image"
+          },
+          "cpu_model": "Intel(R) Xeon(R) Platinum 8488C",
+          "omp_num_threads": null,
+          "image_manifest": null,
+          "model_inputs": [
+            {
+              "name": "cornerHBT.lib",
+              "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+            },
+            {
+              "name": "sg13g2_hbt_mod.lib",
+              "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+            },
+            {
+              "name": "sg13g2_hbt_mod_mismatch.lib",
+              "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+            },
+            {
+              "name": "sg13g2_hbt_stat.lib",
+              "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+            }
+          ],
+          "diagnostics": [
+            "pdk stamp unreadable: FileNotFoundError"
+          ],
+          "pdk_stamp_comparison": {
+            "basis": "staged_model_inputs",
+            "status": "match"
+          },
+          "engine_build_comparison": {
+            "status": "mismatch",
+            "warning": "the worker's ngspice --version banner differs from the local binary's; build options (e.g. FFT linkage) may differ, so results derived from them can differ from a local run"
+          }
+        },
+        "runner_model_inputs": [
+          {
+            "name": "cornerHBT.lib",
+            "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+          },
+          {
+            "name": "sg13g2_hbt_mod.lib",
+            "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+          },
+          {
+            "name": "sg13g2_hbt_mod_mismatch.lib",
+            "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+          },
+          {
+            "name": "sg13g2_hbt_stat.lib",
+            "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+          }
+        ],
+        "job_ceiling": {
+          "basis": "conservative_serial_bound",
+          "unit_count": 1,
+          "per_unit_timeout_s": 7200,
+          "overhead_s": 120.0,
+          "job_bound_s": 7320.0,
+          "max_job_seconds": 3600.0,
+          "max_job_seconds_source": "fleet_config",
+          "exceeds_ceiling": true,
+          "check": "warn",
+          "max_units_per_job": 0,
+          "recommended_hosts": null,
+          "warning": "batch job bound 7320s (options.timeout_s 7200s x 1 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. No remote.hosts value fits: a single unit's bound exceeds the ceiling -- lower options.timeout_s to at most 3480s"
+        }
+      },
+      "klt_version": "0.8.1.dev971+gb3ab6e5851ca"
+    }
+  ],
+  "sweeps_file": "20261031-222819-864b44f-sweeps.json.gz",
+  "environment": {
+    "git": {
+      "commit": "864b44f578f20d6c8f13d0f70bb0ffceb47557f0",
+      "short": "864b44f",
+      "branch": "feature/issue-132",
+      "dirty": false
+    },
+    "klt_client": "klt 0.8.1.dev971+gb3ab6e5851ca",
+    "pdk_artifact_sha256": "2ca42a292eeef18dc0da32004bb2cfa66dfead21c73b4f77d4609d60dadeabf1",
+    "pdk": {
+      "variant_path": "/home/ubuntu/share/pdk/ihp-sg13g2",
+      "fetched_version_file": "0.3.0",
+      "model_sha256": {
+        "cornerHBT.lib": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+        "sg13g2_hbt_mod.lib": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+      }
+    }
+  },
+  "plan_declaration": {
+    "name": "lna-headroom",
+    "issue": 132,
+    "plan_version": 2,
+    "scope": "NOMINAL-CORNER (hbt_typ, 27 C, 2.5 V) study of experimental bias / collector-load variants of the committed design/lna_stage1 cascode (IDEAL lossless L/C matching, placeholder circuit). It asks only whether the Q2 divider ratio and the collector damping resistor can buy output-swing headroom under the UNCHANGED ratified limits (row 17: V_CE <= 1.4 V) and the unchanged row 8 / row 7 targets. The production schematic is NOT changed; adoption would be a later reviewed change. Draft band (row 1) is not ratified; nothing here is compliance. Plan version 2 adds the stage-2 refinement of the stage-1 shortlist (issue #132): convergence controls on the single-tone sweep, a nominal two-tone IIP3 check and a small-signal gain / NF / stability comparison against C00, for the stage-1 shortlist C08 and C05 (C00 reference); see the refinement block.",
+    "frozen_before_collection": "This file (candidate table, gates, ranking, shortlist, outcome rules and, from version 2, the refinement declaration) is committed before any collection; run.py refuses to collect with it dirty. No rule was tuned on candidate results.",
+    "linearity_plan": {
+      "file": "sim/lna-linearity/testbench/plan-v2.json",
+      "sha256": "26ad9db80f996405662eb0431911eb0a2970ebe405576b6ee6c2153f8257e195",
+      "reuses": "nominal corner, three placements, single-tone available-power convention, time grid, solver options (numerics.one), P1dB extractor, operating limits and the versioned collector-current diagnostics, unchanged",
+      "current_diagnostics": "plan-v2 policy kept as declared: applicability UNRESOLVED, complete_envelope false, over-box points listed not excluded, missing/non-finite diagnostics reject a point; no instantaneous current rating is invented and no complete operating envelope is claimed"
+    },
+    "dut": {
+      "netlist": "design/netlist/lna_stage1.spice",
+      "subckt": "lna_stage1",
+      "sha256": "ad4fe1be5754f21fc4b2dd67863234858dc399e2a8232d3b20cf530014b8c447",
+      "held_fixed": "Q1, Q2 (Nx=8 each), Re1, the whole input network (Cshunt, Lin, Cblk_in), Rref/Xqr/Rer/Rbias bias mirror, Lfeed, Cm, Cb2, supply 2.5 V",
+      "varied": "R1b and R2b (Q2 base divider) and Rd (collector damping resistor, in parallel with the ideal DC-short Lfeed), nothing else"
+    },
+    "candidates": {
+      "baseline_id": "C00",
+      "divider_rule": "R1b + R2b = 8.5 kohm in every candidate (the divider's total resistance, and so its loading by Q2's base current and the Cb2 time constant order, is held; only the ratio moves). Divider points chosen from a method-development DC .op (one local ngspice process, nominal corner): Vc1 = 1.247, 1.29, 1.335, 1.38 V for R2b = 7.0, 7.15, 7.3, 7.45 kohm; beyond ~7.5 kohm Q1's DC V_CE alone exceeds the 1.4 V limit, so the table stops there. Q1 + Q2 DC V_CE sum to ~2.5 V, so moving Vc1 can only trade Q2 headroom for Q1 headroom.",
+      "damping_rule": "Rd = 465 (committed), 300, 200 ohm: smaller Rd lowers the collector RF impedance (less gain, less swing per unit input). Larger Rd is excluded: it only increases swing.",
+      "table": [
+        {
+          "id": "C00",
+          "r1b_ohm": 1500,
+          "r2b_ohm": 7000,
+          "rd_ohm": 465
+        },
+        {
+          "id": "C01",
+          "r1b_ohm": 1500,
+          "r2b_ohm": 7000,
+          "rd_ohm": 300
+        },
+        {
+          "id": "C02",
+          "r1b_ohm": 1500,
+          "r2b_ohm": 7000,
+          "rd_ohm": 200
+        },
+        {
+          "id": "C03",
+          "r1b_ohm": 1350,
+          "r2b_ohm": 7150,
+          "rd_ohm": 465
+        },
+        {
+          "id": "C04",
+          "r1b_ohm": 1350,
+          "r2b_ohm": 7150,
+          "rd_ohm": 300
+        },
+        {
+          "id": "C05",
+          "r1b_ohm": 1350,
+          "r2b_ohm": 7150,
+          "rd_ohm": 200
+        },
+        {
+          "id": "C06",
+          "r1b_ohm": 1200,
+          "r2b_ohm": 7300,
+          "rd_ohm": 465
+        },
+        {
+          "id": "C07",
+          "r1b_ohm": 1200,
+          "r2b_ohm": 7300,
+          "rd_ohm": 300
+        },
+        {
+          "id": "C08",
+          "r1b_ohm": 1200,
+          "r2b_ohm": 7300,
+          "rd_ohm": 200
+        },
+        {
+          "id": "C09",
+          "r1b_ohm": 1050,
+          "r2b_ohm": 7450,
+          "rd_ohm": 465
+        },
+        {
+          "id": "C10",
+          "r1b_ohm": 1050,
+          "r2b_ohm": 7450,
+          "rd_ohm": 300
+        },
+        {
+          "id": "C11",
+          "r1b_ohm": 1050,
+          "r2b_ohm": 7450,
+          "rd_ohm": 200
+        }
+      ]
+    },
+    "baseline_reproduction": {
+      "record": "sim/lna-linearity/records/20261010-174208-0f67eaf",
+      "semantics": "historical plan_version 1 is voltage-only; C00 is re-run under the v2 diagnostics with enforce=false, which changes no admission decision for finite diagnostics, so the voltage-only first-violation outcome must reproduce",
+      "pin_tolerance_db": 2.0,
+      "vce_q2_peak_tol_v": 0.005,
+      "gain_tol_db": 0.05,
+      "rule": "per placement: first single-tone power breaking a limit within pin_tolerance_db (one 2 dB grid step) of the historical one with the same limit identity, and at every swept power Q2 V_CE peak within vce_q2_peak_tol_v and delivered power within gain_tol_db of the stored base sweep. Otherwise the study is invalid (status BASELINE_NOT_REPRODUCED) and no candidate is ranked."
+    },
+    "screening": {
+      "kind": "single-tone, base timing only (no timestep/window refinements at this stage), all three placements per candidate, one klt request per candidate (63 runs) plus one analytic-cubic control request",
+      "dc_block": "a DC .op at the head of each body records Vc1, Ve1, Vb1, Vb2, Voc and the supply current; DC V_CE(Q1) = Vc1 - Ve1, DC V_CE(Q2) = Voc - Vc1; Ic(Q1) ~ Ve1 / Re1 (Re1 = 3 ohm)"
+    },
+    "gates": {
+      "dc_vce_margin_v": 0.03,
+      "dc_rule": "G_dc: each of Q1, Q2 DC V_CE lies in [0.4, 1.4 - dc_vce_margin_v] V",
+      "gain_loss_max_db": 6.0,
+      "gain_rule": "G_gain: at EVERY placement the candidate's baseline gain is at least gain_loss_max_db below C00's baseline gain at that placement (a heavily attenuated candidate is not a solution to the receive-chain design)",
+      "baseline_rule": "G_base: a usable small-signal gain baseline exists at every placement",
+      "note": "a candidate failing a gate stays visible in every table with the failed gate named; it is excluded only from the ranking and shortlist"
+    },
+    "metrics": {
+      "stress_free_pin_dbm": "highest swept single-tone available power below the first limit violation (the last stress-valid point), per placement; a stress-valid P1dB, if any, is the fit_p1db 'ok' value",
+      "worst_placement": "minimum of stress_free_pin_dbm over the three placements",
+      "headroom_gain_db": "worst-placement stress_free_pin_dbm minus C00's",
+      "net_output_headroom_db": "headroom_gain_db plus (candidate baseline gain minus C00 baseline gain), minimised over placements: the change in stress-free OUTPUT power; <= 0 means the input-referred improvement is only the gain given away",
+      "limit_identity": "which device/limit breaks first (e.g. q2 V_CE peak, q1 V_CE peak, V_BE box), copied from the extractor's own messages"
+    },
+    "ranking": {
+      "among": "candidates passing G_dc, G_gain and G_base",
+      "order": [
+        "worst-placement stress_free_pin_dbm, descending",
+        "minimum placement baseline gain, descending",
+        "candidate id, ascending"
+      ],
+      "tie_tolerance_db": 0.0
+    },
+    "shortlist": {
+      "size": 2,
+      "admission": "a ranked candidate enters the shortlist only if headroom_gain_db >= min_headroom_gain_db AND net_output_headroom_db > 0",
+      "min_headroom_gain_db": 4.0,
+      "empty_means": "no candidate is refined; the screening outcome stands as the no-feasible-candidate result for this variant family",
+      "refinement_if_nonempty": "shortlisted candidates get the existing half-step / double-window controls on the single-tone sweep, a nominal two-tone IIP3 check and small-signal gain / NF / stability against C00 with the sim/lna-sparam-nf conventions, as a later record; none of that is claimed by the screening record"
+    },
+    "refinement": {
+      "stage": 2,
+      "issue": 132,
+      "kind": "stage-2 refinement of the stage-1 shortlist (stage-1 record 20261011-053527-d60e79a, outcome class headroom_improved_p1db_undetermined): the existing half-step / double-window single-tone controls, a nominal two-tone IIP3 check and a small-signal gain / NF / stability comparison against C00",
+      "candidates": [
+        "C08",
+        "C05",
+        "C00"
+      ],
+      "candidate_rule": "C08 and C05 are the stage-1 shortlist (stage-1 ranking order); C00 (the committed DUT) is the small-signal and stress reference and is refined under the same controls. The candidate TABLE above is NOT extended: no Rd below 200 ohm and no new divider point is declared in this version, so no such run exists in stage 2.",
+      "single_tone": {
+        "kind": "one",
+        "placements": "all three declared placements, per candidate",
+        "variants": [
+          "base",
+          "half_step",
+          "double_window"
+        ],
+        "purpose": "the existing convergence controls (linearity-plan convergence block): each refined variant must reproduce the base estimator outcome (status and value within the declared tolerances, and the points the estimator used within the point tolerances), else that placement is published 'unconverged' and no verdict is drawn from it"
+      },
+      "two_tone": {
+        "kind": "two",
+        "variants": [
+          "base"
+        ],
+        "purpose": "nominal two-tone IIP3 check per placement with the declared operating limits: points outside the limits (and points with missing/non-finite diagnostics) are classified and excluded, never fitted through; 'unavailable' with a reason is a published outcome, not a failure of the record",
+        "no_convergence_claim": "base timing only: no two-tone convergence is claimed by this stage"
+      },
+      "small_signal": {
+        "conventions": "sim/lna-sparam-nf, reused byte-identical: power-wave S-parameters via Thevenin Z0 sources toggled forward/reverse (S = 2*V(port) - 1), noiseless reference source with the source noise added analytically at T0 = 300.15 K (F = 1 + inoise^2/(4 k T0 Z0)), k / |Delta| / mu in band plus the 1-100 GHz stability sweep, and the per-device operating point; one klt request per candidate at the nominal corner (hbt_typ, 27 C, 2.5 V)",
+        "fixture": {
+          "file": "sim/lna-sparam-nf/testbench/lna_stage1.spice",
+          "sha256": "b3ceba894c4bd8700ea54b733ec048cc0fa40a5a4a19c9505fd312465bef3f45"
+        },
+        "manifest": {
+          "file": "sim/lna-sparam-nf/testbench/tb.json",
+          "sha256": "fd7c884b8a6425fb8cefc26a19eeead2b3db868a229c2978983397d4226901d9"
+        },
+        "dut_substitution": "the fixture's embedded verbatim DUT block is replaced by the candidate's frozen variant deck (checked against the committed DUT before substitution); everything else in the deck - analyses, measurements, solver settings - is the production bench's own text, unchanged",
+        "descriptive_only": "the comparison is descriptive: no gain, NF or stability gate is introduced and no spec row is assessed here"
+      },
+      "baseline_reproduction": {
+        "record": "sim/lna-headroom/records/20261011-053527-d60e79a",
+        "record_id": "20261011-053527-d60e79a",
+        "semantics": "C00 re-run under the stage-2 controls (base timing, plan-v2 current diagnostics with enforce=false as in stage 1) must reproduce the stage-1 first-violation outcome; if not, the refinement is invalid and no candidate is ranked",
+        "pin_tolerance_db": 2.0,
+        "vce_q2_peak_tol_v": 0.005,
+        "gain_tol_db": 0.05,
+        "rule": "per placement: first single-tone power breaking a limit within pin_tolerance_db (one 2 dB grid step) of the stage-1 one with the same limit identity, and at every swept power Q2 V_CE peak within vce_q2_peak_tol_v and delivered power within gain_tol_db of the stage-1 base sweep"
+      },
+      "validity": {
+        "V_ctl": "both analytic ngspice controls (single-tone and two-tone closed-form cubic through the identical generated deck and extractor) pass",
+        "V_repro": "C00 reproduces the stage-1 outcome within the declared tolerances",
+        "V_conv": "the candidate's single-tone P1dB outcome at EVERY placement is reproduced by BOTH the half-step and the double-window refinement; a failing candidate stays visible with the failed placement named and is excluded only from the ranking",
+        "note": "two-tone IIP3 unavailability is a published outcome, not a validity failure; the small-signal comparison introduces no gate"
+      },
+      "ranking": {
+        "among": "refined candidates passing V_conv, with V_ctl and V_repro satisfied",
+        "order": [
+          "worst-placement stress_free_pin_dbm, descending",
+          "minimum placement baseline gain, descending",
+          "candidate id, ascending"
+        ],
+        "tie_tolerance_db": 0.0
+      },
+      "outcome_classes": {
+        "refined_stress_valid_p1db_meets_row8": "a ranked candidate has a stress-valid P1dB at all three placements, each >= the unchanged -25 dBm target",
+        "refined_stress_valid_p1db_below_row8": "a ranked candidate has a stress-valid P1dB at all placements, below -25 dBm",
+        "refined_converged_p1db_still_bounded": "ranked candidates converge but P1dB remains a one-sided bound everywhere (expected from stage 1): the stage-1 outcome carries over refined",
+        "refined_unconverged": "no refined candidate passes V_conv; the stage-1 screening numbers do not carry over to a refinement claim",
+        "refinement_invalid": "controls fail or C00 does not reproduce the stage-1 outcome; no refinement verdict",
+        "rule": "the class is the best one attained by any ranked candidate in that order; every target and limit is the unchanged ratified value"
+      },
+      "rd_extension": "NOT declared in this version: the candidate table below Rd = 200 ohm is not run in stage 2. A further extension requires its own frozen plan version, with the stage-2 evidence (convergence, IIP3, gain/NF/stability) as input."
+    },
+    "outcome_classes": {
+      "stress_valid_p1db_meets_row8": "a ranked candidate has an 'ok' P1dB at all three placements, each >= the unchanged -25 dBm target (converged only after refinement; screening alone says 'unrefined')",
+      "stress_valid_p1db_below_row8": "a ranked candidate has an 'ok' P1dB at all placements but below -25 dBm",
+      "headroom_improved_p1db_undetermined": "shortlist non-empty but no candidate has a stress-valid P1dB at all placements",
+      "no_feasible_candidate": "shortlist empty",
+      "rule": "the class is the best one attained by any ranked candidate in that order; every target and limit is the unchanged ratified value"
+    },
+    "targets": {
+      "p1db_dbm": -25.0,
+      "iip3_dbm": -15.0,
+      "vce_max_v": 1.4
+    }
+  }
+}

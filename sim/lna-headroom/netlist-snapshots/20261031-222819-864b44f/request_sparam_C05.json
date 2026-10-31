@@ -1,0 +1,32 @@
+{
+  "netlist": "body_sparam_C05.spice",
+  "backend": "batch",
+  "models": {
+    "pdk": "ihp-sg13g2",
+    "lib": "libs.tech/ngspice/models/cornerHBT.lib"
+  },
+  "corners": {
+    "process": [
+      "hbt_typ"
+    ],
+    "temperature_c": [
+      27.0
+    ]
+  },
+  "analysis": {
+    "kind": "tran",
+    "args": "1p 2p"
+  },
+  "measurements": [
+    {
+      "name": "lna_rail_v",
+      "spice": ".meas tran lna_rail_v FIND v(vdd) AT=2p",
+      "unit": "V"
+    }
+  ],
+  "options": {
+    "timeout_s": 7200,
+    "keep_artifacts": true,
+    "stage_model_inputs": true
+  }
+}

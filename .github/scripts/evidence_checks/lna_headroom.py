@@ -17,7 +17,10 @@ HEADROOM_BENCH = "lna-headroom"
 HEADROOM_RECORD_FILE_RE = re.compile(r"^(\d{8}-\d{6}-[0-9a-f]{7,40})(\.md|\.json|-sweeps\.json\.gz)$")
 HEADROOM_STATUSES = ("COLLECTED", "CONTROLS_FAILED", "BASELINE_NOT_REPRODUCED")
 HEADROOM_OUTCOMES = ("stress_valid_p1db_meets_row8", "stress_valid_p1db_below_row8", "headroom_improved_p1db_undetermined",
-                     "no_feasible_candidate", "BASELINE_NOT_REPRODUCED")
+                     "no_feasible_candidate", "BASELINE_NOT_REPRODUCED",
+                     # stage 2 (issue #132): refinement outcome classes
+                     "refined_stress_valid_p1db_meets_row8", "refined_stress_valid_p1db_below_row8",
+                     "refined_converged_p1db_still_bounded", "refined_unconverged", "refinement_invalid")
 
 
 def check_lna_headroom(problems: Problems, root: Path, exp_dir: Path) -> None:
@@ -29,7 +32,19 @@ def check_lna_headroom(problems: Problems, root: Path, exp_dir: Path) -> None:
         problems.add(rel(root, exp_dir), "lna-headroom has no testbench/plan.json declaration")
         return
     declared = load_json_object(problems, root, plan_path) or {}
-    keys = ["control"] + [c.get("id") for c in (declared.get("candidates") or {}).get("table", [])]
+    ref = declared.get("refinement") or {}
+    table = [c.get("id") for c in (declared.get("candidates") or {}).get("table", [])]
+    # The stage a record belongs to is the RECORD's own ("stage": 1/2), not the current plan: plan
+    # version 2 (issue #132) refines the stage-1 shortlist and must not re-key the stage-1 records.
+    ref_cand_ids = list(ref.get("candidates") or [])
+    stage2_keys = ["control_one", "control_two"]
+    for cid in ref_cand_ids:
+        stage2_keys += [f"{cid}_one", f"{cid}_two", f"sparam_{cid}"]
+
+    def keyset_for(rec):
+        if rec is not None and rec.get("stage") == 2 and ref:
+            return stage2_keys, ref_cand_ids, True
+        return ["control"] + table, [k for k in table], False
     records = exp_dir / "records"
     ids: set[str] = set()
     if records.is_dir():
@@ -57,6 +72,7 @@ def check_lna_headroom(problems: Problems, root: Path, exp_dir: Path) -> None:
                     problems.add(rel(root, records / f"{rid}.md"), f"missing required section '## {sec}'")
             js = records / f"{rid}.json"
             rec = load_json_object(problems, root, js) if js.is_file() else None
+            keys, cand_ids, stage2 = keyset_for(rec)
             if rec is not None:
                 if rec.get("record_id") != rid:
                     problems.add(rel(root, js), f"JSON record_id {rec.get('record_id')!r} != {rid!r}")
@@ -67,8 +83,8 @@ def check_lna_headroom(problems: Problems, root: Path, exp_dir: Path) -> None:
                 oc = (rec.get("ranking") or {}).get("outcome_class")
                 if oc not in HEADROOM_OUTCOMES or f"`{oc}`" not in md:
                     problems.add(rel(root, js), f"ranking.outcome_class {oc!r} invalid or not stated in the Markdown")
-                if sorted((rec.get("candidates") or {}) ) != sorted(k for k in keys if k != "control"):
-                    problems.add(rel(root, js), "record does not publish every candidate of the frozen table (rejected ones must stay visible)")
+                if sorted((rec.get("candidates") or {}) ) != sorted(cand_ids):
+                    problems.add(rel(root, js), "record does not publish every declared candidate of the frozen plan (rejected ones must stay visible)")
             snap = exp_dir / "netlist-snapshots" / rid
             logs = exp_dir / "corners" / rid
             sp = snap / "plan.json"
@@ -79,7 +95,7 @@ def check_lna_headroom(problems: Problems, root: Path, exp_dir: Path) -> None:
                     problems.add(rel(root, sp), "frozen plan differs from the record's plan_declaration")
             for k in keys:
                 for f in (snap / f"body_{k}.spice", snap / f"request_{k}.json", snap / f"report_{k}.json", snap / f"variant_{k}.spice"):
-                    if k == "control" and f.name.startswith("variant_"):
+                    if f.name.startswith("variant_") and (k == "control" or k.startswith(("control_", "sparam_")) or k not in table):
                         continue
                     if not f.is_file():
                         problems.add(rel(root, f), "missing frozen evidence file")
@@ -87,6 +103,13 @@ def check_lna_headroom(problems: Problems, root: Path, exp_dir: Path) -> None:
                     problems.add(rel(root, logs / f"{k}.log.gz"), "missing raw log")
                 else:
                     read_gzip_text(problems, root, logs / f"{k}.log.gz")
+            if ref and stage2:
+                for f in ("sparam_fixture.spice", "sparam_tb.json"):
+                    if not (snap / f).is_file():
+                        problems.add(rel(root, snap / f), "missing frozen small-signal reference")
+                for cid in cand_ids:
+                    if not (snap / f"variant_{cid}.spice").is_file():
+                        problems.add(rel(root, snap / f"variant_{cid}.spice"), "missing frozen evidence file")
     for sub in ("corners", "netlist-snapshots"):
         d = exp_dir / sub
         if d.is_dir():
