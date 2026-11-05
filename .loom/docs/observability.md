@@ -214,9 +214,8 @@ then `meta-data/instance-type` and `meta-data/placement/region`) spawned at
 telemetry startup on Linux. It bypasses any `HTTP(S)_PROXY`, has a 1 s total
 budget, never retries and is never awaited — so startup is not delayed, and
 batches exported before it lands (or on a host where IMDS is unreachable)
-simply lack `host.type`/`cloud.*`. `eta.stage_outcome` records carry the
-*observing* host's shape, not the executing host's; join through the
-executing `host.id` on `sweep.*` records for that.
+simply lack `host.type`/`cloud.*`. Records carry the *observing* host's shape, not the executing
+host's; join through the executing `host.id` on `sweep.*` records for that.
 
 **Host load on sweep/phase spans (#12884).** `loom.sweep` and every
 `loom.phase` span carry the `lifecycle::host_attributes()` sample, including
@@ -890,8 +889,8 @@ every span also names the endpoint: `github.route` (a template such as
 `/repos/{owner}/{repo}/pulls/{n}`, from the same finite table as gh-shim's
 `github.api.route`), `http.request.method`, and `github.command` (`pr view`
 for an agent front read), so `api.rest` and `agent_gh_front` spend can be
-ranked by route. That pass also
-emits a `pass.summary` log per pass and a `pass.verdict` per artifact; Champion
+ranked by route. Role steps emit a
+`pass.verdict` per artifact; Champion
 steps add `pass.verdict` rows with `mechanism=step:champion`; see
 [`telemetry-schema.md`](telemetry-schema.md) and
 `defaults/observability/signoz/pass-queries.sql`.
@@ -1086,6 +1085,29 @@ Each such span carries, at open:
 A host-process run carries no container keys: unknown is absent, never zero.
 A sweep-dispatched Judge or Doctor has no `loom.role_attempt`; read its
 `loom.phase` span, which carries the PR through the sweep.
+
+### Tokens per step, per PR or issue (#13563)
+
+`sweep.completed` no longer carries per-unit tokens under step dispatch. The
+source now is the step's close **log record**, `role_tick.outcome` with
+`loom.role_tick.source = step`. It is built from the step's session
+transcripts by the same decoder `burn.rs` uses (deduped on `message.id`), so
+totals match by construction. `loom.dispatch.step` is an instant span emitted
+at spawn and cannot carry them; `loom.llm.tokens.*` metrics stay unlabelled by
+repo/issue to bound cardinality.
+
+| Key | Meaning |
+|---|---|
+| `loom.repo`, `loom.sweep_id`, `loom.role` | the repo, step and role |
+| `loom.issue` / `loom.pr_number` | the step's item: a PR for Judge / Champion-merge-style steps, else an issue |
+| `loom.models_used`, `loom.tokens_by_model` | observed models and per-model rows (never inferred from config) |
+| `loom.tokens.input` / `.output` / `.cache_read` / `.cache_write` | flat sums of the rows (`cache_write` = 5m + 1h) |
+
+A step with no readable transcript carries no token keys: absent, never zero.
+**Known gap:** summing per-step counts undercounts `loom.llm.tokens.*` by the
+tokens used outside steps (role-runner ticks, which have no item) and by
+runtimes whose transcripts the scan does not read. The hourly comparison
+against `loom.llm.tokens.*` is a post-roll live check and has not been run.
 
 ## 3d. Agent telemetry relay (Issue #10964)
 

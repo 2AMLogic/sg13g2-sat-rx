@@ -59,3 +59,15 @@ but the skew is not eliminated (tracked upstream, klayout-tools#2948).
   the `sim/lna-sparam-nf` conventions; (3) only then, and in a new frozen plan version, extend the table
   (Rd below 200 ohm) if the remaining 1-3 dB gap is worth the further gain loss. Any schematic adoption
   is a subsequent reviewed change; #79's core/noise selection should treat this as an input, not a result.
+
+
+## Stage 2: refinement of the shortlist (issue #132, record `20261031-222819-864b44f`)
+
+Frozen plan version 2 (declared before collection); evidence in `sim/lna-headroom/records/20261031-222819-864b44f.md`. The stage-1 text above is unchanged.
+Nominal corner only, ideal passives, draft band; no ratified limit or target relaxed; production schematic unchanged.
+
+* **Reference reproduced.** C00 reproduces its stage-1 first-violation outcome at all three placements (-36/-36/-34 dBm, q2 V_CE peak, 0.00 mV and 0.000 dB delta) under the refined controls. Both analytic cubic controls (single-tone, two-tone) pass.
+* **Convergence.** Half-step and double-window controls reproduce the base outcome for every candidate and placement. Single-tone P1dB is still a one-sided bound for every candidate (C08 `> -28/-28/-26 dBm`, C05 `> -30/-30/-28`, C00 `> -38/-38/-36`); the 1 dB crossing is not bracketed by stress-valid points, so row 8 (-25 dBm) is still undetermined. Outcome class `refined_converged_p1db_still_bounded`.
+* **Two-tone IIP3 (nominal, lower sideband, three placements).** C08 -13.0/-13.6/-11.8 dBm, C05 -13.0/-13.6/-11.7 dBm, C00 -13.3/-13.9/-11.8 dBm, fitted over -56..-36 dBm per tone for C08/C05. C00 has stress-excluded points (q2 V_CE peak above 1.4 V from -43/-43/-40 dBm per tone), which were not fitted, so its fit is a shorter interval with a larger extrapolation. The bias/load change leaves IIP3 essentially unchanged (within about 0.3 dB). The row-7 target (-15 dBm) is not claimed: the estimator is an extrapolation of 22-31 dB and applicability is unresolved.
+* **Small-signal (sim/lna-sparam-nf conventions, variant decks substituted in the hash-pinned fixture; `ac lin` for S/k/mu, `noise` for NF).** Against C00 at 19.45 GHz: C08 S21 -4.35 dB, NF +0.057 dB (3.575 vs 3.519 dB); C05 S21 -4.40 dB, NF +0.058 dB. NF stays 3.3-4.0 dB across 17.7-21.2 GHz for all three. No instability in either variant (k >= 13 over the 1-100 GHz sweep, mu > 1, no unstable point), better margin than C00 (k_min 5.75). S11/S22 match is not improved (C08 S22 -6.2 dB at the low band edge).
+* **Reading.** C08 remains the best combination: +10 dB input-referred stress-free headroom for 4.4 dB gain and about 0.06 dB NF, with no stability or IIP3 penalty. It does not close the row-8 question, and nothing here is a compliance claim. Extending the table below Rd = 200 ohm was not declared in plan v2 and was not run; it would need its own frozen plan version.

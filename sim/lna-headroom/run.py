@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Driver for the lna-headroom screening study (issue #123).
+"""Driver for the lna-headroom study (stage 1 screening: issue #123; stage 2 refinement: issue #132).
 
     python3 sim/lna-headroom/run.py check-plan
     python3 sim/lna-headroom/run.py variants [--check]      # (re)write / check the frozen variant decks
@@ -7,10 +7,13 @@
     python3 sim/lna-headroom/run.py collect [--dry-run]
     python3 sim/lna-headroom/run.py verify [RECORD_ID ...]
 
-``collect`` submits one klt request per candidate (plus one analytic control) with an EXPLICIT
-``--backend batch`` (Spot fleet) and never falls back to a local run: a failed submit stops the
-collection, writes nothing and prints the error. ``verify`` re-derives every published verdict from
-the frozen logs with no simulator.
+The declared plan version decides the flow: ``testbench/plan.json`` without a ``refinement`` block
+collects the stage-1 screening table; with one (plan_version 2) it collects the stage-2 refinement of
+the declared shortlist candidates (single-tone convergence controls, base-only two-tone IIP3 and the
+small-signal comparison decks). ``collect`` submits klt requests with an EXPLICIT ``--backend batch``
+(Spot fleet) and never falls back to a local run: a failed submit stops the collection, writes nothing
+and prints the error. ``verify`` re-derives every published verdict of every committed record (both
+stages) from the frozen logs with no simulator.
 """
 
 from __future__ import annotations
@@ -26,7 +29,9 @@ from functools import partial
 from pathlib import Path
 
 import headroom as H
+import linearity as LIN
 from headroom import BENCH_DIR, REPO_ROOT, SIM_DIR
+import small_signal as SS
 from harness import klt_driver
 from harness.provenance import git_out as _git_out, sha256_file
 from harness.report import RecordExists, allocate_record_id, git_provenance
@@ -55,8 +60,15 @@ def cmd_check_plan(args) -> int:
         print("FAIL:", p, file=sys.stderr)
     if probs:
         return 1
-    print(f"plan ok: {len(H.candidates(hp))} candidates (baseline {hp['candidates']['baseline_id']}) x {len(lp['placements'])} "
-          f"placements x {len(L_pins(lp))} single-tone powers; references lna-linearity plan-v2 (sha256 verified)")
+    if H.refinement(hp):
+        ref = H.refinement(hp)
+        print(f"plan ok: plan_version {hp['plan_version']}, refinement of {', '.join(ref['candidates'])}: "
+              f"single-tone variants {', '.join(ref['single_tone']['variants'])} x {len(lp['placements'])} placements x "
+              f"{len(L_pins(lp))} single-tone powers; two-tone base only ({len(LIN.sweep_pins(lp, 'two'))} powers); "
+              f"small-signal refs sha256-verified; references lna-linearity plan-v2 (sha256 verified)")
+    else:
+        print(f"plan ok: {len(H.candidates(hp))} candidates (baseline {hp['candidates']['baseline_id']}) x {len(lp['placements'])} "
+              f"placements x {len(L_pins(lp))} single-tone powers; references lna-linearity plan-v2 (sha256 verified)")
     return 0
 
 
@@ -91,14 +103,24 @@ def cmd_variants(args) -> int:
 def write_requests(hp, lp, work: Path, backend: str, args) -> dict[str, Path]:
     dut = H.DUT_PATH.read_text()
     n = lp["nominal"]
+    ref = H.refinement(hp)
+    fixture_text, tb = (SS.load_refs(hp) if ref else (None, None))
     reqs = {}
     for key in H.request_keys(hp):
         body = work / f"body_{key}.spice"
-        body.write_text(H.body_for_key(hp, lp, key, dut))
+        if ref and key.startswith(H.SPARAM):
+            cid = key[len(H.SPARAM):]
+            body.write_text(SS.body_text(tb, H.sparam_deck(hp, fixture_text, dut, cid),
+                                         cid, float(n["vdd_v"])))
+            sentinel_name, sentinel_node = "lna_rail_v", "v(vdd)"
+        else:
+            body.write_text(H.body_for_key(hp, lp, key, dut))
+            sentinel_name, sentinel_node = "lin_sentinel_v", "v(p2)"
         req = work / f"request_{key}.json"
         req.write_text(json.dumps(klt_driver.klt_request(
             body.name, [n["process"]], [float(n["temperature_c"])], backend, args.timeout_s,
-            sentinel_name="lin_sentinel_v", sentinel_node="v(p2)", stage_models=not args.no_stage_models,
+            sentinel_name=sentinel_name, sentinel_node=sentinel_node,
+            stage_models=not args.no_stage_models,
             runner_version_check=args.runner_version_check), indent=2) + "\n")
         reqs[key] = req
     return reqs
@@ -208,6 +230,186 @@ def render_md(rid: str, status: str, rec: dict) -> str:
     return "\n".join(L)
 
 
+def _conv_line(c: dict) -> str:
+    est = c["estimator"]
+    pw_f = max([v["max_abs_delta_db"] for v in c["pointwise_fundamental"].values()] or [0.0])
+    d = est.get("delta_db")
+    return (f"{c['variant']}: {'PASS' if c['ok'] else 'FAIL'}; estimator {est['base_status']}->{est['other_status']}, "
+            f"delta {('n/a' if d is None else f'{d:+.3f}')} dB (tol {est['tol_db']}); max fundamental delta {pw_f:.3f} dB"
+            + (f" -- {est['reason']}" if est.get("reason") and not c["ok"] else ""))
+
+
+def render_md_v2(rid: str, status: str, rec: dict) -> str:
+    hp, rk, bl = rec["plan_declaration"], rec["ranking"], rec["baseline_reproduction"]
+    ref = hp["refinement"]
+    ctl = rec["ngspice_control"]
+    tgt, itgt = hp["targets"]["p1db_dbm"], hp["targets"]["iip3_dbm"]
+    L = [f"# lna-headroom record {rid}", "",
+         f"- **Status: {status}**",
+         "- **Experiment**: lna-headroom (issue #132), stage 2 refinement of the stage-1 shortlist",
+         f"- **Started (UTC)**: {rec['started_utc']}", "",
+         f"**Claim**: {hp['scope']}", "",
+         "**Spec rows**: row 8 (input P1dB, target >= -25 dBm), row 7 (IIP3, target >= -15 dBm) and row 17 "
+         "(V_CE <= 1.4 V). None is relaxed and none is claimed met. Ideal passives, the draft band and the "
+         "nominal-only scope (hbt_typ, 27 C, 2.5 V) are unchanged.", "",
+         "## Declaration",
+         f"- Plan `sim/lna-headroom/testbench/plan.json` (plan_version {hp['plan_version']}) sha256 `{rec['plan']['sha256']}`, "
+         f"committed at `{rec['plan']['commit']}` (dirty: {str(rec['plan']['dirty']).lower()}). Refined candidates "
+         f"({', '.join(ref['candidates'])}), timing controls, two-tone grid, validity, ranking and outcome rules were "
+         "frozen before collection.",
+         f"- Reused nonlinear method: `{hp['linearity_plan']['file']}` sha256 `{hp['linearity_plan']['sha256']}` "
+         "(single-tone sweep -56..-16 dBm, 2 dB; two-tone sweep -56..-36 dBm per tone, 1 dB; three placements; "
+         "available-power convention; P1dB / IIP3 extractors; V_CE/V_BE limits; collector-current diagnostics with "
+         "applicability UNRESOLVED and complete_envelope false).",
+         f"- Single-tone convergence controls: variants {', '.join(ref['single_tone']['variants'])} at all three "
+         "placements per candidate; the base estimator outcome must be reproduced by both refinements.",
+         "- Two-tone: base timing only, all three placements per candidate; points outside the operating limits are "
+         "classified and excluded, never fitted through; no two-tone convergence is claimed.",
+         f"- Small-signal: `sim/lna-sparam-nf` conventions byte-identical (fixture sha256 "
+         f"`{ref['small_signal']['fixture']['sha256']}`; manifest sha256 `{ref['small_signal']['manifest']['sha256']}`); "
+         "the fixture's embedded verbatim DUT is replaced by the candidate's frozen variant deck; one klt request per "
+         "candidate at the nominal corner. The comparison is descriptive: no gain/NF/stability gate, no row assessed.",
+         f"- Rd extension: {ref['rd_extension']}",
+         f"- DUT `{rec['dut']['file']}` sha256 `{rec['dut']['sha256']}`; varied only R1b/R2b (sum held at 8.5 kohm) and Rd; "
+         "frozen decks in `variants/` and the snapshot.", "",
+         "## Controls and baseline reproduction",
+         _ctl_line("single tone (P1dB)", ctl["evaluations"]["one"]),
+         _ctl_line("two tone (IIP3)", ctl["evaluations"]["two"]),
+         f"- Reference candidate C00 vs stage-1 record `{bl['record']}`: **{'REPRODUCED' if bl['reproduced'] else 'NOT REPRODUCED'}** "
+         f"(tolerances {bl['tolerances']})"]
+    for n, c in bl["per_placement"].items():
+        L.append(f"  - {n}: first violation {c['first_violation_pin_dbm']} dBm ({c['identity']}) vs stage-1 "
+                 f"{c['historical_first_violation_pin_dbm']} dBm ({c['historical_identity']}); max Q2 V_CE peak delta "
+                 f"{c['max_vce_q2_peak_delta_v'] * 1e3:.2f} mV, max delivered-power delta {c['max_delivered_power_delta_db']:.3f} dB: "
+                 f"{'ok' if c['reproduced'] else 'FAIL'}")
+    L += ["", "## DC voltage allocation (nominal)", "",
+          "| cand | R2b | Rd | Vc1 | Vb2 | V_CE Q1 | V_CE Q2 | V_BE Q2 | Ic(Q1) mA | gates failed |",
+          "|---|---|---|---|---|---|---|---|---|---|"]
+    for cid, c in rec["candidates"].items():
+        d, k = c["dc"], c["candidate"]
+        L.append(f"| {cid} | {k['r2b_ohm']:g} | {k['rd_ohm']:g} | {d['vc1_v']:.3f} | {d['vb2_v']:.3f} | {d['vce_q1_v']:.3f} | "
+                 f"{d['vce_q2_v']:.3f} | {d['vbe_q2_v']:.3f} | {d['ic_q1_ma_from_re1']:.2f} | "
+                 f"{', '.join(c['gates']['failed']) or 'none'} |")
+    L += ["", "## Single-tone refinement and convergence", "",
+          "Base outcome per placement (stress boundary and P1dB from the base timing), then the frozen convergence "
+          "controls: both refinements must reproduce the base estimator outcome or the placement is unconverged. "
+          "P1dB stays a one-sided bound unless the crossing is bracketed by stress-valid points.", "",
+          "| cand | placement | base gain dB | stress-free dBm | first violation | P1dB (base) | half_step | double_window | converged |",
+          "|---|---|---|---|---|---|---|---|---|"]
+    for cid, c in rec["candidates"].items():
+        for n, p in c["placements"].items():
+            s, q = p["stress"], p["p1db"]
+            pd = f"{q['p1db_in_dbm']:.2f}" if q["status"] == "ok" else \
+                (f"> {q['p1db_in_dbm_gt']:g} (bounded)" if q["status"] == "bounded" else "unavailable")
+            convs = c["convergence"][n]
+            cells = [_conv_cell(cv) for cv in convs]
+            L.append(f"| {cid} | {n} | {_f(p['baseline_gain_db'])} | {_f(s['stress_free_pin_dbm'], '{:g}')} | "
+                     f"{_f(s['first_violation_pin_dbm'], '{:g}')} ({s['limit_identity'] or 'none in sweep'}) | {pd} | "
+                     + " | ".join(cells) + f" | {'yes' if c['validity']['V_conv'] else 'NO'} |")
+    L += ["", "## Two-tone IIP3 (nominal)", "",
+          f"Fitted only from contiguous usable points inside the operating limits (stress-excluded points are listed "
+          f"and excluded, never fitted through); reported value is the lower sideband; unchanged row-7 target "
+          f">= {itgt:g} dBm, not claimed.", "",
+          "| cand | placement | IIP3 dBm | sideband spread dB | fitted interval dBm | extrapolation dB | first two-tone violation |",
+          "|---|---|---|---|---|---|---|"]
+    for cid, c in rec["candidates"].items():
+        for n, t in c["two_tone"].items():
+            r = t["iip3"]
+            if r["status"] == "ok":
+                worst = min((s for s in r["sidebands"].values() if s["status"] == "ok"), key=lambda s: s["iip3_dbm"])
+                L.append(f"| {cid} | {n} | **{r['iip3_dbm']:.2f}** | {r['sideband_spread_db']:.2f} | "
+                         f"{worst['interval_dbm'][0]:g}..{worst['interval_dbm'][1]:g} | {worst['extrapolation_db']:.1f} | "
+                         + (_fv_cell(t["first_violation"]) or "none in sweep") + " |")
+            else:
+                L.append(f"| {cid} | {n} | unavailable: {r['reason']} | | | | "
+                         + (_fv_cell(t["first_violation"]) or "none in sweep") + " |")
+    excl = _two_tone_excluded(rec)
+    L += ["", "Excluded / stress-rejected two-tone sweep points (never fitted):"]
+    L += (excl or ["  - none"])
+    L += ["", "## Small-signal gain, NF and stability (sim/lna-sparam-nf conventions)", "",
+          "Analyses, as declared by the bench manifest: S-parameters / k / |Delta| / mu / NF from `ac lin 3 17.7e9 21.2e9` "
+          "(17.7 / 19.45 / 21.2 GHz, the DRAFT band's edges and centre) with the two-ac power-wave method; NF from the "
+          "`noise` analysis with the noiseless reference source (source noise added analytically at T0 = 300.15 K); the "
+          "stability sweep from `ac dec 100 1e9 1e11` in both directions; the operating point from `op`. Descriptive "
+          "comparison against C00; no row is assessed.", ""]
+    for cid, c in rec["candidates"].items():
+        m = c["small_signal"]["measurements"]
+        L.append(f"### {cid}")
+        L.append("")
+        L.append("| quantity (analysis) | lo (17.7 GHz) | mid (19.45 GHz) | hi (21.2 GHz) |")
+        L.append("|---|---|---|---|")
+        for label, pre in (("S11 dB (AC)", "s11_db"), ("S21 dB (AC)", "s21_db"), ("S22 dB (AC)", "s22_db"),
+                           ("S12 dB (AC)", "s12_db"), ("k (AC)", "k"), ("|Delta| (AC)", "d"), ("mu (AC)", "mu"),
+                           ("MSG dB (AC)", "msg_db"), ("NF dB (noise)", "nf_db")):
+            L.append(f"| {label} | {m[pre + '_lo']:.3f} | {m[pre + '_mid']:.3f} | {m[pre + '_hi']:.3f} |")
+        L.append(f"| op: V_CE Q1 / Q2 V (op) | {m['q1_vce']:.3f} / {m['q2_vce']:.3f} | | |")
+        L.append(f"| op: Ic/(3 mA x Nx) Q1 / Q2 (op) | {m['q1_icfrac']:.3f} / {m['q2_icfrac']:.3f} | | |")
+        L.append(f"| op: Idd mA / Pdc mW (op) | {m['idd_ma']:.3f} / {m['pdc_mw']:.3f} | | |")
+        L.append("")
+        if c["small_signal"]["vs_baseline"] is not None:
+            v = c["small_signal"]["vs_baseline"]
+            L.append(f"vs C00: dS21 {v['s21_db']['s21_db_mid']:+.2f} dB (mid, {v['s21_db']['s21_db_lo']:+.2f} / "
+                     f"{v['s21_db']['s21_db_hi']:+.2f} lo/hi), dNF {v['nf_db']['nf_db_mid']:+.3f} dB (mid), "
+                     f"dk(mid) {v['k']['k_mid']:+.3f}, sweep kmin {m['sw_kmin']:.3f} at {m['sw_fkmin_ghz']:.2f} GHz "
+                     f"(C00 {rec['candidates'][hp['candidates']['baseline_id']]['small_signal']['measurements']['sw_kmin']:.3f}), "
+                     f"sweep kmin in band {m['sw_kmin_lo']:.3f}..{m['sw_kmin_hi']:.3f}, mu_min {m['sw_mumin']:.3f}, "
+                     f"n_unstable {m['sw_nunst']:g}")
+            L.append("")
+    L += ["", "## Gain versus stress tradeoff (relative to C00)", "",
+          "| cand | worst stress-free dBm | headroom gain dB (input-referred) | min gain loss dB | net OUTPUT headroom dB | validity failed |",
+          "|---|---|---|---|---|---|"]
+    for cid, c in rec["candidates"].items():
+        m, g = c["metrics"], c["validity"]
+        loss = [v for v in (c["gates"]["gain_loss_db"] or {}).values() if v is not None]
+        L.append(f"| {cid} | {_f(m['worst_stress_free_pin_dbm'], '{:g}')} | {_f(m['headroom_gain_db'], '{:+.1f}')} | "
+                 f"{_f(max(loss) if loss else None, '{:.2f}')} (worst) | {_f(m['net_output_headroom_db'], '{:+.1f}')} | "
+                 f"{', '.join(g['failed']) or 'none'} |")
+    L += ["", "## Ranking, validity and outcome (rules from the frozen plan)",
+          f"- Ranked (V_conv pass, controls and stage-1 reproduction ok): {', '.join(rk['ranked']) or 'none'}",
+          "- Not ranked: " + ("; ".join(f"{k}: {', '.join(v)}" for k, v in rk["not_ranked"].items()) or "none"),
+          f"- **Outcome class: `{rk['outcome_class']}`**", "",
+          "## Provenance and raw artifacts",
+          f"- Git: commit `{rec['environment']['git']['commit']}` (dirty: {str(rec['environment']['git']['dirty']).lower()}), "
+          "minted by `python3 sim/lna-headroom/run.py collect`.",
+          f"- Client: `{rec['environment']['klt_client']}`; PDK artifact pin sha256 `{rec['environment']['pdk_artifact_sha256']}`."]
+    for r in rec["klt_requests"]:
+        L.append(f"- request `{r['key']}`: backend {r['backend']}, status {r['status']}, engine {r['engine']} "
+                 f"{r['engine_version']}, models_lib_sha256 `{r['models_lib_sha256']}`, remote {json.dumps(r['remote'], sort_keys=True)}")
+    L += [f"- Raw logs `corners/{rid}/<request>.log.gz`; frozen plan, DUT, variants, small-signal fixture/manifest, bodies, "
+          f"requests, reports `netlist-snapshots/{rid}/`; every sweep point `records/{rid}-sweeps.json.gz`. Re-derive with "
+          "`python3 sim/lna-headroom/run.py verify`.", ""]
+    return "\n".join(L)
+
+
+def _ctl_line(kind: str, ev: dict) -> str:
+    if ev["error_db"] is None:
+        return f"- ngspice analytic cubic control, {kind}: FAIL ({ev['result']['status']})"
+    return (f"- ngspice analytic cubic control, {kind}: {'PASS' if ev['pass'] else 'FAIL'} "
+            f"(error {ev['error_db']:+.3f} dB, tol {ev['tol_db']}; gain error {ev['gain_error_db']:+.3f} dB, tol {ev['gain_tol_db']})")
+
+
+def _conv_cell(c: dict) -> str:
+    est = c["estimator"]
+    d = est.get("delta_db")
+    ds = "n/a" if d is None else f"{d:+.3f}"
+    return f"{c['variant']} {'PASS' if c['ok'] else 'FAIL'} ({est['base_status']}->{est['other_status']}, {ds} dB)"
+
+
+def _fv_cell(fv: dict | None) -> str | None:
+    return f"{fv['pin_dbm']:g} dBm ({'; '.join(fv['violations'])})" if fv else None
+
+
+def _two_tone_excluded(rec: dict) -> list[str]:
+    """Every two-tone sweep point excluded from a fit, with the reason (from the extractor's own bookkeeping)."""
+    out = []
+    for cid, c in rec["candidates"].items():
+        for n, t in c["two_tone"].items():
+            for side, s in (t["iip3"].get("sidebands") or {}).items():
+                for pin, why in (s.get("excluded_points") or {}).items():
+                    out.append(f"  - {cid} {n} {side} sideband {pin} dBm: {why}")
+    return out
+
+
 def collect(args) -> int:
     hp, lp = H.load_plans()
     probs = H.plan_problems(hp, lp, H.DUT_PATH.read_text())
@@ -239,6 +441,8 @@ def collect(args) -> int:
 
 
 def finalize(hp, lp, work, reqs, texts, reports, pdk, started, args) -> int:
+    if H.refinement(hp):
+        return finalize_refined(hp, lp, work, reqs, texts, reports, pdk, started, args)
     hist, hist_sw = H.load_historical(HIST_ID)
     res = H.analyze(hp, lp, texts, hist, hist_sw)
     if res["problems"]:
@@ -296,6 +500,71 @@ def finalize(hp, lp, work, reqs, texts, reports, pdk, started, args) -> int:
     return 0
 
 
+def finalize_refined(hp, lp, work, reqs, texts, reports, pdk, started, args) -> int:
+    refs = SS.load_refs(hp)
+    hist, hist_sw = H.load_stage1_historical(hp)
+    res = H.analyze(hp, lp, texts, hist, hist_sw, refs=refs)
+    if res["problems"]:
+        for p in res["problems"][:40]:
+            print("FAIL:", p, file=sys.stderr)
+        print("collect: log integrity gate failed; NO record written", file=sys.stderr)
+        return 1
+    git = git_provenance(REPO_ROOT)
+    git["dirty"] = bool(dirty_code())
+    rid = allocate_record_id(REPO_ROOT, RECORDS, git=git)
+    ctl_ok = res["ngspice_control"]["pass"]
+    status = ("COLLECTED" if ctl_ok and res["baseline_reproduction"]["reproduced"]
+              else "CONTROLS_FAILED" if not ctl_ok else "BASELINE_NOT_REPRODUCED")
+    client = subprocess.run(shlex.split(args.klt_cmd) + ["--version"], capture_output=True, text=True)
+    requests = []
+    for key in H.request_keys(hp):
+        d = reports[key]
+        env = d.get("environment") or {}
+        requests.append({"key": key, "backend": args.backend, "status": d.get("status"), "engine": env.get("engine"),
+                         "engine_version": env.get("engine_version"), "models_lib_sha256": env.get("models_lib_sha256"),
+                         "netlist_sha256": env.get("netlist_sha256"), "remote": env.get("remote"),
+                         "klt_version": (d.get("provenance") or {}).get("klt_version")})
+    sweeps = res.pop("sweeps")
+    plan_rel = H.PLAN_PATH.relative_to(REPO_ROOT).as_posix()
+    rec = {"record_id": rid, "status": status, "stage": 2, "started_utc": started.isoformat(),
+           "spec_rows_claimed_met": [],
+           "plan": {"file": plan_rel, "sha256": sha256_file(H.PLAN_PATH),
+                    "commit": git_out("log", "-1", "--format=%H", "--", plan_rel), "dirty": bool(dirty_code())},
+           "plan_declaration": hp,
+           "dut": {"file": H.DUT_PATH.relative_to(REPO_ROOT).as_posix(), "sha256": sha256_file(H.DUT_PATH)},
+           "ngspice_control": res["ngspice_control"], "baseline_reproduction": res["baseline_reproduction"],
+           "candidates": res["candidates"], "ranking": res["ranking"], "klt_requests": requests,
+           "sweeps_file": f"{rid}-sweeps.json.gz",
+           "environment": {"git": git, "klt_client": (client.stdout or client.stderr).strip(),
+                           "pdk_artifact_sha256": sha256_file(SIM_DIR / "pdk-artifact.json"),
+                           "pdk": klt_driver.pdk_provenance(pdk, MODEL_FILES)}}
+    for d in (RECORDS, LOGS / rid, SNAPS / rid):
+        d.mkdir(parents=True, exist_ok=True)
+    published = H.roundtrip({k: v for k, v in rec.items() if k != "plan_declaration"})
+    published["plan_declaration"] = hp
+    (RECORDS / f"{rid}.json").write_text(json.dumps(published, indent=2) + "\n")
+    with gzip.open(RECORDS / f"{rid}-sweeps.json.gz", "wt", encoding="utf-8") as fh:
+        json.dump(H.roundtrip(sweeps), fh)
+    for key, text in texts.items():
+        with gzip.open(LOGS / rid / f"{key}.log.gz", "wt", encoding="utf-8") as fh:
+            fh.write(text)
+    snap = SNAPS / rid
+    (snap / "plan.json").write_bytes(H.PLAN_PATH.read_bytes())
+    (snap / "lna_stage1.spice").write_bytes(H.DUT_PATH.read_bytes())
+    (snap / "linearity-plan-v2.json").write_bytes((REPO_ROOT / hp["linearity_plan"]["file"]).read_bytes())
+    (snap / "sparam_fixture.spice").write_text(refs[0])
+    (snap / "sparam_tb.json").write_text(json.dumps(refs[1], indent=2) + "\n")
+    for key in reqs:
+        for stem in ("body_{}.spice", "request_{}.json", "report_{}.json"):
+            (snap / stem.format(key)).write_bytes((work / stem.format(key)).read_bytes())
+    dut_text = H.DUT_PATH.read_text()
+    for c in H.candidates(hp):
+        (snap / f"variant_{c['id']}.spice").write_text(H.variant_text(dut_text, c))
+    (RECORDS / f"{rid}.md").write_text(render_md_v2(rid, status, json.loads((RECORDS / f"{rid}.json").read_text())))
+    print(f"record {rid}: {status}; outcome class {res['ranking']['outcome_class']}; ranked {res['ranking']['ranked']}")
+    return 0
+
+
 # ---------------------------------------------------------------------------
 # verify
 # ---------------------------------------------------------------------------
@@ -312,8 +581,14 @@ def verify_record(rid: str) -> list[str]:
     for key in H.request_keys(hp):
         with gzip.open(LOGS / rid / f"{key}.log.gz", "rt", encoding="utf-8") as fh:
             texts[key] = fh.read()
-    hist, hist_sw = H.load_historical(HIST_ID)
-    res = H.analyze(hp, lp, texts, hist, hist_sw)
+    if H.refinement(hp):
+        refs = ((snap / "sparam_fixture.spice").read_text(), json.loads((snap / "sparam_tb.json").read_text()))
+        hist, hist_sw = H.load_stage1_historical(hp)
+        res = H.analyze(hp, lp, texts, hist, hist_sw, refs=refs)
+    else:
+        refs = None
+        hist, hist_sw = H.load_historical(HIST_ID)
+        res = H.analyze(hp, lp, texts, hist, hist_sw)
     if res["problems"]:
         return res["problems"]
     sweeps = res.pop("sweeps")
@@ -330,7 +605,12 @@ def verify_record(rid: str) -> list[str]:
         out.append("record plan_declaration differs from the frozen plan")
     dut = (snap / "lna_stage1.spice").read_text()
     for key in H.request_keys(hp):
-        if (snap / f"body_{key}.spice").read_text() != H.body_for_key(hp, lp, key, dut):
+        if H.refinement(hp) and key.startswith(H.SPARAM):
+            cid = key[len(H.SPARAM):]
+            body = SS.body_text(refs[1], H.sparam_deck(hp, refs[0], dut, cid), cid, float(lp["nominal"]["vdd_v"]))
+        else:
+            body = H.body_for_key(hp, lp, key, dut)
+        if (snap / f"body_{key}.spice").read_text() != body:
             out.append(f"frozen body_{key}.spice does not regenerate from the frozen plan and DUT")
     for c in H.candidates(hp):
         if (snap / f"variant_{c['id']}.spice").read_text() != H.variant_text(dut, c):

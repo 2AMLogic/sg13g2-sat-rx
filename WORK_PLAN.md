@@ -51,8 +51,7 @@ Issues carrying `loom:curated`.
 
 - **#38**: Auditor Capability Request: Python runtime for local harness smoke validation *(curated)*
 - **#79**: design: choose the first-stage core change that lets NF and input match close together *(curated)*
-- **#132**: sim: refine headroom shortlist (C08/C05) - convergence, two-tone IIP3, gain/NF/stability vs baseline *(curated)*
-- **#135**: mixer-conversion-iip3: FFT-bin metrics depend on the ngspice FFT build (local zero-padded vs batch unpadded) *(curated)*
+- **#110**: sim: execute the prepared p1 EM campaign and reproduce frozen results *(curated)*
 
 ## Proposed (Architect / Hermit)
 
@@ -73,7 +72,7 @@ _None._
 | In Progress (`loom:building`) | 0 |
 | PRs awaiting review | 0 |
 | Approved PRs awaiting merge | 0 |
-| Curated | 4 |
+| Curated | 3 |
 | Architect / Hermit proposals | 0 |
 | Active epics | 0 |
 <!-- guide:plan-body:end -->

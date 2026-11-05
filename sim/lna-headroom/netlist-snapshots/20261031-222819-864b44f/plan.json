@@ -1,0 +1,219 @@
+{
+  "name": "lna-headroom",
+  "issue": 132,
+  "plan_version": 2,
+  "scope": "NOMINAL-CORNER (hbt_typ, 27 C, 2.5 V) study of experimental bias / collector-load variants of the committed design/lna_stage1 cascode (IDEAL lossless L/C matching, placeholder circuit). It asks only whether the Q2 divider ratio and the collector damping resistor can buy output-swing headroom under the UNCHANGED ratified limits (row 17: V_CE <= 1.4 V) and the unchanged row 8 / row 7 targets. The production schematic is NOT changed; adoption would be a later reviewed change. Draft band (row 1) is not ratified; nothing here is compliance. Plan version 2 adds the stage-2 refinement of the stage-1 shortlist (issue #132): convergence controls on the single-tone sweep, a nominal two-tone IIP3 check and a small-signal gain / NF / stability comparison against C00, for the stage-1 shortlist C08 and C05 (C00 reference); see the refinement block.",
+  "frozen_before_collection": "This file (candidate table, gates, ranking, shortlist, outcome rules and, from version 2, the refinement declaration) is committed before any collection; run.py refuses to collect with it dirty. No rule was tuned on candidate results.",
+  "linearity_plan": {
+    "file": "sim/lna-linearity/testbench/plan-v2.json",
+    "sha256": "26ad9db80f996405662eb0431911eb0a2970ebe405576b6ee6c2153f8257e195",
+    "reuses": "nominal corner, three placements, single-tone available-power convention, time grid, solver options (numerics.one), P1dB extractor, operating limits and the versioned collector-current diagnostics, unchanged",
+    "current_diagnostics": "plan-v2 policy kept as declared: applicability UNRESOLVED, complete_envelope false, over-box points listed not excluded, missing/non-finite diagnostics reject a point; no instantaneous current rating is invented and no complete operating envelope is claimed"
+  },
+  "dut": {
+    "netlist": "design/netlist/lna_stage1.spice",
+    "subckt": "lna_stage1",
+    "sha256": "ad4fe1be5754f21fc4b2dd67863234858dc399e2a8232d3b20cf530014b8c447",
+    "held_fixed": "Q1, Q2 (Nx=8 each), Re1, the whole input network (Cshunt, Lin, Cblk_in), Rref/Xqr/Rer/Rbias bias mirror, Lfeed, Cm, Cb2, supply 2.5 V",
+    "varied": "R1b and R2b (Q2 base divider) and Rd (collector damping resistor, in parallel with the ideal DC-short Lfeed), nothing else"
+  },
+  "candidates": {
+    "baseline_id": "C00",
+    "divider_rule": "R1b + R2b = 8.5 kohm in every candidate (the divider's total resistance, and so its loading by Q2's base current and the Cb2 time constant order, is held; only the ratio moves). Divider points chosen from a method-development DC .op (one local ngspice process, nominal corner): Vc1 = 1.247, 1.29, 1.335, 1.38 V for R2b = 7.0, 7.15, 7.3, 7.45 kohm; beyond ~7.5 kohm Q1's DC V_CE alone exceeds the 1.4 V limit, so the table stops there. Q1 + Q2 DC V_CE sum to ~2.5 V, so moving Vc1 can only trade Q2 headroom for Q1 headroom.",
+    "damping_rule": "Rd = 465 (committed), 300, 200 ohm: smaller Rd lowers the collector RF impedance (less gain, less swing per unit input). Larger Rd is excluded: it only increases swing.",
+    "table": [
+      {
+        "id": "C00",
+        "r1b_ohm": 1500,
+        "r2b_ohm": 7000,
+        "rd_ohm": 465
+      },
+      {
+        "id": "C01",
+        "r1b_ohm": 1500,
+        "r2b_ohm": 7000,
+        "rd_ohm": 300
+      },
+      {
+        "id": "C02",
+        "r1b_ohm": 1500,
+        "r2b_ohm": 7000,
+        "rd_ohm": 200
+      },
+      {
+        "id": "C03",
+        "r1b_ohm": 1350,
+        "r2b_ohm": 7150,
+        "rd_ohm": 465
+      },
+      {
+        "id": "C04",
+        "r1b_ohm": 1350,
+        "r2b_ohm": 7150,
+        "rd_ohm": 300
+      },
+      {
+        "id": "C05",
+        "r1b_ohm": 1350,
+        "r2b_ohm": 7150,
+        "rd_ohm": 200
+      },
+      {
+        "id": "C06",
+        "r1b_ohm": 1200,
+        "r2b_ohm": 7300,
+        "rd_ohm": 465
+      },
+      {
+        "id": "C07",
+        "r1b_ohm": 1200,
+        "r2b_ohm": 7300,
+        "rd_ohm": 300
+      },
+      {
+        "id": "C08",
+        "r1b_ohm": 1200,
+        "r2b_ohm": 7300,
+        "rd_ohm": 200
+      },
+      {
+        "id": "C09",
+        "r1b_ohm": 1050,
+        "r2b_ohm": 7450,
+        "rd_ohm": 465
+      },
+      {
+        "id": "C10",
+        "r1b_ohm": 1050,
+        "r2b_ohm": 7450,
+        "rd_ohm": 300
+      },
+      {
+        "id": "C11",
+        "r1b_ohm": 1050,
+        "r2b_ohm": 7450,
+        "rd_ohm": 200
+      }
+    ]
+  },
+  "baseline_reproduction": {
+    "record": "sim/lna-linearity/records/20261010-174208-0f67eaf",
+    "semantics": "historical plan_version 1 is voltage-only; C00 is re-run under the v2 diagnostics with enforce=false, which changes no admission decision for finite diagnostics, so the voltage-only first-violation outcome must reproduce",
+    "pin_tolerance_db": 2.0,
+    "vce_q2_peak_tol_v": 0.005,
+    "gain_tol_db": 0.05,
+    "rule": "per placement: first single-tone power breaking a limit within pin_tolerance_db (one 2 dB grid step) of the historical one with the same limit identity, and at every swept power Q2 V_CE peak within vce_q2_peak_tol_v and delivered power within gain_tol_db of the stored base sweep. Otherwise the study is invalid (status BASELINE_NOT_REPRODUCED) and no candidate is ranked."
+  },
+  "screening": {
+    "kind": "single-tone, base timing only (no timestep/window refinements at this stage), all three placements per candidate, one klt request per candidate (63 runs) plus one analytic-cubic control request",
+    "dc_block": "a DC .op at the head of each body records Vc1, Ve1, Vb1, Vb2, Voc and the supply current; DC V_CE(Q1) = Vc1 - Ve1, DC V_CE(Q2) = Voc - Vc1; Ic(Q1) ~ Ve1 / Re1 (Re1 = 3 ohm)"
+  },
+  "gates": {
+    "dc_vce_margin_v": 0.03,
+    "dc_rule": "G_dc: each of Q1, Q2 DC V_CE lies in [0.4, 1.4 - dc_vce_margin_v] V",
+    "gain_loss_max_db": 6.0,
+    "gain_rule": "G_gain: at EVERY placement the candidate's baseline gain is at least gain_loss_max_db below C00's baseline gain at that placement (a heavily attenuated candidate is not a solution to the receive-chain design)",
+    "baseline_rule": "G_base: a usable small-signal gain baseline exists at every placement",
+    "note": "a candidate failing a gate stays visible in every table with the failed gate named; it is excluded only from the ranking and shortlist"
+  },
+  "metrics": {
+    "stress_free_pin_dbm": "highest swept single-tone available power below the first limit violation (the last stress-valid point), per placement; a stress-valid P1dB, if any, is the fit_p1db 'ok' value",
+    "worst_placement": "minimum of stress_free_pin_dbm over the three placements",
+    "headroom_gain_db": "worst-placement stress_free_pin_dbm minus C00's",
+    "net_output_headroom_db": "headroom_gain_db plus (candidate baseline gain minus C00 baseline gain), minimised over placements: the change in stress-free OUTPUT power; <= 0 means the input-referred improvement is only the gain given away",
+    "limit_identity": "which device/limit breaks first (e.g. q2 V_CE peak, q1 V_CE peak, V_BE box), copied from the extractor's own messages"
+  },
+  "ranking": {
+    "among": "candidates passing G_dc, G_gain and G_base",
+    "order": [
+      "worst-placement stress_free_pin_dbm, descending",
+      "minimum placement baseline gain, descending",
+      "candidate id, ascending"
+    ],
+    "tie_tolerance_db": 0.0
+  },
+  "shortlist": {
+    "size": 2,
+    "admission": "a ranked candidate enters the shortlist only if headroom_gain_db >= min_headroom_gain_db AND net_output_headroom_db > 0",
+    "min_headroom_gain_db": 4.0,
+    "empty_means": "no candidate is refined; the screening outcome stands as the no-feasible-candidate result for this variant family",
+    "refinement_if_nonempty": "shortlisted candidates get the existing half-step / double-window controls on the single-tone sweep, a nominal two-tone IIP3 check and small-signal gain / NF / stability against C00 with the sim/lna-sparam-nf conventions, as a later record; none of that is claimed by the screening record"
+  },
+  "refinement": {
+    "stage": 2,
+    "issue": 132,
+    "kind": "stage-2 refinement of the stage-1 shortlist (stage-1 record 20261011-053527-d60e79a, outcome class headroom_improved_p1db_undetermined): the existing half-step / double-window single-tone controls, a nominal two-tone IIP3 check and a small-signal gain / NF / stability comparison against C00",
+    "candidates": ["C08", "C05", "C00"],
+    "candidate_rule": "C08 and C05 are the stage-1 shortlist (stage-1 ranking order); C00 (the committed DUT) is the small-signal and stress reference and is refined under the same controls. The candidate TABLE above is NOT extended: no Rd below 200 ohm and no new divider point is declared in this version, so no such run exists in stage 2.",
+    "single_tone": {
+      "kind": "one",
+      "placements": "all three declared placements, per candidate",
+      "variants": ["base", "half_step", "double_window"],
+      "purpose": "the existing convergence controls (linearity-plan convergence block): each refined variant must reproduce the base estimator outcome (status and value within the declared tolerances, and the points the estimator used within the point tolerances), else that placement is published 'unconverged' and no verdict is drawn from it"
+    },
+    "two_tone": {
+      "kind": "two",
+      "variants": ["base"],
+      "purpose": "nominal two-tone IIP3 check per placement with the declared operating limits: points outside the limits (and points with missing/non-finite diagnostics) are classified and excluded, never fitted through; 'unavailable' with a reason is a published outcome, not a failure of the record",
+      "no_convergence_claim": "base timing only: no two-tone convergence is claimed by this stage"
+    },
+    "small_signal": {
+      "conventions": "sim/lna-sparam-nf, reused byte-identical: power-wave S-parameters via Thevenin Z0 sources toggled forward/reverse (S = 2*V(port) - 1), noiseless reference source with the source noise added analytically at T0 = 300.15 K (F = 1 + inoise^2/(4 k T0 Z0)), k / |Delta| / mu in band plus the 1-100 GHz stability sweep, and the per-device operating point; one klt request per candidate at the nominal corner (hbt_typ, 27 C, 2.5 V)",
+      "fixture": {
+        "file": "sim/lna-sparam-nf/testbench/lna_stage1.spice",
+        "sha256": "b3ceba894c4bd8700ea54b733ec048cc0fa40a5a4a19c9505fd312465bef3f45"
+      },
+      "manifest": {
+        "file": "sim/lna-sparam-nf/testbench/tb.json",
+        "sha256": "fd7c884b8a6425fb8cefc26a19eeead2b3db868a229c2978983397d4226901d9"
+      },
+      "dut_substitution": "the fixture's embedded verbatim DUT block is replaced by the candidate's frozen variant deck (checked against the committed DUT before substitution); everything else in the deck - analyses, measurements, solver settings - is the production bench's own text, unchanged",
+      "descriptive_only": "the comparison is descriptive: no gain, NF or stability gate is introduced and no spec row is assessed here"
+    },
+    "baseline_reproduction": {
+      "record": "sim/lna-headroom/records/20261011-053527-d60e79a",
+      "record_id": "20261011-053527-d60e79a",
+      "semantics": "C00 re-run under the stage-2 controls (base timing, plan-v2 current diagnostics with enforce=false as in stage 1) must reproduce the stage-1 first-violation outcome; if not, the refinement is invalid and no candidate is ranked",
+      "pin_tolerance_db": 2.0,
+      "vce_q2_peak_tol_v": 0.005,
+      "gain_tol_db": 0.05,
+      "rule": "per placement: first single-tone power breaking a limit within pin_tolerance_db (one 2 dB grid step) of the stage-1 one with the same limit identity, and at every swept power Q2 V_CE peak within vce_q2_peak_tol_v and delivered power within gain_tol_db of the stage-1 base sweep"
+    },
+    "validity": {
+      "V_ctl": "both analytic ngspice controls (single-tone and two-tone closed-form cubic through the identical generated deck and extractor) pass",
+      "V_repro": "C00 reproduces the stage-1 outcome within the declared tolerances",
+      "V_conv": "the candidate's single-tone P1dB outcome at EVERY placement is reproduced by BOTH the half-step and the double-window refinement; a failing candidate stays visible with the failed placement named and is excluded only from the ranking",
+      "note": "two-tone IIP3 unavailability is a published outcome, not a validity failure; the small-signal comparison introduces no gate"
+    },
+    "ranking": {
+      "among": "refined candidates passing V_conv, with V_ctl and V_repro satisfied",
+      "order": [
+        "worst-placement stress_free_pin_dbm, descending",
+        "minimum placement baseline gain, descending",
+        "candidate id, ascending"
+      ],
+      "tie_tolerance_db": 0.0
+    },
+    "outcome_classes": {
+      "refined_stress_valid_p1db_meets_row8": "a ranked candidate has a stress-valid P1dB at all three placements, each >= the unchanged -25 dBm target",
+      "refined_stress_valid_p1db_below_row8": "a ranked candidate has a stress-valid P1dB at all placements, below -25 dBm",
+      "refined_converged_p1db_still_bounded": "ranked candidates converge but P1dB remains a one-sided bound everywhere (expected from stage 1): the stage-1 outcome carries over refined",
+      "refined_unconverged": "no refined candidate passes V_conv; the stage-1 screening numbers do not carry over to a refinement claim",
+      "refinement_invalid": "controls fail or C00 does not reproduce the stage-1 outcome; no refinement verdict",
+      "rule": "the class is the best one attained by any ranked candidate in that order; every target and limit is the unchanged ratified value"
+    },
+    "rd_extension": "NOT declared in this version: the candidate table below Rd = 200 ohm is not run in stage 2. A further extension requires its own frozen plan version, with the stage-2 evidence (convergence, IIP3, gain/NF/stability) as input."
+  },
+  "outcome_classes": {
+    "stress_valid_p1db_meets_row8": "a ranked candidate has an 'ok' P1dB at all three placements, each >= the unchanged -25 dBm target (converged only after refinement; screening alone says 'unrefined')",
+    "stress_valid_p1db_below_row8": "a ranked candidate has an 'ok' P1dB at all placements but below -25 dBm",
+    "headroom_improved_p1db_undetermined": "shortlist non-empty but no candidate has a stress-valid P1dB at all placements",
+    "no_feasible_candidate": "shortlist empty",
+    "rule": "the class is the best one attained by any ranked candidate in that order; every target and limit is the unchanged ratified value"
+  },
+  "targets": {
+    "p1db_dbm": -25.0,
+    "iip3_dbm": -15.0,
+    "vce_max_v": 1.4
+  }
+}

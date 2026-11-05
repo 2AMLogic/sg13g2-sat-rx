@@ -52,7 +52,6 @@ sim/*/corners/_scratch/
 .loom/claims/
 .loom/locks/
 .loom/signals/
-.loom/sweep-dispatch-tap/
 .loom/status/
 .loom/retry-state/
 .loom/exit-codes/
@@ -103,7 +102,7 @@ sim/*/corners/_scratch/
 .loom/gh-config-by-owner/
 .loom/gh-config-by-owner.*/
 .loom/gh-config-by-owner-*/
-.loom-local/
+/.loom-local/
 # <<< loom-managed <<<
 
 # hbt-mismatch-pair (issue #186): raw per-unit klt artifact trees are
