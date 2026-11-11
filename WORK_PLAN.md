@@ -20,6 +20,7 @@ _None._
 `loom:important`; taken before unlabelled work.
 
 - **#79**: design: choose the first-stage core change that lets NF and input match close together
+- **#110**: sim: execute the prepared p1 EM campaign and reproduce frozen results
 
 ## Ready
 
@@ -67,7 +68,7 @@ _None._
 |------|-------|
 | Operator merge-risk holds | 0 |
 | Very important | 0 |
-| Important | 1 |
+| Important | 2 |
 | Ready (`loom:issue`) | 0 |
 | In Progress (`loom:building`) | 0 |
 | PRs awaiting review | 0 |
