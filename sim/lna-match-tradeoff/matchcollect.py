@@ -117,7 +117,8 @@ def submit(spec: RequestSpec, req: Path, work: Path, args) -> Path:
     """Run one klt request; reuse an existing complete report (resume).
     Raises CollectionError on any klt failure (never a local fallback)."""
     return klt_driver.submit_request(req, work / f"report_{spec.key}.json", spec.key,
-                                     backend_for(spec, args), args.klt_cmd, work)
+                                     backend_for(spec, args), args.klt_cmd, work,
+                                     getattr(args, "wait_for_capacity", None))
 
 
 def read_units(report: Path) -> tuple[dict, list[dict]]:

@@ -114,6 +114,8 @@ def build_parser() -> argparse.ArgumentParser:
     c = sub.add_parser("collect")
     c.add_argument("--klt-cmd", default="klt")
     c.add_argument("--backend", default="batch", help="backend for the 9-unit corner requests")
+    c.add_argument("--wait-for-capacity", type=int, default=600,
+                   help="seconds each batch submit waits for fleet capacity (host rule: 600)")
     c.add_argument("--timeout-s", type=int, default=3600)
     c.add_argument("--no-stage-models", action="store_true")
     c.add_argument("--runner-version-check", default="", choices=("", "enforce", "warn"))

@@ -259,7 +259,7 @@ class CollectionError(RuntimeError):
 
 
 def submit_request(req: Path, report: Path, key: str, backend: str, klt_cmd: str,
-                   work: Path) -> Path:
+                   work: Path, wait_for_capacity: int | None = None) -> Path:
     """Strict one-request ``klt sim`` for the per-study collect drivers.
 
     Reuses *report* when it already holds ``corners`` (an interrupted
@@ -279,6 +279,8 @@ def submit_request(req: Path, report: Path, key: str, backend: str, klt_cmd: str
     out = (work / f"out_{key}").resolve()
     cmd = shlex.split(klt_cmd) + ["sim", str(req), "--backend", backend, "-o", str(out),
                                   "--format", "json"]
+    if backend == "batch" and wait_for_capacity is not None:
+        cmd += ["--wait-for-capacity", str(wait_for_capacity)]
     print("$ " + " ".join(cmd), flush=True)
     with report.open("w") as fh:
         proc = subprocess.run(cmd, stdout=fh, stderr=subprocess.PIPE, text=True)
