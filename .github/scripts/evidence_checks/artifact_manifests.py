@@ -38,7 +38,7 @@ import posixpath
 import re
 from pathlib import Path
 
-from .common import Problems, compare_identities, header_field, rel, section_body
+from .common import Problems, RECORD_ID_PREFIX_RE, compare_identities, header_field, rel, section_body
 
 MANIFEST_DIR = "manifests/artifacts"
 MANIFEST_NAME_RE = re.compile(r"^([A-Za-z0-9][A-Za-z0-9._-]*)\.manifest\.json$")
@@ -53,6 +53,9 @@ URI_RE = re.compile(r"^artifact:([^/\s]\S*)$")
 #: acceptance grep ``git grep -nE 's3://|arn:aws:' -- manifests/``.
 STORAGE_LOCATION_RE = re.compile(r"s3://|arn:aws:")
 STAGE_DIRNAME = ".work"
+#: The record id at the end of a manifest file stem: ``<bench>-<id>.manifest.json``
+#: (``Path.stem`` keeps the inner ``.manifest``, so it is optional here).
+MANIFEST_RID_RE = re.compile(r"(\d{8}-\d{6}-[0-9a-f]{7,40})(?:\.manifest)?$")
 TABLE_ROW_RE = re.compile(r"^\|\s*`([^`]+)`\s*\|\s*(\d+)\s*\|\s*`([0-9a-f]{64})`")
 EMPTY_SHA256 = hashlib.sha256(b"").hexdigest()
 
@@ -178,18 +181,38 @@ def check_artifact_manifests(problems: Problems, root: Path) -> None:
         manifest = load_manifest(problems, root, p)
         if manifest:
             entries += [(rel(root, p), e) for e in manifest["entries"]]
-    by_size: dict[int, list[tuple[str, dict]]] = {}
+    by_size: dict[int, list[tuple[str, dict, str]]] = {}
     for where, e in entries:
-        by_size.setdefault(e["size"], []).append((where, e))
+        m = MANIFEST_RID_RE.search(Path(where).stem)
+        rid = m.group(1) if m else ""
+        by_size.setdefault(e["size"], []).append((where, e, rid))
         if (root / e["name"]).exists():
             problems.add(where, f"{e['name']} is committed beside its manifest; stored evidence "
                          "bytes must not also be committed (no blob fallback)")
     for p in _sim_files_by_size(root, set(by_size)):
+        if _twin_path_exempt(rel(root, p), {rid for _w, _e, rid in by_size[p.stat().st_size]}):
+            continue
         h = hashlib.sha256(p.read_bytes()).hexdigest()
-        for where, e in by_size[p.stat().st_size]:
+        for where, e, _rid in by_size[p.stat().st_size]:
             if e["sha256"] == h:
                 problems.add(rel(root, p), f"its bytes are a stored object of {where} "
                              f"({e['name']}); stored evidence bytes must not also be committed")
+
+
+def _twin_path_exempt(relp: str, ids: set[str]) -> bool:
+    """True for committed byte-twins that cannot be a stored record's blob
+    fallback: the live ``testbench/`` declaration (an input the bench is loaded
+    from, never evidence) and another record's committed frozen copy (its own
+    evidence, named by its record id). The frozen testbench-manifest snapshot
+    is byte-identical to the live declaration by construction
+    (harness.report.write_manifest_snapshot), so an unchanged testbench always
+    byte-matches its bench's committed ``testbench/tb.json`` and any older
+    record's committed ``.tb.json`` snapshot. A twin at a fresh path, or under
+    the record's own id, is still flagged."""
+    parts = relp.split("/")
+    if "testbench" in parts:
+        return True
+    return any(RECORD_ID_PREFIX_RE.match(part) and part not in ids for part in parts)
 
 
 def stored_table(text: str) -> dict[str, tuple[int, str]]:

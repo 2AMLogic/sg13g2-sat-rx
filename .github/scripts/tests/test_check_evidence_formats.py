@@ -51,6 +51,11 @@ def tree(tmp_path):
     (dst / "spec").mkdir()
     for name in ("target-spec.md", "row-coverage.json"):
         shutil.copyfile(REPO / "spec" / name, dst / "spec" / name)
+    # Stored-evidence records (issue #226) need their committed manifests: the
+    # checker refuses a record with a "## Stored evidence" section whose
+    # manifests/artifacts/<bench>-<id>.manifest.json is missing.
+    if (REPO / "manifests" / "artifacts").is_dir():
+        shutil.copytree(REPO / "manifests", dst / "manifests")
     return dst
 
 

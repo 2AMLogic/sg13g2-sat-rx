@@ -59,7 +59,7 @@ def stored(tree):
     md = own(bench / "records" / f"{NATIVE_ID}.md")
     md.write_text(md.read_text().rstrip("\n") + "\n" + _table(entries))
     mdir = tree / "manifests" / "artifacts"
-    mdir.mkdir(parents=True)
+    mdir.mkdir(parents=True, exist_ok=True)
     mpath = mdir / f"{NATIVE}-{NATIVE_ID}.manifest.json"
     mpath.write_text(json.dumps({"schema_version": 1, "entries": entries}, indent=2) + "\n")
     return tree, mpath, md, entries
@@ -127,6 +127,46 @@ def test_stored_object_bytes_also_committed_fails(stored):
         Path(log["name"]).name))
     shutil.copyfile(original, sim_log)
     assert_fails(tree, "committed beside its manifest", "its bytes are a stored object")
+
+
+def test_committed_twin_of_another_record_or_the_live_testbench_is_not_a_fallback(stored):
+    """A committed file whose bytes equal a stored object is only a blob
+    fallback if it claims THIS record's evidence. Two legitimate twin shapes
+    are exempt: the live ``testbench/`` declaration (an input, byte-identical
+    to the frozen manifest snapshot by construction -- write_manifest_snapshot
+    freezes tb.json verbatim) and another record's committed frozen copy,
+    named by that record's id. A twin at a fresh path still fires."""
+    tree, mpath, md, entries = stored
+    log = next(e for e in entries if e["name"].endswith(".log"))
+    original = next((Path(__file__).resolve().parents[3] / "sim" / NATIVE / "corners" / NATIVE_ID).glob(
+        Path(log["name"]).name))
+    # 1. Live testbench declaration: byte-twin, exempt.
+    tb = tree / "sim" / NATIVE / "testbench" / "tb.json"
+    own_tb = tb  # the fixture symlinks; the bytes must match a stored object
+    saved = own_tb.read_bytes()
+    own_tb.unlink() if own_tb.is_symlink() else None
+    own_tb.write_bytes(original.read_bytes())
+    problems = chk.Problems()
+    chk.check_artifact_manifests(problems, tree)
+    assert not any("testbench/tb.json" in p for p in problems.items)
+    own_tb.unlink()
+    own_tb.write_bytes(saved)
+    # 2. Another record's committed frozen copy (a path named by a different
+    #    record id): byte-twin, exempt.
+    old = tree / "sim" / NATIVE / "netlist-snapshots" / "20250101-000000-deadbeef.old.tb.json"
+    old.write_bytes(original.read_bytes())
+    problems = chk.Problems()
+    chk.check_artifact_manifests(problems, tree)
+    assert not any("20250101-000000-deadbeef" in p for p in problems.items)
+    old.unlink()
+    # 3. Control: the same bytes at a fresh path with no id and no testbench
+    #    component is a blob fallback and must fire.
+    fresh = tree / "sim" / NATIVE / "copied-elsewhere.log"
+    fresh.write_bytes(original.read_bytes())
+    problems = chk.Problems()
+    chk.check_artifact_manifests(problems, tree)
+    assert any("copied-elsewhere.log" in p and "its bytes are a stored object" in p
+               for p in problems.items), problems.items
 
 
 def test_stored_record_without_manifest_fails(stored):
