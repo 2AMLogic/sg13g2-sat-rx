@@ -14,8 +14,9 @@ HBT x T x V grid on the off-host batch fleet, the per-device operating-point
 table and the k / |Delta| / mu sweep) was taken on the **pre-change** core, as
 were the #74 and #123 studies. Those records are not wrong and are not
 deleted; they simply describe the earlier core, and nothing here claims the
-post-change core has been characterized on that grid. Re-running the bench on
-the new core is follow-up work, not evidence that exists today.
+post-change core has been characterized on that grid. Re-running those benches
+on the new core is follow-up work, tracked in #250 — not evidence that exists
+today.
 
 ## Files
 
@@ -207,6 +208,6 @@ change rather than a fit to the corner it is judged at.
   core.** #79 measured its network-independent NF-vs-S11 bound, gain at that
   bound, stability and operating point on the declared grid, and nothing more.
   The lna-sparam-nf, lna-linearity and lna-headroom records were taken on the
-  earlier core.
+  earlier core; re-running them is #250.
 * Not a wideband result: the match is detuned at the band edges and varies over
   corners; no flatness is claimed between the three band points.

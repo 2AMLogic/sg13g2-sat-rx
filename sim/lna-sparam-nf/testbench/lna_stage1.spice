@@ -25,7 +25,6 @@
 * tools: XSCHEM V3.4.7; klt 0.9.2.dev1022+g2a9c52b27ce7; sources sha256 (lna_stage1.sch then lna_stage1.sym concatenated): c6c82d72a0e711158ae6fc75a4d4f7e6293eba6b75819432d08b29b52eda64c2
 * DERIVED FILE: regenerate with design/export_netlist.sh, never edit by hand.
 * Matching elements (Cshunt, Lin, Lfeed, Cm) and the emitter-degeneration inductor Le1 are IDEAL lossless L/C: no PDK inductor model exists.
-** klt-netlist-inputs: {"pdk_variant": "ihp-sg13cmos5l", "rcfile": "xschemrc", "xschem_version": "3.4.7"}
 ** sch_path: design/lna_stage1.sch
 .subckt lna_stage1 in out vdd gnd
 *.ipin in
