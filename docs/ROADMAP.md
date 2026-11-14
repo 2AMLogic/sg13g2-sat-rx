@@ -65,7 +65,7 @@ Evidence on `main` (all append-only records under `sim/*/records/`):
    simulation capacity; the issue carries a transient capacity park and is
    re-queued automatically when it expires.
 2. **Re-run the layout-chain readiness probe at the pinned release, klt 0.8.0**
-   (no issue yet; seed draft 1). The upstream gap behind the HBT result,
+   (#246). The upstream gap behind the HBT result,
    [klayout-tools#3137](https://github.com/2AMLogic/klayout-tools/issues/3137),
    closed on 2026-10-18, and `layout/toolchain.json` already says a 0.8.0
    re-run "would be a separate, later record". *Done when:*
@@ -73,8 +73,8 @@ Evidence on `main` (all append-only records under `sim/*/records/`):
    README gains a dated section stating whether `npn13G2` extracts and whether
    the full-reference LVS matches, and any remaining gap is filed upstream.
    Non-claiming: `signoff/` does not change.
-3. **Bring the README repo-layout block up to date** (no issue yet; seed
-   draft 2). It lists five directories and omits `signoff/`, `manifests/`,
+3. **Bring the README repo-layout block up to date** (#247). It lists five
+   directories and omits `signoff/`, `manifests/`,
    `ratification/` and `docs/`. *Done when:* the block names every top-level
    content directory and links this roadmap.
 
@@ -119,7 +119,7 @@ Evidence on `main` (all append-only records under `sim/*/records/`):
 | #4 T1 tracker | an operator decision on how the tracker leaves the triage queue; its body still quotes an older grade, and `signoff/tier-report.json` is the verdict |
 
 As read today no open issue carries `loom:issue`. #79 returns to the queue
-when its capacity park expires; Now 2 and Now 3 can start once filed.
+when its capacity park expires; Now 2 and Now 3 are filed as #246 and #247.
 
 ## Not planned
 
