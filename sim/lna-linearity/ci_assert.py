@@ -108,13 +108,21 @@ def compose_deck(red: dict) -> str:
 
 def sabotage_amplitude(summaries: list[dict], scale: float) -> list[dict]:
     """Every measured bin amplitude -- tone AND floor bins -- scaled by ``scale``:
-    the wrong-DFT-normalization fault, applied to the real extracted marks."""
+    the wrong-DFT-normalization fault, applied to the real extracted marks.
+
+    This recomputes dBm from an ``amp_v`` without a finiteness guard of its own
+    (``linearity.run_summary``'s guard is upstream of the summaries handed in).
+    It is safe under the issue #268 convention because the conversion is now
+    honest at the edge: a NaN amplitude yields a NaN power rather than a finite,
+    plausible-looking -400 dBm, and :func:`linearity.floor_dbm_of` propagates
+    that NaN instead of letting ``max`` argument order decide. A corrupt mark
+    therefore stays visible here too, without duplicating the upstream guard."""
     out = []
     for s in summaries:
         s2 = dict(s)
         s2["amp_v"] = {k: v * scale for k, v in s["amp_v"].items()}
         s2["p_dbm"] = {k: L.delivered_dbm(a) for k, a in s2["amp_v"].items()}
-        s2["floor_dbm"] = max(s2["p_dbm"]["fl_lo"], s2["p_dbm"]["fl_hi"])
+        s2["floor_dbm"] = L.floor_dbm_of(s2["p_dbm"])
         out.append(s2)
     return out
 

@@ -59,7 +59,14 @@ class StudyError(ValueError):
 
 
 def dbm(watts: float) -> float:
-    """Power in dBm; ``-inf`` for exactly zero, NaN propagates."""
+    """Power in dBm; ``-inf`` for zero or negative, NaN propagates.
+
+    This is the repo-wide watts-to-dBm edge convention (issue #268): the
+    ``lna-linearity`` bench's ``linearity.dbm_from_w`` now has these same three
+    branches, where it previously mapped zero, negative AND NaN to a finite
+    -400 dBm. Canonical statement, with the reasoning: ``sim/README.md`` ->
+    "Watts-to-dBm edge convention". NaN must not become a finite number: a NaN
+    power is a corrupt measurement, and -400 dBm is a plausible-looking one."""
     if watts != watts:  # NaN
         return float("nan")
     if watts <= 0.0:
