@@ -6,7 +6,7 @@ import json
 import re
 from pathlib import Path
 
-from .common import Problems, duplicates, load_json_object, read_gzip_text, rel
+from .common import Problems, duplicates, load_json_object, read_gzip_text, reject_foreign_dirs, rel
 from .lna_match import LNAMATCH_STATUSES, _all_numbers, _lnamatch_cid
 from .passive_p1 import PASSIVE_PACKAGES, _sha256_of
 
@@ -227,6 +227,4 @@ def check_lna_core_variants(problems: Problems, root: Path, exp_dir: Path) -> No
             for p in sorted(d.iterdir()):
                 if p.name not in ids:
                     problems.add(rel(root, p), f"{sub} entry belongs to no record in this experiment (orphan evidence)")
-    for sub in ("probe-logs", PASSIVE_PACKAGES):
-        if (exp_dir / sub).exists():
-            problems.add(rel(root, exp_dir / sub), f"{sub}/ is not part of the lna-core-variants evidence layout")
+    reject_foreign_dirs(problems, root, exp_dir, "lna-core-variants", ("probe-logs", PASSIVE_PACKAGES))

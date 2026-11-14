@@ -7,7 +7,7 @@ import json
 import re
 from pathlib import Path
 
-from .common import (PAIR_RE, Problems, RECORD_ID_RE, has_section, load_json_object, need_sha256, need_str, record_pairs, rel)
+from .common import (PAIR_RE, Problems, RECORD_ID_RE, has_section, load_json_object, need_sha256, need_str, record_pairs, reject_foreign_dirs, rel)
 
 
 # ---------------------------------------------------------------------------
@@ -360,6 +360,4 @@ def check_passive_p1(problems: Problems, root: Path, exp_dir: Path) -> None:
                 elif p.name not in claimed:
                     problems.add(rel(root, p), "solver-artifact package belongs to no record "
                                  "(orphan or interrupted publication)")
-    for sub in ("corners", "netlist-snapshots", "probe-logs"):
-        if (exp_dir / sub).exists():
-            problems.add(rel(root, exp_dir / sub), f"{sub}/ is not part of the passive-p1 evidence layout")
+    reject_foreign_dirs(problems, root, exp_dir, "passive-p1", ("corners", "netlist-snapshots", "probe-logs"))
