@@ -106,6 +106,7 @@ class CommittedEvidence(FormatBase):
 
     def test_adapters_are_registered_explicitly(self):
         self.assertEqual(set(chk.ADAPTERS), {PASSIVE, MIXER, LNAMATCH, CMPROBE, PRA,
+                                             "lna-core-variants",
                                              "lna-linearity", "lna-headroom",
                                              "hbt-mismatch-pair"})
 
