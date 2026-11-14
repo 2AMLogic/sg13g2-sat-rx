@@ -97,13 +97,20 @@ Alongside it:
 ## Repo layout
 
 ```
-design/        schematics (xschem)
-layout/        GDS + DRC/LVS reports (klayout-tools driven)
+design/        schematics (xschem) + the derived netlist
+docs/          standalone investigation / reproduction reports
+layout/        klt layout-chain readiness probe + toolchain pin (no LNA layout yet)
+manifests/     artifact-store manifests for stored sim evidence
 measurements/  silicon characterization (empty until tape-out)
+ratification/  the two non-author review-key rubrics (EE + market)
+signoff/       machine-graded T1 block manifest + tier verdict of record
 sim/           analog testbenches + PVT corner results
 spec/          target spec (partially ratified, DR-0003) + porting plan
                + decision records
 ```
+
+The machine-graded tier verdict of record is [`signoff/README.md`](signoff/README.md);
+the current roadmap, generated from label state, is [`WORK_PLAN.md`](WORK_PLAN.md).
 
 ## Reproduce
 
