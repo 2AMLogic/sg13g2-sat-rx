@@ -35,6 +35,50 @@ def test_declaration_pins_the_method_and_the_frozen_dut():
     assert sha(cs.FROZEN) == RAW["frozen_dut"]["sha256"]
 
 
+def _frozen_env(tmp_path, monkeypatch, *, design: bytes, snapshots: dict):
+    """A fake tree: one design netlist plus named record snapshots of it."""
+    decl = tmp_path / "variants.json"
+    decl.write_text(json.dumps({"frozen_dut": {"sha256": RAW["frozen_dut"]["sha256"]}}))
+    netlist = tmp_path / "design" / "netlist" / "lna_stage1.spice"
+    netlist.parent.mkdir(parents=True)
+    netlist.write_bytes(design)
+    snaps = tmp_path / "netlist-snapshots"
+    for rid, text in snapshots.items():
+        (snaps / rid).mkdir(parents=True)
+        (snaps / rid / "lna_stage1.spice").write_bytes(text)
+    monkeypatch.setattr(cs, "DECLARATION", decl)
+    monkeypatch.setattr(cs, "DESIGN_NETLIST", netlist)
+    monkeypatch.setattr(cs, "SNAPSHOTS", snaps)
+    return netlist, snaps
+
+
+def test_the_frozen_dut_is_the_live_design_netlist_while_it_still_matches(tmp_path, monkeypatch):
+    frozen = cs.FROZEN.read_bytes()
+    netlist, _ = _frozen_env(tmp_path, monkeypatch, design=frozen, snapshots={"r1": frozen})
+    assert cs.resolve_frozen() == netlist
+
+
+def test_the_frozen_dut_is_the_record_snapshot_once_the_design_moves(tmp_path, monkeypatch):
+    """The chosen core change lands in design/lna_stage1.sch, so the live
+    netlist is no longer the deck this study declared and simulated; the
+    pinned bytes are the ones the record froze."""
+    frozen = cs.FROZEN.read_bytes()
+    _, snaps = _frozen_env(tmp_path, monkeypatch, design=frozen + b"* moved on\n",
+                           snapshots={"r1": b"* some other record\n", "r2": frozen})
+    got = cs.resolve_frozen()
+    assert got == snaps / "r2" / "lna_stage1.spice"
+    assert sha(got) == RAW["frozen_dut"]["sha256"]
+
+
+def test_no_matching_copy_falls_back_to_the_declared_design_netlist(tmp_path, monkeypatch):
+    """So corecollect.check_inputs reports the mismatch itself, naming the
+    declared path, instead of this resolver failing obscurely."""
+    netlist, _ = _frozen_env(tmp_path, monkeypatch, design=b"* moved on\n", snapshots={})
+    assert cs.resolve_frozen() == netlist
+    monkeypatch.setattr(cs, "DECLARATION", tmp_path / "gone.json")
+    assert cs.resolve_frozen() == netlist
+
+
 def test_every_placeholder_has_a_derived_value_with_its_scan_result():
     for d in RAW["derivations"]:
         assert "value" in d and "result" in d, d["param"]

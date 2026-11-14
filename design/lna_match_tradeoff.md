@@ -109,11 +109,81 @@ the screen at the corners that bind rows 3 and 4.
   `NF excl. load` column quantifies it. At hbt_wcs/125 C the lowest-NF
   network is still 2.56 dB without the load share.
 
-## Next circuit decision (identified, not made)
+## The core change (#79): per-variant comparison
 
 Meeting rows 3 and 4 together requires a change to the core, not to the
-input network. One option is inductive emitter degeneration, which
-co-locates Gamma_opt with conj(Gamma_in). Others are the device size or
-current density at 125 C, and the noise of the Rbias base feed. That
-decision is filed separately as #79. This issue changes no schematic, no
-spec value and no row-coverage verdict.
+input network. #79 screened the three candidate classes the section above
+named, over this study's own grid and bound, with the input network still
+ideal and unsized.
+
+- **Evidence:** `sim/lna-core-variants/records/20261114-031930-fbdf13c.md`
+- **Declaration:** `sim/lna-core-variants/STUDY.md` and
+  `testbench/variants.json`, committed before the record.
+- **Method:** this study's `testbench/study.json` unchanged (grids,
+  thresholds, probes, port fixture, NF convention), executed by
+  `matchstudy.py`. Only the core netlist differs per variant, so the numbers
+  below are comparable with the `core0` row, which reproduces the record
+  above to 5.0e-07 dB at all 27 points with the jointly-infeasible counts
+  equal.
+
+Worst case over the 18 in-rail PVT points and the 71-point DRAFT band.
+"infeasible" counts in-rail points where no lossless input network reaches
+NF <= 2.5 dB with S11 <= -10 dB at some band frequency.
+
+| variant | the single change | infeasible | worst NF bound (dB) | Fmin @ hbt_wcs/125 C/2.25 V (dB) | margin @21.2 GHz nominal (dB) | min GT (dB) | min k | max V_CE (V) |
+|---|---|---|---|---|---|---|---|---|
+| `core0` | none (the frozen core) | 8/18 | 3.307 | 2.43-2.73 | +0.031 | 15.29 | 4.12 | 1.342 |
+| `a_le` | (a) Le1 = 54 pH emitter degeneration | 2/18 | 2.885 | 2.45-2.78 | +0.832 | 13.19 | 10.31 | 1.342 |
+| `b_jopt` | (b) Rref retuned to Ic(Q1) = 1.70 mA at the binding corner | 9/18 | 3.286 | 2.32-2.58 | -0.011 | 16.56 | 3.37 | 1.333 |
+| `b_nx10` | (b) Nx 8 -> 10 at constant current density | 9/18 | 3.257 | 2.19-2.50 | -0.029 | 17.11 | 2.49 | 1.332 |
+| `c_rbias` | (c) Rbias 2k -> 10k, base-current compensated | 8/18 | 3.120 | 1.93-2.27 | +0.056 | 16.50 | 3.62 | 1.340 |
+| `diag_rbias_noiseless` | diagnostic: Rbias made noiseless | 3/18 | 2.937 | 2.07-2.43 | +0.552 | 15.29 | 4.12 | 1.342 |
+| **`ac`** | **(a) + (c): Le1 = 67 pH and Rbias 10k** | **0/18** | **2.459** | **1.98-2.36** | **+1.224** | **13.49** | **9.88** | **1.340** |
+| `abc` | (a) + (b, current density) + (c) | 0/18 | 2.370 | 1.90-2.25 | +1.257 | 14.26 | 9.13 | 1.334 |
+
+Row 17 and the card box pass at every in-rail point for every variant, and
+every variant holds k > 1, |Delta| < 1 and GT >= 10 dB there, so no variant
+buys noise by breaking another row.
+
+**What the comparison says.** Neither (a) nor (c) alone closes the bound,
+and they fail for different reasons, which is why their combination does:
+
+- **(a) degeneration moves the optimum but not the floor.** `a_le` lifts the
+  nominal margin by 0.8 dB and raises min k from 4.1 to 10.3 -- it brings
+  Re(Z_in) at node in2 from ~22 to ~50 ohm, so the power-match and
+  noise-match points stop fighting -- but Fmin at the binding corner is
+  *unchanged* (2.45-2.78 vs 2.43-2.73 dB). Two 125 C points stay infeasible.
+- **(c) a quieter base feed lowers the floor but not the conflict.**
+  `c_rbias` drops hot-corner Fmin by ~0.5 dB (2.43-2.73 -> 1.93-2.27 dB) and
+  the `diag_rbias_noiseless` diagnostic bounds what the class can ever buy
+  (3/18). But the bound stays infeasible at 8 of 18 points, because the
+  source reflection that reaches Fmin still cannot also hold S11 <= -10 dB.
+- **(b) more current, or more device, is not the answer here.** Both (b)
+  variants lower Fmin yet make the bound *worse* (9/18): they widen the gap
+  between the noise and power-match points, and `b_nx10` additionally
+  detunes the unchanged output network.
+- **`ac` closes it; `abc` closes it by more but changes more.** The declared
+  rule takes the fewest changes first, so the choice is `ac`: 2.459 dB worst
+  in-rail bound against the 2.5 dB screen, a +0.041 dB worst-case margin.
+
+**That margin is thin, and on ideal elements.** 0.041 dB is a necessary
+condition met, not a row met: see "What remains contingent" above, which
+applies unchanged, plus Le1's own loss and Q (no PDK inductor model exists;
+passive qualification is #46). A realizable input network must still track
+the feasible region across the band.
+
+## The decision this landed
+
+`design/lna_stage1.sch` now carries the `ac` core change -- `Le1` = 67 pH in
+series with Q1's emitter ahead of `Re1`, and `Rbias` 2k -> 10k with the
+`Rbr` base-current compensation that holds the nominal Ic(Q1) at 1.563 mA.
+`design/lna_stage1.md` records it against the evidence. No spec row text or
+value changed, and no row-coverage verdict moved.
+
+**The records of this study and of #74 were both taken on the core as it was
+before that change.** They are not superseded by it: each pins the netlist
+it ran by sha256 and keeps a byte copy under its own
+`netlist-snapshots/<record-id>/`, and their drivers read that pinned copy
+(`harness/frozen_dut.py`), so re-running either reproduces its own campaign
+rather than silently measuring a different circuit. A campaign of the new
+core is a new declaration and a new record.

@@ -3,21 +3,21 @@
   "kind": "generic",
   "status": "pass",
   "t1_item": 9,
-  "summary": "T1 item 9 (Testbenches shipped): 18/18 attestation checks passed (klt signoff --attest)",
+  "summary": "T1 item 9 (Testbenches shipped): 19/19 attestation checks passed (klt signoff --attest)",
   "source": "signoff/inventories/item9.json",
   "attestation": {
     "producer": "klt signoff --attest",
     "inventory_schema_version": 1,
     "hash_algorithm": "sha256-raw-bytes",
-    "check_count": 18,
-    "passed_count": 18,
+    "check_count": 19,
+    "passed_count": 19,
     "checks": [
       {
         "check": "present",
         "role": "testbench",
         "path": "sim/README.md",
         "passed": true,
-        "content_hash": "sha256:b58fc3b6a627ed953ae9d29080db6e60b2e573333e3f02c4c97b9e0441ee26c5"
+        "content_hash": "sha256:5fdd7359e3525d6bb99e8895c92038bfa6a6031be95cbab3ddd0ad4d1a67b743"
       },
       {
         "check": "present",
@@ -39,6 +39,13 @@
         "path": "sim/hbt-mismatch-pair/README.md",
         "passed": true,
         "content_hash": "sha256:8b82c78696198a1c1319b6c13b572014238589145134bf72552ff095c46f443c"
+      },
+      {
+        "check": "present",
+        "role": "testbench",
+        "path": "sim/lna-core-variants/README.md",
+        "passed": true,
+        "content_hash": "sha256:f64c3eb6349a8481a796bd1c530f192e64c74dee29fd4ad7389b04e419e132b3"
       },
       {
         "check": "present",
@@ -161,7 +168,7 @@
         "path": "signoff/inventories/item9.json",
         "scope": "repo"
       },
-      "content_hash": "sha256:9e4be5f59e6e5775f05bceeb4fbd7917251dab95fc28a9262df655522a46fa3a"
+      "content_hash": "sha256:f9322af319b4011d3192ac40d4f0a00f6d089ccce24f80bfdc63dad45818e436"
     }
   }
 }

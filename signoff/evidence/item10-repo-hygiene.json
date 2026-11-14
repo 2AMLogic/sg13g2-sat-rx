@@ -17,14 +17,14 @@
         "role": "hygiene",
         "path": ".github/scripts/check_evidence_formats.py",
         "passed": true,
-        "content_hash": "sha256:d45f5e0b65cad8bd5d1041b5e3c0a534cf72ac5175ef6bc4715c138491653225"
+        "content_hash": "sha256:c14a27d4a833a40833cca1e74b88cbc402885de2f875f275a97f4950479b7b73"
       },
       {
         "check": "present",
         "role": "hygiene",
         "path": ".github/workflows/ci.yml",
         "passed": true,
-        "content_hash": "sha256:93d79eefbe5ad2cf5f4cceae190a2ed317265a69fb40eb236414b01c6ac969b6"
+        "content_hash": "sha256:39669b8fd8613d105641c434e326039ecc70c310cade5d93052d66d873c6a93d"
       },
       {
         "check": "present",
@@ -45,7 +45,7 @@
         "role": "hygiene",
         "path": "sim/README.md",
         "passed": true,
-        "content_hash": "sha256:b58fc3b6a627ed953ae9d29080db6e60b2e573333e3f02c4c97b9e0441ee26c5"
+        "content_hash": "sha256:5fdd7359e3525d6bb99e8895c92038bfa6a6031be95cbab3ddd0ad4d1a67b743"
       },
       {
         "check": "present",

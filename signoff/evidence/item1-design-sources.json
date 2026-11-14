@@ -17,14 +17,14 @@
         "role": "source",
         "path": "design/export_netlist.sh",
         "passed": true,
-        "content_hash": "sha256:74e4d105ecfff829f0db29ae672daa6f2133e2d6d445de965928572d193af1c2"
+        "content_hash": "sha256:1230cbbbc6f58db90ecd4aed8f8def7b4c1a5232235225a03912ae3790385ad5"
       },
       {
         "check": "present",
         "role": "source",
         "path": "design/lna_stage1.sch",
         "passed": true,
-        "content_hash": "sha256:e676f996a5ab0139630c880892cf87a93d919e6bf0ee40dc8a36584b96a98744"
+        "content_hash": "sha256:ab8ebb801a0fe54a1998d6472252e5f100d502138e81ac6d05ff4a37ef672134"
       },
       {
         "check": "present",
@@ -38,7 +38,7 @@
         "role": "derived",
         "path": "design/netlist/lna_stage1.spice",
         "passed": true,
-        "content_hash": "sha256:ad4fe1be5754f21fc4b2dd67863234858dc399e2a8232d3b20cf530014b8c447"
+        "content_hash": "sha256:0bbcdeb194196beaa75fdf4f011a1b9c0b1abd820efe525af590fd61a0e68e05"
       },
       {
         "check": "command",

@@ -43,7 +43,7 @@ sys.path.insert(0, str(BENCH_DIR))
 sys.path.insert(0, str(SIM_DIR / "lna-sparam-nf"))
 
 import matchstudy as ms  # noqa: E402
-from harness import klt_driver  # noqa: E402
+from harness import frozen_dut, klt_driver  # noqa: E402
 from harness.report import RecordExists, allocate_record_id, git_provenance  # noqa: E402
 
 TB_DIR = BENCH_DIR / "testbench"
@@ -51,7 +51,14 @@ SCRATCH = BENCH_DIR / "_build"
 RECORDS = BENCH_DIR / "records"
 CORNER_LOGS = BENCH_DIR / "corners"
 SNAPSHOTS = BENCH_DIR / "netlist-snapshots"
-FROZEN = REPO_ROOT / "design" / "netlist" / "lna_stage1.spice"
+DESIGN_NETLIST = REPO_ROOT / "design" / "netlist" / "lna_stage1.spice"
+
+#: The DUT this study froze, as declared in ``STUDY.md`` -> "What is frozen and
+#: what varies". The declaration is prose (``study.json`` carries the method,
+#: not the DUT), so it is restated here to be machine-checkable;
+#: ``test_the_declared_dut_pin_matches_study_md`` fails if the two drift.
+FROZEN_SHA256 = "ad4fe1be5754f21fc4b2dd67863234858dc399e2a8232d3b20cf530014b8c447"
+FROZEN = frozen_dut.resolve(DESIGN_NETLIST, FROZEN_SHA256, SNAPSHOTS)
 BASELINE_RECORD = "20261010-012923-6cad7fc"
 BASELINE_LOGS = SIM_DIR / "lna-sparam-nf" / "corners" / BASELINE_RECORD
 MODEL_FILES = ("cornerHBT.lib", "sg13g2_hbt_mod.lib")

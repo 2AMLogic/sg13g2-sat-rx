@@ -41,9 +41,34 @@ sys.path.insert(0, str(METHOD_DIR))
 
 import matchstudy as ms  # noqa: E402
 
+sys.path.insert(0, str(SIM_DIR))
+
+from harness import frozen_dut  # noqa: E402
+
 DECLARATION = BENCH_DIR / "testbench" / "variants.json"
 METHOD_STUDY = METHOD_DIR / "testbench" / "study.json"
-FROZEN = REPO_ROOT / "design" / "netlist" / "lna_stage1.spice"
+SNAPSHOTS = BENCH_DIR / "netlist-snapshots"
+
+#: Where the declaration says the frozen DUT was taken from.
+DESIGN_NETLIST = REPO_ROOT / "design" / "netlist" / "lna_stage1.spice"
+
+
+def resolve_frozen() -> Path:
+    """The declared frozen DUT, located by its declared sha256.
+
+    Shared plumbing: see :mod:`harness.frozen_dut`. Until this study's own
+    chosen core change lands in `design/lna_stage1.sch`, the live design
+    netlist IS the declared bytes; after it lands, they are the copy each
+    record froze under ``netlist-snapshots/``.
+    """
+    try:
+        want = json.loads(DECLARATION.read_text())["frozen_dut"]["sha256"]
+    except (OSError, ValueError, KeyError):
+        want = None
+    return frozen_dut.resolve(DESIGN_NETLIST, want, SNAPSHOTS)
+
+
+FROZEN = resolve_frozen()
 
 #: Lines no variant may touch: the #74 input network (the bound must see the
 #: same parameterized input lines) and the subcircuit boundary.

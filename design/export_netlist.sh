@@ -33,7 +33,7 @@ src_hash="$(cat "$here/lna_stage1.sch" "$here/lna_stage1.sym" | sha256sum | cut 
   echo "* lna_stage1 subcircuit, exported by xschem from design/lna_stage1.sch via 'klt netlist --block'"
   echo "* tools: $ver; $klt_ver; sources sha256 (lna_stage1.sch then lna_stage1.sym concatenated): $src_hash"
   echo "* DERIVED FILE: regenerate with design/export_netlist.sh, never edit by hand."
-  echo "* Matching elements (Cshunt, Lin, Lfeed, Cm) are IDEAL lossless L/C: no PDK inductor model exists."
+  echo "* Matching elements (Cshunt, Lin, Lfeed, Cm) and the emitter-degeneration inductor Le1 are IDEAL lossless L/C: no PDK inductor model exists."
   sed -e 's#^\*\* sch_path: .*#** sch_path: design/lna_stage1.sch#' "$tmp/raw.spice" | sed -e '/^$/d'
 } > "$tmp/lna.spice"
 dst="$here/netlist/lna_stage1.spice"
