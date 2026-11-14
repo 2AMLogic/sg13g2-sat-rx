@@ -2,7 +2,20 @@
 """klt-sim driver for the lna-sparam-nf bench (issue #22).
 
     python3 sim/lna-sparam-nf/run.py characterize --supersedes ID [--dry-run]
+    python3 sim/lna-sparam-nf/run.py characterize --supersedes-new-dut ID [--dry-run]
     python3 sim/lna-sparam-nf/run.py ingest REPORT.json [...] --supersedes ID
+
+The two --supersedes forms are mutually exclusive and mean different things:
+--supersedes is a method CORRECTION (same DUT; ingest compares against the old
+logs under lna_nf.py's linear-F relation and refuses on disagreement, issue
+#22), --supersedes-new-dut is a NEW core revision of the DUT (same bench and
+method; the record's note says so and the agreement comparison is deliberately
+not run, because a real core change is expected to violate it -- issue #250).
+With neither, the record is a new design that supersedes nothing (issue #28).
+
+On --backend batch each klt sim submit passes --wait-for-capacity (default
+600 s) so a vCPU-budget burst waits with backoff instead of failing the run
+with batch_no_capacity.
 
 This driver predates `harness.cli run --backend batch` (issue #134), which now
 sends any multi-point harness grid to the batch fleet the same way; it is kept
@@ -165,6 +178,8 @@ def cmd_characterize(args) -> int:
         out, resp = work / f"out_{tag}", work / f"report_{tag}.json"
         cmd = shlex.split(args.klt_cmd) + ["sim", str(req), "--backend", args.backend,
                                            "-o", str(out), "--format", "json"]
+        if args.backend == "batch" and args.wait_for_capacity is not None:
+            cmd += ["--wait-for-capacity", str(args.wait_for_capacity)]
         print("$ " + " ".join(cmd), flush=True)
         if args.dry_run:
             continue
@@ -335,12 +350,23 @@ def ingest(tb, reports, args, verified=None) -> int:
             "grid with the corrected NF method (noiseless Rs1, analytic F = 1 + inoise^2/(4 k 300.15 K Z0)); "
             "it is not a reprocessing of the old logs. The old record is untouched.")
     else:
-        notes.append(
-            "NEW-DESIGN RECORD (issue #28): this record supersedes NOTHING. The earlier lna-sparam-nf records "
-            "(20260912-034726-9204518, 20261009-134024-57e1898) measure a different circuit (the unmatched "
-            "single-CE placeholder, testbench/lna_ce_placeholder.spice) and stay valid as placeholder-methodology "
-            "evidence; this record measures the xschem-derived design/lna_stage1 netlist. tb.json is re-pointed at "
-            "that netlist by this record's commit; the old records are untouched.")
+        if args.supersedes_new_dut:
+            notes.append(
+                "NEW-CORE-REVISION RECORD (issue #250): this record runs the SAME bench and method on a "
+                f"NEW core revision of the DUT (design/netlist/lna_stage1.spice) and supersedes "
+                f"{args.supersedes_new_dut} for that reason -- the circuit changed, not the method, so the "
+                "--supersedes agreement comparison was deliberately NOT run: it asserts the corrected-method "
+                "linear-F relation (lna_nf.compare_to_superseded), which a real core change is expected to "
+                "VIOLATE, and relaxing its tolerances to force agreement would destroy the correction "
+                "check's value for its own (issue #22) purpose. The superseded record stays valid as "
+                "evidence for the earlier core; no existing record is edited or deleted.")
+        else:
+            notes.append(
+                "NEW-DESIGN RECORD (issue #28): this record supersedes NOTHING. The earlier lna-sparam-nf records "
+                "(20260912-034726-9204518, 20261009-134024-57e1898) measure a different circuit (the unmatched "
+                "single-CE placeholder, testbench/lna_ce_placeholder.spice) and stay valid as placeholder-methodology "
+                "evidence; this record measures the xschem-derived design/lna_stage1 netlist. tb.json is re-pointed at "
+                "that netlist by this record's commit; the old records are untouched.")
         notes.append(
             "NF expression used (post-#22, corrected): "
             + "; ".join(f"{n} = `{e}`" for n, e in sorted(nf_exprs.items()))
@@ -421,7 +447,8 @@ def ingest(tb, reports, args, verified=None) -> int:
     record = build_record(
         tb, pdk, points, ordered, f"{', '.join('ngspice-' + e for e in engines)} via klt sim "
         f"(ingested on {ngspice_version()})", REPO_ROOT, record_id, started.isoformat(), wall,
-        claim=args.claim or tb.claim, supersedes=args.supersedes or "", git=git,
+        claim=args.claim or tb.claim,
+        supersedes=args.supersedes or args.supersedes_new_dut or "", git=git,
         extensions=extensions, pdk_artifact=pdk_artifact)
     write_netlist_snapshot(tb, stage_exp, record_id)
     write_manifest_snapshot(tb, stage_exp, record_id)
@@ -449,14 +476,28 @@ def build_parser() -> argparse.ArgumentParser:
     pc.add_argument("--no-stage-models", action="store_true")
     pc.add_argument("--runner-version-check", default="", choices=("", "enforce", "warn"))
     pc.add_argument("--claim", default="")
-    pc.add_argument("--supersedes", default="")
+    sup = pc.add_mutually_exclusive_group()
+    sup.add_argument("--supersedes", default="",
+                     help="record id whose CORRECTION this is (same DUT, corrected method): ingest "
+                          "compares the new logs against the old under lna_nf's linear-F relation "
+                          "and refuses on disagreement")
+    sup.add_argument("--supersedes-new-dut", default="",
+                     help="record id this record supersedes because the DUT changed (new core "
+                          "revision), not the method: writes the new-core note and skips the "
+                          "--supersedes agreement comparison (a real core change must be allowed "
+                          "to violate it)")
+    pc.add_argument("--wait-for-capacity", type=int, default=600,
+                    help="seconds each batch klt sim submit waits for fleet capacity with "
+                         "backoff instead of failing with batch_no_capacity (host rule: 600)")
     pc.add_argument("--dry-run", action="store_true")
     pc.set_defaults(func=cmd_characterize)
     pi = sub.add_parser("ingest")
     pi.add_argument("reports", nargs="+")
     pi.add_argument("--klt-cmd", default="klt")
     pi.add_argument("--claim", default="")
-    pi.add_argument("--supersedes", default="")
+    supi = pi.add_mutually_exclusive_group()
+    supi.add_argument("--supersedes", default="")
+    supi.add_argument("--supersedes-new-dut", default="")
     pi.set_defaults(func=cmd_ingest)
     return p
 
