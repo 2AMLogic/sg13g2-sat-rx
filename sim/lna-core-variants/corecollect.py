@@ -100,16 +100,41 @@ def unit_points(st: ms.Study, dec: cs.Declaration, spec: mc.RequestSpec, unit: d
     return pt, []
 
 
+def submit_all(st: ms.Study, dec: cs.Declaration, reqs: dict, work: Path, args) -> None:
+    """Submit the whole pending campaign in one ``klt sim --batch-set``.
+
+    The campaign is 24 independent batch requests of 9 units each. Submitted
+    one at a time they cost 24 sequential fleet jobs (about 10 min each) and
+    each one backs off for fleet capacity alone, which is how three
+    consecutive attempts at this study ran out of capacity part-way through.
+    One set keeps ``--max-in-flight`` members in flight and re-submits a
+    capacity refusal with doubling backoff; every member still carries
+    ``--wait-for-capacity`` (the host rule). Members that finish leave their
+    reports in *work*, so an interrupted set resumes member-by-member.
+
+    A no-op unless the backend is ``batch`` and ``--max-in-flight`` is above
+    1; the caller's per-request loop then submits serially as before.
+    """
+    if args.backend != "batch" or int(getattr(args, "max_in_flight", 1) or 1) <= 1:
+        return
+    klt_driver.submit_set([(spec.key, reqs[spec.key]) for spec in request_specs(st, dec)], work,
+                          klt_cmd=args.klt_cmd, max_in_flight=int(args.max_in_flight),
+                          capacity_retries=int(getattr(args, "capacity_retries", 0) or 0),
+                          wait_for_capacity=getattr(args, "wait_for_capacity", None))
+
+
 def run_collection(st: ms.Study, dec: cs.Declaration, work: Path, args) -> dict:
     points: list[dict] = []
     requests: list[dict] = []
     texts: dict = {}
     problems: list[str] = []
-    for spec in request_specs(st, dec):
-        req = write_request(st, dec, spec, work, args)
-        if args.dry_run:
-            continue
-        report = mc.submit(spec, req, work, args)
+    specs = request_specs(st, dec)
+    reqs = {spec.key: write_request(st, dec, spec, work, args) for spec in specs}
+    if args.dry_run:
+        return {"points": points, "requests": requests, "texts": texts, "work": work}
+    submit_all(st, dec, reqs, work, args)
+    for spec in specs:
+        report = mc.submit(spec, reqs[spec.key], work, args)
         meta, units = mc.read_units(report)
         requests.append(mc.execution(meta, spec, args.backend))
         for u in units:

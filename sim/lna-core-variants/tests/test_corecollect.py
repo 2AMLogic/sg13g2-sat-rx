@@ -142,3 +142,37 @@ def test_dry_run_writes_every_request_and_submits_nothing(env):
     cc.run_collection(ST, DEC, work, args(dry_run=True))
     assert not fake.calls
     assert len(list(work.glob("request_*.json"))) == 24
+
+
+def test_the_campaign_goes_out_as_one_batch_set_then_is_ingested_from_the_reports(env, monkeypatch):
+    """--max-in-flight > 1 submits the whole campaign in one klt sim --batch-set;
+    the per-request loop then reuses the reports it left in the workdir."""
+    fake, work, _ = env
+    seen = {}
+
+    def fake_set(keys_and_requests, w, **kw):
+        seen["keys"] = [k for k, _ in keys_and_requests]
+        seen["kw"] = kw
+        seen["work"] = w
+        return {}
+
+    monkeypatch.setattr(cc.klt_driver, "submit_set", fake_set)
+    col = cc.run_collection(ST, DEC, work, args(max_in_flight=4, capacity_retries=3, wait_for_capacity=600))
+    assert len(seen["keys"]) == 24 and "core0__2.250v" in seen["keys"]
+    assert seen["work"] == work
+    assert seen["kw"]["max_in_flight"] == 4 and seen["kw"]["capacity_retries"] == 3
+    assert seen["kw"]["wait_for_capacity"] == 600
+    # the set is an optimisation, not a second source of evidence: every point
+    # still comes from the per-request reports the ordinary loop reads
+    assert len(col["points"]) == len(cs.expected_points(ST, DEC))
+    assert len(fake.calls) == 24
+
+
+def test_one_at_a_time_and_non_batch_backends_submit_no_set(env, monkeypatch):
+    fake, work, _ = env
+    monkeypatch.setattr(cc.klt_driver, "submit_set",
+                        lambda *a, **k: pytest.fail("submit_set must not run"))
+    cc.run_collection(ST, DEC, work, args(max_in_flight=1))
+    cc.run_collection(ST, DEC, work, args(max_in_flight=4, backend="local"))
+    # both runs submitted request by request through mc.submit, never as a set
+    assert len(fake.calls) == 48

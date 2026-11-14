@@ -9,7 +9,11 @@
 ``derive`` runs ONE local ``ngspice -b`` per declared derivation, each at ONE
 PVT point (a parameter scan inside one deck), which the host rules allow.
 The PVT campaign (``collect``) is expressed as ``klt sim`` requests on the
-batch fleet; a failed batch submit is an error, never a local fallback.
+batch fleet; a failed batch submit is an error, never a local fallback. The
+24 requests go out as one ``klt sim --batch-set`` (``--max-in-flight``
+in flight, ``--capacity-retries`` re-submits on a capacity refusal); each
+member still carries ``--wait-for-capacity``. ``--workdir`` resumes a
+part-finished campaign request by request.
 Only ``collect`` writes evidence.
 """
 
@@ -116,6 +120,12 @@ def build_parser() -> argparse.ArgumentParser:
     c.add_argument("--backend", default="batch", help="backend for the 9-unit corner requests")
     c.add_argument("--wait-for-capacity", type=int, default=600,
                    help="seconds each batch submit waits for fleet capacity (host rule: 600)")
+    c.add_argument("--max-in-flight", type=int, default=4,
+                   help="batch requests in flight at once, submitted as one klt sim --batch-set "
+                        "(1 submits them one at a time, as before)")
+    c.add_argument("--capacity-retries", type=int, default=3,
+                   help="re-submit a member refused for fleet capacity this many more times, "
+                        "with doubling backoff")
     c.add_argument("--timeout-s", type=int, default=3600)
     c.add_argument("--no-stage-models", action="store_true")
     c.add_argument("--runner-version-check", default="", choices=("", "enforce", "warn"))

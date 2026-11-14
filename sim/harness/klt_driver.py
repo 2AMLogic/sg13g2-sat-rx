@@ -27,6 +27,7 @@ import json
 import math
 import re
 import shlex
+import shutil
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
@@ -256,6 +257,106 @@ def klt_process_names(points) -> dict[str, object]:
 
 class CollectionError(RuntimeError):
     """A study collection is corrupt or incomplete: exit non-zero, write nothing."""
+
+
+def report_has_corners(report: Path) -> bool:
+    """True when *report* is a klt report that already carries ``corners``
+    (what the per-study collect drivers treat as a finished request)."""
+    if not report.is_file():
+        return False
+    try:
+        return "corners" in json.loads(report.read_text())
+    except ValueError:
+        return False
+
+
+def submit_set(keys_and_requests: list[tuple[str, Path]], work: Path, *, klt_cmd: str = "klt",
+               max_in_flight: int = 4, capacity_retries: int = 0,
+               wait_for_capacity: int | None = None) -> dict[str, Path]:
+    """One ``klt sim --batch-set`` for several ``backend: batch`` requests at once.
+
+    The per-study collect drivers submit one request per ``klt sim``, serially;
+    a campaign of N requests then costs N sequential fleet jobs and backs off
+    for capacity alone each time. This runs the whole pending set in one
+    invocation: at most *max_in_flight* members are in flight, the rest queue,
+    and a member refused for fleet capacity (``batch_no_capacity`` /
+    ``batch_concurrency_cap``) is re-submitted up to *capacity_retries* more
+    times with doubling backoff. Nothing is ever re-run on local ngspice.
+
+    Each member's own single-request report (``<outdir>/<stem>/report.json``)
+    is copied to ``work/report_<key>.json``, which is exactly where
+    :func:`submit_request` looks for a finished request -- so the caller's
+    ordinary per-request loop then reuses these reports instead of submitting
+    again, and an interrupted set resumes member-by-member. Returns the
+    ``{key: report path}`` map of members that now have a usable report.
+
+    Raises :class:`CollectionError` when any member has no usable report (the
+    successful members' reports are copied first, so a resume keeps them).
+    """
+    if max_in_flight < 1:
+        raise CollectionError(f"submit_set: max_in_flight must be >= 1, got {max_in_flight}")
+    done: dict[str, Path] = {}
+    pending: list[tuple[str, Path]] = []
+    for key, req in keys_and_requests:
+        report = work / f"report_{key}.json"
+        if report_has_corners(report):
+            print(f"  reuse {report.name}", flush=True)
+            done[key] = report
+        else:
+            pending.append((key, req))
+    if not pending:
+        return done
+    out = (work / "set").resolve()
+    envelope = work / "set-report.json"
+    cmd = shlex.split(klt_cmd) + ["sim", "--batch-set"] + [str(r) for _, r in pending] + [
+        "--backend", "batch", "-o", str(out), "--format", "json",
+        "--max-in-flight", str(max_in_flight)]
+    if capacity_retries:
+        cmd += ["--capacity-retries", str(capacity_retries)]
+    if wait_for_capacity is not None:
+        cmd += ["--wait-for-capacity", str(wait_for_capacity)]
+    print("$ " + " ".join(cmd), flush=True)
+    with envelope.open("w") as fh:
+        proc = subprocess.run(cmd, stdout=fh, stderr=subprocess.PIPE, text=True)
+    if proc.stderr:
+        (work / "stderr_set.log").write_text(proc.stderr)
+    try:
+        data = json.loads(envelope.read_text() or "null")
+    except ValueError:
+        data = None
+    if not isinstance(data, dict) or not isinstance(data.get("requests"), list):
+        raise CollectionError(f"klt sim --batch-set returned no usable envelope (exit {proc.returncode}): "
+                              f"{proc.stderr[-3000:] or 'empty output'}")
+    by_request = {str(req.resolve()): key for key, req in pending}
+    by_request.update({req.name: key for key, req in pending})
+    problems: list[str] = []
+    for entry in data["requests"]:
+        raw = entry.get("request") or ""
+        key = by_request.get(raw) or by_request.get(Path(raw).name)
+        if key is None:
+            problems.append(f"envelope names request {raw!r}, which is not in the submitted set")
+            continue
+        member = Path(entry["report"]).resolve() if entry.get("report") else None
+        if member is not None and not member.is_absolute():
+            member = (envelope.parent / member).resolve()
+        if member is None or not report_has_corners(member):
+            err = entry.get("error") or {}
+            problems.append(f"{key}: status {entry.get('status')} exit {entry.get('exit_code')} "
+                            f"code {err.get('code')}: {err.get('message')}")
+            continue
+        report = work / f"report_{key}.json"
+        shutil.copyfile(member, report)
+        done[key] = report
+        print(f"  {key}: {entry.get('status')} (job {entry.get('job_id')}) -> {report.name}", flush=True)
+    missing = sorted({key for key, _ in pending} - set(done))
+    if missing:
+        problems.append("no envelope entry for " + ", ".join(missing))
+    if problems:
+        raise CollectionError(
+            f"klt sim --batch-set failed for {len(problems)} of {len(pending)} requests (exit "
+            f"{proc.returncode}, backend batch; refused_codes {data.get('refused_codes')}): "
+            + "; ".join(problems[:10]))
+    return done
 
 
 def submit_request(req: Path, report: Path, key: str, backend: str, klt_cmd: str,
