@@ -31,13 +31,15 @@ import cmath
 import json
 import math
 import re
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
 BENCH_DIR = Path(__file__).resolve().parent
 REPO_ROOT = BENCH_DIR.parents[1]
 
-K_BOLTZMANN = 1.380649e-23
+sys.path.insert(0, str(BENCH_DIR.parent))  # sim/ -> harness
+from harness import rf  # noqa: E402
 
 #: The two lines of the frozen netlist this study is allowed to change, and
 #: their replacements. ``Csh2`` is inserted directly after ``Lin``.
@@ -657,7 +659,7 @@ def parse_log(text: str) -> ParsedLog:
 
 def nf_db_from_inoise(inoise: float, t0_k: float = 300.15, z0: float = 50.0) -> float:
     """F = 1 + inoise^2/(4 k T0 z0) (noiseless reference source, issue #22)."""
-    return 10 * math.log10(1 + inoise * inoise / (4 * K_BOLTZMANN * t0_k * z0))
+    return 10 * math.log10(rf.noise_factor_from_inoise(inoise, t0_k, z0))
 
 
 def db20(x: complex | float) -> float:
