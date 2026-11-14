@@ -12,6 +12,17 @@ compliance for rows 7 or 8, the band (row 1) is still a draft, and nothing here
 relaxes a ratified target: a failing, bounded, unavailable or unconverged
 outcome is published as it is.
 
+**NO DUT PIN** (noted as a #250 disposition, verified 2026-11-14 against
+origin/main @ `88c2be4`). Unlike the other study benches, this one reads the
+LIVE `design/netlist/lna_stage1.spice`: `testbench/plan.json` (and
+`plan-v2.json`) declare `netlist` + `subckt` but no `sha256`, and `run.py`
+loads the live netlist, hashing it only as recorded provenance — never
+checking it against a declaration. A re-run therefore measures whatever the
+design currently is. The existing record (`20261010-174208-0f67eaf`) froze the
+pre-#79 deck (`ad4fe1be…`) as its DUT identity and stays valid as evidence for
+that circuit; since #79 changed the core (`7a74e7ae…`) it is no longer
+reproducible from the live tree. Re-running on the new core is filed as #273.
+
 ## Cold start
 
 ```bash
