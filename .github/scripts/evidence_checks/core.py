@@ -183,6 +183,7 @@ from .artifact_manifests import MANIFEST_DIR, check_artifact_manifests, check_ma
 from .common import PROTECTED_RE, Problems, RECORD_ID_PREFIX_RE, git, rel
 from .hbt_mismatch_pair import check_hbt_mismatch_pair
 from .kaband import check_kaband_record
+from .lna_core import check_lna_core_variants
 from .lna_headroom import check_lna_headroom
 from .lna_linearity import check_lna_linearity
 from .lna_match import check_lna_match_tradeoff
@@ -204,6 +205,7 @@ ADAPTERS = {
     "mixer-cm-interface-probe": check_mixer_cm_interface_probe,
     "mixer-pumped-rf-admittance": check_mixer_pumped_rf_admittance,
     "lna-match-tradeoff": check_lna_match_tradeoff,
+    "lna-core-variants": check_lna_core_variants,
     "lna-linearity": check_lna_linearity,
     "lna-headroom": check_lna_headroom,
     "hbt-mismatch-pair": check_hbt_mismatch_pair,

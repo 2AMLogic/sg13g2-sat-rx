@@ -449,11 +449,13 @@ Rs2 s2n p2 {z0}
 """
 
 
-def op_lets() -> list[tuple[str, str]]:
+def op_lets(devices: tuple = DEVICES) -> list[tuple[str, str]]:
     """``(name, expression)`` of the operating-point measurements; the same
-    expressions as sim/lna-sparam-nf/testbench/tb.json (a test pins them)."""
+    expressions as sim/lna-sparam-nf/testbench/tb.json (a test pins them).
+    ``devices`` defaults to this DUT's :data:`DEVICES`; a core-variant study
+    (issue #79) passes its own terminal nodes / Nx."""
     out: list[tuple[str, str]] = []
-    for dev, _label, nx, inst, c, b, e in DEVICES:
+    for dev, _label, nx, inst, c, b, e in devices:
         q = f"@q.xdut.{inst}.qnpn13g2"
         ft = (f"{q}[gm]/(2*3.14159265358979*({q}[cbe]+{q}[cbex]+{q}[cbc]+{q}[cbcx]+{q}[cbep]+{q}[cbcp]))/1e9")
         out += [(f"{dev}_vce", f"v(xdut.{c}) - v(xdut.{e})"),
@@ -471,7 +473,7 @@ def _num(x: float) -> str:
 
 
 def control_lines(st: Study, cands: list[Candidate], *, with_op: bool = True,
-                  network_alter: bool = True) -> list[str]:
+                  network_alter: bool = True, devices: tuple = DEVICES) -> list[str]:
     """The ``.control`` body for one deck at one PVT point: the operating
     point once (the input network is DC-isolated by Cblk_in, which the smoke
     control verifies), then per candidate the forward dense / midpoint /
@@ -491,9 +493,9 @@ def control_lines(st: Study, cands: list[Candidate], *, with_op: bool = True,
         if network_alter:
             out += [f"alterparam {k} = {_num(v)}" for k, v in first.params().items()]
         out += ["alterparam mag1 = 1", "alterparam mag2 = 0", "reset", "op"]
-        for name, expr in op_lets():
+        for name, expr in op_lets(devices):
             out.append(f"let m_op_{name} = {expr}")
-        out += [f"print m_op_{name}" for name, _ in op_lets()]
+        out += [f"print m_op_{name}" for name, _ in op_lets(devices)]
         out.append("destroy all")
     ports = "real(v(p1)) imag(v(p1)) real(v(p2)) imag(v(p2))"
     for c in cands:
@@ -518,7 +520,8 @@ def control_lines(st: Study, cands: list[Candidate], *, with_op: bool = True,
 
 
 def body_text(st: Study, frozen_netlist: str, cands: list[Candidate], vdd: float, *, title: str,
-              dut: str | None = None, network_alter: bool = True, with_op: bool = True) -> str:
+              dut: str | None = None, network_alter: bool = True, with_op: bool = True,
+              devices: tuple = DEVICES) -> str:
     """Circuit body without model/corner lines (klt adds those; the local
     runner prepends them). ``dut`` overrides the DUT text (controls only)."""
     first = cands[0]
@@ -531,7 +534,7 @@ def body_text(st: Study, frozen_netlist: str, cands: list[Candidate], vdd: float
     else:
         lines += ["", dut.rstrip("\n")]
     lines += ["", PORTS.rstrip("\n"), "", ".control", "set noaskquit",
-              *control_lines(st, cands, with_op=with_op, network_alter=network_alter), ".endc", ""]
+              *control_lines(st, cands, with_op=with_op, network_alter=network_alter, devices=devices), ".endc", ""]
     return "\n".join(lines)
 
 
@@ -816,12 +819,12 @@ VCE_WINDOW_V = (0.4, 2.0)
 VBE_WINDOW_V = (0.65, 0.96)
 
 
-def op_checks(op: dict[str, float], vdd: float, st: Study) -> dict:
+def op_checks(op: dict[str, float], vdd: float, st: Study, devices: tuple = DEVICES) -> dict:
     """Per-device pass/fail against row 17 and the card box; 2.75 V-class
     supplies above the rail ceiling are labelled an excursion, not merged."""
     devs = {}
     fails = []
-    for dev, label, _nx, *_ in DEVICES:
+    for dev, label, _nx, *_ in devices:
         need = [f"{dev}_{q}" for q in ("vce", "vbe", "icfrac", "ft")]
         if any(n not in op or not math.isfinite(op[n]) for n in need):
             return {"valid": False, "problems": [f"op values missing/non-finite for {dev}"]}
@@ -880,13 +883,13 @@ def screen_cell(st: Study, cell: dict) -> dict:
 
 
 def make_cell(st: Study, phase: str, cand: Candidate, process: str, temp_c: float, vdd: float,
-              tables: dict, op: dict) -> dict:
+              tables: dict, op: dict, devices: tuple = DEVICES) -> dict:
     an = analyze_candidate(st, cand, tables, temp_c)
     cell = {"id": cell_id(phase, cand.name, process, temp_c, vdd), "phase": phase, "candidate": cand.name,
             "role": cand.role, "process": process, "model_section": process, "temp_c": temp_c, "vdd_v": vdd,
             "corner_id": corner_id(process, temp_c, vdd),
             "supply_class": "excursion" if vdd > st.rail_ceiling_v + 1e-9 else "in_rail",
-            "op": op_checks(op, vdd, st)}
+            "op": op_checks(op, vdd, st, devices)}
     problems = list(an.get("problems", []))
     if not cell["op"].get("valid"):
         problems += cell["op"].get("problems", [])

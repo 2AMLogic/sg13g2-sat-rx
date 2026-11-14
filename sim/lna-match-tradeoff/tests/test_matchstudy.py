@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import cmath
 import copy
+import hashlib
 import json
 import math
 import random
@@ -20,14 +21,19 @@ REPO = BENCH.parents[1]
 sys.path.insert(0, str(BENCH))
 sys.path.insert(0, str(BENCH / "tests"))
 sys.path.insert(0, str(REPO / "sim" / "lna-sparam-nf"))
+sys.path.insert(0, str(REPO / "sim"))
 
 import matchfakes as fakes  # noqa: E402
 import lna_nf  # noqa: E402
+import matchcollect as mc  # noqa: E402
 import matchstudy as ms  # noqa: E402
 
 RAW = json.loads((BENCH / "testbench" / "study.json").read_text())
 ST = ms.study_from_manifest(RAW)
-FROZEN = (REPO / "design" / "netlist" / "lna_stage1.spice").read_text()
+#: The DUT this study declared, located by its pinned sha256 -- NOT whatever
+#: `design/netlist/lna_stage1.spice` holds today (issue #79 lands a core
+#: change there, and this study's records were taken before it).
+FROZEN = mc.FROZEN.read_text()
 
 
 # --- declaration --------------------------------------------------------------
@@ -127,8 +133,19 @@ def test_dut_text_changes_only_the_two_input_lines():
     new = set(dut.splitlines())
     assert old - new == set(ms.FROZEN_INPUT_LINES.values())
     assert new - old == {"Cshunt in gnd {c_sh1} m=1", "Lin in in2 {l_in} m=1", "Csh2 in2 gnd {c_sh2} m=1"}
-    for keep in ("Rd vdd oc 465 m=1", "Lfeed vdd oc 0.962n m=1", "Cm oc out 57.8f m=1", "Rbias nr b1 2k m=1"):
+    # the output network, the damping resistor and the whole bias network are
+    # untouched -- read off the frozen deck, not restated, so this stays an
+    # assertion about dut_text rather than about one era of the design
+    for keep in (ln for ln in FROZEN.splitlines()
+                 if ln[:1].isalpha() and ln.split()[0] not in ("Cshunt", "Lin")):
         assert keep in dut
+
+
+def test_the_declared_dut_pin_matches_study_md():
+    """`matchcollect.FROZEN_SHA256` restates a prose declaration; keep them equal."""
+    declared = (BENCH / "STUDY.md").read_text()
+    assert mc.FROZEN_SHA256 in declared, "STUDY.md no longer declares this DUT sha256"
+    assert hashlib.sha256(mc.FROZEN.read_bytes()).hexdigest() == mc.FROZEN_SHA256
 
 
 def test_dut_text_refuses_a_changed_schematic():

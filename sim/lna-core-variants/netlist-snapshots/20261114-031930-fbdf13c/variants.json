@@ -1,0 +1,469 @@
+{
+  "name": "lna-core-variants",
+  "issue": 79,
+  "description": "First-stage core-variant study around design/lna_stage1: each declared change to the cascode core (not to the input network) is applied to the frozen netlist, and the issue-#74 network-independent bound (smallest NF any lossless input network can reach with S11 <= -10 dB, per frequency) is re-run on every variant over the same 27-point PVT grid (18 in-rail) and the DRAFT band, with the same probes, grids, thresholds and NF convention.",
+  "claim": "ideal-element core-variant feasibility screen; no spec row is claimed met. Every matching element and the degeneration inductor are ideal lossless elements (no PDK inductor model; passive qualification is #46), the band (row 1) is OPEN/DRAFT, and the bound is a per-frequency necessary condition, not a realized network.",
+  "method": {
+    "study_json": "sim/lna-match-tradeoff/testbench/study.json",
+    "study_json_sha256": "912e00c19b0e8a05a1f951daa011983280b3f730de60ef46dc12ba7ae2e64470",
+    "baseline_record": "sim/lna-match-tradeoff/records/20261010-042556-dae8519",
+    "_note": "Grids (dense ac lin 71 over 17.7-21.2 GHz, ac dec 100 over 1-100 GHz), screen thresholds, tolerances, the 9 probe networks, the baseline (drawn) input network, the port fixture and the NF convention are all taken from the #74 declaration and executed by sim/lna-match-tradeoff/matchstudy.py unchanged. Only the DUT core differs."
+  },
+  "frozen_dut": {
+    "path": "design/netlist/lna_stage1.spice",
+    "sha256": "ad4fe1be5754f21fc4b2dd67863234858dc399e2a8232d3b20cf530014b8c447"
+  },
+  "reproduction_tol_db": 0.001,
+  "_reproduction_note": "The frozen core (variant core0) must reproduce the #74 record's per-point NF-bound max and Fmin range within this tolerance, and its jointly-infeasible frequency count exactly, at all 27 PVT points. Same ngspice, same models, same deck text apart from the variant comment line: anything above print precision means the comparison between variants is not on the #74 footing.",
+  "changes": {
+    "A": {
+      "class": "a",
+      "title": "inductive emitter degeneration",
+      "description": "An ideal inductor Le1 in series with Q1's emitter (between e1 and Re1). Degeneration adds a real part Re(Z_in) ~ omega_T Le to the core's input impedance without a resistor's noise, moving conj(Gamma_in) toward Gamma_opt. DC is unchanged (zero-DC-drop element).",
+      "edits": [
+        {
+          "line": "Re1 e1 gnd 3 m=1",
+          "with": [
+            "Le1 e1 e1d {le} m=1",
+            "Re1 e1d gnd 3 m=1"
+          ]
+        }
+      ]
+    },
+    "B_J": {
+      "class": "b",
+      "title": "current density at the binding corner",
+      "description": "Rref retuned so Q1's collector current at hbt_wcs / 125 C / 2.5 V equals the Ka-band characterization's noise-optimal collector current for Nx = 8 at that PVT point (1.70 mA at 19.45 GHz, VCE 1.4 V; sim/hbt-kaband-characterization/records/20261009-095725-dbf8179.md, per-Nx table). The frozen core runs 1.43 mA there. Device size unchanged.",
+      "edits": [
+        {
+          "line": "Rref vdd nr 8k m=1",
+          "with": [
+            "Rref vdd nr {rref} m=1"
+          ]
+        }
+      ]
+    },
+    "B_NX": {
+      "class": "b",
+      "title": "device size at constant current density",
+      "description": "Q1 and Q2 go from Nx = 8 to Nx = 10 (the model card's upper Nx limit) at the same current density: Rref 8k -> 6.4k (reference current x 10/8) and Re1 3 -> 2.4 ohm (mirror emitter ratio Rer/Re1 = 24/2.4 = 10 = the new area ratio). The characterization shows NFmin nearly flat in Nx at fixed J_C while Zopt scales as 1/Nx; this variant measures what the size does in the circuit.",
+      "edits": [
+        {
+          "line": "Rref vdd nr 8k m=1",
+          "with": [
+            "Rref vdd nr 6.4k m=1"
+          ]
+        },
+        {
+          "line": "Xq2 oc b2 c1 gnd npn13G2 Nx=8",
+          "with": [
+            "Xq2 oc b2 c1 gnd npn13G2 Nx=10"
+          ]
+        },
+        {
+          "line": "Xq1 c1 b1 e1 gnd npn13G2 Nx=8",
+          "with": [
+            "Xq1 c1 b1 e1 gnd npn13G2 Nx=10"
+          ]
+        },
+        {
+          "line": "Re1 e1 gnd 3 m=1",
+          "with": [
+            "Re1 e1 gnd 2.4 m=1"
+          ]
+        }
+      ]
+    },
+    "C": {
+      "class": "c",
+      "title": "base-feed noise: larger Rbias with base-current compensation",
+      "description": "Rbias 2k -> 10k cuts the base feed's shunt thermal-noise current by 5x in power. Its larger DC drop (Ib x 10k) is compensated in the reference by Rbr between the mirror's collector node nr and Xqr's base (the classic beta-compensated mirror), with Rbr derived so Q1's nominal collector current equals the frozen core's 1.563 mA (study.json derivation op). The mirror still tracks V_BE over process and temperature.",
+      "edits": [
+        {
+          "line": "Rbias nr b1 2k m=1",
+          "with": [
+            "Rbias nr b1 10k m=1"
+          ]
+        },
+        {
+          "line": "Xqr nr nr er gnd npn13G2 Nx=1",
+          "with": [
+            "Xqr nr br er gnd npn13G2 Nx=1",
+            "Rbr nr br {rbr} m=1"
+          ]
+        }
+      ]
+    },
+    "D": {
+      "class": "diagnostic",
+      "title": "Rbias made noiseless (attribution only)",
+      "description": "Rbias keeps its 2k DC value but its thermal noise is switched off (noisy=0). Not a circuit: it bounds what any base-feed change of class (c) can buy at most.",
+      "edits": [
+        {
+          "line": "Rbias nr b1 2k m=1",
+          "with": [
+            "Rbias nr b1 2k m=1 noisy=0"
+          ]
+        }
+      ]
+    }
+  },
+  "variants": [
+    {
+      "name": "core0",
+      "role": "baseline",
+      "changes": [],
+      "params": {},
+      "summary": "the frozen design/lna_stage1 core (reproduction control against #74)"
+    },
+    {
+      "name": "a_le",
+      "role": "candidate",
+      "changes": [
+        "A"
+      ],
+      "params": {
+        "le": "le_a"
+      },
+      "summary": "(a) inductive emitter degeneration"
+    },
+    {
+      "name": "b_jopt",
+      "role": "candidate",
+      "changes": [
+        "B_J"
+      ],
+      "params": {
+        "rref": "rref_b"
+      },
+      "summary": "(b) current density to the characterization's hot-corner noise optimum"
+    },
+    {
+      "name": "b_nx10",
+      "role": "candidate",
+      "changes": [
+        "B_NX"
+      ],
+      "params": {},
+      "summary": "(b) device size Nx 8 -> 10 at constant current density"
+    },
+    {
+      "name": "c_rbias",
+      "role": "candidate",
+      "changes": [
+        "C"
+      ],
+      "params": {
+        "rbr": "rbr_c"
+      },
+      "summary": "(c) Rbias 2k -> 10k with base-current compensation"
+    },
+    {
+      "name": "diag_rbias_noiseless",
+      "role": "diagnostic",
+      "changes": [
+        "D"
+      ],
+      "params": {},
+      "summary": "attribution: the frozen core with a noiseless Rbias"
+    },
+    {
+      "name": "ac",
+      "role": "combination",
+      "changes": [
+        "A",
+        "C"
+      ],
+      "params": {
+        "le": "le_ac",
+        "rbr": "rbr_c"
+      },
+      "summary": "(a) + (c)"
+    },
+    {
+      "name": "abc",
+      "role": "combination",
+      "changes": [
+        "A",
+        "B_J",
+        "C"
+      ],
+      "params": {
+        "le": "le_abc",
+        "rref": "rref_abc",
+        "rbr": "rbr_c"
+      },
+      "summary": "(a) + (b, current density) + (c)"
+    }
+  ],
+  "derivations": [
+    {
+      "param": "le_a",
+      "changes": [
+        "A"
+      ],
+      "bind": {
+        "le": "SCAN"
+      },
+      "kind": "zin_f0",
+      "target": 50.0,
+      "sig": 2,
+      "point": {
+        "process": "hbt_typ",
+        "temp_c": 27.0,
+        "vdd": 2.5
+      },
+      "scan": {
+        "start": 0.0,
+        "stop": 4e-10,
+        "step": 5e-12
+      },
+      "rule": "Le such that Re(Z_in) of the core at node in2 equals z0 = 50 ohm at f0 = 19.45 GHz at the nominal point (the textbook degeneration condition), rounded to 2 significant digits",
+      "value": 5.4e-11,
+      "result": {
+        "crossing": 5.41173e-11,
+        "ngspice": "ngspice-46 : Circuit level simulation program",
+        "bracket": [
+          [
+            5e-11,
+            47.8729
+          ],
+          [
+            5.5e-11,
+            50.456
+          ],
+          [
+            6e-11,
+            53.0352
+          ]
+        ]
+      }
+    },
+    {
+      "param": "rref_b",
+      "changes": [
+        "B_J"
+      ],
+      "bind": {
+        "rref": "SCAN"
+      },
+      "kind": "ic_q1",
+      "target": 0.0017,
+      "sig": 3,
+      "point": {
+        "process": "hbt_wcs",
+        "temp_c": 125.0,
+        "vdd": 2.5
+      },
+      "scan": {
+        "start": 3000.0,
+        "stop": 12000.0,
+        "step": 50.0
+      },
+      "rule": "Rref such that Ic(Q1) = 1.70 mA at hbt_wcs / 125 C / 2.5 V (characterization noise-optimal Ic, Nx = 8), rounded to 3 significant digits",
+      "value": 6500.0,
+      "result": {
+        "crossing": 6498.75,
+        "ngspice": "ngspice-46 : Circuit level simulation program",
+        "bracket": [
+          [
+            6450.0,
+            0.00171054
+          ],
+          [
+            6500.0,
+            0.00169973
+          ],
+          [
+            6550.0,
+            0.00168909
+          ]
+        ]
+      }
+    },
+    {
+      "param": "rbr_c",
+      "changes": [
+        "C"
+      ],
+      "bind": {
+        "rbr": "SCAN"
+      },
+      "kind": "ic_q1",
+      "target": 0.001563,
+      "sig": 3,
+      "point": {
+        "process": "hbt_typ",
+        "temp_c": 27.0,
+        "vdd": 2.5
+      },
+      "scan": {
+        "start": 0.0,
+        "stop": 200000.0,
+        "step": 1000.0
+      },
+      "rule": "Rbr such that Ic(Q1) at the nominal point equals the frozen core's 1.563 mA, rounded to 3 significant digits",
+      "value": 60900.0,
+      "result": {
+        "crossing": 60919.9,
+        "ngspice": "ngspice-46 : Circuit level simulation program",
+        "bracket": [
+          [
+            60000.0,
+            0.00155668
+          ],
+          [
+            61000.0,
+            0.00156355
+          ],
+          [
+            62000.0,
+            0.00157044
+          ]
+        ]
+      }
+    },
+    {
+      "param": "le_ac",
+      "changes": [
+        "A",
+        "C"
+      ],
+      "bind": {
+        "le": "SCAN",
+        "rbr": "rbr_c"
+      },
+      "kind": "zin_f0",
+      "target": 50.0,
+      "sig": 2,
+      "point": {
+        "process": "hbt_typ",
+        "temp_c": 27.0,
+        "vdd": 2.5
+      },
+      "scan": {
+        "start": 0.0,
+        "stop": 4e-10,
+        "step": 5e-12
+      },
+      "rule": "as le_a, on the (c) core",
+      "value": 6.7e-11,
+      "result": {
+        "crossing": 6.65395e-11,
+        "ngspice": "ngspice-46 : Circuit level simulation program",
+        "bracket": [
+          [
+            6e-11,
+            46.5055
+          ],
+          [
+            6.5e-11,
+            49.1783
+          ],
+          [
+            7e-11,
+            51.8468
+          ]
+        ]
+      }
+    },
+    {
+      "param": "rref_abc",
+      "changes": [
+        "B_J",
+        "C"
+      ],
+      "bind": {
+        "rref": "SCAN",
+        "rbr": "rbr_c"
+      },
+      "kind": "ic_q1",
+      "target": 0.0017,
+      "sig": 3,
+      "point": {
+        "process": "hbt_wcs",
+        "temp_c": 125.0,
+        "vdd": 2.5
+      },
+      "scan": {
+        "start": 3000.0,
+        "stop": 12000.0,
+        "step": 50.0
+      },
+      "rule": "as rref_b, on the (c) core",
+      "value": 6950.0,
+      "result": {
+        "crossing": 6954.11,
+        "ngspice": "ngspice-46 : Circuit level simulation program",
+        "bracket": [
+          [
+            6900.0,
+            0.00171159
+          ],
+          [
+            6950.0,
+            0.00170087
+          ],
+          [
+            7000.0,
+            0.00169029
+          ]
+        ]
+      }
+    },
+    {
+      "param": "le_abc",
+      "changes": [
+        "A",
+        "B_J",
+        "C"
+      ],
+      "bind": {
+        "le": "SCAN",
+        "rref": "rref_abc",
+        "rbr": "rbr_c"
+      },
+      "kind": "zin_f0",
+      "target": 50.0,
+      "sig": 2,
+      "point": {
+        "process": "hbt_typ",
+        "temp_c": 27.0,
+        "vdd": 2.5
+      },
+      "scan": {
+        "start": 0.0,
+        "stop": 4e-10,
+        "step": 5e-12
+      },
+      "rule": "as le_a, on the (b, current density) + (c) core",
+      "value": 6.3e-11,
+      "result": {
+        "crossing": 6.26354e-11,
+        "ngspice": "ngspice-46 : Circuit level simulation program",
+        "bracket": [
+          [
+            6e-11,
+            48.4789
+          ],
+          [
+            6.5e-11,
+            51.3648
+          ],
+          [
+            7e-11,
+            54.2439
+          ]
+        ]
+      }
+    }
+  ],
+  "selection_rule": {
+    "nf_max_db": 2.5,
+    "s11_max_db": -10.0,
+    "gt_min_db": 10.0,
+    "k_min": 1.0,
+    "delta_max": 1.0,
+    "description": "Eligible: candidate or combination variants whose 18 in-rail points all have a valid bound (model check), pass the row-17 / card-box operating-point checks, have k > 1 and |Delta| < 1 in band and over 1-100 GHz, have transducer gain >= 10 dB (row 2 split over two stages, the #74 S21 screen) at the NF-bound source reflection at every band frequency, and have NO in-rail point where the bound is jointly infeasible (NF <= 2.5 dB with S11 <= -10 dB unreachable by any lossless input network at some band frequency). Choice: among eligible variants, the fewest declared changes, then the largest worst-case in-rail margin (2.5 dB - worst NF bound), then the name. No eligible variant: no choice, and the outcome is a decision-record proposal naming the binding corner. Excursion (2.75 V) points are reported and never enter the choice. Diagnostic variants are never chosen."
+  }
+}

@@ -24,11 +24,15 @@ BENCH_DIR = Path(__file__).resolve().parent
 SIM_DIR = BENCH_DIR.parent
 REPO_ROOT = SIM_DIR.parent
 SP_DIR = SIM_DIR / "lna-sparam-nf"
-if str(SP_DIR) not in sys.path:
-    sys.path.insert(0, str(SP_DIR))
+for _p in (str(SP_DIR), str(SIM_DIR)):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
 
 import lna_nf  # noqa: E402
 
+from harness import frozen_dut  # noqa: E402
+
+SNAPSHOTS = BENCH_DIR / "netlist-snapshots"
 PREFIX = "sparam_"
 
 _EMBED_RE = re.compile(
@@ -63,11 +67,21 @@ def sha256_bytes(b: bytes) -> str:
 
 
 def load_refs(hp: dict) -> tuple[str, dict]:
-    """(fixture text, parsed manifest), each hash-checked against the frozen plan."""
+    """(fixture text, parsed manifest), each hash-checked against the frozen plan.
+
+    The plan names each reference by its path in `sim/lna-sparam-nf`, which is
+    a live bench: its fixture tracks `design/netlist/lna_stage1.spice`, so it
+    moves when a core change lands there (issue #79). The declared BYTES are
+    what this study was run on, and every record froze a copy of them, so each
+    reference is located by its declared sha256 (:mod:`harness.frozen_dut`) --
+    the live file while it still matches, else the frozen copy. The hash check
+    below is unchanged and still fails when neither matches.
+    """
     cfg = hp["refinement"]["small_signal"]
     texts = {}
     for key in ("fixture", "manifest"):
-        p = REPO_ROOT / cfg[key]["file"]
+        declared = REPO_ROOT / cfg[key]["file"]
+        p = frozen_dut.resolve(declared, cfg[key]["sha256"], SNAPSHOTS)
         got = sha256_bytes(p.read_bytes())
         if got != cfg[key]["sha256"]:
             raise ValueError(f"{cfg[key]['file']} sha256 {got} != declared {cfg[key]['sha256']}")
