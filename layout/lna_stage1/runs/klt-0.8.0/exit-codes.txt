@@ -1,0 +1,8 @@
+drc 0
+extract 0
+erc 4
+ringcheck_activ 0
+ringcheck_psd 0
+ringcheck_m1 0
+economy 0
+lvs-devices 3

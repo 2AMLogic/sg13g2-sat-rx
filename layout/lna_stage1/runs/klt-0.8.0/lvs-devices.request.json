@@ -1,0 +1,5 @@
+{
+  "engine": "klayout",
+  "layout": {"deck": "sg13g2", "file": "../../lna_stage1_devices.gds", "top": "lna_stage1_devices"},
+  "reference": {"netlist": "../../reference-devices.spice", "form": "subckt-call", "deck": "sg13g2"}
+}

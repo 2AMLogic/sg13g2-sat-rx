@@ -1,0 +1,26 @@
+* Reference netlist for lna_stage1_devices.gds (issue #198).
+* NON-CLAIMING: this is not the LNA stage-1 netlist. It holds only the
+* devices the device-group layout study actually draws -- the stage's
+* resistors, capacitors and inductors are absent from both. The
+* designed Nx=8 devices are drawn as 8 parallel Nx=1 units, so they
+* appear here as 8 parallel devices; see generate.py's module docstring.
+* DERIVED FILE: regenerate with generate.py, never edit by hand.
+.subckt lna_stage1_devices c1 b1 e1 oc b2 nr br er gnd
+Xq1_0 c1 b1 e1 gnd npn13G2 Nx=1
+Xq1_1 c1 b1 e1 gnd npn13G2 Nx=1
+Xq1_2 c1 b1 e1 gnd npn13G2 Nx=1
+Xq1_3 c1 b1 e1 gnd npn13G2 Nx=1
+Xq1_4 c1 b1 e1 gnd npn13G2 Nx=1
+Xq1_5 c1 b1 e1 gnd npn13G2 Nx=1
+Xq1_6 c1 b1 e1 gnd npn13G2 Nx=1
+Xq1_7 c1 b1 e1 gnd npn13G2 Nx=1
+Xq2_0 oc b2 c1 gnd npn13G2 Nx=1
+Xq2_1 oc b2 c1 gnd npn13G2 Nx=1
+Xq2_2 oc b2 c1 gnd npn13G2 Nx=1
+Xq2_3 oc b2 c1 gnd npn13G2 Nx=1
+Xq2_4 oc b2 c1 gnd npn13G2 Nx=1
+Xq2_5 oc b2 c1 gnd npn13G2 Nx=1
+Xq2_6 oc b2 c1 gnd npn13G2 Nx=1
+Xq2_7 oc b2 c1 gnd npn13G2 Nx=1
+Xqr_0 nr br er gnd npn13G2 Nx=1
+.ends lna_stage1_devices

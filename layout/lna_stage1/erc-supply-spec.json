@@ -1,0 +1,30 @@
+{
+  "stackup": [
+    {"name": "GatPoly", "layer": "5/0", "role": "gate"},
+    {"name": "Metal1", "layer": "8/0", "label_layer": "8/25"},
+    {"name": "Metal2", "layer": "10/0", "label_layer": "10/25"}
+  ],
+  "vias": [
+    {"name": "Via1", "layer": "19/0", "between": ["Metal1", "Metal2"]}
+  ],
+  "nets": [
+    {"name": "gnd", "kind": "supply", "islands": 1},
+    {"name": "vdd", "kind": "supply", "islands": 1}
+  ],
+  "ties": [
+    {
+      "name": "psub_ring_tap",
+      "well_layer": null,
+      "well_boxes": [[-7.02, -8.02, 73.36, 45.0]],
+      "tap_layer": "1/0",
+      "tap_requires": ["14/0"],
+      "tap_boxes": [
+        [-7.05, -8.05, 73.4, -7.2],
+        [-7.05, -8.05, -6.2, 45.0],
+        [72.54, -8.05, 73.4, 45.0]
+      ],
+      "connect_to": "Metal1",
+      "net": "gnd"
+    }
+  ]
+}
