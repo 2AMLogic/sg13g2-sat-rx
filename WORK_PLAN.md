@@ -13,20 +13,19 @@ _None._
 
 `loom:very-important` (one counts per workspace); every stage takes these first.
 
-_None._
+- **#79**: design: choose the first-stage core change that lets NF and input match close together
 
 ## Important
 
 `loom:important`; taken before unlabelled work.
 
-- **#79**: design: choose the first-stage core change that lets NF and input match close together
 - **#110**: sim: execute the prepared p1 EM campaign and reproduce frozen results
 
 ## Ready
 
 Human-approved issues ready for implementation (`loom:issue`).
 
-_None._
+- **#79**: design: choose the first-stage core change that lets NF and input match close together
 
 ## In Progress
 
@@ -38,7 +37,7 @@ _None._
 
 PRs waiting on Judge (`loom:review-requested`).
 
-_None._
+- **#245**: docs: roadmap as of 2026-11-13
 
 ## Approved (Awaiting Merge)
 
@@ -67,11 +66,11 @@ _None._
 | Bucket | Count |
 |------|-------|
 | Operator merge-risk holds | 0 |
-| Very important | 0 |
-| Important | 2 |
-| Ready (`loom:issue`) | 0 |
+| Very important | 1 |
+| Important | 1 |
+| Ready (`loom:issue`) | 1 |
 | In Progress (`loom:building`) | 0 |
-| PRs awaiting review | 0 |
+| PRs awaiting review | 1 |
 | Approved PRs awaiting merge | 0 |
 | Curated | 3 |
 | Architect / Hermit proposals | 0 |
