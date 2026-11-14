@@ -1,0 +1,635 @@
+{
+  "schema_version": 2,
+  "engine": "klayout",
+  "layout": {
+    "path": "layout/lna_stage1/lna_stage1_devices.gds",
+    "scope": "repo"
+  },
+  "reference": "../../reference-devices.spice",
+  "top": "lna_stage1_devices",
+  "reference_top": "LNA_STAGE1_DEVICES",
+  "reference_conversion": {
+    "form": "subckt-call",
+    "deck": "sg13g2",
+    "device_map": null
+  },
+  "parameter_tolerance": null,
+  "options": {
+    "combine_devices": false,
+    "combine_devices_per_circuit": null,
+    "combine_devices_max_attempts": 5,
+    "flatten_layout": false,
+    "flatten_reference": false,
+    "netgen_setup": null,
+    "parameter_tolerance": null,
+    "compare_parameters": null,
+    "power_connectivity": null,
+    "anchor_top_level_pins": null,
+    "strict_top_level_pin_count": false,
+    "compare_mos_flavour": false,
+    "supply_nets": [
+      "GND",
+      "VCC",
+      "VDD",
+      "VGND",
+      "VPWR",
+      "VSS"
+    ],
+    "finfet_bulk": null
+  },
+  "hints_applied": null,
+  "constant_nets_applied": null,
+  "status": "mismatch",
+  "power_connectivity": {
+    "status": "unchecked",
+    "reason": "reference.form is 'subckt-call', whose reference netlist carries its own power/ground pins and nets -- they take part in the ordinary compare, so this check (which exists to cover the signal-only 'gate-level-verilog' form) does not apply",
+    "power_pins": [],
+    "power_pins_derivation": null,
+    "instance_count": 0,
+    "expected_nets": null,
+    "unchecked_expected_pins": [],
+    "findings": [],
+    "finding_count": 0
+  },
+  "body_verification": {
+    "status": "verified",
+    "reason": null,
+    "device_classes": [],
+    "device_count": 0,
+    "findings": [],
+    "finding_count": 0
+  },
+  "device_parameter_coverage": [],
+  "mismatch_count": 21,
+  "error_count": 19,
+  "category_counts": {
+    "reference.unresolved_subckt_call": 17,
+    "topology": 4
+  },
+  "category_error_counts": {
+    "reference.unresolved_subckt_call": 17,
+    "topology": 2
+  },
+  "counts": {
+    "nets": {
+      "layout": 10,
+      "reference": 9,
+      "matched": 0
+    },
+    "devices": {
+      "layout": 0,
+      "reference": 0,
+      "matched": 0
+    },
+    "pins": {
+      "layout": 10,
+      "reference": 9,
+      "matched": 0
+    }
+  },
+  "device_classes": [
+    "nfet",
+    "pfet",
+    "cap_cmim",
+    "rfcmim",
+    "cap_cmomi",
+    "cap_cmomf",
+    "resistor",
+    "dantenna",
+    "dpantenna"
+  ],
+  "environment": {
+    "engine": "klayout",
+    "engine_version": "0.30.13",
+    "netgen_binary": null,
+    "layout_sha256": "46c6b87e9a37c8e6605964dc595e26222db7f29a12e03b9963138039a4ed98a8",
+    "reference_sha256": "95abb298043312b9683f35879f8ef552d21de5ddf44d630a06056d8ec472bcce",
+    "extracted_netlist": null
+  },
+  "provenance": {
+    "klt_version": "0.8.0",
+    "klayout_version": "0.30.13",
+    "pdk": null,
+    "deck": {
+      "name": "sg13g2",
+      "content_hash": "sha256:1c95db40596afc5412e216009bcf0b775d1d74895b32738447eccbc76336dd15",
+      "released": true
+    },
+    "input": {
+      "content_hash": "sha256:46c6b87e9a37c8e6605964dc595e26222db7f29a12e03b9963138039a4ed98a8",
+      "role": "layout"
+    },
+    "klayout_version_mismatch": true
+  },
+  "mismatches": [
+    {
+      "category": "reference.unresolved_subckt_call",
+      "severity": "error",
+      "description": "reference instance 'Q1_0' in circuit 'LNA_STAGE1_DEVICES' calls subcircuit 'NPN13G2', which is not defined in the reference netlist, was not converted to a device, and has no same-named layout circuit -- the reader substitutes an empty placeholder, so whatever device(s) it stands for are never compared. Define the subcircuit, map it to a device class (reference.form \"subckt-call\" + reference.device_map), or write it as a plain-element card (see docs/cli/lvs.md, \"reference.unresolved_subckt_call\")",
+      "side": "reference",
+      "net": null,
+      "device": null,
+      "property": null,
+      "details": {
+        "callee": "NPN13G2",
+        "reader_circuit": "NPN13G2(NX=1)",
+        "pin_count": 4
+      },
+      "circuit": {
+        "layout": null,
+        "reference": "LNA_STAGE1_DEVICES"
+      },
+      "instance": {
+        "layout": null,
+        "reference": "Q1_0"
+      },
+      "subcircuit": {
+        "layout": null,
+        "reference": "NPN13G2"
+      }
+    },
+    {
+      "category": "reference.unresolved_subckt_call",
+      "severity": "error",
+      "description": "reference instance 'Q1_1' in circuit 'LNA_STAGE1_DEVICES' calls subcircuit 'NPN13G2', which is not defined in the reference netlist, was not converted to a device, and has no same-named layout circuit -- the reader substitutes an empty placeholder, so whatever device(s) it stands for are never compared. Define the subcircuit, map it to a device class (reference.form \"subckt-call\" + reference.device_map), or write it as a plain-element card (see docs/cli/lvs.md, \"reference.unresolved_subckt_call\")",
+      "side": "reference",
+      "net": null,
+      "device": null,
+      "property": null,
+      "details": {
+        "callee": "NPN13G2",
+        "reader_circuit": "NPN13G2(NX=1)",
+        "pin_count": 4
+      },
+      "circuit": {
+        "layout": null,
+        "reference": "LNA_STAGE1_DEVICES"
+      },
+      "instance": {
+        "layout": null,
+        "reference": "Q1_1"
+      },
+      "subcircuit": {
+        "layout": null,
+        "reference": "NPN13G2"
+      }
+    },
+    {
+      "category": "reference.unresolved_subckt_call",
+      "severity": "error",
+      "description": "reference instance 'Q1_2' in circuit 'LNA_STAGE1_DEVICES' calls subcircuit 'NPN13G2', which is not defined in the reference netlist, was not converted to a device, and has no same-named layout circuit -- the reader substitutes an empty placeholder, so whatever device(s) it stands for are never compared. Define the subcircuit, map it to a device class (reference.form \"subckt-call\" + reference.device_map), or write it as a plain-element card (see docs/cli/lvs.md, \"reference.unresolved_subckt_call\")",
+      "side": "reference",
+      "net": null,
+      "device": null,
+      "property": null,
+      "details": {
+        "callee": "NPN13G2",
+        "reader_circuit": "NPN13G2(NX=1)",
+        "pin_count": 4
+      },
+      "circuit": {
+        "layout": null,
+        "reference": "LNA_STAGE1_DEVICES"
+      },
+      "instance": {
+        "layout": null,
+        "reference": "Q1_2"
+      },
+      "subcircuit": {
+        "layout": null,
+        "reference": "NPN13G2"
+      }
+    },
+    {
+      "category": "reference.unresolved_subckt_call",
+      "severity": "error",
+      "description": "reference instance 'Q1_3' in circuit 'LNA_STAGE1_DEVICES' calls subcircuit 'NPN13G2', which is not defined in the reference netlist, was not converted to a device, and has no same-named layout circuit -- the reader substitutes an empty placeholder, so whatever device(s) it stands for are never compared. Define the subcircuit, map it to a device class (reference.form \"subckt-call\" + reference.device_map), or write it as a plain-element card (see docs/cli/lvs.md, \"reference.unresolved_subckt_call\")",
+      "side": "reference",
+      "net": null,
+      "device": null,
+      "property": null,
+      "details": {
+        "callee": "NPN13G2",
+        "reader_circuit": "NPN13G2(NX=1)",
+        "pin_count": 4
+      },
+      "circuit": {
+        "layout": null,
+        "reference": "LNA_STAGE1_DEVICES"
+      },
+      "instance": {
+        "layout": null,
+        "reference": "Q1_3"
+      },
+      "subcircuit": {
+        "layout": null,
+        "reference": "NPN13G2"
+      }
+    },
+    {
+      "category": "reference.unresolved_subckt_call",
+      "severity": "error",
+      "description": "reference instance 'Q1_4' in circuit 'LNA_STAGE1_DEVICES' calls subcircuit 'NPN13G2', which is not defined in the reference netlist, was not converted to a device, and has no same-named layout circuit -- the reader substitutes an empty placeholder, so whatever device(s) it stands for are never compared. Define the subcircuit, map it to a device class (reference.form \"subckt-call\" + reference.device_map), or write it as a plain-element card (see docs/cli/lvs.md, \"reference.unresolved_subckt_call\")",
+      "side": "reference",
+      "net": null,
+      "device": null,
+      "property": null,
+      "details": {
+        "callee": "NPN13G2",
+        "reader_circuit": "NPN13G2(NX=1)",
+        "pin_count": 4
+      },
+      "circuit": {
+        "layout": null,
+        "reference": "LNA_STAGE1_DEVICES"
+      },
+      "instance": {
+        "layout": null,
+        "reference": "Q1_4"
+      },
+      "subcircuit": {
+        "layout": null,
+        "reference": "NPN13G2"
+      }
+    },
+    {
+      "category": "reference.unresolved_subckt_call",
+      "severity": "error",
+      "description": "reference instance 'Q1_5' in circuit 'LNA_STAGE1_DEVICES' calls subcircuit 'NPN13G2', which is not defined in the reference netlist, was not converted to a device, and has no same-named layout circuit -- the reader substitutes an empty placeholder, so whatever device(s) it stands for are never compared. Define the subcircuit, map it to a device class (reference.form \"subckt-call\" + reference.device_map), or write it as a plain-element card (see docs/cli/lvs.md, \"reference.unresolved_subckt_call\")",
+      "side": "reference",
+      "net": null,
+      "device": null,
+      "property": null,
+      "details": {
+        "callee": "NPN13G2",
+        "reader_circuit": "NPN13G2(NX=1)",
+        "pin_count": 4
+      },
+      "circuit": {
+        "layout": null,
+        "reference": "LNA_STAGE1_DEVICES"
+      },
+      "instance": {
+        "layout": null,
+        "reference": "Q1_5"
+      },
+      "subcircuit": {
+        "layout": null,
+        "reference": "NPN13G2"
+      }
+    },
+    {
+      "category": "reference.unresolved_subckt_call",
+      "severity": "error",
+      "description": "reference instance 'Q1_6' in circuit 'LNA_STAGE1_DEVICES' calls subcircuit 'NPN13G2', which is not defined in the reference netlist, was not converted to a device, and has no same-named layout circuit -- the reader substitutes an empty placeholder, so whatever device(s) it stands for are never compared. Define the subcircuit, map it to a device class (reference.form \"subckt-call\" + reference.device_map), or write it as a plain-element card (see docs/cli/lvs.md, \"reference.unresolved_subckt_call\")",
+      "side": "reference",
+      "net": null,
+      "device": null,
+      "property": null,
+      "details": {
+        "callee": "NPN13G2",
+        "reader_circuit": "NPN13G2(NX=1)",
+        "pin_count": 4
+      },
+      "circuit": {
+        "layout": null,
+        "reference": "LNA_STAGE1_DEVICES"
+      },
+      "instance": {
+        "layout": null,
+        "reference": "Q1_6"
+      },
+      "subcircuit": {
+        "layout": null,
+        "reference": "NPN13G2"
+      }
+    },
+    {
+      "category": "reference.unresolved_subckt_call",
+      "severity": "error",
+      "description": "reference instance 'Q1_7' in circuit 'LNA_STAGE1_DEVICES' calls subcircuit 'NPN13G2', which is not defined in the reference netlist, was not converted to a device, and has no same-named layout circuit -- the reader substitutes an empty placeholder, so whatever device(s) it stands for are never compared. Define the subcircuit, map it to a device class (reference.form \"subckt-call\" + reference.device_map), or write it as a plain-element card (see docs/cli/lvs.md, \"reference.unresolved_subckt_call\")",
+      "side": "reference",
+      "net": null,
+      "device": null,
+      "property": null,
+      "details": {
+        "callee": "NPN13G2",
+        "reader_circuit": "NPN13G2(NX=1)",
+        "pin_count": 4
+      },
+      "circuit": {
+        "layout": null,
+        "reference": "LNA_STAGE1_DEVICES"
+      },
+      "instance": {
+        "layout": null,
+        "reference": "Q1_7"
+      },
+      "subcircuit": {
+        "layout": null,
+        "reference": "NPN13G2"
+      }
+    },
+    {
+      "category": "reference.unresolved_subckt_call",
+      "severity": "error",
+      "description": "reference instance 'Q2_0' in circuit 'LNA_STAGE1_DEVICES' calls subcircuit 'NPN13G2', which is not defined in the reference netlist, was not converted to a device, and has no same-named layout circuit -- the reader substitutes an empty placeholder, so whatever device(s) it stands for are never compared. Define the subcircuit, map it to a device class (reference.form \"subckt-call\" + reference.device_map), or write it as a plain-element card (see docs/cli/lvs.md, \"reference.unresolved_subckt_call\")",
+      "side": "reference",
+      "net": null,
+      "device": null,
+      "property": null,
+      "details": {
+        "callee": "NPN13G2",
+        "reader_circuit": "NPN13G2(NX=1)",
+        "pin_count": 4
+      },
+      "circuit": {
+        "layout": null,
+        "reference": "LNA_STAGE1_DEVICES"
+      },
+      "instance": {
+        "layout": null,
+        "reference": "Q2_0"
+      },
+      "subcircuit": {
+        "layout": null,
+        "reference": "NPN13G2"
+      }
+    },
+    {
+      "category": "reference.unresolved_subckt_call",
+      "severity": "error",
+      "description": "reference instance 'Q2_1' in circuit 'LNA_STAGE1_DEVICES' calls subcircuit 'NPN13G2', which is not defined in the reference netlist, was not converted to a device, and has no same-named layout circuit -- the reader substitutes an empty placeholder, so whatever device(s) it stands for are never compared. Define the subcircuit, map it to a device class (reference.form \"subckt-call\" + reference.device_map), or write it as a plain-element card (see docs/cli/lvs.md, \"reference.unresolved_subckt_call\")",
+      "side": "reference",
+      "net": null,
+      "device": null,
+      "property": null,
+      "details": {
+        "callee": "NPN13G2",
+        "reader_circuit": "NPN13G2(NX=1)",
+        "pin_count": 4
+      },
+      "circuit": {
+        "layout": null,
+        "reference": "LNA_STAGE1_DEVICES"
+      },
+      "instance": {
+        "layout": null,
+        "reference": "Q2_1"
+      },
+      "subcircuit": {
+        "layout": null,
+        "reference": "NPN13G2"
+      }
+    },
+    {
+      "category": "reference.unresolved_subckt_call",
+      "severity": "error",
+      "description": "reference instance 'Q2_2' in circuit 'LNA_STAGE1_DEVICES' calls subcircuit 'NPN13G2', which is not defined in the reference netlist, was not converted to a device, and has no same-named layout circuit -- the reader substitutes an empty placeholder, so whatever device(s) it stands for are never compared. Define the subcircuit, map it to a device class (reference.form \"subckt-call\" + reference.device_map), or write it as a plain-element card (see docs/cli/lvs.md, \"reference.unresolved_subckt_call\")",
+      "side": "reference",
+      "net": null,
+      "device": null,
+      "property": null,
+      "details": {
+        "callee": "NPN13G2",
+        "reader_circuit": "NPN13G2(NX=1)",
+        "pin_count": 4
+      },
+      "circuit": {
+        "layout": null,
+        "reference": "LNA_STAGE1_DEVICES"
+      },
+      "instance": {
+        "layout": null,
+        "reference": "Q2_2"
+      },
+      "subcircuit": {
+        "layout": null,
+        "reference": "NPN13G2"
+      }
+    },
+    {
+      "category": "reference.unresolved_subckt_call",
+      "severity": "error",
+      "description": "reference instance 'Q2_3' in circuit 'LNA_STAGE1_DEVICES' calls subcircuit 'NPN13G2', which is not defined in the reference netlist, was not converted to a device, and has no same-named layout circuit -- the reader substitutes an empty placeholder, so whatever device(s) it stands for are never compared. Define the subcircuit, map it to a device class (reference.form \"subckt-call\" + reference.device_map), or write it as a plain-element card (see docs/cli/lvs.md, \"reference.unresolved_subckt_call\")",
+      "side": "reference",
+      "net": null,
+      "device": null,
+      "property": null,
+      "details": {
+        "callee": "NPN13G2",
+        "reader_circuit": "NPN13G2(NX=1)",
+        "pin_count": 4
+      },
+      "circuit": {
+        "layout": null,
+        "reference": "LNA_STAGE1_DEVICES"
+      },
+      "instance": {
+        "layout": null,
+        "reference": "Q2_3"
+      },
+      "subcircuit": {
+        "layout": null,
+        "reference": "NPN13G2"
+      }
+    },
+    {
+      "category": "reference.unresolved_subckt_call",
+      "severity": "error",
+      "description": "reference instance 'Q2_4' in circuit 'LNA_STAGE1_DEVICES' calls subcircuit 'NPN13G2', which is not defined in the reference netlist, was not converted to a device, and has no same-named layout circuit -- the reader substitutes an empty placeholder, so whatever device(s) it stands for are never compared. Define the subcircuit, map it to a device class (reference.form \"subckt-call\" + reference.device_map), or write it as a plain-element card (see docs/cli/lvs.md, \"reference.unresolved_subckt_call\")",
+      "side": "reference",
+      "net": null,
+      "device": null,
+      "property": null,
+      "details": {
+        "callee": "NPN13G2",
+        "reader_circuit": "NPN13G2(NX=1)",
+        "pin_count": 4
+      },
+      "circuit": {
+        "layout": null,
+        "reference": "LNA_STAGE1_DEVICES"
+      },
+      "instance": {
+        "layout": null,
+        "reference": "Q2_4"
+      },
+      "subcircuit": {
+        "layout": null,
+        "reference": "NPN13G2"
+      }
+    },
+    {
+      "category": "reference.unresolved_subckt_call",
+      "severity": "error",
+      "description": "reference instance 'Q2_5' in circuit 'LNA_STAGE1_DEVICES' calls subcircuit 'NPN13G2', which is not defined in the reference netlist, was not converted to a device, and has no same-named layout circuit -- the reader substitutes an empty placeholder, so whatever device(s) it stands for are never compared. Define the subcircuit, map it to a device class (reference.form \"subckt-call\" + reference.device_map), or write it as a plain-element card (see docs/cli/lvs.md, \"reference.unresolved_subckt_call\")",
+      "side": "reference",
+      "net": null,
+      "device": null,
+      "property": null,
+      "details": {
+        "callee": "NPN13G2",
+        "reader_circuit": "NPN13G2(NX=1)",
+        "pin_count": 4
+      },
+      "circuit": {
+        "layout": null,
+        "reference": "LNA_STAGE1_DEVICES"
+      },
+      "instance": {
+        "layout": null,
+        "reference": "Q2_5"
+      },
+      "subcircuit": {
+        "layout": null,
+        "reference": "NPN13G2"
+      }
+    },
+    {
+      "category": "reference.unresolved_subckt_call",
+      "severity": "error",
+      "description": "reference instance 'Q2_6' in circuit 'LNA_STAGE1_DEVICES' calls subcircuit 'NPN13G2', which is not defined in the reference netlist, was not converted to a device, and has no same-named layout circuit -- the reader substitutes an empty placeholder, so whatever device(s) it stands for are never compared. Define the subcircuit, map it to a device class (reference.form \"subckt-call\" + reference.device_map), or write it as a plain-element card (see docs/cli/lvs.md, \"reference.unresolved_subckt_call\")",
+      "side": "reference",
+      "net": null,
+      "device": null,
+      "property": null,
+      "details": {
+        "callee": "NPN13G2",
+        "reader_circuit": "NPN13G2(NX=1)",
+        "pin_count": 4
+      },
+      "circuit": {
+        "layout": null,
+        "reference": "LNA_STAGE1_DEVICES"
+      },
+      "instance": {
+        "layout": null,
+        "reference": "Q2_6"
+      },
+      "subcircuit": {
+        "layout": null,
+        "reference": "NPN13G2"
+      }
+    },
+    {
+      "category": "reference.unresolved_subckt_call",
+      "severity": "error",
+      "description": "reference instance 'Q2_7' in circuit 'LNA_STAGE1_DEVICES' calls subcircuit 'NPN13G2', which is not defined in the reference netlist, was not converted to a device, and has no same-named layout circuit -- the reader substitutes an empty placeholder, so whatever device(s) it stands for are never compared. Define the subcircuit, map it to a device class (reference.form \"subckt-call\" + reference.device_map), or write it as a plain-element card (see docs/cli/lvs.md, \"reference.unresolved_subckt_call\")",
+      "side": "reference",
+      "net": null,
+      "device": null,
+      "property": null,
+      "details": {
+        "callee": "NPN13G2",
+        "reader_circuit": "NPN13G2(NX=1)",
+        "pin_count": 4
+      },
+      "circuit": {
+        "layout": null,
+        "reference": "LNA_STAGE1_DEVICES"
+      },
+      "instance": {
+        "layout": null,
+        "reference": "Q2_7"
+      },
+      "subcircuit": {
+        "layout": null,
+        "reference": "NPN13G2"
+      }
+    },
+    {
+      "category": "reference.unresolved_subckt_call",
+      "severity": "error",
+      "description": "reference instance 'QR_0' in circuit 'LNA_STAGE1_DEVICES' calls subcircuit 'NPN13G2', which is not defined in the reference netlist, was not converted to a device, and has no same-named layout circuit -- the reader substitutes an empty placeholder, so whatever device(s) it stands for are never compared. Define the subcircuit, map it to a device class (reference.form \"subckt-call\" + reference.device_map), or write it as a plain-element card (see docs/cli/lvs.md, \"reference.unresolved_subckt_call\")",
+      "side": "reference",
+      "net": null,
+      "device": null,
+      "property": null,
+      "details": {
+        "callee": "NPN13G2",
+        "reader_circuit": "NPN13G2(NX=1)",
+        "pin_count": 4
+      },
+      "circuit": {
+        "layout": null,
+        "reference": "LNA_STAGE1_DEVICES"
+      },
+      "instance": {
+        "layout": null,
+        "reference": "QR_0"
+      },
+      "subcircuit": {
+        "layout": null,
+        "reference": "NPN13G2"
+      }
+    },
+    {
+      "category": "topology",
+      "severity": "error",
+      "description": "circuit could not be matched to a counterpart",
+      "side": "both",
+      "net": null,
+      "device": null,
+      "property": null,
+      "details": null,
+      "circuit": {
+        "layout": "lna_stage1_devices",
+        "reference": "LNA_STAGE1_DEVICES"
+      },
+      "instance": null,
+      "subcircuit": null
+    },
+    {
+      "category": "topology",
+      "severity": "warning",
+      "description": "device class has no counterpart on the other side, but no devices of this class were extracted either -- not a real topology mismatch: 'nfet'",
+      "side": "layout",
+      "net": null,
+      "device": {
+        "layout": null,
+        "reference": null,
+        "class": "nfet"
+      },
+      "property": null,
+      "details": null,
+      "circuit": null,
+      "instance": null,
+      "subcircuit": null
+    },
+    {
+      "category": "topology",
+      "severity": "warning",
+      "description": "device class has no counterpart on the other side, but no devices of this class were extracted either -- not a real topology mismatch: 'pfet'",
+      "side": "layout",
+      "net": null,
+      "device": {
+        "layout": null,
+        "reference": null,
+        "class": "pfet"
+      },
+      "property": null,
+      "details": null,
+      "circuit": null,
+      "instance": null,
+      "subcircuit": null
+    },
+    {
+      "category": "topology",
+      "severity": "error",
+      "description": "circuit could not be matched to a counterpart",
+      "side": "reference",
+      "net": null,
+      "device": null,
+      "property": null,
+      "details": null,
+      "circuit": {
+        "layout": null,
+        "reference": "NPN13G2(NX=1)"
+      },
+      "instance": null,
+      "subcircuit": null
+    }
+  ],
+  "net_correspondence": []
+}

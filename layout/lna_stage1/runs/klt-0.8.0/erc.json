@@ -1,0 +1,128 @@
+{
+  "schema_version": 2,
+  "file": {
+    "path": "layout/lna_stage1/lna_stage1_devices.gds",
+    "scope": "repo"
+  },
+  "spec": "erc-supply-spec.json",
+  "pdk": null,
+  "findings_only": true,
+  "gate_role": "GatPoly",
+  "gate_count": 0,
+  "antenna_tables_omitted": false,
+  "gates": [],
+  "nets": [
+    {
+      "name": "gnd",
+      "matched_islands": 1,
+      "expected_islands": 1,
+      "roles": [],
+      "unlabelled_islands": null,
+      "unlabelled_area_um2": null,
+      "unlabelled_bbox": null,
+      "unlabelled_allowed_islands": null
+    },
+    {
+      "name": "vdd",
+      "matched_islands": 1,
+      "expected_islands": 1,
+      "roles": [],
+      "unlabelled_islands": null,
+      "unlabelled_area_um2": null,
+      "unlabelled_bbox": null,
+      "unlabelled_allowed_islands": null
+    }
+  ],
+  "erc_findings": [],
+  "erc_finding_count": 0,
+  "erc_status": "clean",
+  "status": "not_checked",
+  "coverage": {
+    "scope": "antenna",
+    "schema_version": 1,
+    "known": true,
+    "checked": [],
+    "skipped": [],
+    "inapplicable": [
+      {
+        "id": "antenna:[]",
+        "reason": "no_gates"
+      }
+    ],
+    "unknown": [],
+    "nothing_checked": true,
+    "nothing_checked_reasons": [
+      "no_gates"
+    ]
+  },
+  "erc_coverage": {
+    "scope": "connectivity",
+    "schema_version": 1,
+    "known": true,
+    "checked": [
+      "erc.missing_tie:[\"psub_ring_tap\"]",
+      "erc.net_connectivity:[\"gnd\"]",
+      "erc.net_connectivity:[\"vdd\"]"
+    ],
+    "skipped": [],
+    "inapplicable": [],
+    "unknown": [],
+    "nothing_checked": false,
+    "nothing_checked_reasons": [],
+    "checked_by_assertion": [
+      "erc.missing_tie:[\"psub_ring_tap\"]"
+    ],
+    "checked_by_well_assertion": [
+      "erc.missing_tie:[\"psub_ring_tap\"]"
+    ],
+    "layers_in_stream_without_declaration": [
+      "1/20",
+      "6/0",
+      "7/21",
+      "8/2",
+      "10/2",
+      "26/0",
+      "33/0",
+      "51/0",
+      "63/0"
+    ],
+    "well_assertion_coverage": [
+      {
+        "id": "erc.missing_tie:[\"psub_ring_tap\"]",
+        "tap_layer": "1/0",
+        "drawn_tap_area_um2": 432.629,
+        "uncovered_tap_area_um2": 74.8956,
+        "uncovered_tap_fraction": 0.173117,
+        "extent_uncovered_fraction": 0.1416
+      }
+    ]
+  },
+  "ties_disclosure": null,
+  "provenance": {
+    "klt_version": "0.8.0",
+    "klayout_version": "0.30.13",
+    "pdk": null,
+    "deck": null,
+    "input": {
+      "content_hash": "sha256:46c6b87e9a37c8e6605964dc595e26222db7f29a12e03b9963138039a4ed98a8",
+      "role": "layout"
+    },
+    "spec": {
+      "content_hash": "sha256:a520621b47ad8b5ac863f1ec444b612dcacea1225c9a2ec37d8a5e96c7b6f753"
+    },
+    "devices": [],
+    "net_exclusions": [],
+    "label_layers": [
+      {
+        "name": "Metal1",
+        "label_layer": "8/25",
+        "label_text_count": 8
+      },
+      {
+        "name": "Metal2",
+        "label_layer": "10/25",
+        "label_text_count": 3
+      }
+    ]
+  }
+}

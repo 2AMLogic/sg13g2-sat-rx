@@ -31,7 +31,7 @@ jobs:
       - name: Install test dependencies (pinned ranges in requirements-test.txt)
         run: pip install -r requirements-test.txt
       - name: Byte-compile every Python file
-        run: python -m compileall -q sim .github/scripts signoff
+        run: python -m compileall -q sim .github/scripts signoff layout
       - name: Harness unit tests (corners, evidence, report, testbench manifests)
         run: python -m pytest sim/harness/tests -q
       - name: Ka-band postprocessor unit tests
