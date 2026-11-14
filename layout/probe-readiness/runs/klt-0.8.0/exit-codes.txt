@@ -1,0 +1,11 @@
+drc 0
+extract 0
+ringcheck_activ 0
+ringcheck_m1 0
+economy 0
+lvs-simform-full 3
+lvs-simform-recognized-only 3
+lvs-full 3
+lvs-recognized-only 3
+lvs-simform-recognized-cap-rsil 3
+lvs-simform-recognized-cap-rsil3 0

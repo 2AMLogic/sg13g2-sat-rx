@@ -8,6 +8,127 @@ added to `signoff/block-manifest.json` from this probe, and neither
 results are append-only evidence: later runs supersede these by adding a record,
 never by editing one.
 
+## Re-run at the pinned release klt `0.8.0` (2026-11-14, issue #246) — supersedes the tables below
+
+This is the first record taken at the klt pin this repo actually declares
+(`layout/toolchain.json` → `klt_install: "klayout-tools==0.8.0"`); the two
+earlier records were taken at `0.7.0+gb770c86e0e96` (#185) and the development
+build `0.7.1.dev1744+g44cc42323184` (#197), and both are kept unedited as
+evidence. The re-run lives in `runs/klt-0.8.0/` (19 files, the same set as the
+0.7.1 directory; `exit-codes.txt` lists all eleven exit codes).
+
+**The two questions this record exists to answer:**
+
+- **Does `npn13G2` extract as a device at the pinned release? No.**
+  `runs/klt-0.8.0/extract.json` reports `device_count: 2` and
+  `device_counts: {"cap_cmim": 1, "rsil": 1}`; the devices list is exactly
+  `$1 cap_cmim {a: CB, b: CT}` and `$2 rsil {a: RB, b: RA, w: GND}`. There is
+  no bipolar device, and `unsupported_devices` is `[]`. The only signal is
+  still the `dantenna` near-miss warning (`warnings[0]`), which at 0.8.0 ends
+  with a new sentence naming the family verbatim:
+  *"Note: this geometry also matches SiGe HBT (npn13G2/npn13G2l/npn13G2v), a
+  device family this deck does not model, so it is probably not a diode at
+  all -- see the sg13g2.py docstring section 'SiGe HBTs -- investigated,
+  declined (issue #1232)'."*
+- **Does `lvs-simform-full` (the 3-terminal `rsil` reference including the HBT)
+  report `match`? No — `mismatch`, exit 3.**
+  `runs/klt-0.8.0/lvs-simform-full.json`: `status: "mismatch"`,
+  `mismatch_count: 9`, `error_count: 3`, `counts.devices` =
+  `{layout: 2, reference: 2, matched: 0}`, with the same
+  `reference.unresolved_subckt_call` error for `NPN13G2` and two `topology`
+  errors the 0.7.1 run recorded.
+
+| Item | Value |
+|---|---|
+| klt | `0.8.0` — the release pin `klayout-tools==0.8.0`, i.e. klayout-tools tag `v0.8.0` = commit `c572046be644e0407f693f2410f3abb799d68a3a` (the `klt_last_verified_commit` in `layout/toolchain.json`). Run from a throwaway `uv` venv; the **host** tool (`klt 0.9.2.dev1022+g2a9c52b27ce7`) was not used and not modified. |
+| deck | `sg13g2`, content hash `sha256:1c95db40596afc5412e216009bcf0b775d1d74895b32738447eccbc76336dd15`, **`released: true`** (was `sha256:08dbffe2…ec01c`, `released: false`, at the 0.7.1 dev build) |
+| klayout (bundled) | 0.30.13 (was 0.30.12). klt 0.8.0 declares it was tested against `klayout==0.30.12`, so `drc.json` and the six `lvs-*.json` carry `provenance.klayout_version_mismatch: true` and each run printed the engine-version disclosure warning added by klayout-tools#1490 (`extract.json` and `economy.json` omit that field). Per that warning the **verdict** is unaffected; derived counts may differ. `klayout_package_min` stays `"0.30"` — no floor change. |
+| record `schema_version` | `drc` 2 → **3**, `extract` 3 → **4**, `lvs-*` 1 → **2**; `economy` and `ring-check` unchanged at **1**. At `extract` schema 4 the `file` field is an anchored object (`{"path": "layout/probe-readiness/probe.gds", "scope": "repo"}`) rather than the bare string it was at schema 3; `split_net_labels` is new (empty here). Nothing in this repo parses these records, so the bump is a record-keeping note, not a breakage. |
+| `probe.gds` | regenerated with `generate_probe.py` under that install (`.venv/bin/python generate_probe.py --out <tmp>`): **byte-identical** to the committed file, sha256 `9759f9ee…db0b` — matching `provenance.input.content_hash` in every record of both earlier runs. No change committed. |
+| PDK | ihp-sg13g2 v0.3.0 @ `5cccb161f7492697cfa52eb14dc03beb00bdca9e` (the `sim/pdk-artifact.json` pin), primitives from `libs.ref/sg13g2_pr/gds/sg13g2_pr.gds`, install marker `.fetched-version` = `0.3.0`. **The GDS primitives are not hash-pinned**: `sim/pdk-artifact.json`'s `files` closure covers the ngspice HBT model set only, so the citation here is the pinned commit plus the install marker, not a hash closure. |
+| host-path hygiene | `klt env-provenance lint-envelope runs/klt-0.8.0/*.json` → `clean: 0 absolute path(s) in 17 file(s)`. |
+
+| Command | Status at the pinned release | Evidence (`runs/klt-0.8.0/`) |
+|---|---|---|
+| `klt drc --deck sg13g2` | **works** — `clean`, 0 violations, exit 0, as at 0.7.1. The deck grew: 24 rules checked (was 21) and 38 inapplicable (was 24). The three new checked rules are `psd.area.1`, `psd.space.1`, `psd.width.1`, and `deck_scope` gains `NW` and `pSD` — so the guard ring's pSD layer `14/0` drops out of `layers_in_stream_without_rules` (19 → 18 entries) and is now actually checked, clean. | `drc.json`. **G3 still fixed** (`cont.width.1` is in `coverage.checked` with 0 violations). |
+| `klt extract --deck sg13g2` | **works** for `cap_cmim` and `rsil`; **blocked** for `npn13G2`, unchanged. The extracted netlist is byte-identical to the 0.7.1 run (`netlist_sha256` `859630d8…eabe7`, `netlist_normalized_sha256` `462a0909…b022` in both). | `extract.json`, `probe_extracted.spice`. **G1 unchanged — and now declined by ruling, see below.** |
+| `klt lvs` | **works** on the recognised subset; **blocked** for a reference containing the HBT. All six runs were repeated and **every verdict-bearing field is identical to the 0.7.1 run** (`status`, `counts`, `mismatch_count`, `error_count`, `category_counts`, `category_error_counts`): `lvs-simform-recognized-cap-rsil3` `match`, exit 0, 8/8 nets, 2/2 devices; the other five `mismatch`, exit 3. | `lvs-simform-recognized-cap-rsil3.json`, `lvs-simform-full.json`, and the four others + their `*.request.json` (copied unchanged from the 0.7.1 run — the layout path is relative to the request's own directory). **G4** still gives the named `reference.unresolved_subckt_call` diagnosis for `NPN13G2`, still caused by G1. |
+| `klt ring-check` | **works** — both `continuous`, exit 0, `violation_count: 0`. But **the record carries no `provenance` block at all** (`schema_version: 1`, no `provenance` key) and its `file` field is the bare input string, unlike `drc`/`extract`/`lvs`/`economy` in the same install. So these two records cannot be attributed to a tool build from the record alone — the one thing this run could not satisfy in issue #246's own acceptance criterion "each carrying `provenance.klt_version`". **New gap G5, filed upstream: 2AMLogic/klayout-tools#5650.** | `ringcheck_activ.json`, `ringcheck_m1.json`. |
+| `klt economy` | **works** — utilisation 20.95 %, bbox 43.78 × 32.08 µm, byte-identical geometry metrics to the 0.7.1 run. | `economy.json`. |
+
+Exit codes are directly comparable to the 0.7.1 run and are **identical**:
+`drc 0`, `extract 0`, `ringcheck_activ 0`, `ringcheck_m1 0`, `economy 0`, then
+`lvs-simform-full 3`, `lvs-simform-recognized-only 3`, `lvs-full 3`,
+`lvs-recognized-only 3`, `lvs-simform-recognized-cap-rsil 3`,
+`lvs-simform-recognized-cap-rsil3 0`. Each exit code agrees with its own
+record's `status` field (`clean` / `extracted` / `continuous` / `match` → 0;
+`mismatch` → 3).
+
+**Provenance coverage of this run, stated plainly: 9 of the 11 records carry
+`provenance.klt_version` = `0.8.0`** (`drc`, `extract`, `economy` and the six
+`lvs-*`). The two `ring-check` records carry **no `provenance` block at all** —
+that is a tool limitation, not an omission in this run, and it is the one part
+of issue #246's acceptance criterion 2 this run cannot satisfy. See G5 below.
+
+### Gap status at 0.8.0 — G1 is **declined by ruling**, not "open pending a fix"
+
+The 0.7.1 section below says "G1 open (klayout-tools#3137 still open)". That
+line is **superseded**: #3137 has closed, but *not* by adding bipolar
+recognition. Verified 2026-11-14 against the upstream tracker and the installed
+0.8.0 distribution:
+
+- **klayout-tools#3137 was closed by PR #3431, a warning-text change only** —
+  "feat(extract): name unmodelled device family in diode near-miss warning".
+  Its own acceptance-criteria verification records that `device_count` is still
+  0 and that native HBT recognition stays out of scope. PR #3431 is an ancestor
+  of the `v0.8.0` tag, which is why the near-miss warning quoted above now names
+  the SiGe HBT family — that sentence *is* the whole of #3137's fix, and this
+  run's `extract.json` is the local confirmation that the device count did not
+  move with it.
+- **The 0.8.0 `sg13g2` extraction deck says so itself.** In the installed
+  `klayout_tools/decks/sg13g2.py` there is no `bipolars=` field anywhere; the
+  docstring carries a section "SiGe HBTs -- investigated, declined (issue
+  #1232)" (line 365), and line 2795 declares
+  `unmodelled_families=(UnmodelledDeviceFamily(name="SiGe HBT (npn13G2/npn13G2l/npn13G2v)", …))`.
+- **Both upstream *routes* to a curated-deck HBT are closed by ruling**:
+  klayout-tools#1232 (investigated, declined), #2864 (closed 2026-10-16 as a
+  docs correction to that operator ruling), #3137 (closed by PR #3431, warning
+  text only) and #2849 — the PDK-own-runset device-aware LVS path — closed
+  2026-10-17 as `not_planned` with no PR.
+
+So **no new upstream issue was filed for G1**: it would duplicate a closed,
+operator-ruled decision, which is noise on the tool tracker rather than
+friction-protocol signal. The ruling is recorded here instead, which is what a
+reader of this directory needs.
+
+**One upstream item on the HBT question is still open**, recorded here because
+it bears on what a later reader can expect: klayout-tools#4397 ("Live-verify
+SG13G2 runset recognises `npn13G2`") is open and parked, and would record
+whether the **PDK's own** runset — `klt lvs --engine klayout-runset` against
+`ihp-sg13g2/libs.tech/klayout/tech/lvs/sg13g2.lvs`, a different path from the
+curated deck this probe exercises — recognises the device. Its park reason is a
+host-capability gap: it needs a standalone KLayout ≥ 0.29 and its worker had
+0.28.16. Observation, not a claim about this probe: on *this* repo's dispatch
+worker today `/usr/bin/klayout` reports 0.30.12, so that premise does not hold
+here. Running that experiment is upstream's, and out of scope for this record.
+
+**Summary of gap status at 0.8.0.** **G1 declined by ruling** (#1232 / #2864 /
+#3137-via-#3431 / #2849 `not_planned`); the curated-deck route to an LVS-clean
+bipolar flow in this repo is closed, and a later reader should not wait on it.
+**G2 fixed** for `rsil` (`rppd`/`rhigh` are still not in the probe and still
+untested). **G3 fixed**, and the deck now additionally checks the pSD layer this
+probe draws. **G4** still a named diagnosis caused by G1. **G5 new** — no
+`provenance` block on `klt ring-check` records
+(2AMLogic/klayout-tools#5650, filed generically per the friction protocol). No
+other new gap: every other verdict-bearing field in this run reproduces the
+0.7.1 record exactly.
+
+This is still a **non-claiming** probe. `signoff/block-manifest.json` and
+`signoff/tier-report.json` are byte-unchanged, no T1 item is cited from it, and
+nothing under `runs/klt-0.7.1.dev1744+g44cc42323184/` or `runs/*.json` was
+edited — those earlier records are superseded by this addition, never by a
+rewrite.
+
 ## Re-run at klt `0.7.1.dev1744+g44cc42323184` (issue #197) — supersedes the v0.7.0 table below
 
 The v0.7.0 records in `runs/*.json` are kept unedited as evidence. The re-run
