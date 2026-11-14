@@ -1,0 +1,3766 @@
+{
+ "record_id": "20261114-031930-fbdf13c",
+ "experiment": "lna-core-variants",
+ "issue": 79,
+ "scope": "ideal-element core-variant feasibility screen; no spec row is claimed met (rows 2, 3, 4, 6 and 17 are screens, not compliance)",
+ "claim": "ideal-element core-variant feasibility screen; no spec row is claimed met. Every matching element and the degeneration inductor are ideal lossless elements (no PDK inductor model; passive qualification is #46), the band (row 1) is OPEN/DRAFT, and the bound is a per-frequency necessary condition, not a realized network.",
+ "spec_rows_claimed_met": [],
+ "declaration": {
+  "path": "sim/lna-core-variants/testbench/variants.json",
+  "sha256": "f62efccd448f5f216cebd622a07f41242e2b13aa40085add80884681ef8a1e3d"
+ },
+ "method": {
+  "study_json": "sim/lna-match-tradeoff/testbench/study.json",
+  "study_json_sha256": "912e00c19b0e8a05a1f951daa011983280b3f730de60ef46dc12ba7ae2e64470",
+  "baseline_record": "sim/lna-match-tradeoff/records/20261010-042556-dae8519",
+  "_note": "Grids (dense ac lin 71 over 17.7-21.2 GHz, ac dec 100 over 1-100 GHz), screen thresholds, tolerances, the 9 probe networks, the baseline (drawn) input network, the port fixture and the NF convention are all taken from the #74 declaration and executed by sim/lna-match-tradeoff/matchstudy.py unchanged. Only the DUT core differs."
+ },
+ "gate": {
+  "validate_collection": "passed",
+  "problems": []
+ },
+ "declared_points": 216,
+ "accepted_points": 216,
+ "points_file": "20261114-031930-fbdf13c-points.json.gz",
+ "variants": {
+  "core0": {
+   "role": "baseline",
+   "changes": [],
+   "params": {}
+  },
+  "a_le": {
+   "role": "candidate",
+   "changes": [
+    "A"
+   ],
+   "params": {
+    "le": 5.4e-11
+   }
+  },
+  "b_jopt": {
+   "role": "candidate",
+   "changes": [
+    "B_J"
+   ],
+   "params": {
+    "rref": 6500.0
+   }
+  },
+  "b_nx10": {
+   "role": "candidate",
+   "changes": [
+    "B_NX"
+   ],
+   "params": {}
+  },
+  "c_rbias": {
+   "role": "candidate",
+   "changes": [
+    "C"
+   ],
+   "params": {
+    "rbr": 60900.0
+   }
+  },
+  "diag_rbias_noiseless": {
+   "role": "diagnostic",
+   "changes": [
+    "D"
+   ],
+   "params": {}
+  },
+  "ac": {
+   "role": "combination",
+   "changes": [
+    "A",
+    "C"
+   ],
+   "params": {
+    "le": 6.7e-11,
+    "rbr": 60900.0
+   }
+  },
+  "abc": {
+   "role": "combination",
+   "changes": [
+    "A",
+    "B_J",
+    "C"
+   ],
+   "params": {
+    "le": 6.3e-11,
+    "rref": 6950.0,
+    "rbr": 60900.0
+   }
+  }
+ },
+ "summaries": {
+  "core0": {
+   "name": "core0",
+   "role": "baseline",
+   "changes": [],
+   "n_changes": 0,
+   "params": {},
+   "in_rail_points": 18,
+   "invalid": [],
+   "n_infeasible": 8,
+   "infeasible_points": [
+    "hbt_bcs_125c_2.25v",
+    "hbt_bcs_125c_2.50v",
+    "hbt_typ_125c_2.25v",
+    "hbt_typ_125c_2.50v",
+    "hbt_wcs_125c_2.25v",
+    "hbt_wcs_125c_2.50v",
+    "hbt_wcs_27c_2.25v",
+    "hbt_wcs_27c_2.50v"
+   ],
+   "worst_nf_bound_db": 3.307192,
+   "worst_point": "hbt_wcs_125c_2.25v",
+   "worst_margin_db": -0.8071922,
+   "binding_fmin_db": {
+    "2.25v": [
+     2.426576,
+     2.725505
+    ],
+    "2.50v": [
+     2.326698,
+     2.587992
+    ]
+   },
+   "binding_nf_bound_db": {
+    "2.25v": 3.307192,
+    "2.50v": 3.277856
+   },
+   "nominal_margin_top_db": 0.03129265,
+   "nominal_nf_bound_top_db": 2.468707,
+   "nominal_zin_f0_ohm": [
+    21.92343,
+    -145.012
+   ],
+   "nominal_q1_ic_ma": 1.562515,
+   "gt_at_nf_bound_min_db": 15.28797,
+   "drawn_s21_min_db": 12.85055,
+   "k_min": 4.123174,
+   "delta_max": 0.9532188,
+   "vce_max_v": 1.341859,
+   "op_fail_in_rail": [],
+   "op_fail_excursion": [
+    "hbt_bcs_125c_2.75v",
+    "hbt_bcs_27c_2.75v",
+    "hbt_typ_125c_2.75v",
+    "hbt_typ_27c_2.75v",
+    "hbt_wcs_125c_2.75v",
+    "hbt_wcs_27c_2.75v"
+   ],
+   "model_check_worst_db": 3.22524e-06,
+   "eligible": false,
+   "ineligible_reasons": [
+    "role baseline is never selectable",
+    "bound jointly infeasible at 8/18 in-rail points"
+   ],
+   "verdict": "bound jointly infeasible at 8/18 in-rail points"
+  },
+  "a_le": {
+   "name": "a_le",
+   "role": "candidate",
+   "changes": [
+    "A"
+   ],
+   "n_changes": 1,
+   "params": {
+    "le": 5.4e-11
+   },
+   "in_rail_points": 18,
+   "invalid": [],
+   "n_infeasible": 2,
+   "infeasible_points": [
+    "hbt_wcs_125c_2.25v",
+    "hbt_wcs_125c_2.50v"
+   ],
+   "worst_nf_bound_db": 2.884579,
+   "worst_point": "hbt_wcs_125c_2.25v",
+   "worst_margin_db": -0.3845789,
+   "binding_fmin_db": {
+    "2.25v": [
+     2.452429,
+     2.778337
+    ],
+    "2.50v": [
+     2.349747,
+     2.63584
+    ]
+   },
+   "binding_nf_bound_db": {
+    "2.25v": 2.884579,
+    "2.50v": 2.750711
+   },
+   "nominal_margin_top_db": 0.832227,
+   "nominal_nf_bound_top_db": 1.667773,
+   "nominal_zin_f0_ohm": [
+    49.93977,
+    -140.8945
+   ],
+   "nominal_q1_ic_ma": 1.562515,
+   "gt_at_nf_bound_min_db": 13.18919,
+   "drawn_s21_min_db": 11.15029,
+   "k_min": 10.31235,
+   "delta_max": 0.9528912,
+   "vce_max_v": 1.341859,
+   "op_fail_in_rail": [],
+   "op_fail_excursion": [
+    "hbt_bcs_125c_2.75v",
+    "hbt_bcs_27c_2.75v",
+    "hbt_typ_125c_2.75v",
+    "hbt_typ_27c_2.75v",
+    "hbt_wcs_125c_2.75v",
+    "hbt_wcs_27c_2.75v"
+   ],
+   "model_check_worst_db": 2.61853e-08,
+   "eligible": false,
+   "ineligible_reasons": [
+    "bound jointly infeasible at 2/18 in-rail points"
+   ],
+   "verdict": "bound jointly infeasible at 2/18 in-rail points"
+  },
+  "b_jopt": {
+   "name": "b_jopt",
+   "role": "candidate",
+   "changes": [
+    "B_J"
+   ],
+   "n_changes": 1,
+   "params": {
+    "rref": 6500.0
+   },
+   "in_rail_points": 18,
+   "invalid": [],
+   "n_infeasible": 9,
+   "infeasible_points": [
+    "hbt_bcs_125c_2.25v",
+    "hbt_bcs_125c_2.50v",
+    "hbt_typ_125c_2.25v",
+    "hbt_typ_125c_2.50v",
+    "hbt_typ_27c_2.50v",
+    "hbt_wcs_125c_2.25v",
+    "hbt_wcs_125c_2.50v",
+    "hbt_wcs_27c_2.25v",
+    "hbt_wcs_27c_2.50v"
+   ],
+   "worst_nf_bound_db": 3.286178,
+   "worst_point": "hbt_wcs_125c_2.25v",
+   "worst_margin_db": -0.7861776,
+   "binding_fmin_db": {
+    "2.25v": [
+     2.322877,
+     2.584791
+    ],
+    "2.50v": [
+     2.246676,
+     2.478387
+    ]
+   },
+   "binding_nf_bound_db": {
+    "2.25v": 3.286178,
+    "2.50v": 3.278378
+   },
+   "nominal_margin_top_db": -0.01107425,
+   "nominal_nf_bound_top_db": 2.511074,
+   "nominal_zin_f0_ohm": [
+    20.85009,
+    -143.2605
+   ],
+   "nominal_q1_ic_ma": 1.889666,
+   "gt_at_nf_bound_min_db": 16.56061,
+   "drawn_s21_min_db": 13.84443,
+   "k_min": 3.373207,
+   "delta_max": 0.9525212,
+   "vce_max_v": 1.332636,
+   "op_fail_in_rail": [],
+   "op_fail_excursion": [
+    "hbt_bcs_125c_2.75v",
+    "hbt_bcs_27c_2.75v",
+    "hbt_typ_125c_2.75v",
+    "hbt_typ_27c_2.75v",
+    "hbt_wcs_125c_2.75v",
+    "hbt_wcs_27c_2.75v"
+   ],
+   "model_check_worst_db": 3.379174e-06,
+   "eligible": false,
+   "ineligible_reasons": [
+    "bound jointly infeasible at 9/18 in-rail points"
+   ],
+   "verdict": "bound jointly infeasible at 9/18 in-rail points"
+  },
+  "b_nx10": {
+   "name": "b_nx10",
+   "role": "candidate",
+   "changes": [
+    "B_NX"
+   ],
+   "n_changes": 1,
+   "params": {},
+   "in_rail_points": 18,
+   "invalid": [],
+   "n_infeasible": 9,
+   "infeasible_points": [
+    "hbt_bcs_125c_2.25v",
+    "hbt_bcs_125c_2.50v",
+    "hbt_typ_125c_2.25v",
+    "hbt_typ_125c_2.50v",
+    "hbt_typ_27c_2.50v",
+    "hbt_wcs_125c_2.25v",
+    "hbt_wcs_125c_2.50v",
+    "hbt_wcs_27c_2.25v",
+    "hbt_wcs_27c_2.50v"
+   ],
+   "worst_nf_bound_db": 3.2565,
+   "worst_point": "hbt_wcs_125c_2.25v",
+   "worst_margin_db": -0.7565001,
+   "binding_fmin_db": {
+    "2.25v": [
+     2.194734,
+     2.50087
+    ],
+    "2.50v": [
+     2.12329,
+     2.393825
+    ]
+   },
+   "binding_nf_bound_db": {
+    "2.25v": 3.2565,
+    "2.50v": 3.255847
+   },
+   "nominal_margin_top_db": -0.02900395,
+   "nominal_nf_bound_top_db": 2.529004,
+   "nominal_zin_f0_ohm": [
+    14.82502,
+    -114.7899
+   ],
+   "nominal_q1_ic_ma": 2.331065,
+   "gt_at_nf_bound_min_db": 17.11398,
+   "drawn_s21_min_db": 11.44464,
+   "k_min": 2.490726,
+   "delta_max": 0.951959,
+   "vce_max_v": 1.332255,
+   "op_fail_in_rail": [],
+   "op_fail_excursion": [
+    "hbt_bcs_125c_2.75v",
+    "hbt_bcs_27c_2.75v",
+    "hbt_typ_125c_2.75v",
+    "hbt_typ_27c_2.75v",
+    "hbt_wcs_125c_2.75v",
+    "hbt_wcs_27c_2.75v"
+   ],
+   "model_check_worst_db": 7.17641e-08,
+   "eligible": false,
+   "ineligible_reasons": [
+    "bound jointly infeasible at 9/18 in-rail points"
+   ],
+   "verdict": "bound jointly infeasible at 9/18 in-rail points"
+  },
+  "c_rbias": {
+   "name": "c_rbias",
+   "role": "candidate",
+   "changes": [
+    "C"
+   ],
+   "n_changes": 1,
+   "params": {
+    "rbr": 60900.0
+   },
+   "in_rail_points": 18,
+   "invalid": [],
+   "n_infeasible": 8,
+   "infeasible_points": [
+    "hbt_bcs_125c_2.25v",
+    "hbt_bcs_125c_2.50v",
+    "hbt_typ_125c_2.25v",
+    "hbt_typ_125c_2.50v",
+    "hbt_wcs_125c_2.25v",
+    "hbt_wcs_125c_2.50v",
+    "hbt_wcs_27c_2.25v",
+    "hbt_wcs_27c_2.50v"
+   ],
+   "worst_nf_bound_db": 3.12014,
+   "worst_point": "hbt_wcs_125c_2.50v",
+   "worst_margin_db": -0.6201397,
+   "binding_fmin_db": {
+    "2.25v": [
+     1.926426,
+     2.273242
+    ],
+    "2.50v": [
+     1.824128,
+     2.128162
+    ]
+   },
+   "binding_nf_bound_db": {
+    "2.25v": 3.10718,
+    "2.50v": 3.12014
+   },
+   "nominal_margin_top_db": 0.05552223,
+   "nominal_nf_bound_top_db": 2.444478,
+   "nominal_zin_f0_ohm": [
+    14.31379,
+    -146.9527
+   ],
+   "nominal_q1_ic_ma": 1.562863,
+   "gt_at_nf_bound_min_db": 16.49719,
+   "drawn_s21_min_db": 13.73845,
+   "k_min": 3.623389,
+   "delta_max": 0.9885619,
+   "vce_max_v": 1.340315,
+   "op_fail_in_rail": [],
+   "op_fail_excursion": [
+    "hbt_bcs_125c_2.75v",
+    "hbt_bcs_27c_2.75v",
+    "hbt_typ_125c_2.75v",
+    "hbt_typ_27c_2.75v",
+    "hbt_wcs_125c_2.75v",
+    "hbt_wcs_27c_2.75v"
+   ],
+   "model_check_worst_db": 1.211072e-07,
+   "eligible": false,
+   "ineligible_reasons": [
+    "bound jointly infeasible at 8/18 in-rail points"
+   ],
+   "verdict": "bound jointly infeasible at 8/18 in-rail points"
+  },
+  "diag_rbias_noiseless": {
+   "name": "diag_rbias_noiseless",
+   "role": "diagnostic",
+   "changes": [
+    "D"
+   ],
+   "n_changes": 1,
+   "params": {},
+   "in_rail_points": 18,
+   "invalid": [],
+   "n_infeasible": 3,
+   "infeasible_points": [
+    "hbt_typ_125c_2.25v",
+    "hbt_wcs_125c_2.25v",
+    "hbt_wcs_125c_2.50v"
+   ],
+   "worst_nf_bound_db": 2.936768,
+   "worst_point": "hbt_wcs_125c_2.25v",
+   "worst_margin_db": -0.4367676,
+   "binding_fmin_db": {
+    "2.25v": [
+     2.071264,
+     2.431584
+    ],
+    "2.50v": [
+     1.963795,
+     2.284086
+    ]
+   },
+   "binding_nf_bound_db": {
+    "2.25v": 2.936768,
+    "2.50v": 2.885919
+   },
+   "nominal_margin_top_db": 0.5518517,
+   "nominal_nf_bound_top_db": 1.948148,
+   "nominal_zin_f0_ohm": [
+    21.92343,
+    -145.012
+   ],
+   "nominal_q1_ic_ma": 1.562515,
+   "gt_at_nf_bound_min_db": 15.28797,
+   "drawn_s21_min_db": 12.85055,
+   "k_min": 4.123174,
+   "delta_max": 0.9532188,
+   "vce_max_v": 1.341859,
+   "op_fail_in_rail": [],
+   "op_fail_excursion": [
+    "hbt_bcs_125c_2.75v",
+    "hbt_bcs_27c_2.75v",
+    "hbt_typ_125c_2.75v",
+    "hbt_typ_27c_2.75v",
+    "hbt_wcs_125c_2.75v",
+    "hbt_wcs_27c_2.75v"
+   ],
+   "model_check_worst_db": 3.22524e-06,
+   "eligible": false,
+   "ineligible_reasons": [
+    "role diagnostic is never selectable",
+    "bound jointly infeasible at 3/18 in-rail points"
+   ],
+   "verdict": "bound jointly infeasible at 3/18 in-rail points"
+  },
+  "ac": {
+   "name": "ac",
+   "role": "combination",
+   "changes": [
+    "A",
+    "C"
+   ],
+   "n_changes": 2,
+   "params": {
+    "le": 6.7e-11,
+    "rbr": 60900.0
+   },
+   "in_rail_points": 18,
+   "invalid": [],
+   "n_infeasible": 0,
+   "infeasible_points": [],
+   "worst_nf_bound_db": 2.459493,
+   "worst_point": "hbt_wcs_125c_2.25v",
+   "worst_margin_db": 0.0405067,
+   "binding_fmin_db": {
+    "2.25v": [
+     1.975087,
+     2.360929
+    ],
+    "2.50v": [
+     1.86762,
+     2.207295
+    ]
+   },
+   "binding_nf_bound_db": {
+    "2.25v": 2.459493,
+    "2.50v": 2.308061
+   },
+   "nominal_margin_top_db": 1.2237,
+   "nominal_nf_bound_top_db": 1.2763,
+   "nominal_zin_f0_ohm": [
+    50.24619,
+    -146.0687
+   ],
+   "nominal_q1_ic_ma": 1.562863,
+   "gt_at_nf_bound_min_db": 13.49033,
+   "drawn_s21_min_db": 11.62653,
+   "k_min": 9.876113,
+   "delta_max": 0.988143,
+   "vce_max_v": 1.340315,
+   "op_fail_in_rail": [],
+   "op_fail_excursion": [
+    "hbt_bcs_125c_2.75v",
+    "hbt_bcs_27c_2.75v",
+    "hbt_typ_125c_2.75v",
+    "hbt_typ_27c_2.75v",
+    "hbt_wcs_125c_2.75v",
+    "hbt_wcs_27c_2.75v"
+   ],
+   "model_check_worst_db": 3.381214e-08,
+   "eligible": true,
+   "ineligible_reasons": [],
+   "verdict": "closes the per-frequency bound at every in-rail point"
+  },
+  "abc": {
+   "name": "abc",
+   "role": "combination",
+   "changes": [
+    "A",
+    "B_J",
+    "C"
+   ],
+   "n_changes": 3,
+   "params": {
+    "le": 6.3e-11,
+    "rref": 6950.0,
+    "rbr": 60900.0
+   },
+   "in_rail_points": 18,
+   "invalid": [],
+   "n_infeasible": 0,
+   "infeasible_points": [],
+   "worst_nf_bound_db": 2.369869,
+   "worst_point": "hbt_wcs_125c_2.25v",
+   "worst_margin_db": 0.1301309,
+   "binding_fmin_db": {
+    "2.25v": [
+     1.898657,
+     2.251739
+    ],
+    "2.50v": [
+     1.812273,
+     2.125343
+    ]
+   },
+   "binding_nf_bound_db": {
+    "2.25v": 2.369869,
+    "2.50v": 2.241524
+   },
+   "nominal_margin_top_db": 1.257364,
+   "nominal_nf_bound_top_db": 1.242636,
+   "nominal_zin_f0_ohm": [
+    50.21119,
+    -145.1961
+   ],
+   "nominal_q1_ic_ma": 1.77888,
+   "gt_at_nf_bound_min_db": 14.25776,
+   "drawn_s21_min_db": 12.32265,
+   "k_min": 9.128658,
+   "delta_max": 0.9879328,
+   "vce_max_v": 1.334264,
+   "op_fail_in_rail": [],
+   "op_fail_excursion": [
+    "hbt_bcs_125c_2.75v",
+    "hbt_bcs_27c_2.75v",
+    "hbt_typ_125c_2.75v",
+    "hbt_typ_27c_2.75v",
+    "hbt_wcs_125c_2.75v",
+    "hbt_wcs_27c_2.75v"
+   ],
+   "model_check_worst_db": 3.260519e-08,
+   "eligible": true,
+   "ineligible_reasons": [],
+   "verdict": "closes the per-frequency bound at every in-rail point"
+  }
+ },
+ "selection": {
+  "chosen": "ac",
+  "ranking": [
+   "ac",
+   "abc"
+  ],
+  "outcome": "chosen core change: ac (A + C); worst in-rail NF bound 2.459 dB at hbt_wcs_125c_2.25v"
+ },
+ "reproduction": {
+  "compared_points": 27,
+  "worst_db": 4.990883e-07,
+  "tol_db": 0.001,
+  "problems": [],
+  "ok": true
+ },
+ "controls": {
+  "pad_27c": {
+   "ok": true,
+   "temp_c": 27.0,
+   "nf_expected_db": 9.0309,
+   "nf_err_db": 2.642345e-06,
+   "s21_expected_db": -6.0206,
+   "s21_err_db": 0.0,
+   "return_loss_worst_db": -177.5097,
+   "problems": []
+  },
+  "local_vs_fleet_core0_nominal": {
+   "ok": true,
+   "worst_db": 0.0,
+   "tol_db": 0.001,
+   "ngspice": "ngspice-47 : Circuit level simulation program"
+  }
+ },
+ "provenance": {
+  "git": {
+   "commit": "fbdf13cab5dc2bc2894d95edb9ce5e6fdb7e0283",
+   "short": "fbdf13c",
+   "branch": "feature/issue-79",
+   "dirty": false
+  },
+  "ngspice": "ngspice-47 : Circuit level simulation program",
+  "klt": "klt 0.9.2.dev1022+g2a9c52b27ce7",
+  "pdk": {
+   "variant_path": "/home/ubuntu/share/pdk/ihp-sg13g2",
+   "fetched_version_file": "0.3.0",
+   "model_sha256": {
+    "cornerHBT.lib": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+    "sg13g2_hbt_mod.lib": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+   }
+  },
+  "klt_requests": [
+   {
+    "key": "core0__2.250v",
+    "phase": "core0",
+    "backend": "batch",
+    "units": 9,
+    "status": "pass",
+    "engine": "ngspice",
+    "engine_version": "47",
+    "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+    "netlist_sha256": "94a65532b23efcf2b85533c70bb0b9f9f3317ab464dd7b183ce62cbc99dfdcb5",
+    "remote": {
+     "provider": "aws-batch-fleet",
+     "job_id": "klt-sim-e3c498ba6ae8",
+     "region": "us-east-1",
+     "instance_id": "i-0b650253a6264ae7d",
+     "instance_type": "c7i.4xlarge",
+     "availability_zone": "us-east-1d",
+     "ami_id": "ami-09c14f55df4958cbd",
+     "lifecycle": "spot",
+     "spot": true,
+     "state": "done",
+     "exit_code": "0",
+     "concurrency": "1",
+     "physical_cores": "8",
+     "elapsed_seconds": 9,
+     "client_submitted_at": "2026-11-14T03:19:32.477774Z",
+     "client_launched_at": "2026-11-14T03:20:04.795702Z",
+     "client_status_terminal_at": "2026-11-14T03:20:37.263554Z",
+     "client_collected_at": "2026-11-14T03:20:38.515833Z",
+     "runner_klt_version": "0.9.0",
+     "client_klt_version": "0.9.2.dev1022+g2a9c52b27ce7",
+     "runner_compatibility": "match",
+     "runner_request_features": {
+      "required": [
+       "options.stage_model_inputs"
+      ],
+      "missing": [],
+      "status": "supported"
+     },
+     "worker_environment": {
+      "capture": "ok",
+      "simulator": {
+       "requested_binary": "ngspice",
+       "binary_source": "PATH",
+       "selected_path": "/usr/local/bin/ngspice",
+       "version_banner": "******\n** ngspice-47 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2026, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Fri Nov 13 23:19:32 UTC 2026\n******\n",
+       "version_probe": "ok"
+      },
+      "pdk": {
+       "variant": "ihp-sg13g2",
+       "root": "/opt/pdk",
+       "stamp_scheme": null,
+       "stamp_sha256": null,
+       "stamp_text": null,
+       "models_staged": true,
+       "stamp_scope": "image"
+      },
+      "cpu_model": "Intel(R) Xeon(R) Platinum 8488C",
+      "omp_num_threads": null,
+      "image_manifest": null,
+      "model_inputs": [
+       {
+        "name": "cornerHBT.lib",
+        "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+       },
+       {
+        "name": "sg13g2_hbt_mod.lib",
+        "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+       },
+       {
+        "name": "sg13g2_hbt_mod_mismatch.lib",
+        "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+       },
+       {
+        "name": "sg13g2_hbt_stat.lib",
+        "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+       }
+      ],
+      "diagnostics": [
+       "pdk stamp unreadable: FileNotFoundError"
+      ],
+      "pdk_stamp_comparison": {
+       "basis": "staged_model_inputs",
+       "status": "match"
+      },
+      "engine_build_comparison": {
+       "status": "match"
+      }
+     },
+     "runner_model_inputs": [
+      {
+       "name": "cornerHBT.lib",
+       "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+      },
+      {
+       "name": "sg13g2_hbt_mod.lib",
+       "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+      },
+      {
+       "name": "sg13g2_hbt_mod_mismatch.lib",
+       "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+      },
+      {
+       "name": "sg13g2_hbt_stat.lib",
+       "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+      }
+     ],
+     "runner_models_lib_sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278",
+     "job_ceiling": {
+      "basis": "conservative_serial_bound",
+      "unit_count": 9,
+      "per_unit_timeout_s": 3600,
+      "overhead_s": 120.0,
+      "job_bound_s": 32520.0,
+      "max_job_seconds": 3600.0,
+      "max_job_seconds_source": "fleet_config",
+      "exceeds_ceiling": true,
+      "check": "warn",
+      "max_units_per_job": 0,
+      "recommended_hosts": null,
+      "warning": "batch job bound 32520s (options.timeout_s 3600s x 9 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. No remote.hosts value fits: a single unit's bound exceeds the ceiling -- lower options.timeout_s to at most 3480s"
+     },
+     "models_lib_comparison": {
+      "status": "not_comparable",
+      "reason": "models_staged"
+     }
+    },
+    "klt_version": "0.9.2.dev1022+g2a9c52b27ce7"
+   },
+   {
+    "key": "core0__2.500v",
+    "phase": "core0",
+    "backend": "batch",
+    "units": 9,
+    "status": "pass",
+    "engine": "ngspice",
+    "engine_version": "47",
+    "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+    "netlist_sha256": "6f5c3a93548321125d44f04d71a689e59f99401a9c558d6253b5c19a6aeddd72",
+    "remote": {
+     "provider": "aws-batch-fleet",
+     "job_id": "klt-sim-59975a1e4a7d",
+     "region": "us-east-1",
+     "instance_id": "i-0df9d9f3d1bda5233",
+     "instance_type": "c7i.4xlarge",
+     "availability_zone": "us-east-1d",
+     "ami_id": "ami-09c14f55df4958cbd",
+     "lifecycle": "spot",
+     "spot": true,
+     "state": "done",
+     "exit_code": "0",
+     "concurrency": "1",
+     "physical_cores": "8",
+     "elapsed_seconds": 9,
+     "client_submitted_at": "2026-11-14T03:19:32.489768Z",
+     "client_launched_at": "2026-11-14T03:20:04.162735Z",
+     "client_status_terminal_at": "2026-11-14T03:20:36.728710Z",
+     "client_collected_at": "2026-11-14T03:20:37.976363Z",
+     "runner_klt_version": "0.9.0",
+     "client_klt_version": "0.9.2.dev1022+g2a9c52b27ce7",
+     "runner_compatibility": "match",
+     "runner_request_features": {
+      "required": [
+       "options.stage_model_inputs"
+      ],
+      "missing": [],
+      "status": "supported"
+     },
+     "worker_environment": {
+      "capture": "ok",
+      "simulator": {
+       "requested_binary": "ngspice",
+       "binary_source": "PATH",
+       "selected_path": "/usr/local/bin/ngspice",
+       "version_banner": "******\n** ngspice-47 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2026, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Fri Nov 13 23:19:32 UTC 2026\n******\n",
+       "version_probe": "ok"
+      },
+      "pdk": {
+       "variant": "ihp-sg13g2",
+       "root": "/opt/pdk",
+       "stamp_scheme": null,
+       "stamp_sha256": null,
+       "stamp_text": null,
+       "models_staged": true,
+       "stamp_scope": "image"
+      },
+      "cpu_model": "Intel(R) Xeon(R) Platinum 8488C",
+      "omp_num_threads": null,
+      "image_manifest": null,
+      "model_inputs": [
+       {
+        "name": "cornerHBT.lib",
+        "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+       },
+       {
+        "name": "sg13g2_hbt_mod.lib",
+        "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+       },
+       {
+        "name": "sg13g2_hbt_mod_mismatch.lib",
+        "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+       },
+       {
+        "name": "sg13g2_hbt_stat.lib",
+        "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+       }
+      ],
+      "diagnostics": [
+       "pdk stamp unreadable: FileNotFoundError"
+      ],
+      "pdk_stamp_comparison": {
+       "basis": "staged_model_inputs",
+       "status": "match"
+      },
+      "engine_build_comparison": {
+       "status": "match"
+      }
+     },
+     "runner_model_inputs": [
+      {
+       "name": "cornerHBT.lib",
+       "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+      },
+      {
+       "name": "sg13g2_hbt_mod.lib",
+       "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+      },
+      {
+       "name": "sg13g2_hbt_mod_mismatch.lib",
+       "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+      },
+      {
+       "name": "sg13g2_hbt_stat.lib",
+       "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+      }
+     ],
+     "runner_models_lib_sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278",
+     "job_ceiling": {
+      "basis": "conservative_serial_bound",
+      "unit_count": 9,
+      "per_unit_timeout_s": 3600,
+      "overhead_s": 120.0,
+      "job_bound_s": 32520.0,
+      "max_job_seconds": 3600.0,
+      "max_job_seconds_source": "fleet_config",
+      "exceeds_ceiling": true,
+      "check": "warn",
+      "max_units_per_job": 0,
+      "recommended_hosts": null,
+      "warning": "batch job bound 32520s (options.timeout_s 3600s x 9 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. No remote.hosts value fits: a single unit's bound exceeds the ceiling -- lower options.timeout_s to at most 3480s"
+     },
+     "models_lib_comparison": {
+      "status": "not_comparable",
+      "reason": "models_staged"
+     }
+    },
+    "klt_version": "0.9.2.dev1022+g2a9c52b27ce7"
+   },
+   {
+    "key": "core0__2.750v",
+    "phase": "core0",
+    "backend": "batch",
+    "units": 9,
+    "status": "pass",
+    "engine": "ngspice",
+    "engine_version": "47",
+    "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+    "netlist_sha256": "04311bbdd42aef632862e34e18782c57385875a2e5e47873efeb6ae522e786ea",
+    "remote": {
+     "provider": "aws-batch-fleet",
+     "job_id": "klt-sim-8307b4f3fc3d",
+     "region": "us-east-1",
+     "instance_id": "i-02507c6f251cad3ae",
+     "instance_type": "c7i.4xlarge",
+     "availability_zone": "us-east-1d",
+     "ami_id": "ami-09c14f55df4958cbd",
+     "lifecycle": "spot",
+     "spot": true,
+     "state": "done",
+     "exit_code": "0",
+     "concurrency": "1",
+     "physical_cores": "8",
+     "elapsed_seconds": 10,
+     "client_submitted_at": "2026-11-14T03:19:32.461632Z",
+     "client_launched_at": "2026-11-14T03:20:04.558207Z",
+     "client_status_terminal_at": "2026-11-14T03:20:37.278276Z",
+     "client_collected_at": "2026-11-14T03:20:38.646856Z",
+     "runner_klt_version": "0.9.0",
+     "client_klt_version": "0.9.2.dev1022+g2a9c52b27ce7",
+     "runner_compatibility": "match",
+     "runner_request_features": {
+      "required": [
+       "options.stage_model_inputs"
+      ],
+      "missing": [],
+      "status": "supported"
+     },
+     "worker_environment": {
+      "capture": "ok",
+      "simulator": {
+       "requested_binary": "ngspice",
+       "binary_source": "PATH",
+       "selected_path": "/usr/local/bin/ngspice",
+       "version_banner": "******\n** ngspice-47 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2026, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Fri Nov 13 23:19:32 UTC 2026\n******\n",
+       "version_probe": "ok"
+      },
+      "pdk": {
+       "variant": "ihp-sg13g2",
+       "root": "/opt/pdk",
+       "stamp_scheme": null,
+       "stamp_sha256": null,
+       "stamp_text": null,
+       "models_staged": true,
+       "stamp_scope": "image"
+      },
+      "cpu_model": "Intel(R) Xeon(R) Platinum 8488C",
+      "omp_num_threads": null,
+      "image_manifest": null,
+      "model_inputs": [
+       {
+        "name": "cornerHBT.lib",
+        "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+       },
+       {
+        "name": "sg13g2_hbt_mod.lib",
+        "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+       },
+       {
+        "name": "sg13g2_hbt_mod_mismatch.lib",
+        "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+       },
+       {
+        "name": "sg13g2_hbt_stat.lib",
+        "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+       }
+      ],
+      "diagnostics": [
+       "pdk stamp unreadable: FileNotFoundError"
+      ],
+      "pdk_stamp_comparison": {
+       "basis": "staged_model_inputs",
+       "status": "match"
+      },
+      "engine_build_comparison": {
+       "status": "match"
+      }
+     },
+     "runner_model_inputs": [
+      {
+       "name": "cornerHBT.lib",
+       "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+      },
+      {
+       "name": "sg13g2_hbt_mod.lib",
+       "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+      },
+      {
+       "name": "sg13g2_hbt_mod_mismatch.lib",
+       "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+      },
+      {
+       "name": "sg13g2_hbt_stat.lib",
+       "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+      }
+     ],
+     "runner_models_lib_sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278",
+     "job_ceiling": {
+      "basis": "conservative_serial_bound",
+      "unit_count": 9,
+      "per_unit_timeout_s": 3600,
+      "overhead_s": 120.0,
+      "job_bound_s": 32520.0,
+      "max_job_seconds": 3600.0,
+      "max_job_seconds_source": "fleet_config",
+      "exceeds_ceiling": true,
+      "check": "warn",
+      "max_units_per_job": 0,
+      "recommended_hosts": null,
+      "warning": "batch job bound 32520s (options.timeout_s 3600s x 9 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. No remote.hosts value fits: a single unit's bound exceeds the ceiling -- lower options.timeout_s to at most 3480s"
+     },
+     "models_lib_comparison": {
+      "status": "not_comparable",
+      "reason": "models_staged"
+     }
+    },
+    "klt_version": "0.9.2.dev1022+g2a9c52b27ce7"
+   },
+   {
+    "key": "a_le__2.250v",
+    "phase": "a_le",
+    "backend": "batch",
+    "units": 9,
+    "status": "pass",
+    "engine": "ngspice",
+    "engine_version": "47",
+    "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+    "netlist_sha256": "02414b60638d2e4b6218908db3af1a7d18dce39dd3cdffe5ba3cf4b0b906bc33",
+    "remote": {
+     "provider": "aws-batch-fleet",
+     "job_id": "klt-sim-d49d2486dab8",
+     "region": "us-east-1",
+     "instance_id": "i-0783d7892c3a220a3",
+     "instance_type": "c7i.4xlarge",
+     "availability_zone": "us-east-1d",
+     "ami_id": "ami-09c14f55df4958cbd",
+     "lifecycle": "spot",
+     "spot": true,
+     "state": "done",
+     "exit_code": "0",
+     "concurrency": "1",
+     "physical_cores": "8",
+     "elapsed_seconds": 9,
+     "client_submitted_at": "2026-11-14T03:19:32.496256Z",
+     "client_launched_at": "2026-11-14T03:20:04.962611Z",
+     "client_status_terminal_at": "2026-11-14T03:20:37.088110Z",
+     "client_collected_at": "2026-11-14T03:20:38.422033Z",
+     "runner_klt_version": "0.9.0",
+     "client_klt_version": "0.9.2.dev1022+g2a9c52b27ce7",
+     "runner_compatibility": "match",
+     "runner_request_features": {
+      "required": [
+       "options.stage_model_inputs"
+      ],
+      "missing": [],
+      "status": "supported"
+     },
+     "worker_environment": {
+      "capture": "ok",
+      "simulator": {
+       "requested_binary": "ngspice",
+       "binary_source": "PATH",
+       "selected_path": "/usr/local/bin/ngspice",
+       "version_banner": "******\n** ngspice-47 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2026, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Fri Nov 13 23:19:32 UTC 2026\n******\n",
+       "version_probe": "ok"
+      },
+      "pdk": {
+       "variant": "ihp-sg13g2",
+       "root": "/opt/pdk",
+       "stamp_scheme": null,
+       "stamp_sha256": null,
+       "stamp_text": null,
+       "models_staged": true,
+       "stamp_scope": "image"
+      },
+      "cpu_model": "Intel(R) Xeon(R) Platinum 8488C",
+      "omp_num_threads": null,
+      "image_manifest": null,
+      "model_inputs": [
+       {
+        "name": "cornerHBT.lib",
+        "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+       },
+       {
+        "name": "sg13g2_hbt_mod.lib",
+        "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+       },
+       {
+        "name": "sg13g2_hbt_mod_mismatch.lib",
+        "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+       },
+       {
+        "name": "sg13g2_hbt_stat.lib",
+        "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+       }
+      ],
+      "diagnostics": [
+       "pdk stamp unreadable: FileNotFoundError"
+      ],
+      "pdk_stamp_comparison": {
+       "basis": "staged_model_inputs",
+       "status": "match"
+      },
+      "engine_build_comparison": {
+       "status": "match"
+      }
+     },
+     "runner_model_inputs": [
+      {
+       "name": "cornerHBT.lib",
+       "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+      },
+      {
+       "name": "sg13g2_hbt_mod.lib",
+       "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+      },
+      {
+       "name": "sg13g2_hbt_mod_mismatch.lib",
+       "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+      },
+      {
+       "name": "sg13g2_hbt_stat.lib",
+       "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+      }
+     ],
+     "runner_models_lib_sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278",
+     "job_ceiling": {
+      "basis": "conservative_serial_bound",
+      "unit_count": 9,
+      "per_unit_timeout_s": 3600,
+      "overhead_s": 120.0,
+      "job_bound_s": 32520.0,
+      "max_job_seconds": 3600.0,
+      "max_job_seconds_source": "fleet_config",
+      "exceeds_ceiling": true,
+      "check": "warn",
+      "max_units_per_job": 0,
+      "recommended_hosts": null,
+      "warning": "batch job bound 32520s (options.timeout_s 3600s x 9 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. No remote.hosts value fits: a single unit's bound exceeds the ceiling -- lower options.timeout_s to at most 3480s"
+     },
+     "models_lib_comparison": {
+      "status": "not_comparable",
+      "reason": "models_staged"
+     }
+    },
+    "klt_version": "0.9.2.dev1022+g2a9c52b27ce7"
+   },
+   {
+    "key": "a_le__2.500v",
+    "phase": "a_le",
+    "backend": "batch",
+    "units": 9,
+    "status": "pass",
+    "engine": "ngspice",
+    "engine_version": "47",
+    "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+    "netlist_sha256": "4dde0555440fc46c4ccfc185ed5958a4693742854b7cb54a612e6e94319e3002",
+    "remote": {
+     "provider": "aws-batch-fleet",
+     "job_id": "klt-sim-810828d05272",
+     "region": "us-east-1",
+     "instance_id": "i-04de15eee5a0e101a",
+     "instance_type": "c7i.4xlarge",
+     "availability_zone": "us-east-1a",
+     "ami_id": "ami-09c14f55df4958cbd",
+     "lifecycle": "spot",
+     "spot": true,
+     "state": "done",
+     "exit_code": "0",
+     "concurrency": "1",
+     "physical_cores": "8",
+     "elapsed_seconds": 31,
+     "client_submitted_at": "2026-11-14T03:20:38.158938Z",
+     "client_launched_at": "2026-11-14T03:21:09.263525Z",
+     "client_status_terminal_at": "2026-11-14T03:22:12.021951Z",
+     "client_collected_at": "2026-11-14T03:22:13.098165Z",
+     "runner_klt_version": "0.9.0",
+     "client_klt_version": "0.9.2.dev1022+g2a9c52b27ce7",
+     "runner_compatibility": "match",
+     "runner_request_features": {
+      "required": [
+       "options.stage_model_inputs"
+      ],
+      "missing": [],
+      "status": "supported"
+     },
+     "worker_environment": {
+      "capture": "ok",
+      "simulator": {
+       "requested_binary": "ngspice",
+       "binary_source": "PATH",
+       "selected_path": "/usr/local/bin/ngspice",
+       "version_banner": "******\n** ngspice-47 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2026, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Fri Nov 13 23:19:32 UTC 2026\n******\n",
+       "version_probe": "ok"
+      },
+      "pdk": {
+       "variant": "ihp-sg13g2",
+       "root": "/opt/pdk",
+       "stamp_scheme": null,
+       "stamp_sha256": null,
+       "stamp_text": null,
+       "models_staged": true,
+       "stamp_scope": "image"
+      },
+      "cpu_model": "Intel(R) Xeon(R) Platinum 8488C",
+      "omp_num_threads": null,
+      "image_manifest": null,
+      "model_inputs": [
+       {
+        "name": "cornerHBT.lib",
+        "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+       },
+       {
+        "name": "sg13g2_hbt_mod.lib",
+        "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+       },
+       {
+        "name": "sg13g2_hbt_mod_mismatch.lib",
+        "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+       },
+       {
+        "name": "sg13g2_hbt_stat.lib",
+        "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+       }
+      ],
+      "diagnostics": [
+       "pdk stamp unreadable: FileNotFoundError"
+      ],
+      "pdk_stamp_comparison": {
+       "basis": "staged_model_inputs",
+       "status": "match"
+      },
+      "engine_build_comparison": {
+       "status": "match"
+      }
+     },
+     "runner_model_inputs": [
+      {
+       "name": "cornerHBT.lib",
+       "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+      },
+      {
+       "name": "sg13g2_hbt_mod.lib",
+       "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+      },
+      {
+       "name": "sg13g2_hbt_mod_mismatch.lib",
+       "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+      },
+      {
+       "name": "sg13g2_hbt_stat.lib",
+       "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+      }
+     ],
+     "runner_models_lib_sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278",
+     "job_ceiling": {
+      "basis": "conservative_serial_bound",
+      "unit_count": 9,
+      "per_unit_timeout_s": 3600,
+      "overhead_s": 120.0,
+      "job_bound_s": 32520.0,
+      "max_job_seconds": 3600.0,
+      "max_job_seconds_source": "fleet_config",
+      "exceeds_ceiling": true,
+      "check": "warn",
+      "max_units_per_job": 0,
+      "recommended_hosts": null,
+      "warning": "batch job bound 32520s (options.timeout_s 3600s x 9 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. No remote.hosts value fits: a single unit's bound exceeds the ceiling -- lower options.timeout_s to at most 3480s"
+     },
+     "models_lib_comparison": {
+      "status": "not_comparable",
+      "reason": "models_staged"
+     }
+    },
+    "klt_version": "0.9.2.dev1022+g2a9c52b27ce7"
+   },
+   {
+    "key": "a_le__2.750v",
+    "phase": "a_le",
+    "backend": "batch",
+    "units": 9,
+    "status": "pass",
+    "engine": "ngspice",
+    "engine_version": "47",
+    "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+    "netlist_sha256": "8e09576e3bb657abeac6f9b59a75e857f53af7b85a72a545cf14939adb23321c",
+    "remote": {
+     "provider": "aws-batch-fleet",
+     "job_id": "klt-sim-0bc406c808f2",
+     "region": "us-east-1",
+     "instance_id": "i-0177a45f33f530fd5",
+     "instance_type": "c7i.4xlarge",
+     "availability_zone": "us-east-1b",
+     "ami_id": "ami-09c14f55df4958cbd",
+     "lifecycle": "spot",
+     "spot": true,
+     "state": "done",
+     "exit_code": "0",
+     "concurrency": "1",
+     "physical_cores": "8",
+     "elapsed_seconds": 10,
+     "client_submitted_at": "2026-11-14T03:20:38.706862Z",
+     "client_launched_at": "2026-11-14T03:21:08.930393Z",
+     "client_status_terminal_at": "2026-11-14T03:21:40.715898Z",
+     "client_collected_at": "2026-11-14T03:21:41.997066Z",
+     "runner_klt_version": "0.9.0",
+     "client_klt_version": "0.9.2.dev1022+g2a9c52b27ce7",
+     "runner_compatibility": "match",
+     "runner_request_features": {
+      "required": [
+       "options.stage_model_inputs"
+      ],
+      "missing": [],
+      "status": "supported"
+     },
+     "worker_environment": {
+      "capture": "ok",
+      "simulator": {
+       "requested_binary": "ngspice",
+       "binary_source": "PATH",
+       "selected_path": "/usr/local/bin/ngspice",
+       "version_banner": "******\n** ngspice-47 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2026, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Fri Nov 13 23:19:32 UTC 2026\n******\n",
+       "version_probe": "ok"
+      },
+      "pdk": {
+       "variant": "ihp-sg13g2",
+       "root": "/opt/pdk",
+       "stamp_scheme": null,
+       "stamp_sha256": null,
+       "stamp_text": null,
+       "models_staged": true,
+       "stamp_scope": "image"
+      },
+      "cpu_model": "Intel(R) Xeon(R) Platinum 8488C",
+      "omp_num_threads": null,
+      "image_manifest": null,
+      "model_inputs": [
+       {
+        "name": "cornerHBT.lib",
+        "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+       },
+       {
+        "name": "sg13g2_hbt_mod.lib",
+        "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+       },
+       {
+        "name": "sg13g2_hbt_mod_mismatch.lib",
+        "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+       },
+       {
+        "name": "sg13g2_hbt_stat.lib",
+        "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+       }
+      ],
+      "diagnostics": [
+       "pdk stamp unreadable: FileNotFoundError"
+      ],
+      "pdk_stamp_comparison": {
+       "basis": "staged_model_inputs",
+       "status": "match"
+      },
+      "engine_build_comparison": {
+       "status": "match"
+      }
+     },
+     "runner_model_inputs": [
+      {
+       "name": "cornerHBT.lib",
+       "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+      },
+      {
+       "name": "sg13g2_hbt_mod.lib",
+       "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+      },
+      {
+       "name": "sg13g2_hbt_mod_mismatch.lib",
+       "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+      },
+      {
+       "name": "sg13g2_hbt_stat.lib",
+       "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+      }
+     ],
+     "runner_models_lib_sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278",
+     "job_ceiling": {
+      "basis": "conservative_serial_bound",
+      "unit_count": 9,
+      "per_unit_timeout_s": 3600,
+      "overhead_s": 120.0,
+      "job_bound_s": 32520.0,
+      "max_job_seconds": 3600.0,
+      "max_job_seconds_source": "fleet_config",
+      "exceeds_ceiling": true,
+      "check": "warn",
+      "max_units_per_job": 0,
+      "recommended_hosts": null,
+      "warning": "batch job bound 32520s (options.timeout_s 3600s x 9 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. No remote.hosts value fits: a single unit's bound exceeds the ceiling -- lower options.timeout_s to at most 3480s"
+     },
+     "models_lib_comparison": {
+      "status": "not_comparable",
+      "reason": "models_staged"
+     }
+    },
+    "klt_version": "0.9.2.dev1022+g2a9c52b27ce7"
+   },
+   {
+    "key": "b_jopt__2.250v",
+    "phase": "b_jopt",
+    "backend": "batch",
+    "units": 9,
+    "status": "pass",
+    "engine": "ngspice",
+    "engine_version": "47",
+    "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+    "netlist_sha256": "0cff93a77fb91e9e9a1b9fd5daeaf674eab1bfd5ed74a88fdb7f658eeb2356ce",
+    "remote": {
+     "provider": "aws-batch-fleet",
+     "job_id": "klt-sim-9bd022873a2b",
+     "region": "us-east-1",
+     "instance_id": "i-07247c8e7d3ca209c",
+     "instance_type": "c7i.4xlarge",
+     "availability_zone": "us-east-1b",
+     "ami_id": "ami-09c14f55df4958cbd",
+     "lifecycle": "spot",
+     "spot": true,
+     "state": "done",
+     "exit_code": "0",
+     "concurrency": "1",
+     "physical_cores": "8",
+     "elapsed_seconds": 9,
+     "client_submitted_at": "2026-11-14T03:20:38.848712Z",
+     "client_launched_at": "2026-11-14T03:21:09.231760Z",
+     "client_status_terminal_at": "2026-11-14T03:21:41.113205Z",
+     "client_collected_at": "2026-11-14T03:21:42.409102Z",
+     "runner_klt_version": "0.9.0",
+     "client_klt_version": "0.9.2.dev1022+g2a9c52b27ce7",
+     "runner_compatibility": "match",
+     "runner_request_features": {
+      "required": [
+       "options.stage_model_inputs"
+      ],
+      "missing": [],
+      "status": "supported"
+     },
+     "worker_environment": {
+      "capture": "ok",
+      "simulator": {
+       "requested_binary": "ngspice",
+       "binary_source": "PATH",
+       "selected_path": "/usr/local/bin/ngspice",
+       "version_banner": "******\n** ngspice-47 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2026, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Fri Nov 13 23:19:32 UTC 2026\n******\n",
+       "version_probe": "ok"
+      },
+      "pdk": {
+       "variant": "ihp-sg13g2",
+       "root": "/opt/pdk",
+       "stamp_scheme": null,
+       "stamp_sha256": null,
+       "stamp_text": null,
+       "models_staged": true,
+       "stamp_scope": "image"
+      },
+      "cpu_model": "Intel(R) Xeon(R) Platinum 8488C",
+      "omp_num_threads": null,
+      "image_manifest": null,
+      "model_inputs": [
+       {
+        "name": "cornerHBT.lib",
+        "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+       },
+       {
+        "name": "sg13g2_hbt_mod.lib",
+        "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+       },
+       {
+        "name": "sg13g2_hbt_mod_mismatch.lib",
+        "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+       },
+       {
+        "name": "sg13g2_hbt_stat.lib",
+        "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+       }
+      ],
+      "diagnostics": [
+       "pdk stamp unreadable: FileNotFoundError"
+      ],
+      "pdk_stamp_comparison": {
+       "basis": "staged_model_inputs",
+       "status": "match"
+      },
+      "engine_build_comparison": {
+       "status": "match"
+      }
+     },
+     "runner_model_inputs": [
+      {
+       "name": "cornerHBT.lib",
+       "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+      },
+      {
+       "name": "sg13g2_hbt_mod.lib",
+       "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+      },
+      {
+       "name": "sg13g2_hbt_mod_mismatch.lib",
+       "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+      },
+      {
+       "name": "sg13g2_hbt_stat.lib",
+       "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+      }
+     ],
+     "runner_models_lib_sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278",
+     "job_ceiling": {
+      "basis": "conservative_serial_bound",
+      "unit_count": 9,
+      "per_unit_timeout_s": 3600,
+      "overhead_s": 120.0,
+      "job_bound_s": 32520.0,
+      "max_job_seconds": 3600.0,
+      "max_job_seconds_source": "fleet_config",
+      "exceeds_ceiling": true,
+      "check": "warn",
+      "max_units_per_job": 0,
+      "recommended_hosts": null,
+      "warning": "batch job bound 32520s (options.timeout_s 3600s x 9 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. No remote.hosts value fits: a single unit's bound exceeds the ceiling -- lower options.timeout_s to at most 3480s"
+     },
+     "models_lib_comparison": {
+      "status": "not_comparable",
+      "reason": "models_staged"
+     }
+    },
+    "klt_version": "0.9.2.dev1022+g2a9c52b27ce7"
+   },
+   {
+    "key": "b_jopt__2.500v",
+    "phase": "b_jopt",
+    "backend": "batch",
+    "units": 9,
+    "status": "pass",
+    "engine": "ngspice",
+    "engine_version": "47",
+    "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+    "netlist_sha256": "14aefc9a9dc78fb69bebd31a667fd3423ac328f32071ad9f6aac14e6f88a8532",
+    "remote": {
+     "provider": "aws-batch-fleet",
+     "job_id": "klt-sim-8fdb954a0e22",
+     "region": "us-east-1",
+     "instance_id": "i-0e029844d68064643",
+     "instance_type": "c7i.4xlarge",
+     "availability_zone": "us-east-1b",
+     "ami_id": "ami-09c14f55df4958cbd",
+     "lifecycle": "spot",
+     "spot": true,
+     "state": "done",
+     "exit_code": "0",
+     "concurrency": "1",
+     "physical_cores": "8",
+     "elapsed_seconds": 9,
+     "client_submitted_at": "2026-11-14T03:20:38.964767Z",
+     "client_launched_at": "2026-11-14T03:21:08.998434Z",
+     "client_status_terminal_at": "2026-11-14T03:21:40.845694Z",
+     "client_collected_at": "2026-11-14T03:21:42.257618Z",
+     "runner_klt_version": "0.9.0",
+     "client_klt_version": "0.9.2.dev1022+g2a9c52b27ce7",
+     "runner_compatibility": "match",
+     "runner_request_features": {
+      "required": [
+       "options.stage_model_inputs"
+      ],
+      "missing": [],
+      "status": "supported"
+     },
+     "worker_environment": {
+      "capture": "ok",
+      "simulator": {
+       "requested_binary": "ngspice",
+       "binary_source": "PATH",
+       "selected_path": "/usr/local/bin/ngspice",
+       "version_banner": "******\n** ngspice-47 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2026, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Fri Nov 13 23:19:32 UTC 2026\n******\n",
+       "version_probe": "ok"
+      },
+      "pdk": {
+       "variant": "ihp-sg13g2",
+       "root": "/opt/pdk",
+       "stamp_scheme": null,
+       "stamp_sha256": null,
+       "stamp_text": null,
+       "models_staged": true,
+       "stamp_scope": "image"
+      },
+      "cpu_model": "Intel(R) Xeon(R) Platinum 8488C",
+      "omp_num_threads": null,
+      "image_manifest": null,
+      "model_inputs": [
+       {
+        "name": "cornerHBT.lib",
+        "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+       },
+       {
+        "name": "sg13g2_hbt_mod.lib",
+        "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+       },
+       {
+        "name": "sg13g2_hbt_mod_mismatch.lib",
+        "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+       },
+       {
+        "name": "sg13g2_hbt_stat.lib",
+        "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+       }
+      ],
+      "diagnostics": [
+       "pdk stamp unreadable: FileNotFoundError"
+      ],
+      "pdk_stamp_comparison": {
+       "basis": "staged_model_inputs",
+       "status": "match"
+      },
+      "engine_build_comparison": {
+       "status": "match"
+      }
+     },
+     "runner_model_inputs": [
+      {
+       "name": "cornerHBT.lib",
+       "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+      },
+      {
+       "name": "sg13g2_hbt_mod.lib",
+       "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+      },
+      {
+       "name": "sg13g2_hbt_mod_mismatch.lib",
+       "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+      },
+      {
+       "name": "sg13g2_hbt_stat.lib",
+       "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+      }
+     ],
+     "runner_models_lib_sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278",
+     "job_ceiling": {
+      "basis": "conservative_serial_bound",
+      "unit_count": 9,
+      "per_unit_timeout_s": 3600,
+      "overhead_s": 120.0,
+      "job_bound_s": 32520.0,
+      "max_job_seconds": 3600.0,
+      "max_job_seconds_source": "fleet_config",
+      "exceeds_ceiling": true,
+      "check": "warn",
+      "max_units_per_job": 0,
+      "recommended_hosts": null,
+      "warning": "batch job bound 32520s (options.timeout_s 3600s x 9 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. No remote.hosts value fits: a single unit's bound exceeds the ceiling -- lower options.timeout_s to at most 3480s"
+     },
+     "models_lib_comparison": {
+      "status": "not_comparable",
+      "reason": "models_staged"
+     }
+    },
+    "klt_version": "0.9.2.dev1022+g2a9c52b27ce7"
+   },
+   {
+    "key": "b_jopt__2.750v",
+    "phase": "b_jopt",
+    "backend": "batch",
+    "units": 9,
+    "status": "pass",
+    "engine": "ngspice",
+    "engine_version": "47",
+    "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+    "netlist_sha256": "9c19d54237f9d4740e7f137f56a9f9e10abf3a87fd08c320e4879070a3b9f6a8",
+    "remote": {
+     "provider": "aws-batch-fleet",
+     "job_id": "klt-sim-70b1a9edffca",
+     "region": "us-east-1",
+     "instance_id": "i-01f53092beb06e373",
+     "instance_type": "c7i.4xlarge",
+     "availability_zone": "us-east-1f",
+     "ami_id": "ami-09c14f55df4958cbd",
+     "lifecycle": "spot",
+     "spot": true,
+     "state": "done",
+     "exit_code": "0",
+     "concurrency": "1",
+     "physical_cores": "8",
+     "elapsed_seconds": 12,
+     "client_submitted_at": "2026-11-14T03:21:42.183588Z",
+     "client_launched_at": "2026-11-14T03:22:11.486549Z",
+     "client_status_terminal_at": "2026-11-14T03:22:43.329695Z",
+     "client_collected_at": "2026-11-14T03:22:44.569298Z",
+     "runner_klt_version": "0.9.0",
+     "client_klt_version": "0.9.2.dev1022+g2a9c52b27ce7",
+     "runner_compatibility": "match",
+     "runner_request_features": {
+      "required": [
+       "options.stage_model_inputs"
+      ],
+      "missing": [],
+      "status": "supported"
+     },
+     "worker_environment": {
+      "capture": "ok",
+      "simulator": {
+       "requested_binary": "ngspice",
+       "binary_source": "PATH",
+       "selected_path": "/usr/local/bin/ngspice",
+       "version_banner": "******\n** ngspice-47 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2026, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Fri Nov 13 23:19:32 UTC 2026\n******\n",
+       "version_probe": "ok"
+      },
+      "pdk": {
+       "variant": "ihp-sg13g2",
+       "root": "/opt/pdk",
+       "stamp_scheme": null,
+       "stamp_sha256": null,
+       "stamp_text": null,
+       "models_staged": true,
+       "stamp_scope": "image"
+      },
+      "cpu_model": "Intel(R) Xeon(R) Platinum 8488C",
+      "omp_num_threads": null,
+      "image_manifest": null,
+      "model_inputs": [
+       {
+        "name": "cornerHBT.lib",
+        "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+       },
+       {
+        "name": "sg13g2_hbt_mod.lib",
+        "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+       },
+       {
+        "name": "sg13g2_hbt_mod_mismatch.lib",
+        "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+       },
+       {
+        "name": "sg13g2_hbt_stat.lib",
+        "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+       }
+      ],
+      "diagnostics": [
+       "pdk stamp unreadable: FileNotFoundError"
+      ],
+      "pdk_stamp_comparison": {
+       "basis": "staged_model_inputs",
+       "status": "match"
+      },
+      "engine_build_comparison": {
+       "status": "match"
+      }
+     },
+     "runner_model_inputs": [
+      {
+       "name": "cornerHBT.lib",
+       "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+      },
+      {
+       "name": "sg13g2_hbt_mod.lib",
+       "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+      },
+      {
+       "name": "sg13g2_hbt_mod_mismatch.lib",
+       "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+      },
+      {
+       "name": "sg13g2_hbt_stat.lib",
+       "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+      }
+     ],
+     "runner_models_lib_sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278",
+     "job_ceiling": {
+      "basis": "conservative_serial_bound",
+      "unit_count": 9,
+      "per_unit_timeout_s": 3600,
+      "overhead_s": 120.0,
+      "job_bound_s": 32520.0,
+      "max_job_seconds": 3600.0,
+      "max_job_seconds_source": "fleet_config",
+      "exceeds_ceiling": true,
+      "check": "warn",
+      "max_units_per_job": 0,
+      "recommended_hosts": null,
+      "warning": "batch job bound 32520s (options.timeout_s 3600s x 9 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. No remote.hosts value fits: a single unit's bound exceeds the ceiling -- lower options.timeout_s to at most 3480s"
+     },
+     "models_lib_comparison": {
+      "status": "not_comparable",
+      "reason": "models_staged"
+     }
+    },
+    "klt_version": "0.9.2.dev1022+g2a9c52b27ce7"
+   },
+   {
+    "key": "b_nx10__2.250v",
+    "phase": "b_nx10",
+    "backend": "batch",
+    "units": 9,
+    "status": "pass",
+    "engine": "ngspice",
+    "engine_version": "47",
+    "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+    "netlist_sha256": "1ce242cc713ec9f6bfaeca05a0e2b014bcc1b9a5dfa60d0d6a719706969b4b4e",
+    "remote": {
+     "provider": "aws-batch-fleet",
+     "job_id": "klt-sim-1f1fcbf404b5",
+     "region": "us-east-1",
+     "instance_id": "i-0f1dc6d188e744404",
+     "instance_type": "c7i.4xlarge",
+     "availability_zone": "us-east-1a",
+     "ami_id": "ami-09c14f55df4958cbd",
+     "lifecycle": "spot",
+     "spot": true,
+     "state": "done",
+     "exit_code": "0",
+     "concurrency": "1",
+     "physical_cores": "8",
+     "elapsed_seconds": 44,
+     "client_submitted_at": "2026-11-14T03:21:42.478999Z",
+     "client_launched_at": "2026-11-14T03:22:12.628236Z",
+     "client_status_terminal_at": "2026-11-14T03:23:15.546425Z",
+     "client_collected_at": "2026-11-14T03:23:16.691577Z",
+     "runner_klt_version": "0.9.0",
+     "client_klt_version": "0.9.2.dev1022+g2a9c52b27ce7",
+     "runner_compatibility": "match",
+     "runner_request_features": {
+      "required": [
+       "options.stage_model_inputs"
+      ],
+      "missing": [],
+      "status": "supported"
+     },
+     "worker_environment": {
+      "capture": "ok",
+      "simulator": {
+       "requested_binary": "ngspice",
+       "binary_source": "PATH",
+       "selected_path": "/usr/local/bin/ngspice",
+       "version_banner": "******\n** ngspice-47 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2026, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Fri Nov 13 23:19:32 UTC 2026\n******\n",
+       "version_probe": "ok"
+      },
+      "pdk": {
+       "variant": "ihp-sg13g2",
+       "root": "/opt/pdk",
+       "stamp_scheme": null,
+       "stamp_sha256": null,
+       "stamp_text": null,
+       "models_staged": true,
+       "stamp_scope": "image"
+      },
+      "cpu_model": "Intel(R) Xeon(R) Platinum 8488C",
+      "omp_num_threads": null,
+      "image_manifest": null,
+      "model_inputs": [
+       {
+        "name": "cornerHBT.lib",
+        "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+       },
+       {
+        "name": "sg13g2_hbt_mod.lib",
+        "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+       },
+       {
+        "name": "sg13g2_hbt_mod_mismatch.lib",
+        "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+       },
+       {
+        "name": "sg13g2_hbt_stat.lib",
+        "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+       }
+      ],
+      "diagnostics": [
+       "pdk stamp unreadable: FileNotFoundError"
+      ],
+      "pdk_stamp_comparison": {
+       "basis": "staged_model_inputs",
+       "status": "match"
+      },
+      "engine_build_comparison": {
+       "status": "match"
+      }
+     },
+     "runner_model_inputs": [
+      {
+       "name": "cornerHBT.lib",
+       "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+      },
+      {
+       "name": "sg13g2_hbt_mod.lib",
+       "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+      },
+      {
+       "name": "sg13g2_hbt_mod_mismatch.lib",
+       "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+      },
+      {
+       "name": "sg13g2_hbt_stat.lib",
+       "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+      }
+     ],
+     "runner_models_lib_sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278",
+     "job_ceiling": {
+      "basis": "conservative_serial_bound",
+      "unit_count": 9,
+      "per_unit_timeout_s": 3600,
+      "overhead_s": 120.0,
+      "job_bound_s": 32520.0,
+      "max_job_seconds": 3600.0,
+      "max_job_seconds_source": "fleet_config",
+      "exceeds_ceiling": true,
+      "check": "warn",
+      "max_units_per_job": 0,
+      "recommended_hosts": null,
+      "warning": "batch job bound 32520s (options.timeout_s 3600s x 9 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. No remote.hosts value fits: a single unit's bound exceeds the ceiling -- lower options.timeout_s to at most 3480s"
+     },
+     "models_lib_comparison": {
+      "status": "not_comparable",
+      "reason": "models_staged"
+     }
+    },
+    "klt_version": "0.9.2.dev1022+g2a9c52b27ce7"
+   },
+   {
+    "key": "b_nx10__2.500v",
+    "phase": "b_nx10",
+    "backend": "batch",
+    "units": 9,
+    "status": "pass",
+    "engine": "ngspice",
+    "engine_version": "47",
+    "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+    "netlist_sha256": "d66ebb29af2d9eb6b60c060eb9dde93cf0bf02f8aabfdb619b09a9e85a21b5da",
+    "remote": {
+     "provider": "aws-batch-fleet",
+     "job_id": "klt-sim-f9a9e59671c9",
+     "region": "us-east-1",
+     "instance_id": "i-05e26c1ae9ef150c1",
+     "instance_type": "c7i.4xlarge",
+     "availability_zone": "us-east-1a",
+     "ami_id": "ami-09c14f55df4958cbd",
+     "lifecycle": "spot",
+     "spot": true,
+     "state": "done",
+     "exit_code": "0",
+     "concurrency": "1",
+     "physical_cores": "8",
+     "elapsed_seconds": 8,
+     "client_submitted_at": "2026-11-14T03:21:42.596273Z",
+     "client_launched_at": "2026-11-14T03:22:11.815997Z",
+     "client_status_terminal_at": "2026-11-14T03:22:43.586043Z",
+     "client_collected_at": "2026-11-14T03:22:44.821858Z",
+     "runner_klt_version": "0.9.0",
+     "client_klt_version": "0.9.2.dev1022+g2a9c52b27ce7",
+     "runner_compatibility": "match",
+     "runner_request_features": {
+      "required": [
+       "options.stage_model_inputs"
+      ],
+      "missing": [],
+      "status": "supported"
+     },
+     "worker_environment": {
+      "capture": "ok",
+      "simulator": {
+       "requested_binary": "ngspice",
+       "binary_source": "PATH",
+       "selected_path": "/usr/local/bin/ngspice",
+       "version_banner": "******\n** ngspice-47 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2026, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Fri Nov 13 23:19:32 UTC 2026\n******\n",
+       "version_probe": "ok"
+      },
+      "pdk": {
+       "variant": "ihp-sg13g2",
+       "root": "/opt/pdk",
+       "stamp_scheme": null,
+       "stamp_sha256": null,
+       "stamp_text": null,
+       "models_staged": true,
+       "stamp_scope": "image"
+      },
+      "cpu_model": "Intel(R) Xeon(R) Platinum 8488C",
+      "omp_num_threads": null,
+      "image_manifest": null,
+      "model_inputs": [
+       {
+        "name": "cornerHBT.lib",
+        "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+       },
+       {
+        "name": "sg13g2_hbt_mod.lib",
+        "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+       },
+       {
+        "name": "sg13g2_hbt_mod_mismatch.lib",
+        "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+       },
+       {
+        "name": "sg13g2_hbt_stat.lib",
+        "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+       }
+      ],
+      "diagnostics": [
+       "pdk stamp unreadable: FileNotFoundError"
+      ],
+      "pdk_stamp_comparison": {
+       "basis": "staged_model_inputs",
+       "status": "match"
+      },
+      "engine_build_comparison": {
+       "status": "match"
+      }
+     },
+     "runner_model_inputs": [
+      {
+       "name": "cornerHBT.lib",
+       "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+      },
+      {
+       "name": "sg13g2_hbt_mod.lib",
+       "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+      },
+      {
+       "name": "sg13g2_hbt_mod_mismatch.lib",
+       "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+      },
+      {
+       "name": "sg13g2_hbt_stat.lib",
+       "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+      }
+     ],
+     "runner_models_lib_sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278",
+     "job_ceiling": {
+      "basis": "conservative_serial_bound",
+      "unit_count": 9,
+      "per_unit_timeout_s": 3600,
+      "overhead_s": 120.0,
+      "job_bound_s": 32520.0,
+      "max_job_seconds": 3600.0,
+      "max_job_seconds_source": "fleet_config",
+      "exceeds_ceiling": true,
+      "check": "warn",
+      "max_units_per_job": 0,
+      "recommended_hosts": null,
+      "warning": "batch job bound 32520s (options.timeout_s 3600s x 9 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. No remote.hosts value fits: a single unit's bound exceeds the ceiling -- lower options.timeout_s to at most 3480s"
+     },
+     "models_lib_comparison": {
+      "status": "not_comparable",
+      "reason": "models_staged"
+     }
+    },
+    "klt_version": "0.9.2.dev1022+g2a9c52b27ce7"
+   },
+   {
+    "key": "b_nx10__2.750v",
+    "phase": "b_nx10",
+    "backend": "batch",
+    "units": 9,
+    "status": "pass",
+    "engine": "ngspice",
+    "engine_version": "47",
+    "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+    "netlist_sha256": "062f21f78eef71a0d848c5fe751980d61321d2a5346447063c4d1ecd7ecb3686",
+    "remote": {
+     "provider": "aws-batch-fleet",
+     "job_id": "klt-sim-5d1108568049",
+     "region": "us-east-1",
+     "instance_id": "i-0670701b6b6e87526",
+     "instance_type": "c7i.4xlarge",
+     "availability_zone": "us-east-1a",
+     "ami_id": "ami-09c14f55df4958cbd",
+     "lifecycle": "spot",
+     "spot": true,
+     "state": "done",
+     "exit_code": "0",
+     "concurrency": "1",
+     "physical_cores": "8",
+     "elapsed_seconds": 8,
+     "client_submitted_at": "2026-11-14T03:22:13.272934Z",
+     "client_launched_at": "2026-11-14T03:22:38.217378Z",
+     "client_status_terminal_at": "2026-11-14T03:23:09.977099Z",
+     "client_collected_at": "2026-11-14T03:23:11.064277Z",
+     "runner_klt_version": "0.9.0",
+     "client_klt_version": "0.9.2.dev1022+g2a9c52b27ce7",
+     "runner_compatibility": "match",
+     "runner_request_features": {
+      "required": [
+       "options.stage_model_inputs"
+      ],
+      "missing": [],
+      "status": "supported"
+     },
+     "worker_environment": {
+      "capture": "ok",
+      "simulator": {
+       "requested_binary": "ngspice",
+       "binary_source": "PATH",
+       "selected_path": "/usr/local/bin/ngspice",
+       "version_banner": "******\n** ngspice-47 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2026, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Fri Nov 13 23:19:32 UTC 2026\n******\n",
+       "version_probe": "ok"
+      },
+      "pdk": {
+       "variant": "ihp-sg13g2",
+       "root": "/opt/pdk",
+       "stamp_scheme": null,
+       "stamp_sha256": null,
+       "stamp_text": null,
+       "models_staged": true,
+       "stamp_scope": "image"
+      },
+      "cpu_model": "Intel(R) Xeon(R) Platinum 8488C",
+      "omp_num_threads": null,
+      "image_manifest": null,
+      "model_inputs": [
+       {
+        "name": "cornerHBT.lib",
+        "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+       },
+       {
+        "name": "sg13g2_hbt_mod.lib",
+        "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+       },
+       {
+        "name": "sg13g2_hbt_mod_mismatch.lib",
+        "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+       },
+       {
+        "name": "sg13g2_hbt_stat.lib",
+        "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+       }
+      ],
+      "diagnostics": [
+       "pdk stamp unreadable: FileNotFoundError"
+      ],
+      "pdk_stamp_comparison": {
+       "basis": "staged_model_inputs",
+       "status": "match"
+      },
+      "engine_build_comparison": {
+       "status": "match"
+      }
+     },
+     "runner_model_inputs": [
+      {
+       "name": "cornerHBT.lib",
+       "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+      },
+      {
+       "name": "sg13g2_hbt_mod.lib",
+       "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+      },
+      {
+       "name": "sg13g2_hbt_mod_mismatch.lib",
+       "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+      },
+      {
+       "name": "sg13g2_hbt_stat.lib",
+       "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+      }
+     ],
+     "runner_models_lib_sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278",
+     "job_ceiling": {
+      "basis": "conservative_serial_bound",
+      "unit_count": 9,
+      "per_unit_timeout_s": 3600,
+      "overhead_s": 120.0,
+      "job_bound_s": 32520.0,
+      "max_job_seconds": 3600.0,
+      "max_job_seconds_source": "fleet_config",
+      "exceeds_ceiling": true,
+      "check": "warn",
+      "max_units_per_job": 0,
+      "recommended_hosts": null,
+      "warning": "batch job bound 32520s (options.timeout_s 3600s x 9 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. No remote.hosts value fits: a single unit's bound exceeds the ceiling -- lower options.timeout_s to at most 3480s"
+     },
+     "models_lib_comparison": {
+      "status": "not_comparable",
+      "reason": "models_staged"
+     }
+    },
+    "klt_version": "0.9.2.dev1022+g2a9c52b27ce7"
+   },
+   {
+    "key": "c_rbias__2.250v",
+    "phase": "c_rbias",
+    "backend": "batch",
+    "units": 9,
+    "status": "pass",
+    "engine": "ngspice",
+    "engine_version": "47",
+    "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+    "netlist_sha256": "3bd6ba3798de8b227908fdd0fb62bf350b0430b727c3a7b23fcd5383ac9ed819",
+    "remote": {
+     "provider": "aws-batch-fleet",
+     "job_id": "klt-sim-88ccfbf3953f",
+     "region": "us-east-1",
+     "instance_id": "i-0a9affe97c6350784",
+     "instance_type": "c7i.4xlarge",
+     "availability_zone": "us-east-1a",
+     "ami_id": "ami-09c14f55df4958cbd",
+     "lifecycle": "spot",
+     "spot": true,
+     "state": "done",
+     "exit_code": "0",
+     "concurrency": "1",
+     "physical_cores": "8",
+     "elapsed_seconds": 8,
+     "client_submitted_at": "2026-11-14T03:22:44.788527Z",
+     "client_launched_at": "2026-11-14T03:23:11.064959Z",
+     "client_status_terminal_at": "2026-11-14T03:23:43.025591Z",
+     "client_collected_at": "2026-11-14T03:23:44.253936Z",
+     "runner_klt_version": "0.9.0",
+     "client_klt_version": "0.9.2.dev1022+g2a9c52b27ce7",
+     "runner_compatibility": "match",
+     "runner_request_features": {
+      "required": [
+       "options.stage_model_inputs"
+      ],
+      "missing": [],
+      "status": "supported"
+     },
+     "worker_environment": {
+      "capture": "ok",
+      "simulator": {
+       "requested_binary": "ngspice",
+       "binary_source": "PATH",
+       "selected_path": "/usr/local/bin/ngspice",
+       "version_banner": "******\n** ngspice-47 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2026, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Fri Nov 13 23:19:32 UTC 2026\n******\n",
+       "version_probe": "ok"
+      },
+      "pdk": {
+       "variant": "ihp-sg13g2",
+       "root": "/opt/pdk",
+       "stamp_scheme": null,
+       "stamp_sha256": null,
+       "stamp_text": null,
+       "models_staged": true,
+       "stamp_scope": "image"
+      },
+      "cpu_model": "Intel(R) Xeon(R) Platinum 8488C",
+      "omp_num_threads": null,
+      "image_manifest": null,
+      "model_inputs": [
+       {
+        "name": "cornerHBT.lib",
+        "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+       },
+       {
+        "name": "sg13g2_hbt_mod.lib",
+        "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+       },
+       {
+        "name": "sg13g2_hbt_mod_mismatch.lib",
+        "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+       },
+       {
+        "name": "sg13g2_hbt_stat.lib",
+        "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+       }
+      ],
+      "diagnostics": [
+       "pdk stamp unreadable: FileNotFoundError"
+      ],
+      "pdk_stamp_comparison": {
+       "basis": "staged_model_inputs",
+       "status": "match"
+      },
+      "engine_build_comparison": {
+       "status": "match"
+      }
+     },
+     "runner_model_inputs": [
+      {
+       "name": "cornerHBT.lib",
+       "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+      },
+      {
+       "name": "sg13g2_hbt_mod.lib",
+       "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+      },
+      {
+       "name": "sg13g2_hbt_mod_mismatch.lib",
+       "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+      },
+      {
+       "name": "sg13g2_hbt_stat.lib",
+       "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+      }
+     ],
+     "runner_models_lib_sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278",
+     "job_ceiling": {
+      "basis": "conservative_serial_bound",
+      "unit_count": 9,
+      "per_unit_timeout_s": 3600,
+      "overhead_s": 120.0,
+      "job_bound_s": 32520.0,
+      "max_job_seconds": 3600.0,
+      "max_job_seconds_source": "fleet_config",
+      "exceeds_ceiling": true,
+      "check": "warn",
+      "max_units_per_job": 0,
+      "recommended_hosts": null,
+      "warning": "batch job bound 32520s (options.timeout_s 3600s x 9 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. No remote.hosts value fits: a single unit's bound exceeds the ceiling -- lower options.timeout_s to at most 3480s"
+     },
+     "models_lib_comparison": {
+      "status": "not_comparable",
+      "reason": "models_staged"
+     }
+    },
+    "klt_version": "0.9.2.dev1022+g2a9c52b27ce7"
+   },
+   {
+    "key": "c_rbias__2.500v",
+    "phase": "c_rbias",
+    "backend": "batch",
+    "units": 9,
+    "status": "pass",
+    "engine": "ngspice",
+    "engine_version": "47",
+    "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+    "netlist_sha256": "f475ef29a6929d1eb83f3e21b0c0af9368313bf8605b33d3543b9876e9d7def3",
+    "remote": {
+     "provider": "aws-batch-fleet",
+     "job_id": "klt-sim-d4742c306d5e",
+     "region": "us-east-1",
+     "instance_id": "i-00077b055733ea01f",
+     "instance_type": "c7i.4xlarge",
+     "availability_zone": "us-east-1b",
+     "ami_id": "ami-09c14f55df4958cbd",
+     "lifecycle": "spot",
+     "spot": true,
+     "state": "done",
+     "exit_code": "0",
+     "concurrency": "1",
+     "physical_cores": "8",
+     "elapsed_seconds": 9,
+     "client_submitted_at": "2026-11-14T03:22:45.038633Z",
+     "client_launched_at": "2026-11-14T03:23:11.215580Z",
+     "client_status_terminal_at": "2026-11-14T03:23:43.170017Z",
+     "client_collected_at": "2026-11-14T03:23:44.302688Z",
+     "runner_klt_version": "0.9.0",
+     "client_klt_version": "0.9.2.dev1022+g2a9c52b27ce7",
+     "runner_compatibility": "match",
+     "runner_request_features": {
+      "required": [
+       "options.stage_model_inputs"
+      ],
+      "missing": [],
+      "status": "supported"
+     },
+     "worker_environment": {
+      "capture": "ok",
+      "simulator": {
+       "requested_binary": "ngspice",
+       "binary_source": "PATH",
+       "selected_path": "/usr/local/bin/ngspice",
+       "version_banner": "******\n** ngspice-47 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2026, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Fri Nov 13 23:19:32 UTC 2026\n******\n",
+       "version_probe": "ok"
+      },
+      "pdk": {
+       "variant": "ihp-sg13g2",
+       "root": "/opt/pdk",
+       "stamp_scheme": null,
+       "stamp_sha256": null,
+       "stamp_text": null,
+       "models_staged": true,
+       "stamp_scope": "image"
+      },
+      "cpu_model": "Intel(R) Xeon(R) Platinum 8488C",
+      "omp_num_threads": null,
+      "image_manifest": null,
+      "model_inputs": [
+       {
+        "name": "cornerHBT.lib",
+        "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+       },
+       {
+        "name": "sg13g2_hbt_mod.lib",
+        "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+       },
+       {
+        "name": "sg13g2_hbt_mod_mismatch.lib",
+        "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+       },
+       {
+        "name": "sg13g2_hbt_stat.lib",
+        "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+       }
+      ],
+      "diagnostics": [
+       "pdk stamp unreadable: FileNotFoundError"
+      ],
+      "pdk_stamp_comparison": {
+       "basis": "staged_model_inputs",
+       "status": "match"
+      },
+      "engine_build_comparison": {
+       "status": "match"
+      }
+     },
+     "runner_model_inputs": [
+      {
+       "name": "cornerHBT.lib",
+       "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+      },
+      {
+       "name": "sg13g2_hbt_mod.lib",
+       "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+      },
+      {
+       "name": "sg13g2_hbt_mod_mismatch.lib",
+       "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+      },
+      {
+       "name": "sg13g2_hbt_stat.lib",
+       "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+      }
+     ],
+     "runner_models_lib_sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278",
+     "job_ceiling": {
+      "basis": "conservative_serial_bound",
+      "unit_count": 9,
+      "per_unit_timeout_s": 3600,
+      "overhead_s": 120.0,
+      "job_bound_s": 32520.0,
+      "max_job_seconds": 3600.0,
+      "max_job_seconds_source": "fleet_config",
+      "exceeds_ceiling": true,
+      "check": "warn",
+      "max_units_per_job": 0,
+      "recommended_hosts": null,
+      "warning": "batch job bound 32520s (options.timeout_s 3600s x 9 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. No remote.hosts value fits: a single unit's bound exceeds the ceiling -- lower options.timeout_s to at most 3480s"
+     },
+     "models_lib_comparison": {
+      "status": "not_comparable",
+      "reason": "models_staged"
+     }
+    },
+    "klt_version": "0.9.2.dev1022+g2a9c52b27ce7"
+   },
+   {
+    "key": "c_rbias__2.750v",
+    "phase": "c_rbias",
+    "backend": "batch",
+    "units": 9,
+    "status": "pass",
+    "engine": "ngspice",
+    "engine_version": "47",
+    "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+    "netlist_sha256": "29177010db5d838721abf8c78fd28722018470e73704444688cecd125dae3b60",
+    "remote": {
+     "provider": "aws-batch-fleet",
+     "job_id": "klt-sim-b90c63b3bd7b",
+     "region": "us-east-1",
+     "instance_id": "i-0047fd19d49165163",
+     "instance_type": "c7i.4xlarge",
+     "availability_zone": "us-east-1c",
+     "ami_id": "ami-09c14f55df4958cbd",
+     "lifecycle": "spot",
+     "spot": true,
+     "state": "done",
+     "exit_code": "0",
+     "concurrency": "1",
+     "physical_cores": "8",
+     "elapsed_seconds": 9,
+     "client_submitted_at": "2026-11-14T03:23:11.262814Z",
+     "client_launched_at": "2026-11-14T03:23:39.526698Z",
+     "client_status_terminal_at": "2026-11-14T03:24:11.327425Z",
+     "client_collected_at": "2026-11-14T03:24:12.396913Z",
+     "runner_klt_version": "0.9.0",
+     "client_klt_version": "0.9.2.dev1022+g2a9c52b27ce7",
+     "runner_compatibility": "match",
+     "runner_request_features": {
+      "required": [
+       "options.stage_model_inputs"
+      ],
+      "missing": [],
+      "status": "supported"
+     },
+     "worker_environment": {
+      "capture": "ok",
+      "simulator": {
+       "requested_binary": "ngspice",
+       "binary_source": "PATH",
+       "selected_path": "/usr/local/bin/ngspice",
+       "version_banner": "******\n** ngspice-47 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2026, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Fri Nov 13 23:19:32 UTC 2026\n******\n",
+       "version_probe": "ok"
+      },
+      "pdk": {
+       "variant": "ihp-sg13g2",
+       "root": "/opt/pdk",
+       "stamp_scheme": null,
+       "stamp_sha256": null,
+       "stamp_text": null,
+       "models_staged": true,
+       "stamp_scope": "image"
+      },
+      "cpu_model": "Intel(R) Xeon(R) Platinum 8488C",
+      "omp_num_threads": null,
+      "image_manifest": null,
+      "model_inputs": [
+       {
+        "name": "cornerHBT.lib",
+        "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+       },
+       {
+        "name": "sg13g2_hbt_mod.lib",
+        "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+       },
+       {
+        "name": "sg13g2_hbt_mod_mismatch.lib",
+        "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+       },
+       {
+        "name": "sg13g2_hbt_stat.lib",
+        "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+       }
+      ],
+      "diagnostics": [
+       "pdk stamp unreadable: FileNotFoundError"
+      ],
+      "pdk_stamp_comparison": {
+       "basis": "staged_model_inputs",
+       "status": "match"
+      },
+      "engine_build_comparison": {
+       "status": "match"
+      }
+     },
+     "runner_model_inputs": [
+      {
+       "name": "cornerHBT.lib",
+       "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+      },
+      {
+       "name": "sg13g2_hbt_mod.lib",
+       "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+      },
+      {
+       "name": "sg13g2_hbt_mod_mismatch.lib",
+       "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+      },
+      {
+       "name": "sg13g2_hbt_stat.lib",
+       "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+      }
+     ],
+     "runner_models_lib_sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278",
+     "job_ceiling": {
+      "basis": "conservative_serial_bound",
+      "unit_count": 9,
+      "per_unit_timeout_s": 3600,
+      "overhead_s": 120.0,
+      "job_bound_s": 32520.0,
+      "max_job_seconds": 3600.0,
+      "max_job_seconds_source": "fleet_config",
+      "exceeds_ceiling": true,
+      "check": "warn",
+      "max_units_per_job": 0,
+      "recommended_hosts": null,
+      "warning": "batch job bound 32520s (options.timeout_s 3600s x 9 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. No remote.hosts value fits: a single unit's bound exceeds the ceiling -- lower options.timeout_s to at most 3480s"
+     },
+     "models_lib_comparison": {
+      "status": "not_comparable",
+      "reason": "models_staged"
+     }
+    },
+    "klt_version": "0.9.2.dev1022+g2a9c52b27ce7"
+   },
+   {
+    "key": "diag_rbias_noiseless__2.250v",
+    "phase": "diag_rbias_noiseless",
+    "backend": "batch",
+    "units": 9,
+    "status": "pass",
+    "engine": "ngspice",
+    "engine_version": "47",
+    "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+    "netlist_sha256": "c31a19aca323be229213577c2d55ae52afb08d39755ac8209af6a68dc25668cd",
+    "remote": {
+     "provider": "aws-batch-fleet",
+     "job_id": "klt-sim-7bfacdb8cc71",
+     "region": "us-east-1",
+     "instance_id": "i-0242a949788dcd578",
+     "instance_type": "c7i.4xlarge",
+     "availability_zone": "us-east-1c",
+     "ami_id": "ami-09c14f55df4958cbd",
+     "lifecycle": "spot",
+     "spot": true,
+     "state": "done",
+     "exit_code": "0",
+     "concurrency": "1",
+     "physical_cores": "8",
+     "elapsed_seconds": 12,
+     "client_submitted_at": "2026-11-14T03:23:17.008685Z",
+     "client_launched_at": "2026-11-14T03:23:45.079005Z",
+     "client_status_terminal_at": "2026-11-14T03:24:17.066570Z",
+     "client_collected_at": "2026-11-14T03:24:18.194005Z",
+     "runner_klt_version": "0.9.0",
+     "client_klt_version": "0.9.2.dev1022+g2a9c52b27ce7",
+     "runner_compatibility": "match",
+     "runner_request_features": {
+      "required": [
+       "options.stage_model_inputs"
+      ],
+      "missing": [],
+      "status": "supported"
+     },
+     "worker_environment": {
+      "capture": "ok",
+      "simulator": {
+       "requested_binary": "ngspice",
+       "binary_source": "PATH",
+       "selected_path": "/usr/local/bin/ngspice",
+       "version_banner": "******\n** ngspice-47 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2026, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Fri Nov 13 23:19:32 UTC 2026\n******\n",
+       "version_probe": "ok"
+      },
+      "pdk": {
+       "variant": "ihp-sg13g2",
+       "root": "/opt/pdk",
+       "stamp_scheme": null,
+       "stamp_sha256": null,
+       "stamp_text": null,
+       "models_staged": true,
+       "stamp_scope": "image"
+      },
+      "cpu_model": "Intel(R) Xeon(R) Platinum 8488C",
+      "omp_num_threads": null,
+      "image_manifest": null,
+      "model_inputs": [
+       {
+        "name": "cornerHBT.lib",
+        "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+       },
+       {
+        "name": "sg13g2_hbt_mod.lib",
+        "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+       },
+       {
+        "name": "sg13g2_hbt_mod_mismatch.lib",
+        "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+       },
+       {
+        "name": "sg13g2_hbt_stat.lib",
+        "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+       }
+      ],
+      "diagnostics": [
+       "pdk stamp unreadable: FileNotFoundError"
+      ],
+      "pdk_stamp_comparison": {
+       "basis": "staged_model_inputs",
+       "status": "match"
+      },
+      "engine_build_comparison": {
+       "status": "match"
+      }
+     },
+     "runner_model_inputs": [
+      {
+       "name": "cornerHBT.lib",
+       "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+      },
+      {
+       "name": "sg13g2_hbt_mod.lib",
+       "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+      },
+      {
+       "name": "sg13g2_hbt_mod_mismatch.lib",
+       "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+      },
+      {
+       "name": "sg13g2_hbt_stat.lib",
+       "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+      }
+     ],
+     "runner_models_lib_sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278",
+     "job_ceiling": {
+      "basis": "conservative_serial_bound",
+      "unit_count": 9,
+      "per_unit_timeout_s": 3600,
+      "overhead_s": 120.0,
+      "job_bound_s": 32520.0,
+      "max_job_seconds": 3600.0,
+      "max_job_seconds_source": "fleet_config",
+      "exceeds_ceiling": true,
+      "check": "warn",
+      "max_units_per_job": 0,
+      "recommended_hosts": null,
+      "warning": "batch job bound 32520s (options.timeout_s 3600s x 9 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. No remote.hosts value fits: a single unit's bound exceeds the ceiling -- lower options.timeout_s to at most 3480s"
+     },
+     "models_lib_comparison": {
+      "status": "not_comparable",
+      "reason": "models_staged"
+     }
+    },
+    "klt_version": "0.9.2.dev1022+g2a9c52b27ce7"
+   },
+   {
+    "key": "diag_rbias_noiseless__2.500v",
+    "phase": "diag_rbias_noiseless",
+    "backend": "batch",
+    "units": 9,
+    "status": "pass",
+    "engine": "ngspice",
+    "engine_version": "47",
+    "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+    "netlist_sha256": "277fa845c1a35a325a92e0321f334294d6bc44d3936b0b4df60374d4a5274db1",
+    "remote": {
+     "provider": "aws-batch-fleet",
+     "job_id": "klt-sim-42ce9d6be177",
+     "region": "us-east-1",
+     "instance_id": "i-043a8fae0f4bd4b36",
+     "instance_type": "c7i.4xlarge",
+     "availability_zone": "us-east-1b",
+     "ami_id": "ami-09c14f55df4958cbd",
+     "lifecycle": "spot",
+     "spot": true,
+     "state": "done",
+     "exit_code": "0",
+     "concurrency": "1",
+     "physical_cores": "8",
+     "elapsed_seconds": 25,
+     "client_submitted_at": "2026-11-14T03:23:44.602926Z",
+     "client_launched_at": "2026-11-14T03:24:13.062511Z",
+     "client_status_terminal_at": "2026-11-14T03:25:15.593746Z",
+     "client_collected_at": "2026-11-14T03:25:16.615452Z",
+     "runner_klt_version": "0.9.0",
+     "client_klt_version": "0.9.2.dev1022+g2a9c52b27ce7",
+     "runner_compatibility": "match",
+     "runner_request_features": {
+      "required": [
+       "options.stage_model_inputs"
+      ],
+      "missing": [],
+      "status": "supported"
+     },
+     "worker_environment": {
+      "capture": "ok",
+      "simulator": {
+       "requested_binary": "ngspice",
+       "binary_source": "PATH",
+       "selected_path": "/usr/local/bin/ngspice",
+       "version_banner": "******\n** ngspice-47 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2026, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Fri Nov 13 23:19:32 UTC 2026\n******\n",
+       "version_probe": "ok"
+      },
+      "pdk": {
+       "variant": "ihp-sg13g2",
+       "root": "/opt/pdk",
+       "stamp_scheme": null,
+       "stamp_sha256": null,
+       "stamp_text": null,
+       "models_staged": true,
+       "stamp_scope": "image"
+      },
+      "cpu_model": "Intel(R) Xeon(R) Platinum 8488C",
+      "omp_num_threads": null,
+      "image_manifest": null,
+      "model_inputs": [
+       {
+        "name": "cornerHBT.lib",
+        "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+       },
+       {
+        "name": "sg13g2_hbt_mod.lib",
+        "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+       },
+       {
+        "name": "sg13g2_hbt_mod_mismatch.lib",
+        "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+       },
+       {
+        "name": "sg13g2_hbt_stat.lib",
+        "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+       }
+      ],
+      "diagnostics": [
+       "pdk stamp unreadable: FileNotFoundError"
+      ],
+      "pdk_stamp_comparison": {
+       "basis": "staged_model_inputs",
+       "status": "match"
+      },
+      "engine_build_comparison": {
+       "status": "match"
+      }
+     },
+     "runner_model_inputs": [
+      {
+       "name": "cornerHBT.lib",
+       "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+      },
+      {
+       "name": "sg13g2_hbt_mod.lib",
+       "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+      },
+      {
+       "name": "sg13g2_hbt_mod_mismatch.lib",
+       "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+      },
+      {
+       "name": "sg13g2_hbt_stat.lib",
+       "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+      }
+     ],
+     "runner_models_lib_sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278",
+     "job_ceiling": {
+      "basis": "conservative_serial_bound",
+      "unit_count": 9,
+      "per_unit_timeout_s": 3600,
+      "overhead_s": 120.0,
+      "job_bound_s": 32520.0,
+      "max_job_seconds": 3600.0,
+      "max_job_seconds_source": "fleet_config",
+      "exceeds_ceiling": true,
+      "check": "warn",
+      "max_units_per_job": 0,
+      "recommended_hosts": null,
+      "warning": "batch job bound 32520s (options.timeout_s 3600s x 9 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. No remote.hosts value fits: a single unit's bound exceeds the ceiling -- lower options.timeout_s to at most 3480s"
+     },
+     "models_lib_comparison": {
+      "status": "not_comparable",
+      "reason": "models_staged"
+     }
+    },
+    "klt_version": "0.9.2.dev1022+g2a9c52b27ce7"
+   },
+   {
+    "key": "diag_rbias_noiseless__2.750v",
+    "phase": "diag_rbias_noiseless",
+    "backend": "batch",
+    "units": 9,
+    "status": "pass",
+    "engine": "ngspice",
+    "engine_version": "47",
+    "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+    "netlist_sha256": "44ed199f6979d2fab40ecd3362e26d4b18fe22c6dcb843ac1effbf297fc1ff07",
+    "remote": {
+     "provider": "aws-batch-fleet",
+     "job_id": "klt-sim-d8fa25b83f78",
+     "region": "us-east-1",
+     "instance_id": "i-02316397076523d1b",
+     "instance_type": "c7i.4xlarge",
+     "availability_zone": "us-east-1b",
+     "ami_id": "ami-09c14f55df4958cbd",
+     "lifecycle": "spot",
+     "spot": true,
+     "state": "done",
+     "exit_code": "0",
+     "concurrency": "1",
+     "physical_cores": "8",
+     "elapsed_seconds": 7,
+     "client_submitted_at": "2026-11-14T03:23:44.749925Z",
+     "client_launched_at": "2026-11-14T03:24:13.179574Z",
+     "client_status_terminal_at": "2026-11-14T03:24:45.096721Z",
+     "client_collected_at": "2026-11-14T03:24:46.280918Z",
+     "runner_klt_version": "0.9.0",
+     "client_klt_version": "0.9.2.dev1022+g2a9c52b27ce7",
+     "runner_compatibility": "match",
+     "runner_request_features": {
+      "required": [
+       "options.stage_model_inputs"
+      ],
+      "missing": [],
+      "status": "supported"
+     },
+     "worker_environment": {
+      "capture": "ok",
+      "simulator": {
+       "requested_binary": "ngspice",
+       "binary_source": "PATH",
+       "selected_path": "/usr/local/bin/ngspice",
+       "version_banner": "******\n** ngspice-47 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2026, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Fri Nov 13 23:19:32 UTC 2026\n******\n",
+       "version_probe": "ok"
+      },
+      "pdk": {
+       "variant": "ihp-sg13g2",
+       "root": "/opt/pdk",
+       "stamp_scheme": null,
+       "stamp_sha256": null,
+       "stamp_text": null,
+       "models_staged": true,
+       "stamp_scope": "image"
+      },
+      "cpu_model": "Intel(R) Xeon(R) Platinum 8488C",
+      "omp_num_threads": null,
+      "image_manifest": null,
+      "model_inputs": [
+       {
+        "name": "cornerHBT.lib",
+        "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+       },
+       {
+        "name": "sg13g2_hbt_mod.lib",
+        "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+       },
+       {
+        "name": "sg13g2_hbt_mod_mismatch.lib",
+        "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+       },
+       {
+        "name": "sg13g2_hbt_stat.lib",
+        "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+       }
+      ],
+      "diagnostics": [
+       "pdk stamp unreadable: FileNotFoundError"
+      ],
+      "pdk_stamp_comparison": {
+       "basis": "staged_model_inputs",
+       "status": "match"
+      },
+      "engine_build_comparison": {
+       "status": "match"
+      }
+     },
+     "runner_model_inputs": [
+      {
+       "name": "cornerHBT.lib",
+       "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+      },
+      {
+       "name": "sg13g2_hbt_mod.lib",
+       "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+      },
+      {
+       "name": "sg13g2_hbt_mod_mismatch.lib",
+       "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+      },
+      {
+       "name": "sg13g2_hbt_stat.lib",
+       "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+      }
+     ],
+     "runner_models_lib_sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278",
+     "job_ceiling": {
+      "basis": "conservative_serial_bound",
+      "unit_count": 9,
+      "per_unit_timeout_s": 3600,
+      "overhead_s": 120.0,
+      "job_bound_s": 32520.0,
+      "max_job_seconds": 3600.0,
+      "max_job_seconds_source": "fleet_config",
+      "exceeds_ceiling": true,
+      "check": "warn",
+      "max_units_per_job": 0,
+      "recommended_hosts": null,
+      "warning": "batch job bound 32520s (options.timeout_s 3600s x 9 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. No remote.hosts value fits: a single unit's bound exceeds the ceiling -- lower options.timeout_s to at most 3480s"
+     },
+     "models_lib_comparison": {
+      "status": "not_comparable",
+      "reason": "models_staged"
+     }
+    },
+    "klt_version": "0.9.2.dev1022+g2a9c52b27ce7"
+   },
+   {
+    "key": "ac__2.250v",
+    "phase": "ac",
+    "backend": "batch",
+    "units": 9,
+    "status": "pass",
+    "engine": "ngspice",
+    "engine_version": "47",
+    "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+    "netlist_sha256": "48e48ea7d6d48a6cab6f724b371eb83cde94e1493af5dced0b4805ad59001656",
+    "remote": {
+     "provider": "aws-batch-fleet",
+     "job_id": "klt-sim-2ae63cb38d50",
+     "region": "us-east-1",
+     "instance_id": "i-06f0e2bc38e1baeb7",
+     "instance_type": "c7i.4xlarge",
+     "availability_zone": "us-east-1b",
+     "ami_id": "ami-09c14f55df4958cbd",
+     "lifecycle": "spot",
+     "spot": true,
+     "state": "done",
+     "exit_code": "0",
+     "concurrency": "1",
+     "physical_cores": "8",
+     "elapsed_seconds": 10,
+     "client_submitted_at": "2026-11-14T03:24:12.579115Z",
+     "client_launched_at": "2026-11-14T03:25:08.500103Z",
+     "client_status_terminal_at": "2026-11-14T03:25:40.220008Z",
+     "client_collected_at": "2026-11-14T03:25:41.368434Z",
+     "runner_klt_version": "0.9.0",
+     "client_klt_version": "0.9.2.dev1022+g2a9c52b27ce7",
+     "runner_compatibility": "match",
+     "runner_request_features": {
+      "required": [
+       "options.stage_model_inputs"
+      ],
+      "missing": [],
+      "status": "supported"
+     },
+     "worker_environment": {
+      "capture": "ok",
+      "simulator": {
+       "requested_binary": "ngspice",
+       "binary_source": "PATH",
+       "selected_path": "/usr/local/bin/ngspice",
+       "version_banner": "******\n** ngspice-47 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2026, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Fri Nov 13 23:19:32 UTC 2026\n******\n",
+       "version_probe": "ok"
+      },
+      "pdk": {
+       "variant": "ihp-sg13g2",
+       "root": "/opt/pdk",
+       "stamp_scheme": null,
+       "stamp_sha256": null,
+       "stamp_text": null,
+       "models_staged": true,
+       "stamp_scope": "image"
+      },
+      "cpu_model": "Intel(R) Xeon(R) Platinum 8488C",
+      "omp_num_threads": null,
+      "image_manifest": null,
+      "model_inputs": [
+       {
+        "name": "cornerHBT.lib",
+        "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+       },
+       {
+        "name": "sg13g2_hbt_mod.lib",
+        "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+       },
+       {
+        "name": "sg13g2_hbt_mod_mismatch.lib",
+        "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+       },
+       {
+        "name": "sg13g2_hbt_stat.lib",
+        "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+       }
+      ],
+      "diagnostics": [
+       "pdk stamp unreadable: FileNotFoundError"
+      ],
+      "pdk_stamp_comparison": {
+       "basis": "staged_model_inputs",
+       "status": "match"
+      },
+      "engine_build_comparison": {
+       "status": "match"
+      }
+     },
+     "runner_model_inputs": [
+      {
+       "name": "cornerHBT.lib",
+       "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+      },
+      {
+       "name": "sg13g2_hbt_mod.lib",
+       "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+      },
+      {
+       "name": "sg13g2_hbt_mod_mismatch.lib",
+       "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+      },
+      {
+       "name": "sg13g2_hbt_stat.lib",
+       "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+      }
+     ],
+     "runner_models_lib_sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278",
+     "job_ceiling": {
+      "basis": "conservative_serial_bound",
+      "unit_count": 9,
+      "per_unit_timeout_s": 3600,
+      "overhead_s": 120.0,
+      "job_bound_s": 32520.0,
+      "max_job_seconds": 3600.0,
+      "max_job_seconds_source": "fleet_config",
+      "exceeds_ceiling": true,
+      "check": "warn",
+      "max_units_per_job": 0,
+      "recommended_hosts": null,
+      "warning": "batch job bound 32520s (options.timeout_s 3600s x 9 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. No remote.hosts value fits: a single unit's bound exceeds the ceiling -- lower options.timeout_s to at most 3480s"
+     },
+     "models_lib_comparison": {
+      "status": "not_comparable",
+      "reason": "models_staged"
+     }
+    },
+    "klt_version": "0.9.2.dev1022+g2a9c52b27ce7"
+   },
+   {
+    "key": "ac__2.500v",
+    "phase": "ac",
+    "backend": "batch",
+    "units": 9,
+    "status": "pass",
+    "engine": "ngspice",
+    "engine_version": "47",
+    "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+    "netlist_sha256": "a4d6b2596e91168f2af1b77eb2cc0ced52d476fcfd3d40b07c89a2b33d24ffc9",
+    "remote": {
+     "provider": "aws-batch-fleet",
+     "job_id": "klt-sim-174f15bd5dc2",
+     "region": "us-east-1",
+     "instance_id": "i-0e4f7ea3be5424f33",
+     "instance_type": "c7i.4xlarge",
+     "availability_zone": "us-east-1a",
+     "ami_id": "ami-09c14f55df4958cbd",
+     "lifecycle": "spot",
+     "spot": true,
+     "state": "done",
+     "exit_code": "0",
+     "concurrency": "1",
+     "physical_cores": "8",
+     "elapsed_seconds": 8,
+     "client_submitted_at": "2026-11-14T03:24:18.406754Z",
+     "client_launched_at": "2026-11-14T03:25:08.788330Z",
+     "client_status_terminal_at": "2026-11-14T03:25:40.619226Z",
+     "client_collected_at": "2026-11-14T03:25:41.801303Z",
+     "runner_klt_version": "0.9.0",
+     "client_klt_version": "0.9.2.dev1022+g2a9c52b27ce7",
+     "runner_compatibility": "match",
+     "runner_request_features": {
+      "required": [
+       "options.stage_model_inputs"
+      ],
+      "missing": [],
+      "status": "supported"
+     },
+     "worker_environment": {
+      "capture": "ok",
+      "simulator": {
+       "requested_binary": "ngspice",
+       "binary_source": "PATH",
+       "selected_path": "/usr/local/bin/ngspice",
+       "version_banner": "******\n** ngspice-47 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2026, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Fri Nov 13 23:19:32 UTC 2026\n******\n",
+       "version_probe": "ok"
+      },
+      "pdk": {
+       "variant": "ihp-sg13g2",
+       "root": "/opt/pdk",
+       "stamp_scheme": null,
+       "stamp_sha256": null,
+       "stamp_text": null,
+       "models_staged": true,
+       "stamp_scope": "image"
+      },
+      "cpu_model": "Intel(R) Xeon(R) Platinum 8488C",
+      "omp_num_threads": null,
+      "image_manifest": null,
+      "model_inputs": [
+       {
+        "name": "cornerHBT.lib",
+        "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+       },
+       {
+        "name": "sg13g2_hbt_mod.lib",
+        "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+       },
+       {
+        "name": "sg13g2_hbt_mod_mismatch.lib",
+        "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+       },
+       {
+        "name": "sg13g2_hbt_stat.lib",
+        "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+       }
+      ],
+      "diagnostics": [
+       "pdk stamp unreadable: FileNotFoundError"
+      ],
+      "pdk_stamp_comparison": {
+       "basis": "staged_model_inputs",
+       "status": "match"
+      },
+      "engine_build_comparison": {
+       "status": "match"
+      }
+     },
+     "runner_model_inputs": [
+      {
+       "name": "cornerHBT.lib",
+       "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+      },
+      {
+       "name": "sg13g2_hbt_mod.lib",
+       "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+      },
+      {
+       "name": "sg13g2_hbt_mod_mismatch.lib",
+       "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+      },
+      {
+       "name": "sg13g2_hbt_stat.lib",
+       "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+      }
+     ],
+     "runner_models_lib_sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278",
+     "job_ceiling": {
+      "basis": "conservative_serial_bound",
+      "unit_count": 9,
+      "per_unit_timeout_s": 3600,
+      "overhead_s": 120.0,
+      "job_bound_s": 32520.0,
+      "max_job_seconds": 3600.0,
+      "max_job_seconds_source": "fleet_config",
+      "exceeds_ceiling": true,
+      "check": "warn",
+      "max_units_per_job": 0,
+      "recommended_hosts": null,
+      "warning": "batch job bound 32520s (options.timeout_s 3600s x 9 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. No remote.hosts value fits: a single unit's bound exceeds the ceiling -- lower options.timeout_s to at most 3480s"
+     },
+     "models_lib_comparison": {
+      "status": "not_comparable",
+      "reason": "models_staged"
+     }
+    },
+    "klt_version": "0.9.2.dev1022+g2a9c52b27ce7"
+   },
+   {
+    "key": "ac__2.750v",
+    "phase": "ac",
+    "backend": "batch",
+    "units": 9,
+    "status": "pass",
+    "engine": "ngspice",
+    "engine_version": "47",
+    "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+    "netlist_sha256": "b3d1eb0411dd1d953ad64e053178b974b428b0769e4674b260a5da91f0e8a93b",
+    "remote": {
+     "provider": "aws-batch-fleet",
+     "job_id": "klt-sim-a93410765a7a",
+     "region": "us-east-1",
+     "instance_id": "i-0edf4101bc5d47b7a",
+     "instance_type": "c7i.4xlarge",
+     "availability_zone": "us-east-1b",
+     "ami_id": "ami-09c14f55df4958cbd",
+     "lifecycle": "spot",
+     "spot": true,
+     "state": "done",
+     "exit_code": "0",
+     "concurrency": "1",
+     "physical_cores": "8",
+     "elapsed_seconds": 9,
+     "client_submitted_at": "2026-11-14T03:24:46.453601Z",
+     "client_launched_at": "2026-11-14T03:25:14.056688Z",
+     "client_status_terminal_at": "2026-11-14T03:25:45.781074Z",
+     "client_collected_at": "2026-11-14T03:25:46.955456Z",
+     "runner_klt_version": "0.9.0",
+     "client_klt_version": "0.9.2.dev1022+g2a9c52b27ce7",
+     "runner_compatibility": "match",
+     "runner_request_features": {
+      "required": [
+       "options.stage_model_inputs"
+      ],
+      "missing": [],
+      "status": "supported"
+     },
+     "worker_environment": {
+      "capture": "ok",
+      "simulator": {
+       "requested_binary": "ngspice",
+       "binary_source": "PATH",
+       "selected_path": "/usr/local/bin/ngspice",
+       "version_banner": "******\n** ngspice-47 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2026, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Fri Nov 13 23:19:32 UTC 2026\n******\n",
+       "version_probe": "ok"
+      },
+      "pdk": {
+       "variant": "ihp-sg13g2",
+       "root": "/opt/pdk",
+       "stamp_scheme": null,
+       "stamp_sha256": null,
+       "stamp_text": null,
+       "models_staged": true,
+       "stamp_scope": "image"
+      },
+      "cpu_model": "Intel(R) Xeon(R) Platinum 8488C",
+      "omp_num_threads": null,
+      "image_manifest": null,
+      "model_inputs": [
+       {
+        "name": "cornerHBT.lib",
+        "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+       },
+       {
+        "name": "sg13g2_hbt_mod.lib",
+        "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+       },
+       {
+        "name": "sg13g2_hbt_mod_mismatch.lib",
+        "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+       },
+       {
+        "name": "sg13g2_hbt_stat.lib",
+        "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+       }
+      ],
+      "diagnostics": [
+       "pdk stamp unreadable: FileNotFoundError"
+      ],
+      "pdk_stamp_comparison": {
+       "basis": "staged_model_inputs",
+       "status": "match"
+      },
+      "engine_build_comparison": {
+       "status": "match"
+      }
+     },
+     "runner_model_inputs": [
+      {
+       "name": "cornerHBT.lib",
+       "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+      },
+      {
+       "name": "sg13g2_hbt_mod.lib",
+       "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+      },
+      {
+       "name": "sg13g2_hbt_mod_mismatch.lib",
+       "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+      },
+      {
+       "name": "sg13g2_hbt_stat.lib",
+       "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+      }
+     ],
+     "runner_models_lib_sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278",
+     "job_ceiling": {
+      "basis": "conservative_serial_bound",
+      "unit_count": 9,
+      "per_unit_timeout_s": 3600,
+      "overhead_s": 120.0,
+      "job_bound_s": 32520.0,
+      "max_job_seconds": 3600.0,
+      "max_job_seconds_source": "fleet_config",
+      "exceeds_ceiling": true,
+      "check": "warn",
+      "max_units_per_job": 0,
+      "recommended_hosts": null,
+      "warning": "batch job bound 32520s (options.timeout_s 3600s x 9 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. No remote.hosts value fits: a single unit's bound exceeds the ceiling -- lower options.timeout_s to at most 3480s"
+     },
+     "models_lib_comparison": {
+      "status": "not_comparable",
+      "reason": "models_staged"
+     }
+    },
+    "klt_version": "0.9.2.dev1022+g2a9c52b27ce7"
+   },
+   {
+    "key": "abc__2.250v",
+    "phase": "abc",
+    "backend": "batch",
+    "units": 9,
+    "status": "pass",
+    "engine": "ngspice",
+    "engine_version": "47",
+    "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+    "netlist_sha256": "69b3e0c72634a4ddf1377825d79d09fe40b5bef973e4b5d8b2732740147b48a4",
+    "remote": {
+     "provider": "aws-batch-fleet",
+     "job_id": "klt-sim-b6fcb8ebcec4",
+     "region": "us-east-1",
+     "instance_id": "i-03aab085357126b08",
+     "instance_type": "c7i.4xlarge",
+     "availability_zone": "us-east-1b",
+     "ami_id": "ami-09c14f55df4958cbd",
+     "lifecycle": "spot",
+     "spot": true,
+     "state": "done",
+     "exit_code": "0",
+     "concurrency": "1",
+     "physical_cores": "8",
+     "elapsed_seconds": 8,
+     "client_submitted_at": "2026-11-14T03:25:16.766511Z",
+     "client_launched_at": "2026-11-14T03:25:42.733194Z",
+     "client_status_terminal_at": "2026-11-14T03:26:14.333192Z",
+     "client_collected_at": "2026-11-14T03:26:15.310124Z",
+     "runner_klt_version": "0.9.0",
+     "client_klt_version": "0.9.2.dev1022+g2a9c52b27ce7",
+     "runner_compatibility": "match",
+     "runner_request_features": {
+      "required": [
+       "options.stage_model_inputs"
+      ],
+      "missing": [],
+      "status": "supported"
+     },
+     "worker_environment": {
+      "capture": "ok",
+      "simulator": {
+       "requested_binary": "ngspice",
+       "binary_source": "PATH",
+       "selected_path": "/usr/local/bin/ngspice",
+       "version_banner": "******\n** ngspice-47 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2026, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Fri Nov 13 23:19:32 UTC 2026\n******\n",
+       "version_probe": "ok"
+      },
+      "pdk": {
+       "variant": "ihp-sg13g2",
+       "root": "/opt/pdk",
+       "stamp_scheme": null,
+       "stamp_sha256": null,
+       "stamp_text": null,
+       "models_staged": true,
+       "stamp_scope": "image"
+      },
+      "cpu_model": "Intel(R) Xeon(R) Platinum 8488C",
+      "omp_num_threads": null,
+      "image_manifest": null,
+      "model_inputs": [
+       {
+        "name": "cornerHBT.lib",
+        "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+       },
+       {
+        "name": "sg13g2_hbt_mod.lib",
+        "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+       },
+       {
+        "name": "sg13g2_hbt_mod_mismatch.lib",
+        "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+       },
+       {
+        "name": "sg13g2_hbt_stat.lib",
+        "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+       }
+      ],
+      "diagnostics": [
+       "pdk stamp unreadable: FileNotFoundError"
+      ],
+      "pdk_stamp_comparison": {
+       "basis": "staged_model_inputs",
+       "status": "match"
+      },
+      "engine_build_comparison": {
+       "status": "match"
+      }
+     },
+     "runner_model_inputs": [
+      {
+       "name": "cornerHBT.lib",
+       "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+      },
+      {
+       "name": "sg13g2_hbt_mod.lib",
+       "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+      },
+      {
+       "name": "sg13g2_hbt_mod_mismatch.lib",
+       "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+      },
+      {
+       "name": "sg13g2_hbt_stat.lib",
+       "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+      }
+     ],
+     "runner_models_lib_sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278",
+     "job_ceiling": {
+      "basis": "conservative_serial_bound",
+      "unit_count": 9,
+      "per_unit_timeout_s": 3600,
+      "overhead_s": 120.0,
+      "job_bound_s": 32520.0,
+      "max_job_seconds": 3600.0,
+      "max_job_seconds_source": "fleet_config",
+      "exceeds_ceiling": true,
+      "check": "warn",
+      "max_units_per_job": 0,
+      "recommended_hosts": null,
+      "warning": "batch job bound 32520s (options.timeout_s 3600s x 9 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. No remote.hosts value fits: a single unit's bound exceeds the ceiling -- lower options.timeout_s to at most 3480s"
+     },
+     "models_lib_comparison": {
+      "status": "not_comparable",
+      "reason": "models_staged"
+     }
+    },
+    "klt_version": "0.9.2.dev1022+g2a9c52b27ce7"
+   },
+   {
+    "key": "abc__2.500v",
+    "phase": "abc",
+    "backend": "batch",
+    "units": 9,
+    "status": "pass",
+    "engine": "ngspice",
+    "engine_version": "47",
+    "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+    "netlist_sha256": "0bebd5b8977a8312c67dfb56b309b788757979d17832648e30eef1f60587680b",
+    "remote": {
+     "provider": "aws-batch-fleet",
+     "job_id": "klt-sim-0723c989bc10",
+     "region": "us-east-1",
+     "instance_id": "i-02984bb13d526951e",
+     "instance_type": "c7i.4xlarge",
+     "availability_zone": "us-east-1c",
+     "ami_id": "ami-09c14f55df4958cbd",
+     "lifecycle": "spot",
+     "spot": true,
+     "state": "done",
+     "exit_code": "0",
+     "concurrency": "1",
+     "physical_cores": "8",
+     "elapsed_seconds": 32,
+     "client_submitted_at": "2026-11-14T03:25:41.526764Z",
+     "client_launched_at": "2026-11-14T03:26:08.069531Z",
+     "client_status_terminal_at": "2026-11-14T03:27:10.337473Z",
+     "client_collected_at": "2026-11-14T03:27:11.339777Z",
+     "runner_klt_version": "0.9.0",
+     "client_klt_version": "0.9.2.dev1022+g2a9c52b27ce7",
+     "runner_compatibility": "match",
+     "runner_request_features": {
+      "required": [
+       "options.stage_model_inputs"
+      ],
+      "missing": [],
+      "status": "supported"
+     },
+     "worker_environment": {
+      "capture": "ok",
+      "simulator": {
+       "requested_binary": "ngspice",
+       "binary_source": "PATH",
+       "selected_path": "/usr/local/bin/ngspice",
+       "version_banner": "******\n** ngspice-47 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2026, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Fri Nov 13 23:19:32 UTC 2026\n******\n",
+       "version_probe": "ok"
+      },
+      "pdk": {
+       "variant": "ihp-sg13g2",
+       "root": "/opt/pdk",
+       "stamp_scheme": null,
+       "stamp_sha256": null,
+       "stamp_text": null,
+       "models_staged": true,
+       "stamp_scope": "image"
+      },
+      "cpu_model": "Intel(R) Xeon(R) Platinum 8488C",
+      "omp_num_threads": null,
+      "image_manifest": null,
+      "model_inputs": [
+       {
+        "name": "cornerHBT.lib",
+        "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+       },
+       {
+        "name": "sg13g2_hbt_mod.lib",
+        "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+       },
+       {
+        "name": "sg13g2_hbt_mod_mismatch.lib",
+        "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+       },
+       {
+        "name": "sg13g2_hbt_stat.lib",
+        "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+       }
+      ],
+      "diagnostics": [
+       "pdk stamp unreadable: FileNotFoundError"
+      ],
+      "pdk_stamp_comparison": {
+       "basis": "staged_model_inputs",
+       "status": "match"
+      },
+      "engine_build_comparison": {
+       "status": "match"
+      }
+     },
+     "runner_model_inputs": [
+      {
+       "name": "cornerHBT.lib",
+       "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+      },
+      {
+       "name": "sg13g2_hbt_mod.lib",
+       "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+      },
+      {
+       "name": "sg13g2_hbt_mod_mismatch.lib",
+       "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+      },
+      {
+       "name": "sg13g2_hbt_stat.lib",
+       "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+      }
+     ],
+     "runner_models_lib_sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278",
+     "job_ceiling": {
+      "basis": "conservative_serial_bound",
+      "unit_count": 9,
+      "per_unit_timeout_s": 3600,
+      "overhead_s": 120.0,
+      "job_bound_s": 32520.0,
+      "max_job_seconds": 3600.0,
+      "max_job_seconds_source": "fleet_config",
+      "exceeds_ceiling": true,
+      "check": "warn",
+      "max_units_per_job": 0,
+      "recommended_hosts": null,
+      "warning": "batch job bound 32520s (options.timeout_s 3600s x 9 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. No remote.hosts value fits: a single unit's bound exceeds the ceiling -- lower options.timeout_s to at most 3480s"
+     },
+     "models_lib_comparison": {
+      "status": "not_comparable",
+      "reason": "models_staged"
+     }
+    },
+    "klt_version": "0.9.2.dev1022+g2a9c52b27ce7"
+   },
+   {
+    "key": "abc__2.750v",
+    "phase": "abc",
+    "backend": "batch",
+    "units": 9,
+    "status": "pass",
+    "engine": "ngspice",
+    "engine_version": "47",
+    "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+    "netlist_sha256": "cc56c05cecfb83a123f5c37313c7206b4db06f682b579548b237784c7bc21f4a",
+    "remote": {
+     "provider": "aws-batch-fleet",
+     "job_id": "klt-sim-725202b0250c",
+     "region": "us-east-1",
+     "instance_id": "i-03dd435b9f8256737",
+     "instance_type": "c7i.4xlarge",
+     "availability_zone": "us-east-1b",
+     "ami_id": "ami-09c14f55df4958cbd",
+     "lifecycle": "spot",
+     "spot": true,
+     "state": "done",
+     "exit_code": "0",
+     "concurrency": "1",
+     "physical_cores": "8",
+     "elapsed_seconds": 8,
+     "client_submitted_at": "2026-11-14T03:25:41.974116Z",
+     "client_launched_at": "2026-11-14T03:26:08.094913Z",
+     "client_status_terminal_at": "2026-11-14T03:26:39.684559Z",
+     "client_collected_at": "2026-11-14T03:26:40.833023Z",
+     "runner_klt_version": "0.9.0",
+     "client_klt_version": "0.9.2.dev1022+g2a9c52b27ce7",
+     "runner_compatibility": "match",
+     "runner_request_features": {
+      "required": [
+       "options.stage_model_inputs"
+      ],
+      "missing": [],
+      "status": "supported"
+     },
+     "worker_environment": {
+      "capture": "ok",
+      "simulator": {
+       "requested_binary": "ngspice",
+       "binary_source": "PATH",
+       "selected_path": "/usr/local/bin/ngspice",
+       "version_banner": "******\n** ngspice-47 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2026, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Fri Nov 13 23:19:32 UTC 2026\n******\n",
+       "version_probe": "ok"
+      },
+      "pdk": {
+       "variant": "ihp-sg13g2",
+       "root": "/opt/pdk",
+       "stamp_scheme": null,
+       "stamp_sha256": null,
+       "stamp_text": null,
+       "models_staged": true,
+       "stamp_scope": "image"
+      },
+      "cpu_model": "Intel(R) Xeon(R) Platinum 8488C",
+      "omp_num_threads": null,
+      "image_manifest": null,
+      "model_inputs": [
+       {
+        "name": "cornerHBT.lib",
+        "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+       },
+       {
+        "name": "sg13g2_hbt_mod.lib",
+        "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+       },
+       {
+        "name": "sg13g2_hbt_mod_mismatch.lib",
+        "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+       },
+       {
+        "name": "sg13g2_hbt_stat.lib",
+        "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+       }
+      ],
+      "diagnostics": [
+       "pdk stamp unreadable: FileNotFoundError"
+      ],
+      "pdk_stamp_comparison": {
+       "basis": "staged_model_inputs",
+       "status": "match"
+      },
+      "engine_build_comparison": {
+       "status": "match"
+      }
+     },
+     "runner_model_inputs": [
+      {
+       "name": "cornerHBT.lib",
+       "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+      },
+      {
+       "name": "sg13g2_hbt_mod.lib",
+       "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+      },
+      {
+       "name": "sg13g2_hbt_mod_mismatch.lib",
+       "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+      },
+      {
+       "name": "sg13g2_hbt_stat.lib",
+       "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+      }
+     ],
+     "runner_models_lib_sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278",
+     "job_ceiling": {
+      "basis": "conservative_serial_bound",
+      "unit_count": 9,
+      "per_unit_timeout_s": 3600,
+      "overhead_s": 120.0,
+      "job_bound_s": 32520.0,
+      "max_job_seconds": 3600.0,
+      "max_job_seconds_source": "fleet_config",
+      "exceeds_ceiling": true,
+      "check": "warn",
+      "max_units_per_job": 0,
+      "recommended_hosts": null,
+      "warning": "batch job bound 32520s (options.timeout_s 3600s x 9 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. No remote.hosts value fits: a single unit's bound exceeds the ceiling -- lower options.timeout_s to at most 3480s"
+     },
+     "models_lib_comparison": {
+      "status": "not_comparable",
+      "reason": "models_staged"
+     }
+    },
+    "klt_version": "0.9.2.dev1022+g2a9c52b27ce7"
+   }
+  ],
+  "frozen_inputs": {
+   "design_netlist_sha256": "ad4fe1be5754f21fc4b2dd67863234858dc399e2a8232d3b20cf530014b8c447",
+   "method_study_sha256": "912e00c19b0e8a05a1f951daa011983280b3f730de60ef46dc12ba7ae2e64470",
+   "variants_json_sha256": "f62efccd448f5f216cebd622a07f41242e2b13aa40085add80884681ef8a1e3d"
+  }
+ }
+}

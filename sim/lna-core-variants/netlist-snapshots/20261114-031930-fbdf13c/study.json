@@ -1,0 +1,1741 @@
+{
+  "name": "lna-match-tradeoff",
+  "issue": 74,
+  "description": "Ideal-element first-stage input-match feasibility study around the frozen design/lna_stage1 cascode: noise figure vs input return loss vs gain for a declared family of lossless lowpass L-section input networks, plus a network-independent per-frequency bound for ANY lossless input network. Rd, bias network, device sizing and output network are NOT changed.",
+  "claim": "ideal-element feasibility screen; no spec row is claimed met. Every input network is ideal lossless L/C (no PDK inductor model exists; spec row 1, the band, is OPEN). Thresholds are screens traceable to rows 2, 3, 4, 6 and 17, not compliance evidence.",
+  "f0_hz": 19450000000.0,
+  "band_hz": [
+    17700000000.0,
+    21200000000.0
+  ],
+  "z0_ohm": 50.0,
+  "t0_k": 300.15,
+  "grid": {
+    "dense_points": 71,
+    "wide_start_hz": 1000000000.0,
+    "wide_stop_hz": 100000000000.0,
+    "wide_points_per_decade": 100
+  },
+  "nominal": {
+    "process": "hbt_typ",
+    "temp_c": 27.0,
+    "vdd": 2.5
+  },
+  "pvt": {
+    "processes": [
+      "hbt_typ",
+      "hbt_bcs",
+      "hbt_wcs"
+    ],
+    "temperatures_c": [
+      -40.0,
+      27.0,
+      125.0
+    ],
+    "supplies_v": [
+      2.25,
+      2.5,
+      2.75
+    ],
+    "rail_ceiling_v": 2.5
+  },
+  "screen": {
+    "nf_max_db": 2.5,
+    "s11_max_db": -10.0,
+    "s21_min_db": 10.0,
+    "k_min": 1.0,
+    "delta_max": 1.0,
+    "_trace": {
+      "nf_max_db": "row 3 (NF50 <= 2.5 dB across band, all corners). Applied to ONE stage: a necessary condition, since a second stage only adds noise.",
+      "s11_max_db": "row 4 (S11 <= -10 dB across band).",
+      "s21_min_db": "row 2 (>= 20 dB for a two-stage cascode) split evenly in dB over its two assumed stages: 10 dB per stage. A study screen derived from row 2, not a spec value; interstage mismatch is ignored.",
+      "k_min": "row 6 (k > 1 in band and 1-100 GHz; the sweep covers row 6's 63.6 GHz).",
+      "delta_max": "row 6 companion (|Delta| < 1, the second Rollett condition).",
+      "operating_point": "row 17 (V_CE <= 1.4 V, V_CE 0.4-2.0 V) and the card box (V_BE 0.65-0.96 V, Ic < 3 mA x Nx), plus fT > 21.2 GHz; supplies above the 2.5 V ceiling are a labelled excursion, never merged into the verdict."
+    }
+  },
+  "tolerances": {
+    "refine_db": 0.05,
+    "model_db": 0.01,
+    "baseline_db": 0.001,
+    "baseline_k": 0.001,
+    "crosscheck_db": 0.001,
+    "control_nf_db": 0.001,
+    "control_s_db": 0.001,
+    "control_return_loss_db": -60.0,
+    "_notes": {
+      "refine_db": "Worst-case band NF max, S11 max and S21 min over the 141-point union grid (dense + midpoints, 25 MHz) may differ from the 71-point dense grid (50 MHz) by at most this; otherwise the cell is grid-unresolved and rejected_invalid.",
+      "model_db": "Max |simulated - predicted| NF and S11 (dB) for every selectable candidate at a point, the prediction coming from the probe-fitted noise parameters and the thru S-parameters; also the max rms of the noise-parameter fit. Above it the network-independent bound is not used at that point.",
+      "baseline_db": "Baseline candidate vs sim/lna-sparam-nf/records/20261010-012923-6cad7fc logs at 17.7 / 19.45 / 21.2 GHz, every shared PVT point: S11/S21/S22/S12/NF in dB.",
+      "baseline_k": "Same comparison for k (absolute).",
+      "crosscheck_db": "Shortlisted candidates at the nominal point: screen run (this host) vs corner campaign run (fleet).",
+      "control_nf_db": "Matched resistive pad control: NF vs the closed form 1 + (L - 1) T / T0.",
+      "control_s_db": "Matched resistive pad control: S21 vs -L dB.",
+      "control_return_loss_db": "Matched resistive pad control: S11 and S22 must be below this."
+    }
+  },
+  "family": {
+    "f0_hz": 19450000000.0,
+    "z0_ohm": 50.0,
+    "gamma_power_match": [
+      0.7255,
+      0.5534
+    ],
+    "gamma_noise_opt": [
+      0.5952,
+      0.2062
+    ],
+    "segment_fractions": [
+      0.0,
+      0.125,
+      0.25,
+      0.375,
+      0.5,
+      0.625,
+      0.75,
+      0.875,
+      1.0
+    ],
+    "opt_ring_radii": [
+      0.1,
+      0.2
+    ],
+    "pm_ring_radii": [
+      0.03,
+      0.06
+    ],
+    "ring_angles_deg": [
+      0,
+      45,
+      90,
+      135,
+      180,
+      225,
+      270,
+      315
+    ],
+    "_note": "Targets are source reflection coefficients at f0 seen from the core (node in2, 50 ohm reference). gamma_power_match = conj(Gamma_in of the core) and gamma_noise_opt = Gamma_opt of the core are filled in by `run.py declare` from the nominal derivation (`run.py derive`, block 'derivation'); they are this circuit's own values, not the bare-device Zopt. Every realizable lowpass L-section orientation (shunt_first = C at the port then series L, as the baseline; series_first = series L then C at in2) of every target is one candidate; unrealizable or |Gamma| >= 0.98 targets are listed in excluded_targets with the reason."
+  },
+  "probes": {
+    "f0_hz": 19450000000.0,
+    "z0_ohm": 50.0,
+    "thru_l_h": 1e-18,
+    "ring_radius": 0.5,
+    "ring_angles_deg": [
+      0,
+      45,
+      90,
+      135,
+      180,
+      225,
+      270,
+      315
+    ],
+    "_note": "Diagnostic networks, never selectable: probe_thru (L = 1e-18 H, the core seen directly from 50 ohm: its S-parameters are the core's at node in2) and every realizable lowpass L-section presenting |Gamma_s| = 0.5 at f0 at the listed angles. Their NFs over the band fit the core's four noise parameters at each frequency."
+  },
+  "shortlist_rule": {
+    "max_passing": 4,
+    "description": "From the nominal screen, only valid (status ok) selectable candidates that are stable (k > 1 and |Delta| < 1 in band and over 1-100 GHz) are eligible. Shortlist = the baseline (always) + up to max_passing candidates that pass the joint nominal screen, ranked by joint margin min(2.5 - NFmax, -10 - S11max, S21min - 10) + the best joint-margin candidate + the lowest NFmax candidate + the lowest S11max candidate + the lowest NFmax candidate among those with S11max <= -10 dB (if any) + the lowest S11max candidate among those with NFmax <= 2.5 dB (if any); duplicates merge. Ties break by name. Element values never change across corners."
+  },
+  "derivation": {
+    "point": {
+      "process": "hbt_typ",
+      "temp_c": 27.0,
+      "vdd": 2.5
+    },
+    "ngspice": "ngspice-46 : Circuit level simulation program",
+    "f0_hz": 19450000000.0,
+    "gamma_power_match": [
+      0.7255,
+      0.5534
+    ],
+    "gamma_noise_opt": [
+      0.5952,
+      0.2062
+    ],
+    "table": [
+      {
+        "f_ghz": 17.7,
+        "zin_core_ohm": [
+          24.043,
+          -160.098
+        ],
+        "zopt_ohm": [
+          156.081,
+          101.405
+        ],
+        "fmin_db": 1.43,
+        "rn_ohm": 37.513,
+        "fit_rms_db": 1.28e-10
+      },
+      {
+        "f_ghz": 18.55,
+        "zin_core_ohm": [
+          22.853,
+          -152.411
+        ],
+        "zopt_ohm": [
+          151.598,
+          100.354
+        ],
+        "fmin_db": 1.4413,
+        "rn_ohm": 37.154,
+        "fit_rms_db": 2.66e-10
+      },
+      {
+        "f_ghz": 19.45,
+        "zin_core_ohm": [
+          21.923,
+          -145.012
+        ],
+        "zopt_ohm": [
+          146.131,
+          99.911
+        ],
+        "fmin_db": 1.466,
+        "rn_ohm": 37.203,
+        "fit_rms_db": 1.68e-10
+      },
+      {
+        "f_ghz": 20.3,
+        "zin_core_ohm": [
+          21.265,
+          -138.694
+        ],
+        "zopt_ohm": [
+          140.546,
+          99.741
+        ],
+        "fmin_db": 1.4985,
+        "rn_ohm": 37.52,
+        "fit_rms_db": 1.93e-10
+      },
+      {
+        "f_ghz": 21.2,
+        "zin_core_ohm": [
+          20.71,
+          -132.641
+        ],
+        "zopt_ohm": [
+          134.433,
+          99.561
+        ],
+        "fmin_db": 1.5399,
+        "rn_ohm": 38.04,
+        "fit_rms_db": 2.83e-10
+      }
+    ],
+    "probes_used": [
+      "probe_thru",
+      "probe_r50a000_b",
+      "probe_r50a045_b",
+      "probe_r50a090_a",
+      "probe_r50a135_a",
+      "probe_r50a180_a",
+      "probe_r50a225_a",
+      "probe_r50a270_b",
+      "probe_r50a315_b"
+    ],
+    "op": {
+      "q1_vce": 1.242507,
+      "q1_vbe": 0.809304,
+      "q1_ic": 0.001563,
+      "q1_icfrac": 0.065105,
+      "q1_dtj": 3.394234,
+      "q1_ft": 181.832085,
+      "q2_vce": 1.2528,
+      "q2_vbe": 0.809239,
+      "q2_ic": 0.001561,
+      "q2_icfrac": 0.065024,
+      "q2_dtj": 3.418089,
+      "q2_ft": 184.432507,
+      "qr_vce": 0.812877,
+      "qr_vbe": 0.812877,
+      "qr_ic": 0.000208,
+      "qr_icfrac": 0.069354,
+      "qr_dtj": 1.922359,
+      "qr_ft": 171.508282,
+      "idd_ma": 2.066558,
+      "pdc_mw": 5.166394
+    }
+  },
+  "candidates": [
+    {
+      "name": "baseline",
+      "role": "baseline",
+      "topology": "shunt_first",
+      "c_sh1": 1.7e-13,
+      "l_in": 1.41e-09,
+      "c_sh2": 0.0,
+      "target": {
+        "kind": "baseline",
+        "note": "design/lna_stage1 as drawn (Cshunt 170 fF, Lin 1.41 nH)"
+      }
+    },
+    {
+      "name": "seg0000_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "c_sh1": 1.851e-13,
+      "l_in": 1.39e-09,
+      "c_sh2": 0.0,
+      "target": {
+        "kind": "segment",
+        "t": 0.0,
+        "gamma_re": 0.7255,
+        "gamma_im": 0.5534,
+        "zs_re": 21.9336,
+        "zs_im": 145.0203
+      }
+    },
+    {
+      "name": "seg0125_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "c_sh1": 1.104e-13,
+      "l_in": 1.4e-09,
+      "c_sh2": 0.0,
+      "target": {
+        "kind": "segment",
+        "t": 0.125,
+        "gamma_re": 0.709213,
+        "gamma_im": 0.51,
+        "zs_re": 34.37,
+        "zs_im": 147.973
+      }
+    },
+    {
+      "name": "seg0250_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "c_sh1": 2.958e-14,
+      "l_in": 1.295e-09,
+      "c_sh2": 0.0,
+      "target": {
+        "kind": "segment",
+        "t": 0.25,
+        "gamma_re": 0.692925,
+        "gamma_im": 0.4666,
+        "zs_re": 48.4181,
+        "zs_im": 149.5462
+      }
+    },
+    {
+      "name": "seg0375_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "c_sh1": 0.0,
+      "l_in": 1.101e-09,
+      "c_sh2": 7.128e-15,
+      "target": {
+        "kind": "segment",
+        "t": 0.375,
+        "gamma_re": 0.676638,
+        "gamma_im": 0.4232,
+        "zs_re": 63.9959,
+        "zs_im": 149.1919
+      }
+    },
+    {
+      "name": "seg0500_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "c_sh1": 0.0,
+      "l_in": 9.948e-10,
+      "c_sh2": 1.472e-14,
+      "target": {
+        "kind": "segment",
+        "t": 0.5,
+        "gamma_re": 0.66035,
+        "gamma_im": 0.3798,
+        "zs_re": 80.8308,
+        "zs_im": 146.2963
+      }
+    },
+    {
+      "name": "seg0625_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "c_sh1": 0.0,
+      "l_in": 9.118e-10,
+      "c_sh2": 2.203e-14,
+      "target": {
+        "kind": "segment",
+        "t": 0.625,
+        "gamma_re": 0.644062,
+        "gamma_im": 0.3364,
+        "zs_re": 98.396,
+        "zs_im": 140.2505
+      }
+    },
+    {
+      "name": "seg0750_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "c_sh1": 0.0,
+      "l_in": 8.445e-10,
+      "c_sh2": 2.916e-14,
+      "target": {
+        "kind": "segment",
+        "t": 0.75,
+        "gamma_re": 0.627775,
+        "gamma_im": 0.293,
+        "zs_re": 115.8753,
+        "zs_im": 130.5701
+      }
+    },
+    {
+      "name": "seg0875_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "c_sh1": 0.0,
+      "l_in": 7.888e-10,
+      "c_sh2": 3.617e-14,
+      "target": {
+        "kind": "segment",
+        "t": 0.875,
+        "gamma_re": 0.611487,
+        "gamma_im": 0.2496,
+        "zs_re": 132.1931,
+        "zs_im": 117.05
+      }
+    },
+    {
+      "name": "seg1000_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "c_sh1": 0.0,
+      "l_in": 7.42e-10,
+      "c_sh2": 4.311e-14,
+      "target": {
+        "kind": "segment",
+        "t": 1.0,
+        "gamma_re": 0.5952,
+        "gamma_im": 0.2062,
+        "zs_re": 146.1416,
+        "zs_im": 99.9121
+      }
+    },
+    {
+      "name": "optr10a000_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "c_sh1": 0.0,
+      "l_in": 9.285e-10,
+      "c_sh2": 3.725e-14,
+      "target": {
+        "kind": "ring_opt",
+        "r": 0.1,
+        "angle_deg": 0.0,
+        "gamma_re": 0.6952,
+        "gamma_im": 0.2062,
+        "zs_re": 175.0751,
+        "zs_im": 152.2654
+      }
+    },
+    {
+      "name": "optr10a045_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "c_sh1": 0.0,
+      "l_in": 9.096e-10,
+      "c_sh2": 2.944e-14,
+      "target": {
+        "kind": "ring_opt",
+        "r": 0.1,
+        "angle_deg": 45.0,
+        "gamma_re": 0.665911,
+        "gamma_im": 0.276911,
+        "zs_re": 127.4285,
+        "zs_im": 147.062
+      }
+    },
+    {
+      "name": "optr10a090_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "c_sh1": 0.0,
+      "l_in": 7.954e-10,
+      "c_sh2": 2.858e-14,
+      "target": {
+        "kind": "ring_opt",
+        "r": 0.1,
+        "angle_deg": 90.0,
+        "gamma_re": 0.5952,
+        "gamma_im": 0.3062,
+        "zs_re": 107.1298,
+        "zs_im": 118.8565
+      }
+    },
+    {
+      "name": "optr10a135_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "c_sh1": 0.0,
+      "l_in": 6.727e-10,
+      "c_sh2": 3.49e-14,
+      "target": {
+        "kind": "ring_opt",
+        "r": 0.1,
+        "angle_deg": 135.0,
+        "gamma_re": 0.524489,
+        "gamma_im": 0.276911,
+        "zs_re": 107.0431,
+        "zs_im": 91.4531
+      }
+    },
+    {
+      "name": "optr10a180_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "c_sh1": 0.0,
+      "l_in": 6.066e-10,
+      "c_sh2": 4.624e-14,
+      "target": {
+        "kind": "ring_opt",
+        "r": 0.1,
+        "angle_deg": 180.0,
+        "gamma_re": 0.4952,
+        "gamma_im": 0.2062,
+        "zs_re": 119.7711,
+        "zs_im": 69.3479
+      }
+    },
+    {
+      "name": "optr10a225_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "c_sh1": 0.0,
+      "l_in": 6.225e-10,
+      "c_sh2": 5.618e-14,
+      "target": {
+        "kind": "ring_opt",
+        "r": 0.1,
+        "angle_deg": 225.0,
+        "gamma_re": 0.524489,
+        "gamma_im": 0.135489,
+        "zs_re": 144.5085,
+        "zs_im": 55.4222
+      }
+    },
+    {
+      "name": "optr10a270_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "c_sh1": 0.0,
+      "l_in": 7.12e-10,
+      "c_sh2": 5.71e-14,
+      "target": {
+        "kind": "ring_opt",
+        "r": 0.1,
+        "angle_deg": 270.0,
+        "gamma_re": 0.5952,
+        "gamma_im": 0.1062,
+        "zs_re": 181.1274,
+        "zs_im": 60.6367
+      }
+    },
+    {
+      "name": "optr10a315_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "c_sh1": 0.0,
+      "l_in": 8.375e-10,
+      "c_sh2": 4.867e-14,
+      "target": {
+        "kind": "ring_opt",
+        "r": 0.1,
+        "angle_deg": 315.0,
+        "gamma_re": 0.665911,
+        "gamma_im": 0.135489,
+        "zs_re": 207.0451,
+        "zs_im": 104.2442
+      }
+    },
+    {
+      "name": "optr20a000_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "c_sh1": 0.0,
+      "l_in": 1.23e-09,
+      "c_sh2": 2.833e-14,
+      "target": {
+        "kind": "ring_opt",
+        "r": 0.2,
+        "angle_deg": 0.0,
+        "gamma_re": 0.7952,
+        "gamma_im": 0.2062,
+        "zs_re": 192.4774,
+        "zs_im": 244.135
+      }
+    },
+    {
+      "name": "optr20a045_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "c_sh1": 0.0,
+      "l_in": 1.18e-09,
+      "c_sh2": 1.438e-14,
+      "target": {
+        "kind": "ring_opt",
+        "r": 0.2,
+        "angle_deg": 45.0,
+        "gamma_re": 0.736621,
+        "gamma_im": 0.347621,
+        "zs_re": 88.4681,
+        "zs_im": 182.7577
+      }
+    },
+    {
+      "name": "optr20a090_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "c_sh1": 0.0,
+      "l_in": 8.81e-10,
+      "c_sh2": 1.345e-14,
+      "target": {
+        "kind": "ring_opt",
+        "r": 0.2,
+        "angle_deg": 90.0,
+        "gamma_re": 0.5952,
+        "gamma_im": 0.4062,
+        "zs_re": 73.0913,
+        "zs_im": 123.5171
+      }
+    },
+    {
+      "name": "optr20a135_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "c_sh1": 0.0,
+      "l_in": 6.23e-10,
+      "c_sh2": 2.417e-14,
+      "target": {
+        "kind": "ring_opt",
+        "r": 0.2,
+        "angle_deg": 135.0,
+        "gamma_re": 0.453779,
+        "gamma_im": 0.347621,
+        "zs_re": 80.3014,
+        "zs_im": 82.9253
+      }
+    },
+    {
+      "name": "optr20a180_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "c_sh1": 0.0,
+      "l_in": 4.981e-10,
+      "c_sh2": 4.634e-14,
+      "target": {
+        "kind": "ring_opt",
+        "r": 0.2,
+        "angle_deg": 180.0,
+        "gamma_re": 0.3952,
+        "gamma_im": 0.2062,
+        "zs_re": 98.1258,
+        "zs_im": 50.5019
+      }
+    },
+    {
+      "name": "optr20a225_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "c_sh1": 0.0,
+      "l_in": 5.305e-10,
+      "c_sh2": 6.913e-14,
+      "target": {
+        "kind": "ring_opt",
+        "r": 0.2,
+        "angle_deg": 225.0,
+        "gamma_re": 0.453779,
+        "gamma_im": 0.064779,
+        "zs_re": 130.5368,
+        "zs_im": 21.4106
+      }
+    },
+    {
+      "name": "optr20a270_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "c_sh1": 0.0,
+      "l_in": 7.016e-10,
+      "c_sh2": 7.042e-14,
+      "target": {
+        "kind": "ring_opt",
+        "r": 0.2,
+        "angle_deg": 270.0,
+        "gamma_re": 0.5952,
+        "gamma_im": 0.0062,
+        "zs_re": 196.9776,
+        "zs_im": 3.7828
+      }
+    },
+    {
+      "name": "optr20a315_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "c_sh1": 0.0,
+      "l_in": 9.737e-10,
+      "c_sh2": 5.143e-14,
+      "target": {
+        "kind": "ring_opt",
+        "r": 0.2,
+        "angle_deg": 315.0,
+        "gamma_re": 0.736621,
+        "gamma_im": 0.064779,
+        "zs_re": 308.0237,
+        "zs_im": 88.0568
+      }
+    },
+    {
+      "name": "pmr03a000_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "c_sh1": 2.301e-13,
+      "l_in": 1.43e-09,
+      "c_sh2": 0.0,
+      "target": {
+        "kind": "ring_pm",
+        "r": 0.03,
+        "angle_deg": 0.0,
+        "gamma_re": 0.7555,
+        "gamma_im": 0.5534,
+        "zs_re": 16.7975,
+        "zs_im": 151.189
+      }
+    },
+    {
+      "name": "pmr03a045_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "c_sh1": 2.595e-13,
+      "l_in": 1.377e-09,
+      "c_sh2": 0.0,
+      "target": {
+        "kind": "ring_pm",
+        "r": 0.03,
+        "angle_deg": 45.0,
+        "gamma_re": 0.746713,
+        "gamma_im": 0.574613,
+        "zs_re": 14.2315,
+        "zs_im": 145.7172
+      }
+    },
+    {
+      "name": "pmr03a090_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "c_sh1": 2.382e-13,
+      "l_in": 1.339e-09,
+      "c_sh2": 0.0,
+      "target": {
+        "kind": "ring_pm",
+        "r": 0.03,
+        "angle_deg": 90.0,
+        "gamma_re": 0.7255,
+        "gamma_im": 0.5834,
+        "zs_re": 16.0323,
+        "zs_im": 140.3396
+      }
+    },
+    {
+      "name": "pmr03a135_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "c_sh1": 1.938e-13,
+      "l_in": 1.328e-09,
+      "c_sh2": 0.0,
+      "target": {
+        "kind": "ring_pm",
+        "r": 0.03,
+        "angle_deg": 135.0,
+        "gamma_re": 0.704287,
+        "gamma_im": 0.574613,
+        "zs_re": 20.808,
+        "zs_im": 137.5902
+      }
+    },
+    {
+      "name": "pmr03a180_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "c_sh1": 1.552e-13,
+      "l_in": 1.339e-09,
+      "c_sh2": 0.0,
+      "target": {
+        "kind": "ring_pm",
+        "r": 0.03,
+        "angle_deg": 180.0,
+        "gamma_re": 0.6955,
+        "gamma_im": 0.5534,
+        "zs_re": 26.3212,
+        "zs_im": 138.7065
+      }
+    },
+    {
+      "name": "pmr03a225_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "c_sh1": 1.349e-13,
+      "l_in": 1.376e-09,
+      "c_sh2": 0.0,
+      "target": {
+        "kind": "ring_pm",
+        "r": 0.03,
+        "angle_deg": 225.0,
+        "gamma_re": 0.704287,
+        "gamma_im": 0.532187,
+        "zs_re": 29.7782,
+        "zs_im": 143.5746
+      }
+    },
+    {
+      "name": "pmr03a270_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "c_sh1": 1.416e-13,
+      "l_in": 1.429e-09,
+      "c_sh2": 0.0,
+      "target": {
+        "kind": "ring_pm",
+        "r": 0.03,
+        "angle_deg": 270.0,
+        "gamma_re": 0.7255,
+        "gamma_im": 0.5234,
+        "zs_re": 28.5862,
+        "zs_im": 149.8435
+      }
+    },
+    {
+      "name": "pmr03a315_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "c_sh1": 1.779e-13,
+      "l_in": 1.457e-09,
+      "c_sh2": 0.0,
+      "target": {
+        "kind": "ring_pm",
+        "r": 0.03,
+        "angle_deg": 315.0,
+        "gamma_re": 0.746713,
+        "gamma_im": 0.532187,
+        "zs_re": 22.9141,
+        "zs_im": 153.2015
+      }
+    },
+    {
+      "name": "pmr06a000_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "c_sh1": 3.101e-13,
+      "l_in": 1.454e-09,
+      "c_sh2": 0.0,
+      "target": {
+        "kind": "ring_pm",
+        "r": 0.06,
+        "angle_deg": 0.0,
+        "gamma_re": 0.7855,
+        "gamma_im": 0.5534,
+        "zs_re": 10.8922,
+        "zs_im": 157.0991
+      }
+    },
+    {
+      "name": "pmr06a045_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "c_sh1": 4.139e-13,
+      "l_in": 1.332e-09,
+      "c_sh2": 0.0,
+      "target": {
+        "kind": "ring_pm",
+        "r": 0.06,
+        "angle_deg": 45.0,
+        "gamma_re": 0.767926,
+        "gamma_im": 0.595826,
+        "zs_re": 6.7601,
+        "zs_im": 145.7261
+      }
+    },
+    {
+      "name": "pmr06a090_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "c_sh1": 3.121e-13,
+      "l_in": 1.28e-09,
+      "c_sh2": 0.0,
+      "target": {
+        "kind": "ring_pm",
+        "r": 0.06,
+        "angle_deg": 90.0,
+        "gamma_re": 0.7255,
+        "gamma_im": 0.6134,
+        "zs_re": 10.7826,
+        "zs_im": 135.8252
+      }
+    },
+    {
+      "name": "pmr06a135_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "c_sh1": 2.039e-13,
+      "l_in": 1.27e-09,
+      "c_sh2": 0.0,
+      "target": {
+        "kind": "ring_pm",
+        "r": 0.06,
+        "angle_deg": 135.0,
+        "gamma_re": 0.683074,
+        "gamma_im": 0.595826,
+        "zs_re": 19.5851,
+        "zs_im": 130.8211
+      }
+    },
+    {
+      "name": "pmr06a180_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "c_sh1": 1.336e-13,
+      "l_in": 1.283e-09,
+      "c_sh2": 0.0,
+      "target": {
+        "kind": "ring_pm",
+        "r": 0.06,
+        "angle_deg": 180.0,
+        "gamma_re": 0.6655,
+        "gamma_im": 0.5534,
+        "zs_re": 29.9968,
+        "zs_im": 132.3474
+      }
+    },
+    {
+      "name": "pmr06a225_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "c_sh1": 9.368e-14,
+      "l_in": 1.333e-09,
+      "c_sh2": 0.0,
+      "target": {
+        "kind": "ring_pm",
+        "r": 0.06,
+        "angle_deg": 225.0,
+        "gamma_re": 0.683074,
+        "gamma_im": 0.510974,
+        "zs_re": 37.661,
+        "zs_im": 141.3339
+      }
+    },
+    {
+      "name": "pmr06a270_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "c_sh1": 1.015e-13,
+      "l_in": 1.45e-09,
+      "c_sh2": 0.0,
+      "target": {
+        "kind": "ring_pm",
+        "r": 0.06,
+        "angle_deg": 270.0,
+        "gamma_re": 0.7255,
+        "gamma_im": 0.4934,
+        "zs_re": 36.1058,
+        "zs_im": 154.7709
+      }
+    },
+    {
+      "name": "pmr06a315_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "c_sh1": 1.725e-13,
+      "l_in": 1.532e-09,
+      "c_sh2": 0.0,
+      "target": {
+        "kind": "ring_pm",
+        "r": 0.06,
+        "angle_deg": 315.0,
+        "gamma_re": 0.767926,
+        "gamma_im": 0.510974,
+        "zs_re": 23.6853,
+        "zs_im": 162.2385
+      }
+    },
+    {
+      "name": "probe_thru",
+      "role": "probe",
+      "topology": "shunt_first",
+      "c_sh1": 0.0,
+      "l_in": 1e-18,
+      "c_sh2": 0.0,
+      "target": {
+        "kind": "thru"
+      }
+    },
+    {
+      "name": "probe_r50a000_b",
+      "role": "probe",
+      "topology": "series_first",
+      "c_sh1": 0.0,
+      "l_in": 5.786e-10,
+      "c_sh2": 7.715e-14,
+      "target": {
+        "kind": "probe_ring",
+        "r": 0.5,
+        "angle_deg": 0.0,
+        "gamma_re": 0.5,
+        "gamma_im": 0.0,
+        "zs_re": 150.0,
+        "zs_im": 0.0
+      }
+    },
+    {
+      "name": "probe_r50a045_b",
+      "role": "probe",
+      "topology": "series_first",
+      "c_sh1": 0.0,
+      "l_in": 5.191e-10,
+      "c_sh2": 2.044e-14,
+      "target": {
+        "kind": "probe_ring",
+        "r": 0.5,
+        "angle_deg": 45.0,
+        "gamma_re": 0.353553,
+        "gamma_im": 0.353553,
+        "zs_re": 69.0744,
+        "zs_im": 65.1239
+      }
+    },
+    {
+      "name": "probe_r50a090_a",
+      "role": "probe",
+      "topology": "shunt_first",
+      "c_sh1": 1.336e-13,
+      "l_in": 5.277e-10,
+      "c_sh2": 0.0,
+      "target": {
+        "kind": "probe_ring",
+        "r": 0.5,
+        "angle_deg": 90.0,
+        "gamma_re": 0.0,
+        "gamma_im": 0.5,
+        "zs_re": 30.0,
+        "zs_im": 40.0
+      }
+    },
+    {
+      "name": "probe_r50a135_a",
+      "role": "probe",
+      "topology": "shunt_first",
+      "c_sh1": 2.076e-13,
+      "l_in": 3.467e-10,
+      "c_sh2": 0.0,
+      "target": {
+        "kind": "probe_ring",
+        "r": 0.5,
+        "angle_deg": 135.0,
+        "gamma_re": -0.353553,
+        "gamma_im": 0.353553,
+        "zs_re": 19.1609,
+        "zs_im": 18.0651
+      }
+    },
+    {
+      "name": "probe_r50a180_a",
+      "role": "probe",
+      "topology": "shunt_first",
+      "c_sh1": 2.314e-13,
+      "l_in": 1.929e-10,
+      "c_sh2": 0.0,
+      "target": {
+        "kind": "probe_ring",
+        "r": 0.5,
+        "angle_deg": 180.0,
+        "gamma_re": -0.5,
+        "gamma_im": 0.0,
+        "zs_re": 16.6667,
+        "zs_im": 0.0
+      }
+    },
+    {
+      "name": "probe_r50a225_a",
+      "role": "probe",
+      "topology": "shunt_first",
+      "c_sh1": 2.076e-13,
+      "l_in": 5.109e-11,
+      "c_sh2": 0.0,
+      "target": {
+        "kind": "probe_ring",
+        "r": 0.5,
+        "angle_deg": 225.0,
+        "gamma_re": -0.353553,
+        "gamma_im": -0.353553,
+        "zs_re": 19.1609,
+        "zs_im": -18.0651
+      }
+    },
+    {
+      "name": "probe_r50a270_b",
+      "role": "probe",
+      "topology": "series_first",
+      "c_sh1": 0.0,
+      "l_in": 3.341e-10,
+      "c_sh2": 2.111e-13,
+      "target": {
+        "kind": "probe_ring",
+        "r": 0.5,
+        "angle_deg": 270.0,
+        "gamma_re": -0.0,
+        "gamma_im": -0.5,
+        "zs_re": 30.0,
+        "zs_im": -40.0
+      }
+    },
+    {
+      "name": "probe_r50a315_b",
+      "role": "probe",
+      "topology": "series_first",
+      "c_sh1": 0.0,
+      "l_in": 5.191e-10,
+      "c_sh2": 1.387e-13,
+      "target": {
+        "kind": "probe_ring",
+        "r": 0.5,
+        "angle_deg": 315.0,
+        "gamma_re": 0.353553,
+        "gamma_im": -0.353553,
+        "zs_re": 69.0744,
+        "zs_im": -65.1239
+      }
+    }
+  ],
+  "excluded_targets": [
+    {
+      "kind": "segment",
+      "t": 0.0,
+      "gamma_re": 0.7255,
+      "gamma_im": 0.5534,
+      "zs_re": 21.9336,
+      "zs_im": 145.0203,
+      "name": "seg0000_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "reason": "needs a shunt inductor (B_C = -0.002342 < 0)"
+    },
+    {
+      "kind": "segment",
+      "t": 0.125,
+      "gamma_re": 0.709213,
+      "gamma_im": 0.51,
+      "zs_re": 34.37,
+      "zs_im": 147.973,
+      "name": "seg0125_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "reason": "needs a shunt inductor (B_C = -0.001161 < 0)"
+    },
+    {
+      "kind": "segment",
+      "t": 0.25,
+      "gamma_re": 0.692925,
+      "gamma_im": 0.4666,
+      "zs_re": 48.4181,
+      "zs_im": 149.5462,
+      "name": "seg0250_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "reason": "needs a shunt inductor (B_C = -0.0001067 < 0)"
+    },
+    {
+      "kind": "segment",
+      "t": 0.375,
+      "gamma_re": 0.676638,
+      "gamma_im": 0.4232,
+      "zs_re": 63.9959,
+      "zs_im": 149.1919,
+      "name": "seg0375_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "reason": "needs 0 < Rs < 50 ohm (Rs = 64)"
+    },
+    {
+      "kind": "segment",
+      "t": 0.5,
+      "gamma_re": 0.66035,
+      "gamma_im": 0.3798,
+      "zs_re": 80.8308,
+      "zs_im": 146.2963,
+      "name": "seg0500_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "reason": "needs 0 < Rs < 50 ohm (Rs = 80.83)"
+    },
+    {
+      "kind": "segment",
+      "t": 0.625,
+      "gamma_re": 0.644062,
+      "gamma_im": 0.3364,
+      "zs_re": 98.396,
+      "zs_im": 140.2505,
+      "name": "seg0625_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "reason": "needs 0 < Rs < 50 ohm (Rs = 98.4)"
+    },
+    {
+      "kind": "segment",
+      "t": 0.75,
+      "gamma_re": 0.627775,
+      "gamma_im": 0.293,
+      "zs_re": 115.8753,
+      "zs_im": 130.5701,
+      "name": "seg0750_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "reason": "needs 0 < Rs < 50 ohm (Rs = 115.9)"
+    },
+    {
+      "kind": "segment",
+      "t": 0.875,
+      "gamma_re": 0.611487,
+      "gamma_im": 0.2496,
+      "zs_re": 132.1931,
+      "zs_im": 117.05,
+      "name": "seg0875_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "reason": "needs 0 < Rs < 50 ohm (Rs = 132.2)"
+    },
+    {
+      "kind": "segment",
+      "t": 1.0,
+      "gamma_re": 0.5952,
+      "gamma_im": 0.2062,
+      "zs_re": 146.1416,
+      "zs_im": 99.9121,
+      "name": "seg1000_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "reason": "needs 0 < Rs < 50 ohm (Rs = 146.1)"
+    },
+    {
+      "kind": "ring_opt",
+      "r": 0.1,
+      "angle_deg": 0.0,
+      "gamma_re": 0.6952,
+      "gamma_im": 0.2062,
+      "zs_re": 175.0751,
+      "zs_im": 152.2654,
+      "name": "optr10a000_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "reason": "needs 0 < Rs < 50 ohm (Rs = 175.1)"
+    },
+    {
+      "kind": "ring_opt",
+      "r": 0.1,
+      "angle_deg": 45.0,
+      "gamma_re": 0.665911,
+      "gamma_im": 0.276911,
+      "zs_re": 127.4285,
+      "zs_im": 147.062,
+      "name": "optr10a045_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "reason": "needs 0 < Rs < 50 ohm (Rs = 127.4)"
+    },
+    {
+      "kind": "ring_opt",
+      "r": 0.1,
+      "angle_deg": 90.0,
+      "gamma_re": 0.5952,
+      "gamma_im": 0.3062,
+      "zs_re": 107.1298,
+      "zs_im": 118.8565,
+      "name": "optr10a090_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "reason": "needs 0 < Rs < 50 ohm (Rs = 107.1)"
+    },
+    {
+      "kind": "ring_opt",
+      "r": 0.1,
+      "angle_deg": 135.0,
+      "gamma_re": 0.524489,
+      "gamma_im": 0.276911,
+      "zs_re": 107.0431,
+      "zs_im": 91.4531,
+      "name": "optr10a135_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "reason": "needs 0 < Rs < 50 ohm (Rs = 107)"
+    },
+    {
+      "kind": "ring_opt",
+      "r": 0.1,
+      "angle_deg": 180.0,
+      "gamma_re": 0.4952,
+      "gamma_im": 0.2062,
+      "zs_re": 119.7711,
+      "zs_im": 69.3479,
+      "name": "optr10a180_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "reason": "needs 0 < Rs < 50 ohm (Rs = 119.8)"
+    },
+    {
+      "kind": "ring_opt",
+      "r": 0.1,
+      "angle_deg": 225.0,
+      "gamma_re": 0.524489,
+      "gamma_im": 0.135489,
+      "zs_re": 144.5085,
+      "zs_im": 55.4222,
+      "name": "optr10a225_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "reason": "needs 0 < Rs < 50 ohm (Rs = 144.5)"
+    },
+    {
+      "kind": "ring_opt",
+      "r": 0.1,
+      "angle_deg": 270.0,
+      "gamma_re": 0.5952,
+      "gamma_im": 0.1062,
+      "zs_re": 181.1274,
+      "zs_im": 60.6367,
+      "name": "optr10a270_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "reason": "needs 0 < Rs < 50 ohm (Rs = 181.1)"
+    },
+    {
+      "kind": "ring_opt",
+      "r": 0.1,
+      "angle_deg": 315.0,
+      "gamma_re": 0.665911,
+      "gamma_im": 0.135489,
+      "zs_re": 207.0451,
+      "zs_im": 104.2442,
+      "name": "optr10a315_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "reason": "needs 0 < Rs < 50 ohm (Rs = 207)"
+    },
+    {
+      "kind": "ring_opt",
+      "r": 0.2,
+      "angle_deg": 0.0,
+      "gamma_re": 0.7952,
+      "gamma_im": 0.2062,
+      "zs_re": 192.4774,
+      "zs_im": 244.135,
+      "name": "optr20a000_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "reason": "needs 0 < Rs < 50 ohm (Rs = 192.5)"
+    },
+    {
+      "kind": "ring_opt",
+      "r": 0.2,
+      "angle_deg": 45.0,
+      "gamma_re": 0.736621,
+      "gamma_im": 0.347621,
+      "zs_re": 88.4681,
+      "zs_im": 182.7577,
+      "name": "optr20a045_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "reason": "needs 0 < Rs < 50 ohm (Rs = 88.47)"
+    },
+    {
+      "kind": "ring_opt",
+      "r": 0.2,
+      "angle_deg": 90.0,
+      "gamma_re": 0.5952,
+      "gamma_im": 0.4062,
+      "zs_re": 73.0913,
+      "zs_im": 123.5171,
+      "name": "optr20a090_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "reason": "needs 0 < Rs < 50 ohm (Rs = 73.09)"
+    },
+    {
+      "kind": "ring_opt",
+      "r": 0.2,
+      "angle_deg": 135.0,
+      "gamma_re": 0.453779,
+      "gamma_im": 0.347621,
+      "zs_re": 80.3014,
+      "zs_im": 82.9253,
+      "name": "optr20a135_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "reason": "needs 0 < Rs < 50 ohm (Rs = 80.3)"
+    },
+    {
+      "kind": "ring_opt",
+      "r": 0.2,
+      "angle_deg": 180.0,
+      "gamma_re": 0.3952,
+      "gamma_im": 0.2062,
+      "zs_re": 98.1258,
+      "zs_im": 50.5019,
+      "name": "optr20a180_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "reason": "needs 0 < Rs < 50 ohm (Rs = 98.13)"
+    },
+    {
+      "kind": "ring_opt",
+      "r": 0.2,
+      "angle_deg": 225.0,
+      "gamma_re": 0.453779,
+      "gamma_im": 0.064779,
+      "zs_re": 130.5368,
+      "zs_im": 21.4106,
+      "name": "optr20a225_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "reason": "needs 0 < Rs < 50 ohm (Rs = 130.5)"
+    },
+    {
+      "kind": "ring_opt",
+      "r": 0.2,
+      "angle_deg": 270.0,
+      "gamma_re": 0.5952,
+      "gamma_im": 0.0062,
+      "zs_re": 196.9776,
+      "zs_im": 3.7828,
+      "name": "optr20a270_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "reason": "needs 0 < Rs < 50 ohm (Rs = 197)"
+    },
+    {
+      "kind": "ring_opt",
+      "r": 0.2,
+      "angle_deg": 315.0,
+      "gamma_re": 0.736621,
+      "gamma_im": 0.064779,
+      "zs_re": 308.0237,
+      "zs_im": 88.0568,
+      "name": "optr20a315_a",
+      "role": "candidate",
+      "topology": "shunt_first",
+      "reason": "needs 0 < Rs < 50 ohm (Rs = 308)"
+    },
+    {
+      "kind": "ring_pm",
+      "r": 0.03,
+      "angle_deg": 0.0,
+      "gamma_re": 0.7555,
+      "gamma_im": 0.5534,
+      "zs_re": 16.7975,
+      "zs_im": 151.189,
+      "name": "pmr03a000_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "reason": "needs a shunt inductor (B_C = -0.002793 < 0)"
+    },
+    {
+      "kind": "ring_pm",
+      "r": 0.03,
+      "angle_deg": 45.0,
+      "gamma_re": 0.746713,
+      "gamma_im": 0.574613,
+      "zs_re": 14.2315,
+      "zs_im": 145.7172,
+      "name": "pmr03a045_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "reason": "needs a shunt inductor (B_C = -0.003215 < 0)"
+    },
+    {
+      "kind": "ring_pm",
+      "r": 0.03,
+      "angle_deg": 90.0,
+      "gamma_re": 0.7255,
+      "gamma_im": 0.5834,
+      "zs_re": 16.0323,
+      "zs_im": 140.3396,
+      "name": "pmr03a090_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "reason": "needs a shunt inductor (B_C = -0.003106 < 0)"
+    },
+    {
+      "kind": "ring_pm",
+      "r": 0.03,
+      "angle_deg": 135.0,
+      "gamma_re": 0.704287,
+      "gamma_im": 0.574613,
+      "zs_re": 20.808,
+      "zs_im": 137.5902,
+      "name": "pmr03a135_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "reason": "needs a shunt inductor (B_C = -0.002596 < 0)"
+    },
+    {
+      "kind": "ring_pm",
+      "r": 0.03,
+      "angle_deg": 180.0,
+      "gamma_re": 0.6955,
+      "gamma_im": 0.5534,
+      "zs_re": 26.3212,
+      "zs_im": 138.7065,
+      "name": "pmr03a180_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "reason": "needs a shunt inductor (B_C = -0.001992 < 0)"
+    },
+    {
+      "kind": "ring_pm",
+      "r": 0.03,
+      "angle_deg": 225.0,
+      "gamma_re": 0.704287,
+      "gamma_im": 0.532187,
+      "zs_re": 29.7782,
+      "zs_im": 143.5746,
+      "name": "pmr03a225_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "reason": "needs a shunt inductor (B_C = -0.0016 < 0)"
+    },
+    {
+      "kind": "ring_pm",
+      "r": 0.03,
+      "angle_deg": 270.0,
+      "gamma_re": 0.7255,
+      "gamma_im": 0.5234,
+      "zs_re": 28.5862,
+      "zs_im": 149.8435,
+      "name": "pmr03a270_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "reason": "needs a shunt inductor (B_C = -0.001637 < 0)"
+    },
+    {
+      "kind": "ring_pm",
+      "r": 0.03,
+      "angle_deg": 315.0,
+      "gamma_re": 0.746713,
+      "gamma_im": 0.532187,
+      "zs_re": 22.9141,
+      "zs_im": 153.2015,
+      "name": "pmr03a315_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "reason": "needs a shunt inductor (B_C = -0.00212 < 0)"
+    },
+    {
+      "kind": "ring_pm",
+      "r": 0.06,
+      "angle_deg": 0.0,
+      "gamma_re": 0.7855,
+      "gamma_im": 0.5534,
+      "zs_re": 10.8922,
+      "zs_im": 157.0991,
+      "name": "pmr06a000_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "reason": "needs a shunt inductor (B_C = -0.003404 < 0)"
+    },
+    {
+      "kind": "ring_pm",
+      "r": 0.06,
+      "angle_deg": 45.0,
+      "gamma_re": 0.767926,
+      "gamma_im": 0.595826,
+      "zs_re": 6.7601,
+      "zs_im": 145.7261,
+      "name": "pmr06a045_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "reason": "needs a shunt inductor (B_C = -0.004347 < 0)"
+    },
+    {
+      "kind": "ring_pm",
+      "r": 0.06,
+      "angle_deg": 90.0,
+      "gamma_re": 0.7255,
+      "gamma_im": 0.6134,
+      "zs_re": 10.7826,
+      "zs_im": 135.8252,
+      "name": "pmr06a090_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "reason": "needs a shunt inductor (B_C = -0.003958 < 0)"
+    },
+    {
+      "kind": "ring_pm",
+      "r": 0.06,
+      "angle_deg": 135.0,
+      "gamma_re": 0.683074,
+      "gamma_im": 0.595826,
+      "zs_re": 19.5851,
+      "zs_im": 130.8211,
+      "name": "pmr06a135_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "reason": "needs a shunt inductor (B_C = -0.002879 < 0)"
+    },
+    {
+      "kind": "ring_pm",
+      "r": 0.06,
+      "angle_deg": 180.0,
+      "gamma_re": 0.6655,
+      "gamma_im": 0.5534,
+      "zs_re": 29.9968,
+      "zs_im": 132.3474,
+      "name": "pmr06a180_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "reason": "needs a shunt inductor (B_C = -0.001716 < 0)"
+    },
+    {
+      "kind": "ring_pm",
+      "r": 0.06,
+      "angle_deg": 225.0,
+      "gamma_re": 0.683074,
+      "gamma_im": 0.510974,
+      "zs_re": 37.661,
+      "zs_im": 141.3339,
+      "name": "pmr06a225_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "reason": "needs a shunt inductor (B_C = -0.0009399 < 0)"
+    },
+    {
+      "kind": "ring_pm",
+      "r": 0.06,
+      "angle_deg": 270.0,
+      "gamma_re": 0.7255,
+      "gamma_im": 0.4934,
+      "zs_re": 36.1058,
+      "zs_im": 154.7709,
+      "name": "pmr06a270_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "reason": "needs a shunt inductor (B_C = -0.0009753 < 0)"
+    },
+    {
+      "kind": "ring_pm",
+      "r": 0.06,
+      "angle_deg": 315.0,
+      "gamma_re": 0.767926,
+      "gamma_im": 0.510974,
+      "zs_re": 23.6853,
+      "zs_im": 162.2385,
+      "name": "pmr06a315_b",
+      "role": "candidate",
+      "topology": "series_first",
+      "reason": "needs a shunt inductor (B_C = -0.001931 < 0)"
+    },
+    {
+      "kind": "probe_ring",
+      "r": 0.5,
+      "angle_deg": 0.0,
+      "gamma_re": 0.5,
+      "gamma_im": 0.0,
+      "zs_re": 150.0,
+      "zs_im": 0.0,
+      "name": "probe_r50a000_a",
+      "role": "probe",
+      "topology": "shunt_first",
+      "reason": "needs 0 < Rs < 50 ohm (Rs = 150)"
+    },
+    {
+      "kind": "probe_ring",
+      "r": 0.5,
+      "angle_deg": 45.0,
+      "gamma_re": 0.353553,
+      "gamma_im": 0.353553,
+      "zs_re": 69.0744,
+      "zs_im": 65.1239,
+      "name": "probe_r50a045_a",
+      "role": "probe",
+      "topology": "shunt_first",
+      "reason": "needs 0 < Rs < 50 ohm (Rs = 69.07)"
+    },
+    {
+      "kind": "probe_ring",
+      "r": 0.5,
+      "angle_deg": 90.0,
+      "gamma_re": 0.0,
+      "gamma_im": 0.5,
+      "zs_re": 30.0,
+      "zs_im": 40.0,
+      "name": "probe_r50a090_b",
+      "role": "probe",
+      "topology": "series_first",
+      "reason": "needs a shunt inductor (B_C = -0.006202 < 0)"
+    },
+    {
+      "kind": "probe_ring",
+      "r": 0.5,
+      "angle_deg": 135.0,
+      "gamma_re": -0.353553,
+      "gamma_im": 0.353553,
+      "zs_re": 19.1609,
+      "zs_im": 18.0651,
+      "name": "probe_r50a135_b",
+      "role": "probe",
+      "topology": "series_first",
+      "reason": "needs 0 < Gs < 0.02 S (Gs = 0.02763)"
+    },
+    {
+      "kind": "probe_ring",
+      "r": 0.5,
+      "angle_deg": 180.0,
+      "gamma_re": -0.5,
+      "gamma_im": 0.0,
+      "zs_re": 16.6667,
+      "zs_im": 0.0,
+      "name": "probe_r50a180_b",
+      "role": "probe",
+      "topology": "series_first",
+      "reason": "needs 0 < Gs < 0.02 S (Gs = 0.06)"
+    },
+    {
+      "kind": "probe_ring",
+      "r": 0.5,
+      "angle_deg": 225.0,
+      "gamma_re": -0.353553,
+      "gamma_im": -0.353553,
+      "zs_re": 19.1609,
+      "zs_im": -18.0651,
+      "name": "probe_r50a225_b",
+      "role": "probe",
+      "topology": "series_first",
+      "reason": "needs 0 < Gs < 0.02 S (Gs = 0.02763)"
+    },
+    {
+      "kind": "probe_ring",
+      "r": 0.5,
+      "angle_deg": 270.0,
+      "gamma_re": -0.0,
+      "gamma_im": -0.5,
+      "zs_re": 30.0,
+      "zs_im": -40.0,
+      "name": "probe_r50a270_a",
+      "role": "probe",
+      "topology": "shunt_first",
+      "reason": "needs a series capacitor (Xs = -40 < -Rs q = -24.49)"
+    },
+    {
+      "kind": "probe_ring",
+      "r": 0.5,
+      "angle_deg": 315.0,
+      "gamma_re": 0.353553,
+      "gamma_im": -0.353553,
+      "zs_re": 69.0744,
+      "zs_im": -65.1239,
+      "name": "probe_r50a315_a",
+      "role": "probe",
+      "topology": "shunt_first",
+      "reason": "needs 0 < Rs < 50 ohm (Rs = 69.07)"
+    }
+  ]
+}
