@@ -6,7 +6,7 @@ import json
 import re
 from pathlib import Path
 
-from .common import (Problems, has_section, header_field, load_json_object, need_record_commit, need_sha256, need_str, read_gzip_text, rel)
+from .common import (Problems, has_section, header_field, load_json_object, need_record_commit, need_sha256, need_str, read_gzip_text, reject_foreign_dirs, rel)
 from .mixer_pra import SHA1_RE, _num
 from .passive_p1 import PASSIVE_PACKAGES, _sha256_of
 from .spec_rows import SPEC_PATH, SPEC_ROW_RE
@@ -502,6 +502,4 @@ def check_lna_linearity(problems: Problems, root: Path, exp_dir: Path) -> None:
             for p in sorted(d.iterdir()):
                 if p.name not in ids:
                     problems.add(rel(root, p), f"{sub} entry belongs to no record in this experiment (orphan evidence)")
-    for sub in ("probe-logs", PASSIVE_PACKAGES):
-        if (exp_dir / sub).exists():
-            problems.add(rel(root, exp_dir / sub), f"{sub}/ is not part of the {LIN_BENCH} evidence layout")
+    reject_foreign_dirs(problems, root, exp_dir, LIN_BENCH, ("probe-logs", PASSIVE_PACKAGES))

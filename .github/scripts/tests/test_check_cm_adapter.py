@@ -255,6 +255,13 @@ class ProbeRun(Base):
         shutil.copytree(self.logs, self.exp / "probe-logs" / "20261010-130000-abcdef1")
         self.assertFails("belongs to no record")
 
+    def test_probe_logs_entry_must_be_a_run_directory(self):
+        # A probe-logs/ entry whose name is not a record id is rejected before
+        # the orphan rule can speak for it. Shared by every probe-log bench via
+        # common.check_probe_log_bench (issue #255).
+        (self.exp / "probe-logs" / "notes").mkdir()
+        self.assertFails("probe-logs entry is not a <YYYYMMDD>-<HHMMSS>-<git-sha>/ run directory")
+
     def test_foreign_dirs_rejected(self):
         (self.exp / "corners").mkdir()
         self.assertFails("is not part of the mixer-cm-interface-probe evidence layout")
