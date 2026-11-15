@@ -2,6 +2,19 @@
 
 Chronological record of merged pull requests and closed issues, maintained by the Loom Guide role.
 
+## Archives
+
+- [2026-09](work_log/WORK_LOG_2026-09.md)
+
+### 2026-11-14
+
+- **PR #249**: docs: list all nine content directories in README repo layout
+- **Issue #247** (closed): docs: README repo-layout block omits signoff/, manifests/, ratification/ and docs/
+- **PR #253**: docs(layout): record the readiness probe re-run at the klt 0.8.0 pin
+- **Issue #246** (closed): layout: re-run the klt layout-chain readiness probe at the pinned release klt 0.8.0 (npn13G2 extraction)
+- **PR #251**: design(lna_stage1): add Le1 degeneration and a quieter base feed, selected by the #79 core-variant campaign
+- **Issue #79** (closed): design: choose the first-stage core change that lets NF and input match close together
+
 ### 2026-10-31
 
 - **PR #242**: sim: lna-headroom stage-2 refinement record for C08/C05 vs C00
@@ -235,12 +248,3 @@ Chronological record of merged pull requests and closed issues, maintained by th
 - **PR #12**: feat: add klt signoff block manifest, graded T1 report, and CI gate
 - **Issue #10** (closed): Commit a klt signoff block manifest so this block's T1 state is graded, not hand-read
 
-### 2026-09-12
-
-- **Issue #9** (closed): Remove unused pdk_available() helper in sim/harness/pdk.py
-- **Issue #2** (closed): Harness bootstrap: LNA S-parameter/NF bench and mixer bench on the scaffold's sim/harness core
-- **PR #6**: sim: harness bootstrap -- LNA S-parameter/NF and mixer conversion/IIP3 benches
-- **Issue #7** (closed): Remove unused pdk_available() helper in sim/harness/pdk.py
-- **PR #8**: Remove unused pdk_available() helper in sim/harness/pdk.py
-- **Issue #1** (closed): Ratify the target spec: Ka-band receive front end (LNA + mixer) — draft spec, porting plan, band and beamsteering decision records, gap-to-T1 tracker
-- **PR #5**: spec: draft the Ka-band target spec, porting plan, and the band + beamsteering decision records
