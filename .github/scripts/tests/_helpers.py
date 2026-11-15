@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 import sys
 import unittest
@@ -24,6 +25,18 @@ def run(cwd, *args):
             f"{list(args)} failed in {cwd} (exit {e.returncode})\n"
             f"stdout:\n{e.stdout}\nstderr:\n{e.stderr}"
         ) from e
+
+
+def mirror_manifests(root: Path, repo: Path) -> None:
+    """Copy the committed ``manifests/`` tree into a fixture repo.
+
+    A stored-evidence record under ``sim/`` (issue #226) names
+    ``manifests/artifacts/<bench>-<id>.manifest.json``; the checker refuses the
+    record when that manifest is missing, so any fixture that copies a bench
+    with stored-form records must mirror the committed manifests too.
+    """
+    if (repo / "manifests" / "artifacts").is_dir():
+        shutil.copytree(repo / "manifests", Path(root) / "manifests")
 
 
 def commit(cwd, msg="c"):
