@@ -17,9 +17,31 @@ GENERIC CORE:
   correctly-rounded, platform-independent convention (matchstudy's and
   kaband's).
 
-EXTENSION POINT -- noise- and dB-scale arithmetic that more than one bench
-needs lands here; issue #257's later splits extend this module in place
-(power/dB conversions, a single-bin reference DFT). Deliberately NOT here:
+POWER / dB CONVERSIONS (issue #263, split B of #257):
+
+- :data:`Z0_OHM` -- the reference system impedance (ohm). The single
+  declaration in the tree: benches import it instead of re-declaring it
+  (it consolidated three identical copies; the local ``Z0`` in a test
+  fixture and a stdlib-only script stay local on purpose).
+- :func:`db10` / :func:`db20` -- the power / amplitude dB scales, each
+  carrying ONE stated zero convention (``db10`` guards nothing;
+  ``db20`` floors non-positive magnitudes -- including NaN -- to -inf).
+- :func:`dbm_strict` / :func:`dbm_floored` -- watts to dBm under the two
+  live edge conventions, named so the choice is visible at the call site:
+  ``dbm_strict`` (NaN propagates, -inf at zero) and ``dbm_floored`` (the
+  caller's required ``floor`` swallows zero, negative and NaN). Which
+  convention a record rests on is split E of #257's decision; until then
+  every existing site keeps its own, and this module provides both
+  without preferring either.
+- :func:`watts`, :func:`available_power_w`, :func:`v_open_peak_for`,
+  :func:`delivered_power_w` -- the power arithmetic both power benches
+  shared bit-for-bit under two naming schemes (available power
+  ``V^2/(8R)``, delivered ``V^2/(2R)``). The resistance is always an
+  explicit argument: no default impedance is baked in here.
+
+EXTENSION POINT -- remaining shared arithmetic lands here; issue #257's
+later splits extend this module in place (a single-bin reference DFT).
+Deliberately NOT here:
 
 - **No default ``t0_k``.** Benches use different reference temperatures on
   purpose (290 K IEEE at ``sim/hbt-kaband-characterization`` vs 300.15 K
@@ -43,6 +65,8 @@ against known answers.
 """
 
 from __future__ import annotations
+
+import math
 
 #: Boltzmann constant, J/K (exact, SI 2019).
 K_BOLTZMANN = 1.380649e-23
@@ -74,3 +98,96 @@ def noise_factor_from_inoise_sq(inoise_sq: float, t0_k: float, z_ohm: float) -> 
     docstring). ``t0_k`` is REQUIRED -- no default.
     """
     return 1.0 + inoise_sq / (4.0 * K_BOLTZMANN * t0_k * z_ohm)
+
+
+#: Reference system impedance, ohm -- the single declaration in the tree
+#: (issue #263 consolidated three identical copies). Benches import this;
+#: the local ``Z0`` in a test fixture and a stdlib-only script stays local
+#: on purpose.
+Z0_OHM = 50.0
+
+
+# ---------------------------------------------------------------------------
+# dB scale
+# ---------------------------------------------------------------------------
+
+
+def db10(x: float) -> float:
+    """Power ratio in dB: ``10 log10(x)``.
+
+    Zero convention (kaband's and nfmethod's, shared verbatim): NO guard.
+    Zero or negative raises ValueError (math domain error); NaN propagates
+    as NaN (``math.log10`` passes NaN through); +inf propagates as +inf.
+    """
+    return 10.0 * math.log10(x)
+
+
+def db20(x: complex | float) -> float:
+    """Amplitude ratio in dB: ``20 log10(|x|)``.
+
+    Zero convention (matchstudy's, shared verbatim): ``|x| <= 0`` returns
+    -inf -- and NaN floors to -inf too, because ``nan > 0`` is false;
+    +inf propagates as +inf. Accepts complex amplitudes (``abs`` first).
+    """
+    a = abs(x)
+    return 20.0 * math.log10(a) if a > 0 else float("-inf")
+
+
+# ---------------------------------------------------------------------------
+# Power / dBm conversions
+# ---------------------------------------------------------------------------
+
+
+def dbm_strict(power_w: float) -> float:
+    """Power in dBm, strict edge convention (mixfeas's, shared verbatim).
+
+    Exactly zero or negative returns -inf; NaN PROPAGATES (the explicit
+    ``power_w != power_w`` branch); +inf propagates. The strict sibling of
+    :func:`dbm_floored` -- which convention a record rests on is chosen by
+    the name at the call site, never by a policy default here.
+    """
+    if power_w != power_w:  # NaN
+        return float("nan")
+    if power_w <= 0.0:
+        return float("-inf")
+    return 10.0 * math.log10(power_w / 1e-3)
+
+
+def dbm_floored(power_w: float, floor: float) -> float:
+    """Power in dBm with the caller's floor (linearity's convention).
+
+    Zero, negative AND NaN all return ``floor`` -- the NaN case because
+    ``power_w > 0`` is false for NaN; +inf propagates. ``floor`` is
+    REQUIRED with no default: which floor a bench pins (linearity passes
+    its ``NEG_INF_DBM``) is split E of #257's decision, not something this
+    helper chooses.
+    """
+    if power_w > 0.0:
+        return 10.0 * math.log10(power_w / 1e-3)
+    return floor
+
+
+def watts(dbm_value: float) -> float:
+    """dBm to watts: ``1e-3 * 10 ** (dbm/10)``. No guard: -inf gives 0.0,
+    NaN propagates, +inf propagates (both former copies agreed)."""
+    return 1e-3 * 10.0 ** (dbm_value / 10.0)
+
+
+def available_power_w(v_open_peak: float, r_source: float) -> float:
+    """Available power of a Thevenin source (peak open-circuit voltage,
+    real source resistance): ``V^2 / (8 R)``. No guard: NaN propagates."""
+    return v_open_peak * v_open_peak / (8.0 * r_source)
+
+
+def v_open_peak_for(dbm_value: float, r_source: float) -> float:
+    """Inverse of :func:`available_power_w` for a power in dBm:
+    ``sqrt(8 R watts(dbm))``."""
+    return math.sqrt(8.0 * r_source * watts(dbm_value))
+
+
+def delivered_power_w(v_peak: float, r_load: float) -> float:
+    """Power delivered into a resistor by a sine of peak amplitude
+    ``v_peak``: ``V^2 / (2 R)`` -- exactly ``10 log10(4)`` dB (6.02 dB)
+    more than the available power of the same peak voltage behind the same
+    resistance. No guard: NaN propagates."""
+    return v_peak * v_peak / (2.0 * r_load)
