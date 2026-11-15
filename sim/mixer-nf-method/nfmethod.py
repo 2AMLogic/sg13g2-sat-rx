@@ -49,7 +49,7 @@ from typing import Iterable, Mapping, Sequence
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # sim/ -> harness
-from harness.rf import K_BOLTZMANN as K_B  # noqa: E402
+from harness.rf import K_BOLTZMANN as K_B, db10  # noqa: E402
 
 T0_K = 300.15       # reference temperature, K (27 C)
 
@@ -259,7 +259,9 @@ def dsb_noise_factor(b: NoiseBudget, t0: float = T0_K) -> float:
 
 
 def db(x: float) -> float:
-    return 10.0 * math.log10(x)
+    # Shared primitive (issue #263): same expression, same no-guard
+    # convention -- zero/negative raise, NaN propagates as NaN.
+    return db10(x)
 
 
 def attenuator_ideal_mixer_f_ssb(loss: float, t_att_k: float, gain_wanted: float,
