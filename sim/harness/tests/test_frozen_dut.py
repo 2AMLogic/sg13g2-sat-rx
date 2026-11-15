@@ -63,6 +63,6 @@ def test_an_oversized_snapshot_file_is_not_scanned(tmp_path, monkeypatch):
     assert fd.resolve(live, SHA, snaps) == live
 
 
-def test_sha256_bytes_reports_an_unreadable_file_as_none(tmp_path):
-    assert fd.sha256_bytes(tmp_path / "missing") is None
-    assert fd.sha256_bytes(tmp_path) is None
+def test_sha256_path_reports_an_unreadable_file_as_none(tmp_path):
+    assert fd.sha256_path(tmp_path / "missing") is None
+    assert fd.sha256_path(tmp_path) is None
