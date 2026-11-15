@@ -51,6 +51,16 @@ def tree(tmp_path):
     (dst / "spec").mkdir()
     for name in ("target-spec.md", "row-coverage.json"):
         shutil.copyfile(REPO / "spec" / name, dst / "spec" / name)
+    # The reuse-masters check (issue #277) reads the root declared-masters lock
+    # and the sim/harness/ files it declares; the sim/ copy above ignores harness/.
+    shutil.copyfile(REPO / "reuse.lock.json", dst / "reuse.lock.json")
+    lock_doc = json.loads((REPO / "reuse.lock.json").read_text(encoding="utf-8"))
+    for entry in lock_doc["masters"]:
+        m = dst / entry["master"]
+        if m.exists():  # already in the symlink farm (masters outside sim/harness/)
+            continue
+        m.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(REPO / entry["master"], m)
     # Stored-evidence records (issue #226) need their committed manifests: the
     # checker refuses a record with a "## Stored evidence" section whose
     # manifests/artifacts/<bench>-<id>.manifest.json is missing.
