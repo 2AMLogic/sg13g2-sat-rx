@@ -1,0 +1,15 @@
+* extracted by klt extract --deck sg13g2
+
+* cell lna_stage1_devices
+* pin b1
+* pin e1
+* pin b2
+* pin c1
+* pin oc
+* pin br
+* pin er
+* pin nr
+* pin vdd
+* pin gnd
+.SUBCKT lna_stage1_devices b1 e1 b2 c1 oc br er nr vdd gnd
+.ENDS lna_stage1_devices

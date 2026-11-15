@@ -20,8 +20,9 @@ BENCH = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(BENCH))
 
 import kaband  # noqa: E402
+from harness import rf  # noqa: E402  (kaband's own import put sim/ on sys.path)
 
-K = kaband.K_BOLTZMANN
+K = rf.K_BOLTZMANN
 
 
 def manifest():

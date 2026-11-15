@@ -25,7 +25,7 @@ REPO = SCRIPTS.parents[1]
 sys.path.insert(0, str(SCRIPTS))
 
 import check_evidence_formats as chk  # noqa: E402
-from _helpers import commit, run  # noqa: E402
+from _helpers import commit, mirror_manifests, run  # noqa: E402
 
 NATIVE = "lna-sparam-nf"
 NATIVE2 = "mixer-conversion-iip3"
@@ -51,6 +51,11 @@ def tree(tmp_path):
     (dst / "spec").mkdir()
     for name in ("target-spec.md", "row-coverage.json"):
         shutil.copyfile(REPO / "spec" / name, dst / "spec" / name)
+    # Stored-evidence records (issue #226) need their committed manifests: the
+    # checker refuses a record with a "## Stored evidence" section whose
+    # manifests/artifacts/<bench>-<id>.manifest.json is missing.
+    if (REPO / "manifests" / "artifacts").is_dir():
+        shutil.copytree(REPO / "manifests", dst / "manifests")
     return dst
 
 
@@ -504,6 +509,7 @@ def upstream(tmp_path_factory):
     root = tmp_path_factory.mktemp("upstream")
     shutil.copytree(REPO / "sim", root / "sim", symlinks=False,
                     ignore=shutil.ignore_patterns("harness", "_build", "_selftest", "__pycache__"))
+    mirror_manifests(root, REPO)
     # the lna-linearity adapter reads the ratified row 7/8 targets from the spec table
     (root / "spec").mkdir()
     shutil.copyfile(REPO / "spec" / "target-spec.md", root / "spec" / "target-spec.md")
@@ -613,6 +619,7 @@ def test_new_record_missing_a_piece_fails_format(pr):
 def test_no_base_is_skipped_loudly_or_fails_when_required(tmp_path):
     root = tmp_path / "lone"
     shutil.copytree(REPO / "sim" / NATIVE, root / "sim" / NATIVE)
+    mirror_manifests(root, REPO)
     run(root, "git", "init", "-q", "-b", "scratch")
     commit(root, "only commit")
     problems, note = chk.check_append_only(root, "0" * 40, False)

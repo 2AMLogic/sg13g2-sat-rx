@@ -46,6 +46,7 @@ from harness.corners import (  # noqa: E402
     CORNERS, PvtPoint, build_grid, resolve_corners, sabotage, supply_points,
 )
 from harness import klt_driver  # noqa: E402
+from harness import rf  # noqa: E402
 from harness.report import RecordExists, allocate_record_id, git_provenance  # noqa: E402
 from harness.runner import NgspiceMissing, ngspice_version, run_point  # noqa: E402
 from harness.testbench import load  # noqa: E402
@@ -190,7 +191,7 @@ def run_probe(tb, pdk) -> tuple[bool, list[str]]:
         if m and current is not None:
             values[current][m.group(1)] = float(m.group(2))
     report, ok = [], True
-    k4r = 4 * kaband.K_BOLTZMANN * 50.0
+    k4r = 4 * rf.K_BOLTZMANN * 50.0
     for t in PROBE_TEMPS_C:
         v = values.get(t, {})
         need = ("kp_ra", "kp_rb", "kp_rc", "kp_qa", "kp_qb")

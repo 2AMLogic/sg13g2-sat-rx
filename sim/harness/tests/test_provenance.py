@@ -45,11 +45,16 @@ def test_sha256_is_the_single_definition_in_the_harness():
     assert provenance.sha256 is provenance.sha256_file
     assert pdkartifact.sha256_file is provenance.sha256_file
     assert klt_driver.sha256_file is provenance.sha256_file
-    definitions = [
-        p for p in (Path(provenance.__file__), Path(pdkartifact.__file__), Path(klt_driver.__file__))
+    # Every harness module, not a hardcoded trio: the canonical definition
+    # lives in provenance, and evidence_store may carry its own because its
+    # manifests record the byte count beside the digest. Any other module
+    # defining sha256_file fails here instead of hiding beside the name.
+    harness_dir = Path(provenance.__file__).resolve().parent
+    definitions = {
+        p.name for p in harness_dir.glob("*.py")
         if "def sha256_file(" in p.read_text()
-    ]
-    assert [Path(provenance.__file__)] == definitions
+    }
+    assert definitions == {"provenance.py", "evidence_store.py"}
 
 
 # ---- git provenance: the probe record shape is exactly {"commit", "dirty"} -------------------

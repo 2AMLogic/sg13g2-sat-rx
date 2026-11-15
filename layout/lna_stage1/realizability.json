@@ -1,0 +1,695 @@
+{
+  "schema_version": 1,
+  "analysis": "lna_stage1_element_realizability",
+  "issue": 198,
+  "note": "Mechanical resolution of every LNA stage-1 netlist element to a PDK primitive, or to the absence of one. A measurement, not a design proposal: it selects no device flavour and proposes no geometry. See README.md for what this means for T1 items 2/3/11.",
+  "inputs": {
+    "netlist": {
+      "path": "design/netlist/lna_stage1.spice",
+      "scope": "repo",
+      "content_hash": "sha256:7a74e7ae611d4eacd94ed768940758e703eaba6b25a3f465bec5ed0841deee37"
+    },
+    "pdk": {
+      "install_subtree": "ihp-sg13g2",
+      "pin": "sim/pdk-artifact.json",
+      "files": {
+        "libs.tech/klayout/python/sg13g2_pycell_lib/sg13g2_tech.json": "sha256:089d6b136876256d46a751752d23b8322465083587c9fe0a0e741408c53c4bea",
+        "libs.tech/ngspice/models/cornerRES.lib": "sha256:2c18502104146804444a567abfe7d00520752bf75426809f9d79f40198fe9c1e",
+        "libs.tech/ngspice/models/cornerCAP.lib": "sha256:4fc4a0f17ca2aef66ca38c2d2e7cead3307b69508d304ed073129565ec1c3e56"
+      }
+    }
+  },
+  "pdk_constants": {
+    "cmim": {
+      "area_cap_f_per_um2": 1.5e-15,
+      "min_c_f": 1e-15,
+      "max_c_f": 8e-12,
+      "min_lw_um": 1.14,
+      "area_cap_f_per_um2_cornerlib": 1.5e-15
+    },
+    "rfcmim": {
+      "area_cap_f_per_um2": 1.5e-15,
+      "min_c_f": 5.0542000000000004e-14,
+      "max_c_f": 1.5000000000000002e-09,
+      "min_lw_um": 7.0,
+      "terminals": 3
+    },
+    "rsil_geometry": {
+      "min_w_um": 0.5,
+      "min_l_um": 0.5
+    },
+    "poly_resistors": {
+      "rsil": {
+        "sheet_ohm_per_sq_typ": 7.0,
+        "sheet_ohm_per_sq_corner_range": [
+          6.02,
+          7.98
+        ]
+      },
+      "rppd": {
+        "sheet_ohm_per_sq_typ": 260.0,
+        "sheet_ohm_per_sq_corner_range": [
+          234.0,
+          286.0
+        ]
+      },
+      "rhigh": {
+        "sheet_ohm_per_sq_typ": 1360.0,
+        "sheet_ohm_per_sq_corner_range": [
+          1020.0,
+          1700.0
+        ]
+      }
+    }
+  },
+  "pcell_availability": {
+    "vendored_shim_relpath": "libs.tech/klayout/python/pycell4klayout-api",
+    "vendored_shim_present": true,
+    "vendored_shim_entry_count": 0,
+    "cni_importable": false,
+    "pcell_libraries_instantiable": false,
+    "consequence": "`klt gen --list-pdk-pcells` reports both sg13g2 PCell libraries as unavailable for missing_dependency 'cni'. The shim directory exists but is empty -- an uninitialized submodule in this PDK install -- so no PDK-parametrized device can be instanced, and a generator is limited to the fixed-geometry cells in libs.ref/sg13g2_pr/gds/sg13g2_pr.gds plus hand-drawn or `klt gen`-drawn geometry."
+  },
+  "element_count": 18,
+  "verdict_counts": {
+    "no_primitive_selected": 12,
+    "pdk_primitive_modeled": 3,
+    "no_pdk_model": 3
+  },
+  "summary": {
+    "elements_with_a_pdk_primitive": [
+      "Xqr",
+      "Xq2",
+      "Xq1"
+    ],
+    "elements_drawable_at_their_designed_value": [
+      "Xqr"
+    ],
+    "elements_needing_a_realization_decision": [
+      "Rref",
+      "Rbr",
+      "Rer",
+      "Rbias",
+      "Rd",
+      "Re1",
+      "R1b",
+      "R2b",
+      "Cb2",
+      "Cshunt",
+      "Cblk_in",
+      "Cm"
+    ],
+    "elements_no_primitive_can_realize": [],
+    "elements_with_no_pdk_model": [
+      "Lfeed",
+      "Le1",
+      "Lin"
+    ]
+  },
+  "elements": [
+    {
+      "refdes": "Rref",
+      "kind": "R",
+      "nodes": [
+        "vdd",
+        "nr"
+      ],
+      "value": 8000.0,
+      "value_text": "8k",
+      "verdict": "no_primitive_selected",
+      "schematic_symbol": "res.sym",
+      "why": "the schematic uses the generic xschem res.sym, so the netlist carries a resistance and no PDK device. Which of the PDK's three poly-resistor flavours realizes it, and at what geometry, is not recorded anywhere in spec/.",
+      "candidates": [
+        {
+          "flavour": "rhigh",
+          "sheet_ohm_per_sq_typ": 1360.0,
+          "squares": 5.8824,
+          "length_at_min_width_um": 2.9412,
+          "width_um": 0.5,
+          "body_area_um2": 1.4706
+        },
+        {
+          "flavour": "rppd",
+          "sheet_ohm_per_sq_typ": 260.0,
+          "squares": 30.7692,
+          "length_at_min_width_um": 15.3846,
+          "width_um": 0.5,
+          "body_area_um2": 7.6923
+        },
+        {
+          "flavour": "rsil",
+          "sheet_ohm_per_sq_typ": 7.0,
+          "squares": 1142.8571,
+          "length_at_min_width_um": 571.4286,
+          "width_um": 0.5,
+          "body_area_um2": 285.7143
+        }
+      ],
+      "flavour_choice_body_area_spread": 194.3
+    },
+    {
+      "refdes": "Xqr",
+      "kind": "X",
+      "nodes": [
+        "nr",
+        "br",
+        "er",
+        "gnd"
+      ],
+      "model": "npn13G2",
+      "params": {
+        "Nx": "1"
+      },
+      "verdict": "pdk_primitive_modeled",
+      "pdk_primitive": "npn13G2",
+      "schematic_symbol": "npn13G2.sym",
+      "emitter_multiplicity": 1,
+      "drawn_realization": {
+        "status": "drawable_as_designed",
+        "how": "the pinned PDK's primitive stream ships a fixed-geometry npn13G2 cell, which is the Nx=1 device"
+      }
+    },
+    {
+      "refdes": "Rbr",
+      "kind": "R",
+      "nodes": [
+        "nr",
+        "br"
+      ],
+      "value": 60900.0,
+      "value_text": "60.9k",
+      "verdict": "no_primitive_selected",
+      "schematic_symbol": "res.sym",
+      "why": "the schematic uses the generic xschem res.sym, so the netlist carries a resistance and no PDK device. Which of the PDK's three poly-resistor flavours realizes it, and at what geometry, is not recorded anywhere in spec/.",
+      "candidates": [
+        {
+          "flavour": "rhigh",
+          "sheet_ohm_per_sq_typ": 1360.0,
+          "squares": 44.7794,
+          "length_at_min_width_um": 22.3897,
+          "width_um": 0.5,
+          "body_area_um2": 11.1949
+        },
+        {
+          "flavour": "rppd",
+          "sheet_ohm_per_sq_typ": 260.0,
+          "squares": 234.2308,
+          "length_at_min_width_um": 117.1154,
+          "width_um": 0.5,
+          "body_area_um2": 58.5577
+        },
+        {
+          "flavour": "rsil",
+          "sheet_ohm_per_sq_typ": 7.0,
+          "squares": 8700.0,
+          "length_at_min_width_um": 4350.0,
+          "width_um": 0.5,
+          "body_area_um2": 2175.0
+        }
+      ],
+      "flavour_choice_body_area_spread": 194.3
+    },
+    {
+      "refdes": "Rer",
+      "kind": "R",
+      "nodes": [
+        "er",
+        "gnd"
+      ],
+      "value": 24.0,
+      "value_text": "24",
+      "verdict": "no_primitive_selected",
+      "schematic_symbol": "res.sym",
+      "why": "the schematic uses the generic xschem res.sym, so the netlist carries a resistance and no PDK device. Which of the PDK's three poly-resistor flavours realizes it, and at what geometry, is not recorded anywhere in spec/.",
+      "candidates": [
+        {
+          "flavour": "rhigh",
+          "sheet_ohm_per_sq_typ": 1360.0,
+          "squares": 0.0176,
+          "length_at_min_width_um": 0.0088,
+          "width_um": 0.5,
+          "body_area_um2": 0.0044,
+          "below_minimum_geometry": true,
+          "note": "needs 0.009 um of body at the 0.5 um minimum width, below the PDK's 0.5 um minimum length -- this flavour cannot reach the value at min width"
+        },
+        {
+          "flavour": "rppd",
+          "sheet_ohm_per_sq_typ": 260.0,
+          "squares": 0.0923,
+          "length_at_min_width_um": 0.0462,
+          "width_um": 0.5,
+          "body_area_um2": 0.0231,
+          "below_minimum_geometry": true,
+          "note": "needs 0.046 um of body at the 0.5 um minimum width, below the PDK's 0.5 um minimum length -- this flavour cannot reach the value at min width"
+        },
+        {
+          "flavour": "rsil",
+          "sheet_ohm_per_sq_typ": 7.0,
+          "squares": 3.4286,
+          "length_at_min_width_um": 1.7143,
+          "width_um": 0.5,
+          "body_area_um2": 0.8571
+        }
+      ],
+      "flavour_choice_body_area_spread": null
+    },
+    {
+      "refdes": "Rbias",
+      "kind": "R",
+      "nodes": [
+        "nr",
+        "b1"
+      ],
+      "value": 10000.0,
+      "value_text": "10k",
+      "verdict": "no_primitive_selected",
+      "schematic_symbol": "res.sym",
+      "why": "the schematic uses the generic xschem res.sym, so the netlist carries a resistance and no PDK device. Which of the PDK's three poly-resistor flavours realizes it, and at what geometry, is not recorded anywhere in spec/.",
+      "candidates": [
+        {
+          "flavour": "rhigh",
+          "sheet_ohm_per_sq_typ": 1360.0,
+          "squares": 7.3529,
+          "length_at_min_width_um": 3.6765,
+          "width_um": 0.5,
+          "body_area_um2": 1.8382
+        },
+        {
+          "flavour": "rppd",
+          "sheet_ohm_per_sq_typ": 260.0,
+          "squares": 38.4615,
+          "length_at_min_width_um": 19.2308,
+          "width_um": 0.5,
+          "body_area_um2": 9.6154
+        },
+        {
+          "flavour": "rsil",
+          "sheet_ohm_per_sq_typ": 7.0,
+          "squares": 1428.5714,
+          "length_at_min_width_um": 714.2857,
+          "width_um": 0.5,
+          "body_area_um2": 357.1429
+        }
+      ],
+      "flavour_choice_body_area_spread": 194.3
+    },
+    {
+      "refdes": "Lfeed",
+      "kind": "L",
+      "nodes": [
+        "vdd",
+        "oc"
+      ],
+      "value": 9.62e-10,
+      "value_text": "0.962n",
+      "verdict": "no_pdk_model",
+      "schematic_symbol": "ind.sym",
+      "why": "the PDK ships no inductor model: spec/target-spec.md records 'No inductor model, and no transmission-line model, anywhere in libs.tech/ngspice/models/', and inductor.sym/inductor3.sym ship as symbols with no backing subcircuit. The netlist's own header states these elements are IDEAL lossless L/C.",
+      "ratified_evidence": "spec/decision-records/0001-band-selection-ka-vs-ku.md records openEMS extraction of the PDK's inductor2 PCell: the single-turn p1 geometry is 98.5 pH, and the multi-turn geometries self-resonate below the ratified band ('Multi-turn spirals are dead at Ka band'). Cited, not re-derived here."
+    },
+    {
+      "refdes": "Rd",
+      "kind": "R",
+      "nodes": [
+        "vdd",
+        "oc"
+      ],
+      "value": 465.0,
+      "value_text": "465",
+      "verdict": "no_primitive_selected",
+      "schematic_symbol": "res.sym",
+      "why": "the schematic uses the generic xschem res.sym, so the netlist carries a resistance and no PDK device. Which of the PDK's three poly-resistor flavours realizes it, and at what geometry, is not recorded anywhere in spec/.",
+      "candidates": [
+        {
+          "flavour": "rhigh",
+          "sheet_ohm_per_sq_typ": 1360.0,
+          "squares": 0.3419,
+          "length_at_min_width_um": 0.171,
+          "width_um": 0.5,
+          "body_area_um2": 0.0855,
+          "below_minimum_geometry": true,
+          "note": "needs 0.171 um of body at the 0.5 um minimum width, below the PDK's 0.5 um minimum length -- this flavour cannot reach the value at min width"
+        },
+        {
+          "flavour": "rppd",
+          "sheet_ohm_per_sq_typ": 260.0,
+          "squares": 1.7885,
+          "length_at_min_width_um": 0.8942,
+          "width_um": 0.5,
+          "body_area_um2": 0.4471
+        },
+        {
+          "flavour": "rsil",
+          "sheet_ohm_per_sq_typ": 7.0,
+          "squares": 66.4286,
+          "length_at_min_width_um": 33.2143,
+          "width_um": 0.5,
+          "body_area_um2": 16.6071
+        }
+      ],
+      "flavour_choice_body_area_spread": 37.1
+    },
+    {
+      "refdes": "Xq2",
+      "kind": "X",
+      "nodes": [
+        "oc",
+        "b2",
+        "c1",
+        "gnd"
+      ],
+      "model": "npn13G2",
+      "params": {
+        "Nx": "8"
+      },
+      "verdict": "pdk_primitive_modeled",
+      "pdk_primitive": "npn13G2",
+      "schematic_symbol": "npn13G2.sym",
+      "emitter_multiplicity": 8,
+      "drawn_realization": {
+        "status": "multiplicity_not_drawable_as_designed",
+        "how": "the pinned PDK's primitive stream ships only the fixed-geometry Nx=1 npn13G2 cell. The PDK's own parametrized npn13G2 PCell, which draws a multi-emitter device, is not instantiable in this environment (see pcell_availability below), so Nx>1 can only be approximated by Nx parallel unit cells -- a different structure, with different base resistance and emitter interconnect parasitics from the designed device"
+      }
+    },
+    {
+      "refdes": "Xq1",
+      "kind": "X",
+      "nodes": [
+        "c1",
+        "b1",
+        "e1",
+        "gnd"
+      ],
+      "model": "npn13G2",
+      "params": {
+        "Nx": "8"
+      },
+      "verdict": "pdk_primitive_modeled",
+      "pdk_primitive": "npn13G2",
+      "schematic_symbol": "npn13G2.sym",
+      "emitter_multiplicity": 8,
+      "drawn_realization": {
+        "status": "multiplicity_not_drawable_as_designed",
+        "how": "the pinned PDK's primitive stream ships only the fixed-geometry Nx=1 npn13G2 cell. The PDK's own parametrized npn13G2 PCell, which draws a multi-emitter device, is not instantiable in this environment (see pcell_availability below), so Nx>1 can only be approximated by Nx parallel unit cells -- a different structure, with different base resistance and emitter interconnect parasitics from the designed device"
+      }
+    },
+    {
+      "refdes": "Le1",
+      "kind": "L",
+      "nodes": [
+        "e1",
+        "e1d"
+      ],
+      "value": 6.7e-11,
+      "value_text": "67p",
+      "verdict": "no_pdk_model",
+      "schematic_symbol": "ind.sym",
+      "why": "the PDK ships no inductor model: spec/target-spec.md records 'No inductor model, and no transmission-line model, anywhere in libs.tech/ngspice/models/', and inductor.sym/inductor3.sym ship as symbols with no backing subcircuit. The netlist's own header states these elements are IDEAL lossless L/C.",
+      "ratified_evidence": "spec/decision-records/0001-band-selection-ka-vs-ku.md records openEMS extraction of the PDK's inductor2 PCell: the single-turn p1 geometry is 98.5 pH, and the multi-turn geometries self-resonate below the ratified band ('Multi-turn spirals are dead at Ka band'). Cited, not re-derived here."
+    },
+    {
+      "refdes": "Re1",
+      "kind": "R",
+      "nodes": [
+        "e1d",
+        "gnd"
+      ],
+      "value": 3.0,
+      "value_text": "3",
+      "verdict": "no_primitive_selected",
+      "schematic_symbol": "res.sym",
+      "why": "the schematic uses the generic xschem res.sym, so the netlist carries a resistance and no PDK device. Which of the PDK's three poly-resistor flavours realizes it, and at what geometry, is not recorded anywhere in spec/.",
+      "candidates": [
+        {
+          "flavour": "rhigh",
+          "sheet_ohm_per_sq_typ": 1360.0,
+          "squares": 0.0022,
+          "length_at_min_width_um": 0.0011,
+          "width_um": 0.5,
+          "body_area_um2": 0.0006,
+          "below_minimum_geometry": true,
+          "note": "needs 0.001 um of body at the 0.5 um minimum width, below the PDK's 0.5 um minimum length -- this flavour cannot reach the value at min width"
+        },
+        {
+          "flavour": "rppd",
+          "sheet_ohm_per_sq_typ": 260.0,
+          "squares": 0.0115,
+          "length_at_min_width_um": 0.0058,
+          "width_um": 0.5,
+          "body_area_um2": 0.0029,
+          "below_minimum_geometry": true,
+          "note": "needs 0.006 um of body at the 0.5 um minimum width, below the PDK's 0.5 um minimum length -- this flavour cannot reach the value at min width"
+        },
+        {
+          "flavour": "rsil",
+          "sheet_ohm_per_sq_typ": 7.0,
+          "squares": 0.4286,
+          "length_at_min_width_um": 0.2143,
+          "width_um": 0.5,
+          "body_area_um2": 0.1071,
+          "below_minimum_geometry": true,
+          "note": "needs 0.214 um of body at the 0.5 um minimum width, below the PDK's 0.5 um minimum length -- this flavour cannot reach the value at min width"
+        }
+      ],
+      "flavour_choice_body_area_spread": null
+    },
+    {
+      "refdes": "R1b",
+      "kind": "R",
+      "nodes": [
+        "vdd",
+        "b2"
+      ],
+      "value": 1500.0,
+      "value_text": "1.5k",
+      "verdict": "no_primitive_selected",
+      "schematic_symbol": "res.sym",
+      "why": "the schematic uses the generic xschem res.sym, so the netlist carries a resistance and no PDK device. Which of the PDK's three poly-resistor flavours realizes it, and at what geometry, is not recorded anywhere in spec/.",
+      "candidates": [
+        {
+          "flavour": "rhigh",
+          "sheet_ohm_per_sq_typ": 1360.0,
+          "squares": 1.1029,
+          "length_at_min_width_um": 0.5515,
+          "width_um": 0.5,
+          "body_area_um2": 0.2757
+        },
+        {
+          "flavour": "rppd",
+          "sheet_ohm_per_sq_typ": 260.0,
+          "squares": 5.7692,
+          "length_at_min_width_um": 2.8846,
+          "width_um": 0.5,
+          "body_area_um2": 1.4423
+        },
+        {
+          "flavour": "rsil",
+          "sheet_ohm_per_sq_typ": 7.0,
+          "squares": 214.2857,
+          "length_at_min_width_um": 107.1429,
+          "width_um": 0.5,
+          "body_area_um2": 53.5714
+        }
+      ],
+      "flavour_choice_body_area_spread": 194.3
+    },
+    {
+      "refdes": "R2b",
+      "kind": "R",
+      "nodes": [
+        "b2",
+        "gnd"
+      ],
+      "value": 7000.0,
+      "value_text": "7k",
+      "verdict": "no_primitive_selected",
+      "schematic_symbol": "res.sym",
+      "why": "the schematic uses the generic xschem res.sym, so the netlist carries a resistance and no PDK device. Which of the PDK's three poly-resistor flavours realizes it, and at what geometry, is not recorded anywhere in spec/.",
+      "candidates": [
+        {
+          "flavour": "rhigh",
+          "sheet_ohm_per_sq_typ": 1360.0,
+          "squares": 5.1471,
+          "length_at_min_width_um": 2.5735,
+          "width_um": 0.5,
+          "body_area_um2": 1.2868
+        },
+        {
+          "flavour": "rppd",
+          "sheet_ohm_per_sq_typ": 260.0,
+          "squares": 26.9231,
+          "length_at_min_width_um": 13.4615,
+          "width_um": 0.5,
+          "body_area_um2": 6.7308
+        },
+        {
+          "flavour": "rsil",
+          "sheet_ohm_per_sq_typ": 7.0,
+          "squares": 1000.0,
+          "length_at_min_width_um": 500.0,
+          "width_um": 0.5,
+          "body_area_um2": 250.0
+        }
+      ],
+      "flavour_choice_body_area_spread": 194.3
+    },
+    {
+      "refdes": "Cb2",
+      "kind": "C",
+      "nodes": [
+        "b2",
+        "gnd"
+      ],
+      "value": 1e-11,
+      "value_text": "10p",
+      "schematic_symbol": "capa.sym",
+      "why": "the schematic uses the generic xschem capa.sym, so the netlist carries a capacitance and no PDK device. Which MIM primitive realizes it, and at what plate geometry, is not recorded anywhere in spec/.",
+      "candidates": [
+        {
+          "primitive": "cmim",
+          "terminals": 2,
+          "area_cap_f_per_um2": 1.5e-15,
+          "declared_min_c_f": 1e-15,
+          "declared_max_c_f": 8e-12,
+          "plate_area_um2": 6666.6667,
+          "plate_side_um": 81.6497,
+          "in_declared_range": false,
+          "note": "1e-11 F exceeds this primitive's declared maximum 8e-12 F by 1.2x"
+        },
+        {
+          "primitive": "rfcmim",
+          "terminals": 3,
+          "area_cap_f_per_um2": 1.5e-15,
+          "declared_min_c_f": 5.0542000000000004e-14,
+          "declared_max_c_f": 1.5000000000000002e-09,
+          "plate_area_um2": 6666.6667,
+          "plate_side_um": 81.6497,
+          "in_declared_range": true
+        }
+      ],
+      "verdict": "no_primitive_selected",
+      "note": "only the 3-terminal rfcmim reaches this value; the netlist element is 2-terminal, so using it adds a substrate node the schematic does not have"
+    },
+    {
+      "refdes": "Cshunt",
+      "kind": "C",
+      "nodes": [
+        "in",
+        "gnd"
+      ],
+      "value": 1.7e-13,
+      "value_text": "170f",
+      "schematic_symbol": "capa.sym",
+      "why": "the schematic uses the generic xschem capa.sym, so the netlist carries a capacitance and no PDK device. Which MIM primitive realizes it, and at what plate geometry, is not recorded anywhere in spec/.",
+      "candidates": [
+        {
+          "primitive": "cmim",
+          "terminals": 2,
+          "area_cap_f_per_um2": 1.5e-15,
+          "declared_min_c_f": 1e-15,
+          "declared_max_c_f": 8e-12,
+          "plate_area_um2": 113.3333,
+          "plate_side_um": 10.6458,
+          "in_declared_range": true
+        },
+        {
+          "primitive": "rfcmim",
+          "terminals": 3,
+          "area_cap_f_per_um2": 1.5e-15,
+          "declared_min_c_f": 5.0542000000000004e-14,
+          "declared_max_c_f": 1.5000000000000002e-09,
+          "plate_area_um2": 113.3333,
+          "plate_side_um": 10.6458,
+          "in_declared_range": true
+        }
+      ],
+      "verdict": "no_primitive_selected"
+    },
+    {
+      "refdes": "Lin",
+      "kind": "L",
+      "nodes": [
+        "in",
+        "in2"
+      ],
+      "value": 1.41e-09,
+      "value_text": "1.41n",
+      "verdict": "no_pdk_model",
+      "schematic_symbol": "ind.sym",
+      "why": "the PDK ships no inductor model: spec/target-spec.md records 'No inductor model, and no transmission-line model, anywhere in libs.tech/ngspice/models/', and inductor.sym/inductor3.sym ship as symbols with no backing subcircuit. The netlist's own header states these elements are IDEAL lossless L/C.",
+      "ratified_evidence": "spec/decision-records/0001-band-selection-ka-vs-ku.md records openEMS extraction of the PDK's inductor2 PCell: the single-turn p1 geometry is 98.5 pH, and the multi-turn geometries self-resonate below the ratified band ('Multi-turn spirals are dead at Ka band'). Cited, not re-derived here."
+    },
+    {
+      "refdes": "Cblk_in",
+      "kind": "C",
+      "nodes": [
+        "in2",
+        "b1"
+      ],
+      "value": 1e-09,
+      "value_text": "1n",
+      "schematic_symbol": "capa.sym",
+      "why": "the schematic uses the generic xschem capa.sym, so the netlist carries a capacitance and no PDK device. Which MIM primitive realizes it, and at what plate geometry, is not recorded anywhere in spec/.",
+      "candidates": [
+        {
+          "primitive": "cmim",
+          "terminals": 2,
+          "area_cap_f_per_um2": 1.5e-15,
+          "declared_min_c_f": 1e-15,
+          "declared_max_c_f": 8e-12,
+          "plate_area_um2": 666666.6667,
+          "plate_side_um": 816.4966,
+          "in_declared_range": false,
+          "note": "1e-09 F exceeds this primitive's declared maximum 8e-12 F by 125.0x"
+        },
+        {
+          "primitive": "rfcmim",
+          "terminals": 3,
+          "area_cap_f_per_um2": 1.5e-15,
+          "declared_min_c_f": 5.0542000000000004e-14,
+          "declared_max_c_f": 1.5000000000000002e-09,
+          "plate_area_um2": 666666.6667,
+          "plate_side_um": 816.4966,
+          "in_declared_range": true
+        }
+      ],
+      "verdict": "no_primitive_selected",
+      "note": "only the 3-terminal rfcmim reaches this value; the netlist element is 2-terminal, so using it adds a substrate node the schematic does not have"
+    },
+    {
+      "refdes": "Cm",
+      "kind": "C",
+      "nodes": [
+        "oc",
+        "out"
+      ],
+      "value": 5.78e-14,
+      "value_text": "57.8f",
+      "schematic_symbol": "capa.sym",
+      "why": "the schematic uses the generic xschem capa.sym, so the netlist carries a capacitance and no PDK device. Which MIM primitive realizes it, and at what plate geometry, is not recorded anywhere in spec/.",
+      "candidates": [
+        {
+          "primitive": "cmim",
+          "terminals": 2,
+          "area_cap_f_per_um2": 1.5e-15,
+          "declared_min_c_f": 1e-15,
+          "declared_max_c_f": 8e-12,
+          "plate_area_um2": 38.5333,
+          "plate_side_um": 6.2075,
+          "in_declared_range": true
+        },
+        {
+          "primitive": "rfcmim",
+          "terminals": 3,
+          "area_cap_f_per_um2": 1.5e-15,
+          "declared_min_c_f": 5.0542000000000004e-14,
+          "declared_max_c_f": 1.5000000000000002e-09,
+          "plate_area_um2": 38.5333,
+          "plate_side_um": 6.2075,
+          "in_declared_range": true
+        }
+      ],
+      "verdict": "no_primitive_selected"
+    }
+  ]
+}
