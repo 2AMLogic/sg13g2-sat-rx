@@ -1,0 +1,789 @@
+{
+  "schema_version": 2,
+  "engine": "klayout-runset",
+  "reference_conversion": {
+    "form": "subckt-call",
+    "deck": "sg13g2",
+    "device_map": null
+  },
+  "layout": "../../probe.gds",
+  "reference": "../../reference-simform-full.spice",
+  "top": "probe_readiness",
+  "reference_top": "PROBE_READINESS",
+  "deck_file": "/home/ubuntu/share/pdk/ihp-sg13g2/libs.tech/klayout/tech/lvs/sg13g2.lvs",
+  "deck_vars": {},
+  "options": {},
+  "hints_applied": null,
+  "status": "mismatch",
+  "power_connectivity": {
+    "status": "unchecked",
+    "reason": "no subcircuit instance in the runset's extracted netlist declares a power/ground-named pin -- the extraction carries no instance-level power connectivity to check",
+    "power_pins": [],
+    "power_pins_derivation": null,
+    "instance_count": 0,
+    "expected_nets": null,
+    "unchecked_expected_pins": [],
+    "excluded_pins": [],
+    "findings": [],
+    "finding_count": 0
+  },
+  "body_verification": null,
+  "device_parameter_coverage": null,
+  "coverage": {
+    "schema_version": 1,
+    "known": true,
+    "checked": [
+      "CAP_CMIM",
+      "RSIL",
+      "cap_cmim",
+      "npn13G2",
+      "rsil"
+    ],
+    "skipped": [
+      {
+        "id": "dantenna",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "diodevdd_2kv",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "diodevdd_4kv",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "diodevss_2kv",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "diodevss_4kv",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "dpantenna",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "idiodevdd_2kv",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "idiodevdd_4kv",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "idiodevss_2kv",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "idiodevss_4kv",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "inductor",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "inductor3",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "isolbox",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "nmoscl_2",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "nmoscl_4",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "npn13G2l",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "npn13G2v",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "ntap1",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "pnpMPA",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "ptap1",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "res_metal1",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "res_metal2",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "res_metal3",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "res_metal4",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "res_metal5",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "res_topmetal1",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "res_topmetal2",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "rfcmim",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "rfnmos",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "rfnmoshv",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "rfpmos",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "rfpmoshv",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "rhigh",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "rppd",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "schottky_nbl1",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "sg13_hv_nmos",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "sg13_hv_pmos",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "sg13_hv_svaricap",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "sg13_lv_nmos",
+        "reason": "declared_not_recognized"
+      },
+      {
+        "id": "sg13_lv_pmos",
+        "reason": "declared_not_recognized"
+      }
+    ],
+    "inapplicable": [],
+    "unknown": [],
+    "nothing_checked": false,
+    "nothing_checked_reasons": [],
+    "declared_device_classes": {
+      "layout": [
+        "cap_cmim",
+        "dantenna",
+        "diodevdd_2kv",
+        "diodevdd_4kv",
+        "diodevss_2kv",
+        "diodevss_4kv",
+        "dpantenna",
+        "idiodevdd_2kv",
+        "idiodevdd_4kv",
+        "idiodevss_2kv",
+        "idiodevss_4kv",
+        "inductor",
+        "inductor3",
+        "isolbox",
+        "nmoscl_2",
+        "nmoscl_4",
+        "npn13G2",
+        "npn13G2l",
+        "npn13G2v",
+        "ntap1",
+        "pnpMPA",
+        "ptap1",
+        "res_metal1",
+        "res_metal2",
+        "res_metal3",
+        "res_metal4",
+        "res_metal5",
+        "res_topmetal1",
+        "res_topmetal2",
+        "rfcmim",
+        "rfnmos",
+        "rfnmoshv",
+        "rfpmos",
+        "rfpmoshv",
+        "rhigh",
+        "rppd",
+        "rsil",
+        "schottky_nbl1",
+        "sg13_hv_nmos",
+        "sg13_hv_pmos",
+        "sg13_hv_svaricap",
+        "sg13_lv_nmos",
+        "sg13_lv_pmos"
+      ],
+      "reference": [
+        "CAP_CMIM",
+        "RSIL"
+      ]
+    },
+    "recognized_device_classes": {
+      "layout": [
+        "cap_cmim",
+        "npn13G2",
+        "rsil"
+      ],
+      "reference": [
+        "CAP_CMIM",
+        "RSIL"
+      ]
+    },
+    "declared_not_recognized": [
+      "dantenna",
+      "diodevdd_2kv",
+      "diodevdd_4kv",
+      "diodevss_2kv",
+      "diodevss_4kv",
+      "dpantenna",
+      "idiodevdd_2kv",
+      "idiodevdd_4kv",
+      "idiodevss_2kv",
+      "idiodevss_4kv",
+      "inductor",
+      "inductor3",
+      "isolbox",
+      "nmoscl_2",
+      "nmoscl_4",
+      "npn13G2l",
+      "npn13G2v",
+      "ntap1",
+      "pnpMPA",
+      "ptap1",
+      "res_metal1",
+      "res_metal2",
+      "res_metal3",
+      "res_metal4",
+      "res_metal5",
+      "res_topmetal1",
+      "res_topmetal2",
+      "rfcmim",
+      "rfnmos",
+      "rfnmoshv",
+      "rfpmos",
+      "rfpmoshv",
+      "rhigh",
+      "rppd",
+      "schottky_nbl1",
+      "sg13_hv_nmos",
+      "sg13_hv_pmos",
+      "sg13_hv_svaricap",
+      "sg13_lv_nmos",
+      "sg13_lv_pmos"
+    ]
+  },
+  "device_census": {
+    "layout": {
+      "npn13G2": 1,
+      "rsil": 1,
+      "cap_cmim": 1
+    },
+    "reference": {
+      "RSIL": 1,
+      "CAP_CMIM": 1
+    }
+  },
+  "mismatch_count": 18,
+  "error_count": 18,
+  "category_counts": {
+    "device.unmatched": 2,
+    "net.unmatched": 8,
+    "pin.unmatched": 8
+  },
+  "category_error_counts": {
+    "device.unmatched": 2,
+    "net.unmatched": 8,
+    "pin.unmatched": 8
+  },
+  "counts": {
+    "nets": {
+      "layout": 8,
+      "reference": 5,
+      "matched": 2
+    },
+    "devices": {
+      "layout": 3,
+      "reference": 1,
+      "matched": 1
+    },
+    "pins": {
+      "layout": 8,
+      "reference": 4,
+      "matched": 2
+    }
+  },
+  "device_classes": [
+    "cap_cmim",
+    "dantenna",
+    "diodevdd_2kv",
+    "diodevdd_4kv",
+    "diodevss_2kv",
+    "diodevss_4kv",
+    "dpantenna",
+    "idiodevdd_2kv",
+    "idiodevdd_4kv",
+    "idiodevss_2kv",
+    "idiodevss_4kv",
+    "inductor",
+    "inductor3",
+    "isolbox",
+    "nmoscl_2",
+    "nmoscl_4",
+    "npn13G2",
+    "npn13G2l",
+    "npn13G2v",
+    "ntap1",
+    "pnpMPA",
+    "ptap1",
+    "res_metal1",
+    "res_metal2",
+    "res_metal3",
+    "res_metal4",
+    "res_metal5",
+    "res_topmetal1",
+    "res_topmetal2",
+    "rfcmim",
+    "rfnmos",
+    "rfnmoshv",
+    "rfpmos",
+    "rfpmoshv",
+    "rhigh",
+    "rppd",
+    "rsil",
+    "schottky_nbl1",
+    "sg13_hv_nmos",
+    "sg13_hv_pmos",
+    "sg13_hv_svaricap",
+    "sg13_lv_nmos",
+    "sg13_lv_pmos"
+  ],
+  "environment": {
+    "engine": "klayout-runset",
+    "engine_version": "0.30.12",
+    "klayout_binary": "/usr/bin/klayout",
+    "netgen_binary": null,
+    "layout_sha256": "9759f9eeb84b259ab2579d147a7f485315fc9da7291fcabd1ec34ddb6a62db0b",
+    "reference_sha256": "c3ab6256bef53bef8119e2313953b7d7fb2fb593d32a8d4020918983860bf474",
+    "extracted_netlist": null
+  },
+  "provenance": {
+    "klt_version": "0.9.0",
+    "klt_git_commit": "5dbbad05ff42265c92a6f3d2f20d1bbcd2957d49",
+    "klt_reinstall_spec": "klayout-tools==0.9.0",
+    "klayout_version": "0.30.13",
+    "pdk": null,
+    "deck": {
+      "name": "sg13g2.lvs",
+      "content_hash": "sha256:e01bcb1ec5858e8069bade8f7fd7ec28c1026fc2fd0590e8f611d3398a5bbbd7",
+      "released": null
+    },
+    "input": {
+      "content_hash": "sha256:9759f9eeb84b259ab2579d147a7f485315fc9da7291fcabd1ec34ddb6a62db0b",
+      "role": "layout"
+    },
+    "runset": {
+      "deck_file": "/home/ubuntu/share/pdk/ihp-sg13g2/libs.tech/klayout/tech/lvs/sg13g2.lvs",
+      "deck_vars": {},
+      "content_hash": "sha256:e01bcb1ec5858e8069bade8f7fd7ec28c1026fc2fd0590e8f611d3398a5bbbd7",
+      "klayout_application_version": "0.30.12",
+      "exit_status": 0,
+      "engine_error_lines": []
+    }
+  },
+  "mismatches": [
+    {
+      "category": "device.unmatched",
+      "severity": "error",
+      "description": "layout device '3' (class 'cap_cmim') has no counterpart",
+      "side": "layout",
+      "net": null,
+      "device": {
+        "layout": "3",
+        "reference": null,
+        "class": "cap_cmim"
+      },
+      "property": null,
+      "details": null,
+      "circuit": {
+        "layout": "probe_readiness",
+        "reference": "PROBE_READINESS"
+      },
+      "instance": null,
+      "subcircuit": null
+    },
+    {
+      "category": "device.unmatched",
+      "severity": "error",
+      "description": "layout device '1' (class 'npn13G2') has no counterpart",
+      "side": "layout",
+      "net": null,
+      "device": {
+        "layout": "1",
+        "reference": null,
+        "class": "npn13G2"
+      },
+      "property": null,
+      "details": null,
+      "circuit": {
+        "layout": "probe_readiness",
+        "reference": "PROBE_READINESS"
+      },
+      "instance": null,
+      "subcircuit": null
+    },
+    {
+      "category": "net.unmatched",
+      "severity": "error",
+      "description": "reference net 'CB' has no counterpart",
+      "side": "reference",
+      "net": {
+        "layout": null,
+        "reference": "CB"
+      },
+      "device": null,
+      "property": null,
+      "details": null,
+      "circuit": {
+        "layout": "probe_readiness",
+        "reference": "PROBE_READINESS"
+      },
+      "instance": null,
+      "subcircuit": null
+    },
+    {
+      "category": "net.unmatched",
+      "severity": "error",
+      "description": "reference net 'CT' has no counterpart",
+      "side": "reference",
+      "net": {
+        "layout": null,
+        "reference": "CT"
+      },
+      "device": null,
+      "property": null,
+      "details": null,
+      "circuit": {
+        "layout": "probe_readiness",
+        "reference": "PROBE_READINESS"
+      },
+      "instance": null,
+      "subcircuit": null
+    },
+    {
+      "category": "net.unmatched",
+      "severity": "error",
+      "description": "layout net 'B' has no counterpart",
+      "side": "layout",
+      "net": {
+        "layout": "B",
+        "reference": null
+      },
+      "device": null,
+      "property": null,
+      "details": null,
+      "circuit": {
+        "layout": "probe_readiness",
+        "reference": "PROBE_READINESS"
+      },
+      "instance": null,
+      "subcircuit": null
+    },
+    {
+      "category": "net.unmatched",
+      "severity": "error",
+      "description": "layout net 'C' has no counterpart",
+      "side": "layout",
+      "net": {
+        "layout": "C",
+        "reference": null
+      },
+      "device": null,
+      "property": null,
+      "details": null,
+      "circuit": {
+        "layout": "probe_readiness",
+        "reference": "PROBE_READINESS"
+      },
+      "instance": null,
+      "subcircuit": null
+    },
+    {
+      "category": "net.unmatched",
+      "severity": "error",
+      "description": "layout net 'CB' has no counterpart",
+      "side": "layout",
+      "net": {
+        "layout": "CB",
+        "reference": null
+      },
+      "device": null,
+      "property": null,
+      "details": null,
+      "circuit": {
+        "layout": "probe_readiness",
+        "reference": "PROBE_READINESS"
+      },
+      "instance": null,
+      "subcircuit": null
+    },
+    {
+      "category": "net.unmatched",
+      "severity": "error",
+      "description": "layout net 'CT' has no counterpart",
+      "side": "layout",
+      "net": {
+        "layout": "CT",
+        "reference": null
+      },
+      "device": null,
+      "property": null,
+      "details": null,
+      "circuit": {
+        "layout": "probe_readiness",
+        "reference": "PROBE_READINESS"
+      },
+      "instance": null,
+      "subcircuit": null
+    },
+    {
+      "category": "net.unmatched",
+      "severity": "error",
+      "description": "layout net 'E' has no counterpart",
+      "side": "layout",
+      "net": {
+        "layout": "E",
+        "reference": null
+      },
+      "device": null,
+      "property": null,
+      "details": null,
+      "circuit": {
+        "layout": "probe_readiness",
+        "reference": "PROBE_READINESS"
+      },
+      "instance": null,
+      "subcircuit": null
+    },
+    {
+      "category": "net.unmatched",
+      "severity": "error",
+      "description": "nets 'GND' / '0' were paired but their connectivity differs",
+      "side": "both",
+      "net": {
+        "layout": "GND",
+        "reference": "0"
+      },
+      "device": null,
+      "property": null,
+      "details": null,
+      "circuit": {
+        "layout": "probe_readiness",
+        "reference": "PROBE_READINESS"
+      },
+      "instance": null,
+      "subcircuit": null
+    },
+    {
+      "category": "pin.unmatched",
+      "severity": "error",
+      "description": "pin 'CB' of circuit 'probe_readiness' is not matched",
+      "side": "reference",
+      "net": {
+        "layout": null,
+        "reference": "CB"
+      },
+      "device": null,
+      "property": null,
+      "details": null,
+      "circuit": {
+        "layout": "probe_readiness",
+        "reference": "PROBE_READINESS"
+      },
+      "instance": null,
+      "subcircuit": null
+    },
+    {
+      "category": "pin.unmatched",
+      "severity": "error",
+      "description": "pin 'CT' of circuit 'probe_readiness' is not matched",
+      "side": "reference",
+      "net": {
+        "layout": null,
+        "reference": "CT"
+      },
+      "device": null,
+      "property": null,
+      "details": null,
+      "circuit": {
+        "layout": "probe_readiness",
+        "reference": "PROBE_READINESS"
+      },
+      "instance": null,
+      "subcircuit": null
+    },
+    {
+      "category": "pin.unmatched",
+      "severity": "error",
+      "description": "pin 'B' of circuit 'probe_readiness' is not matched",
+      "side": "layout",
+      "net": {
+        "layout": "B",
+        "reference": null
+      },
+      "device": null,
+      "property": null,
+      "details": null,
+      "circuit": {
+        "layout": "probe_readiness",
+        "reference": "PROBE_READINESS"
+      },
+      "instance": null,
+      "subcircuit": null
+    },
+    {
+      "category": "pin.unmatched",
+      "severity": "error",
+      "description": "pin 'C' of circuit 'probe_readiness' is not matched",
+      "side": "layout",
+      "net": {
+        "layout": "C",
+        "reference": null
+      },
+      "device": null,
+      "property": null,
+      "details": null,
+      "circuit": {
+        "layout": "probe_readiness",
+        "reference": "PROBE_READINESS"
+      },
+      "instance": null,
+      "subcircuit": null
+    },
+    {
+      "category": "pin.unmatched",
+      "severity": "error",
+      "description": "pin 'CB' of circuit 'probe_readiness' is not matched",
+      "side": "layout",
+      "net": {
+        "layout": "CB",
+        "reference": null
+      },
+      "device": null,
+      "property": null,
+      "details": null,
+      "circuit": {
+        "layout": "probe_readiness",
+        "reference": "PROBE_READINESS"
+      },
+      "instance": null,
+      "subcircuit": null
+    },
+    {
+      "category": "pin.unmatched",
+      "severity": "error",
+      "description": "pin 'CT' of circuit 'probe_readiness' is not matched",
+      "side": "layout",
+      "net": {
+        "layout": "CT",
+        "reference": null
+      },
+      "device": null,
+      "property": null,
+      "details": null,
+      "circuit": {
+        "layout": "probe_readiness",
+        "reference": "PROBE_READINESS"
+      },
+      "instance": null,
+      "subcircuit": null
+    },
+    {
+      "category": "pin.unmatched",
+      "severity": "error",
+      "description": "pin 'E' of circuit 'probe_readiness' is not matched",
+      "side": "layout",
+      "net": {
+        "layout": "E",
+        "reference": null
+      },
+      "device": null,
+      "property": null,
+      "details": null,
+      "circuit": {
+        "layout": "probe_readiness",
+        "reference": "PROBE_READINESS"
+      },
+      "instance": null,
+      "subcircuit": null
+    },
+    {
+      "category": "pin.unmatched",
+      "severity": "error",
+      "description": "pin 'GND' of circuit 'probe_readiness' is not matched",
+      "side": "layout",
+      "net": {
+        "layout": "GND",
+        "reference": null
+      },
+      "device": null,
+      "property": null,
+      "details": null,
+      "circuit": {
+        "layout": "probe_readiness",
+        "reference": "PROBE_READINESS"
+      },
+      "instance": null,
+      "subcircuit": null
+    }
+  ],
+  "net_correspondence": [
+    {
+      "layout": "RA",
+      "reference": "RA",
+      "pin": true
+    },
+    {
+      "layout": "RB",
+      "reference": "RB",
+      "pin": true
+    }
+  ]
+}

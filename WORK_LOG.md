@@ -6,6 +6,17 @@ Chronological record of merged pull requests and closed issues, maintained by th
 
 - [2026-09](work_log/WORK_LOG_2026-09.md)
 
+### 2026-11-15
+
+- **PR #281**: test: derive the bench-discovery and workflow-timeout guard universes from the tree
+- **Issue #261** (closed): Two guard tests name a universe they do not inspect: bench discovery checks 3 of 5 benches, workflow timeouts a hardcoded 2-file list
+- **PR #275**: consolidate K_BOLTZMANN and the noiseless-source noise factor into sim/harness/rf
+- **Issue #262** (closed): Consolidate K_BOLTZMANN (4 copies) and the noiseless-source noise factor (4 sites) into a new sim/harness/rf.py, with T0 a required argument
+- **PR #269**: layout(lna_stage1): record why T1 items 2/3 cannot be claimed, with the klt chain run
+- **Issue #198** (closed): layout: LNA stage-1 layout with DRC, LVS and ERC supply evidence (T1 items 2, 3, 4, 11)
+- **PR #274**: lna-sparam-nf: re-run the 27-point grid on the post-#79 core; add the new-DUT record-note branch
+- **Issue #250** (closed): Re-characterize the post-#79 LNA first-stage core (S-parameters, NF, linearity, headroom)
+
 ### 2026-11-14
 
 - **PR #249**: docs: list all nine content directories in README repo layout

@@ -16,6 +16,15 @@ GENERIC CORE:
   shares; the density form squares with ``inoise * inoise``, which is the
   correctly-rounded, platform-independent convention (matchstudy's and
   kaband's).
+- :func:`dft_bin` -- the single reference single-bin DFT of uniformly
+  sampled data, normalised so a coherent sine reads its peak amplitude and
+  carrying the kernel sign the generated ngspice decks actually emit
+  (issue #264 unified the two bench-local copies, which disagreed on the
+  imaginary sign while both docstrings claimed to state the same deck
+  quantity).
+- :func:`dft_bin_amplitude` -- the same bin's single-sided peak amplitude,
+  computed from the same accumulators so the magnitude is bit-identical to
+  the retired ``linearity.window_dft`` arithmetic.
 
 POWER / dB CONVERSIONS (issue #263, split B of #257):
 
@@ -40,8 +49,7 @@ POWER / dB CONVERSIONS (issue #263, split B of #257):
   explicit argument: no default impedance is baked in here.
 
 EXTENSION POINT -- remaining shared arithmetic lands here; issue #257's
-later splits extend this module in place (a single-bin reference DFT).
-Deliberately NOT here:
+later splits extend this module in place. Deliberately NOT here:
 
 - **No default ``t0_k``.** Benches use different reference temperatures on
   purpose (290 K IEEE at ``sim/hbt-kaband-characterization`` vs 300.15 K
@@ -191,3 +199,88 @@ def delivered_power_w(v_peak: float, r_load: float) -> float:
     more than the available power of the same peak voltage behind the same
     resistance. No guard: NaN propagates."""
     return v_peak * v_peak / (2.0 * r_load)
+
+
+# ---------------------------------------------------------------------------
+# Single-bin reference DFT
+# ---------------------------------------------------------------------------
+
+
+def _dft_bin_acc(samples: list[float], dt: float, freq_hz: float,
+                 t0: float) -> tuple[int, float, float]:
+    """Shared accumulator for :func:`dft_bin` and :func:`dft_bin_amplitude`.
+
+    The accumulate-in-floats form (not ``cmath.exp``): it is the form the
+    generated decks mirror -- ``2*mean(x*cos(w t))`` beside
+    ``2*mean(x*sin(w t))`` -- and it avoids a complex-exponential call per
+    sample. Raises :class:`ValueError` on empty input.
+    """
+    n = len(samples)
+    if n == 0:
+        raise ValueError("no samples")
+    re_acc = im_acc = 0.0
+    w = 2.0 * math.pi * freq_hz
+    for k, x in enumerate(samples):
+        ph = w * (k * dt + t0)
+        re_acc += x * math.cos(ph)
+        im_acc += x * math.sin(ph)
+    return n, re_acc, im_acc
+
+
+def dft_bin(samples: list[float], dt: float, freq_hz: float, t0: float = 0.0) -> complex:
+    """Single-bin DFT of uniformly sampled data: the tree's one reference
+    implementation (issue #264 unified ``mixfeas.dft_bin`` and
+    ``linearity.window_dft``, which disagreed on the imaginary sign while
+    both docstrings claimed to state the same deck quantity).
+
+    KERNEL CONVENTION, stated against a worked example and verified against
+    the generated deck text (not either retired docstring, which the deck
+    check proved unreliable): for
+
+        x[k] = a * sin(2 pi f (k dt + t0) + phi)
+
+    on a coherent bin -- ``n`` samples spanning an integer number of periods
+    of ``freq_hz`` -- the return is
+
+        a * (sin(phi) + j * cos(phi))
+
+    e.g. for ``a=0.37, phi=0.9`` on 200 samples at ``dt=0.005`` (samples
+    built as ``0.37*sin(2 pi 5 k dt + 0.9)``) it reads
+    ``(0.2898309565621686+0.22999568826014602j)``, asserted bit-for-bit in
+    ``sim/harness/tests/test_rf.py`` (the last bits of the return track the
+    bits of the samples themselves -- a script that builds ``t = k/200`` by
+    division instead of ``k*dt`` differs in the last places; the signs and
+    the magnitude convention do not move). ``abs()`` is
+    the single-sided peak amplitude ``a``; ``atan2(im, re)`` is the phase in
+    that (cos-reflected) frame. The kernel accumulates
+
+        (2/n) * sum x[k] * exp(+j 2 pi f (k dt + t0))
+
+    which is literally the ``re``/``im`` pair both campaigns' decks emit
+    (``mixfeas.py`` ``mf_<name>_re``/``mf_<name>_im``, ``linearity.py``
+    ``m_<rid>_<name>_c``/``m_<rid>_<name>_s``: ``2*mean(x*cos(w t))`` beside
+    ``2*mean(x*sin(w t))``). ``linearity``'s retired kernel was the conjugate
+    ``exp(-j w t)`` -- identical magnitudes, opposite imaginary sign, which is
+    why every recorded magnitude survived the unification unchanged.
+
+    Raises ``ValueError("no samples")`` on empty input (the deliberate guard
+    ``mixfeas`` already had; ``linearity.window_dft`` previously divided by
+    zero there instead).
+    """
+    n, re_acc, im_acc = _dft_bin_acc(samples, dt, freq_hz, t0)
+    return complex(2.0 * re_acc / n, 2.0 * im_acc / n)
+
+
+def dft_bin_amplitude(samples: list[float], dt: float, freq_hz: float,
+                      t0: float = 0.0) -> float:
+    """Single-sided peak amplitude at ``freq_hz``: the magnitude of
+    :func:`dft_bin` for callers that do not consume the complex value.
+
+    Computed from the same accumulators as ``2.0 * hypot(re, im) / n``
+    rather than as ``abs(dft_bin(...))`` -- scaling before ``hypot`` rounds
+    twice where this form rounds once, so this reproduces the retired
+    ``linearity.window_dft`` arithmetic bit-for-bit and no recorded
+    amplitude can move. Same empty-input ``ValueError("no samples")``.
+    """
+    n, re_acc, im_acc = _dft_bin_acc(samples, dt, freq_hz, t0)
+    return 2.0 * math.hypot(re_acc, im_acc) / n
