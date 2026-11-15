@@ -201,10 +201,12 @@ def check_artifact_manifests(problems: Problems, root: Path) -> None:
 
 def _twin_path_exempt(relp: str, ids: set[str]) -> bool:
     """True for committed byte-twins that cannot be a stored record's blob
-    fallback: the live ``testbench/`` declaration (an input the bench is loaded
-    from, never evidence) and another record's committed frozen copy (its own
-    evidence, named by its record id). The frozen testbench-manifest snapshot
-    is byte-identical to the live declaration by construction
+    fallback: anything under a ``testbench/`` directory -- exempt by intent
+    because testbench trees hold bench inputs (declarations, decks, plans),
+    never evidence -- and another record's committed frozen copy (its own
+    evidence, named by its record id: any path component whose leading
+    record id is not one of this manifest's ids). The frozen testbench-manifest
+    snapshot is byte-identical to the live declaration by construction
     (harness.report.write_manifest_snapshot), so an unchanged testbench always
     byte-matches its bench's committed ``testbench/tb.json`` and any older
     record's committed ``.tb.json`` snapshot. A twin at a fresh path, or under
@@ -212,7 +214,8 @@ def _twin_path_exempt(relp: str, ids: set[str]) -> bool:
     parts = relp.split("/")
     if "testbench" in parts:
         return True
-    return any(RECORD_ID_PREFIX_RE.match(part) and part not in ids for part in parts)
+    return any((m := RECORD_ID_PREFIX_RE.match(part)) and m.group(1) not in ids
+               for part in parts)
 
 
 def stored_table(text: str) -> dict[str, tuple[int, str]]:

@@ -135,7 +135,8 @@ def test_committed_twin_of_another_record_or_the_live_testbench_is_not_a_fallbac
     are exempt: the live ``testbench/`` declaration (an input, byte-identical
     to the frozen manifest snapshot by construction -- write_manifest_snapshot
     freezes tb.json verbatim) and another record's committed frozen copy,
-    named by that record's id. A twin at a fresh path still fires."""
+    named by that record's id. A twin at a fresh path, or at a path that
+    prefixes THIS record's own id, still fires."""
     tree, mpath, md, entries = stored
     log = next(e for e in entries if e["name"].endswith(".log"))
     original = next((Path(__file__).resolve().parents[3] / "sim" / NATIVE / "corners" / NATIVE_ID).glob(
@@ -159,7 +160,17 @@ def test_committed_twin_of_another_record_or_the_live_testbench_is_not_a_fallbac
     chk.check_artifact_manifests(problems, tree)
     assert not any("20250101-000000-deadbeef" in p for p in problems.items)
     old.unlink()
-    # 3. Control: the same bytes at a fresh path with no id and no testbench
+    # 3. A path component that prefixes THIS record's own id with a suffix (a
+    #    copy beside the frozen snapshot): its leading record id IS in ids, so
+    #    the other-record exemption must not apply and the twin still fires.
+    own = tree / "sim" / NATIVE / "netlist-snapshots" / f"{NATIVE_ID}.copy.spice"
+    own.write_bytes(original.read_bytes())
+    problems = chk.Problems()
+    chk.check_artifact_manifests(problems, tree)
+    assert any(f"{NATIVE_ID}.copy.spice" in p and "its bytes are a stored object" in p
+               for p in problems.items), problems.items
+    own.unlink()
+    # 4. Control: the same bytes at a fresh path with no id and no testbench
     #    component is a blob fallback and must fire.
     fresh = tree / "sim" / NATIVE / "copied-elsewhere.log"
     fresh.write_bytes(original.read_bytes())
