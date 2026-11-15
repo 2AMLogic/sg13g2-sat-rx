@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from .common import (PAIR_RE, Problems, check_probe_log_bench, check_probe_log_package, has_section, load_json_object, need_record_commit, need_sha256, need_str, rel)
-from .passive_p1 import MIXER_STATUSES, PASSIVE_PACKAGES
+from .common import (MIXER_STATUSES, PAIR_RE, Problems, SOLVER_ARTIFACTS_DIR, check_probe_log_bench, check_probe_log_package, has_section, load_json_object, need_record_commit, need_sha256, need_str, rel)
 
 
 def check_mixer_record(problems: Problems, root: Path, exp_dir: Path, stem: str, files: dict[str, Path],
@@ -89,4 +88,4 @@ def check_mixer_record(problems: Problems, root: Path, exp_dir: Path, stem: str,
 
 def check_mixer_nf_method(problems: Problems, root: Path, exp_dir: Path) -> None:
     check_probe_log_bench(problems, root, exp_dir, "mixer-nf-method", check_mixer_record,
-                          ("corners", "netlist-snapshots", PASSIVE_PACKAGES))
+                          ("corners", "netlist-snapshots", SOLVER_ARTIFACTS_DIR))

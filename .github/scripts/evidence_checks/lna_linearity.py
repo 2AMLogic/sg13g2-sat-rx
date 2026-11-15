@@ -6,9 +6,7 @@ import json
 import re
 from pathlib import Path
 
-from .common import (Problems, has_section, header_field, load_json_object, need_record_commit, need_sha256, need_str, read_gzip_text, reject_foreign_dirs, rel)
-from .mixer_pra import SHA1_RE, _num
-from .passive_p1 import PASSIVE_PACKAGES, _sha256_of
+from .common import (Problems, SHA1_RE, SOLVER_ARTIFACTS_DIR, has_section, header_field, is_number_not_nan, load_json_object, need_record_commit, need_sha256, need_str, read_gzip_text, reject_foreign_dirs, rel, sha256_of)
 from .spec_rows import SPEC_PATH, SPEC_ROW_RE
 
 
@@ -89,35 +87,35 @@ def lin_check_iip3(problems: Problems, where: str, res: dict, ext: dict, sweep: 
             problems.add(w, "ok IIP3 requires both sidebands ok")
             continue
         iv = sd.get("interval_dbm")
-        if not (isinstance(iv, list) and len(iv) == 2 and all(_num(x) for x in iv) and iv[0] < iv[1]):
+        if not (isinstance(iv, list) and len(iv) == 2 and all(is_number_not_nan(x) for x in iv) and iv[0] < iv[1]):
             problems.add(w, "missing fit interval_dbm")
         elif sweep and not (sweep["start_dbm"] <= iv[0] and iv[1] <= sweep["stop_dbm"]):
             problems.add(w, "fit interval lies outside the declared sweep")
-        if not (_num(sd.get("n_points")) and sd["n_points"] >= prm.get("min_points", 3)):
+        if not (is_number_not_nan(sd.get("n_points")) and sd["n_points"] >= prm.get("min_points", 3)):
             problems.add(w, "fit interval has fewer points than the plan's min_points")
         sf, si = sd.get("slope_fund"), sd.get("slope_im3")
-        if not (_num(sf) and _num(si)):
+        if not (is_number_not_nan(sf) and is_number_not_nan(si)):
             problems.add(w, "missing fitted slopes")
         else:
             lo, hi = prm.get("slope_fund", [0.9, 1.1]), prm.get("slope_im3", [2.7, 3.3])
             if not (lo[0] <= sf <= lo[1] and hi[0] <= si <= hi[1]):
                 problems.add(w, f"fitted slopes {sf!r}/{si!r} are outside the declared 1:3 tolerance")
         rf, ri = sd.get("residual_fund_db"), sd.get("residual_im3_db")
-        if not (_num(rf) and _num(ri)):
+        if not (is_number_not_nan(rf) and is_number_not_nan(ri)):
             problems.add(w, "missing fit residuals")
         elif max(rf, ri) > prm.get("max_residual_db", 0.5):
             problems.add(w, "fit residual exceeds the declared maximum")
-        if not (isinstance(sd.get("baseline"), dict) and _num(sd["baseline"].get("gain_db"))):
+        if not (isinstance(sd.get("baseline"), dict) and is_number_not_nan(sd["baseline"].get("gain_db"))):
             problems.add(w, "missing small-signal gain baseline")
         if not isinstance(sd.get("excluded_points"), dict):
             problems.add(w, "missing excluded_points (rejected-point reasons)")
-        if not (_num(sd.get("iip3_dbm")) and _num(sd.get("iip3_free_slope_dbm")) and _num(sd.get("extrapolation_db"))):
+        if not (is_number_not_nan(sd.get("iip3_dbm")) and is_number_not_nan(sd.get("iip3_free_slope_dbm")) and is_number_not_nan(sd.get("extrapolation_db"))):
             problems.add(w, "missing iip3_dbm / iip3_free_slope_dbm / extrapolation_db")
         else:
             vals.append(sd["iip3_dbm"])
             if abs(sd["iip3_dbm"] - sd["iip3_free_slope_dbm"]) > prm.get("free_fixed_tol_db", 1.0) + 1e-6:
                 problems.add(w, "fixed-slope and free-slope IIP3 disagree beyond the declared tolerance")
-    if len(vals) == 2 and (not _num(res.get("iip3_dbm")) or abs(res["iip3_dbm"] - min(vals)) > 1e-6):
+    if len(vals) == 2 and (not is_number_not_nan(res.get("iip3_dbm")) or abs(res["iip3_dbm"] - min(vals)) > 1e-6):
         problems.add(where, "reported iip3_dbm is not the lower of the two sidebands")
 
 
@@ -132,31 +130,31 @@ def lin_check_p1db(problems: Problems, where: str, res: dict, ext: dict) -> None
         problems.add(where, f"P1dB base result status {st!r} is not ok/bounded/unavailable")
         return
     b = res.get("baseline")
-    if not (isinstance(b, dict) and _num(b.get("gain_db")) and isinstance(b.get("pin_dbm"), list)
-            and len(b["pin_dbm"]) >= prm.get("baseline_points", 3) and _num(b.get("spread_db"))):
+    if not (isinstance(b, dict) and is_number_not_nan(b.get("gain_db")) and isinstance(b.get("pin_dbm"), list)
+            and len(b["pin_dbm"]) >= prm.get("baseline_points", 3) and is_number_not_nan(b.get("spread_db"))):
         problems.add(where, "P1dB result lacks an established small-signal baseline (gain_db, pin_dbm, spread_db)")
     elif b["spread_db"] > prm.get("baseline_flat_db", 0.15) + 1e-9:
         problems.add(where, "P1dB baseline spread exceeds the declared flatness")
     if not isinstance(res.get("excluded_points"), dict):
         problems.add(where, "missing excluded_points (rejected-point reasons)")
     if st == "bounded":
-        if not (_num(res.get("p1db_in_dbm_gt")) and isinstance(res.get("reason"), str) and res["reason"]):
+        if not (is_number_not_nan(res.get("p1db_in_dbm_gt")) and isinstance(res.get("reason"), str) and res["reason"]):
             problems.add(where, "bounded P1dB needs p1db_in_dbm_gt and a reason")
         if "p1db_in_dbm" in res:
             problems.add(where, "bounded P1dB must not carry a p1db_in_dbm number")
         return
     br = res.get("bracket")
     ok = isinstance(br, dict) and isinstance(br.get("pin_dbm"), list) and isinstance(br.get("drop_db"), list) \
-        and len(br["pin_dbm"]) == 2 and len(br["drop_db"]) == 2 and all(_num(x) for x in br["pin_dbm"] + br["drop_db"])
+        and len(br["pin_dbm"]) == 2 and len(br["drop_db"]) == 2 and all(is_number_not_nan(x) for x in br["pin_dbm"] + br["drop_db"])
     if not ok:
         problems.add(where, "ok P1dB requires a bracket {pin_dbm: [lo, hi], drop_db: [d0, d1]}")
         return
     drop = prm.get("drop_db", 1.0)
     if not (br["drop_db"][0] < drop <= br["drop_db"][1]):
         problems.add(where, "bracket does not straddle the declared gain drop")
-    if not (_num(res.get("p1db_in_dbm")) and br["pin_dbm"][0] <= res["p1db_in_dbm"] <= br["pin_dbm"][1]):
+    if not (is_number_not_nan(res.get("p1db_in_dbm")) and br["pin_dbm"][0] <= res["p1db_in_dbm"] <= br["pin_dbm"][1]):
         problems.add(where, "p1db_in_dbm lies outside its bracket")
-    if isinstance(b, dict) and _num(b.get("gain_db")) and _num(res.get("p1db_out_dbm")) and _num(res.get("p1db_in_dbm")) \
+    if isinstance(b, dict) and is_number_not_nan(b.get("gain_db")) and is_number_not_nan(res.get("p1db_out_dbm")) and is_number_not_nan(res.get("p1db_in_dbm")) \
             and abs(res["p1db_out_dbm"] - (res["p1db_in_dbm"] + b["gain_db"] - drop)) > 1e-6:
         problems.add(where, "p1db_out_dbm is inconsistent with p1db_in_dbm, baseline gain and the drop")
 
@@ -179,7 +177,7 @@ def lin_check_sweeps(problems: Problems, where: str, plan: dict, sweeps: object)
                     problems.add(w, f"sweep has {len(rows) if isinstance(rows, list) else 'no'} points, the plan declares {want}")
                     continue
                 pins = [r.get("pin_dbm") for r in rows if isinstance(r, dict)]
-                if len(set(pins)) != len(pins) or not all(_num(x) for x in pins):
+                if len(set(pins)) != len(pins) or not all(is_number_not_nan(x) for x in pins):
                     problems.add(w, "sweep power axis has duplicates or non-numbers")
                 for r in rows:
                     if not isinstance(r, dict):
@@ -188,7 +186,7 @@ def lin_check_sweeps(problems: Problems, where: str, plan: dict, sweeps: object)
                     keys = LIN_TWO_KEYS if kind == "two" else ("p_f0_dbm",)
                     if r.get("sim_failed"):
                         continue  # a published aborted transient: classified, no values
-                    if not all(_num(r.get(k)) for k in keys) or not _num(r.get("floor_dbm")):
+                    if not all(is_number_not_nan(r.get(k)) for k in keys) or not is_number_not_nan(r.get("floor_dbm")):
                         problems.add(w, f"point {r.get('pin_dbm')!r}: missing delivered powers/floor ({', '.join(keys)}, floor_dbm); "
                                      "both IM3 sidebands are required in every two-tone point")
                     if not isinstance(r.get("excursion_v"), dict):
@@ -246,7 +244,7 @@ def lin_check_placement(problems: Problems, where: str, plan: dict, name: str, p
         if f.get("status") != want_status or f.get("status") not in allowed:
             problems.add(wk, f"final.status {f.get('status')!r} must be {want_status!r} (base {base_status!r}, converged {converged})")
         a = f.get("assessment")
-        if not (isinstance(a, dict) and a.get("verdict") in LIN_VERDICTS and _num(a.get("target_dbm"))):
+        if not (isinstance(a, dict) and a.get("verdict") in LIN_VERDICTS and is_number_not_nan(a.get("target_dbm"))):
             problems.add(wk, "final.assessment needs a verdict and the target")
             continue
         if a["target_dbm"] != targets[tkey]:
@@ -255,10 +253,10 @@ def lin_check_placement(problems: Problems, where: str, plan: dict, name: str, p
         if plan.get("targets", {}).get(tkey) != targets[tkey]:
             problems.add(wk, "plan_declaration.targets differs from the ratified spec table")
         unc = f.get("max_estimator_delta_db")
-        if converged and f.get("status") == "ok" and _num(unc):
+        if converged and f.get("status") == "ok" and is_number_not_nan(unc):
             b = res.get(kind, {})
             val = b.get("iip3_dbm") if kind == "iip3" else b.get("p1db_in_dbm")
-            if _num(val) and a["verdict"] != lin_expected_verdict(val, targets[tkey], unc):
+            if is_number_not_nan(val) and a["verdict"] != lin_expected_verdict(val, targets[tkey], unc):
                 problems.add(wk, f"assessment verdict {a['verdict']!r} does not follow from the value {val!r}, "
                              f"target {targets[tkey]!r} and convergence spread {unc!r}")
         if not converged and a["verdict"] != "not_determined":
@@ -318,7 +316,7 @@ def check_lin_record(problems: Problems, root: Path, exp_dir: Path, rid: str) ->
     if not isinstance(prov, dict):
         problems.add(where_js, "missing 'plan' provenance")
     else:
-        if prov.get("sha256") != _sha256_of(plan_snap):
+        if prov.get("sha256") != sha256_of(plan_snap):
             problems.add(where_js, "plan.sha256 does not match the frozen netlist-snapshots/<id>/plan.json")
         if not (isinstance(prov.get("commit"), str) and SHA1_RE.match(prov["commit"])):
             problems.add(where_js, "plan.commit must name the commit that declared the plan")
@@ -330,7 +328,7 @@ def check_lin_record(problems: Problems, root: Path, exp_dir: Path, rid: str) ->
     if not isinstance(dut, dict):
         problems.add(where_js, "missing 'dut' identity")
     else:
-        if dut.get("sha256") != (_sha256_of(dut_snap) if dut_snap.is_file() else None):
+        if dut.get("sha256") != (sha256_of(dut_snap) if dut_snap.is_file() else None):
             problems.add(where_js, "dut.sha256 does not match the frozen DUT snapshot")
         if not (isinstance(dut.get("last_commit"), str) and SHA1_RE.match(dut["last_commit"])):
             problems.add(where_js, "dut.last_commit must name the commit of the exported netlist")
@@ -418,7 +416,7 @@ def check_lin_record(problems: Problems, root: Path, exp_dir: Path, rid: str) ->
     else:
         allp = True
         for kind, ev in ctl["evaluations"].items():
-            ok = (isinstance(ev, dict) and _num(ev.get("error_db")) and _num(ev.get("gain_error_db")) and _num(ev.get("tol_db"))
+            ok = (isinstance(ev, dict) and is_number_not_nan(ev.get("error_db")) and is_number_not_nan(ev.get("gain_error_db")) and is_number_not_nan(ev.get("tol_db"))
                   and abs(ev["error_db"]) <= ev["tol_db"] and abs(ev["gain_error_db"]) <= ev.get("gain_tol_db", 0))
             if isinstance(ev, dict) and ev.get("pass") is not bool(ok):
                 problems.add(where_js, f"controls.evaluations[{kind}].pass disagrees with its errors and tolerances")
@@ -502,4 +500,4 @@ def check_lna_linearity(problems: Problems, root: Path, exp_dir: Path) -> None:
             for p in sorted(d.iterdir()):
                 if p.name not in ids:
                     problems.add(rel(root, p), f"{sub} entry belongs to no record in this experiment (orphan evidence)")
-    reject_foreign_dirs(problems, root, exp_dir, LIN_BENCH, ("probe-logs", PASSIVE_PACKAGES))
+    reject_foreign_dirs(problems, root, exp_dir, LIN_BENCH, ("probe-logs", SOLVER_ARTIFACTS_DIR))

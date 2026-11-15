@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import gzip
+import hashlib
 import io
 import json
 import re
@@ -15,12 +16,15 @@ from pathlib import Path
 
 RECORD_ID_RE = re.compile(r"^\d{8}-\d{6}-[0-9a-f]{7,40}$")
 RECORD_ID_PREFIX_RE = re.compile(r"^(\d{8}-\d{6}-[0-9a-f]{7,40})")
+SHA1_RE = re.compile(r"^[0-9a-f]{40}$")
 PROTECTED_RE = re.compile(r"^sim/[^/]+/(records|corners|netlist-snapshots|probe-logs|solver-artifacts)/")
 NATIVE_STATUSES = ("pass", "fail", "error")
+MIXER_STATUSES = ("METHOD_VALIDATION", "MODEL_ABSENT", "UNCONVERGED", "CAPABILITY_UNAVAILABLE")
 NATIVE_SNAPSHOT_NOTE = b"* This is a verbatim copy taken at record time. Do not edit."
 NATIVE_SECTIONS = ("Evidence", "Result", "Summary", "Environment")
 KABAND_SECTIONS = ("Grid", "Provenance", "Data quality", "Limitations", "Sidecars")
 KABAND_SIDECAR_SUFFIXES = ("-points.csv.gz", "-cells.csv", "-best.csv")
+SOLVER_ARTIFACTS_DIR = "solver-artifacts"
 NUM_RE = re.compile(r"-?\d+(?:\.\d+)?")
 
 
@@ -72,6 +76,14 @@ def expand_matrix(processes: list[str], temps: list[float], supplies: list[float
 
 def numbers(text: str) -> list[float]:
     return [float(x) for x in NUM_RE.findall(text)]
+
+
+def is_number_not_nan(v: object) -> bool:
+    return isinstance(v, (int, float)) and not isinstance(v, bool) and v == v
+
+
+def all_numbers_allow_nan(values) -> bool:
+    return all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in values)
 
 
 def duplicates(items: list) -> list:
@@ -193,6 +205,14 @@ def need_str(problems: Problems, where: str, obj: dict, key: str, label: str | N
 def need_sha256(problems: Problems, where: str, value: object, label: str) -> None:
     if not isinstance(value, str) or not SHA256_RE.match(value):
         problems.add(where, f"{label} is missing or not a 64-hex sha256")
+
+
+def sha256_of(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
 
 
 def need_record_commit(problems: Problems, where: str, env: dict, rid: str) -> object:
