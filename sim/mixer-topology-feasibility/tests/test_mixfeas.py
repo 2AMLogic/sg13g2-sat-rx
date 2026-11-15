@@ -758,3 +758,480 @@ def test_analyze_run_nonfinite_sample_count_is_invalid(study, bad):
     out = mf.analyze_run(run, values, (), study.stress)
     assert out["status"] == "invalid"
     assert any("nonfinite" in p and "mf_n" in p for p in out["problems"])
+
+
+# ---------------------------------------------------------------------------
+# characterization: the pre-consolidation capture (issue #276)
+# ---------------------------------------------------------------------------
+
+
+def gen_rows_mf(s1, s3, iip3, gain=20.0, step=4.0, n=8, start=-60.0, im3_noise=None, floor=-200.0):
+    """Fractional-slope two-line rows crossing exactly at ``iip3``.
+
+    fund = y0 + s1 (pin - iip3) and im3 = y0 + s3 (pin - iip3): the two lines
+    meet at pin = iip3 for ANY slope pair, so the free-slope intersection is
+    exact on residual-free rows and joins the ideal-slope mean whenever
+    s3 - s1 == 2 -- the real agreement condition, not "slopes exactly 1 and 3".
+    """
+    x0, y0 = iip3, iip3 + gain
+    noise = im3_noise if im3_noise is not None else [0.0] * n
+    pts = []
+    for i in range(n):
+        p = start + step * i
+        pts.append({"pin_dbm": p, "status": "ok",
+                    "p_if1_dbm": y0 + s1 * (p - x0), "p_if2_dbm": y0 + s1 * (p - x0),
+                    "p_im3l_dbm": y0 + s3 * (p - x0) + noise[i],
+                    "p_im3h_dbm": y0 + s3 * (p - x0) + noise[i], "floor_dbm": floor})
+    return pts
+
+
+_CASE_D_NOISE = [0.30, -0.35, 0.20, -0.10, 0.15, -0.25, 0.10, -0.05]
+
+
+def _case_points(name):
+    """The characterization inputs, rebuilt identically to the capture run."""
+    if name == "ideal":
+        return two_tone_sweep(iip3=-2.0)
+    if name == "offset":
+        return two_tone_sweep(iip3=0.0, im3h_offset=2.0)
+    if name == "comp":
+        return two_tone_sweep(iip3=0.0, comp_from=-30.0)
+    if name == "noisy_unavail":
+        return two_tone_sweep(iip3=0.0, noise=[0.0, 6.0, -6.0], floor=-300.0)
+    if name == "case_d":
+        return gen_rows_mf(0.988, 3.02, 10.0, im3_noise=_CASE_D_NOISE)
+    if name == "case_c":
+        return gen_rows_mf(1.08, 2.80, 10.0, step=1.0, n=12, start=-55.0)
+    if name == "nonok_break":
+        pts = two_tone_sweep(iip3=0.0, pins=[-45.0, -40.0, -35.0, -30.0])
+        pts[1]["status"] = "invalid"
+        return pts
+    if name == "sideband_offset":
+        return two_tone_sweep(iip3=0.0, im3h_offset=100.0)
+    if name == "high_side_bad_slope":
+        pts = two_tone_sweep(iip3=0.0)
+        for p in pts:
+            p["p_im3h_dbm"] = p["p_if2_dbm"] + 20.0  # slope-1 "IM3": high sideband out of tolerance
+        return pts
+    if name == "too_few":
+        return two_tone_sweep(pins=[-35.0, -30.0])
+    if name == "ref_gain_none":
+        pts = two_tone_sweep(iip3=0.0, pins=[-45.0, -40.0, -35.0, -30.0])
+        for p in pts:
+            p["status"] = "invalid"
+        return pts
+    raise AssertionError(name)
+
+
+# Captured from the bench-local fit_iip3 BEFORE its fit and _linfit were
+# re-homed onto the shared sim/harness/iip3.py engine; kept as the regression
+# guard after the move. The consolidation replaces _linfit's builtin-sum
+# accumulation with the engine's math.fsum -- a last-ulp arithmetic change the
+# issue mandates -- so floats compare to 1e-9; every status, reason string,
+# interval, fit shape and key must be identical. per_point_iip3_dbm is dropped
+# (a deterministic function of the pinned fit), and the intercept keys the
+# engine adds (iip3_free_slope_dbm, iip3_ideal_slope_dbm, iip3_topfit_dbm) are
+# stripped so the capture pins the pre-change key set exactly; their values
+# are asserted in sim/harness/tests/test_iip3.py.
+
+_CAPTURED = json.loads(r"""
+{
+ "case_c": {
+  "convention": "per-tone available input power at the 50 ohm RF port; lower of the two sidebands' line intersections",
+  "iip3_dbm": 9.999999999999998,
+  "sidebands": {
+   "high": {
+    "excluded_steps": {},
+    "iip3_dbm": 9.999999999999998,
+    "interval_dbm": [
+     -55.0,
+     -44.0
+    ],
+    "n_points": 12,
+    "residual_fund_db": 7.105427357601002e-15,
+    "residual_im3_db": 1.4210854715202004e-14,
+    "slope_fund": 1.08,
+    "slope_im3": 2.8,
+    "status": "ok"
+   },
+   "low": {
+    "excluded_steps": {},
+    "iip3_dbm": 9.999999999999998,
+    "interval_dbm": [
+     -55.0,
+     -44.0
+    ],
+    "n_points": 12,
+    "residual_fund_db": 7.105427357601002e-15,
+    "residual_im3_db": 1.4210854715202004e-14,
+    "slope_fund": 1.08,
+    "slope_im3": 2.8,
+    "status": "ok"
+   }
+  },
+  "status": "ok"
+ },
+ "case_d": {
+  "convention": "per-tone available input power at the 50 ohm RF port; lower of the two sidebands' line intersections",
+  "iip3_dbm": 10.106830708545873,
+  "sidebands": {
+   "high": {
+    "excluded_steps": {},
+    "iip3_dbm": 10.106830708545873,
+    "interval_dbm": [
+     -60.0,
+     -32.0
+    ],
+    "n_points": 8,
+    "residual_fund_db": 3.552713678800501e-15,
+    "residual_im3_db": 0.3886904761904475,
+    "slope_fund": 0.9879999999999999,
+    "slope_im3": 3.0161309523809523,
+    "status": "ok"
+   },
+   "low": {
+    "excluded_steps": {},
+    "iip3_dbm": 10.106830708545873,
+    "interval_dbm": [
+     -60.0,
+     -32.0
+    ],
+    "n_points": 8,
+    "residual_fund_db": 3.552713678800501e-15,
+    "residual_im3_db": 0.3886904761904475,
+    "slope_fund": 0.9879999999999999,
+    "slope_im3": 3.0161309523809523,
+    "status": "ok"
+   }
+  },
+  "status": "ok"
+ },
+ "comp": {
+  "convention": "per-tone available input power at the 50 ohm RF port; lower of the two sidebands' line intersections",
+  "iip3_dbm": 0.0,
+  "sidebands": {
+   "high": {
+    "excluded_steps": {
+     "-10.0": "compressed",
+     "-15.0": "compressed",
+     "-20.0": "compressed",
+     "-25.0": "compressed",
+     "-50.0": "IM3 below extraction floor + margin",
+     "-55.0": "IM3 below extraction floor + margin",
+     "-60.0": "IM3 below extraction floor + margin",
+     "-65.0": "IM3 below extraction floor + margin",
+     "-70.0": "IM3 below extraction floor + margin"
+    },
+    "iip3_dbm": 0.0,
+    "interval_dbm": [
+     -45.0,
+     -30.0
+    ],
+    "n_points": 4,
+    "residual_fund_db": 0.0,
+    "residual_im3_db": 0.0,
+    "slope_fund": 1.0,
+    "slope_im3": 3.0,
+    "status": "ok"
+   },
+   "low": {
+    "excluded_steps": {
+     "-10.0": "compressed",
+     "-15.0": "compressed",
+     "-20.0": "compressed",
+     "-25.0": "compressed",
+     "-50.0": "IM3 below extraction floor + margin",
+     "-55.0": "IM3 below extraction floor + margin",
+     "-60.0": "IM3 below extraction floor + margin",
+     "-65.0": "IM3 below extraction floor + margin",
+     "-70.0": "IM3 below extraction floor + margin"
+    },
+    "iip3_dbm": 0.0,
+    "interval_dbm": [
+     -45.0,
+     -30.0
+    ],
+    "n_points": 4,
+    "residual_fund_db": 0.0,
+    "residual_im3_db": 0.0,
+    "slope_fund": 1.0,
+    "slope_im3": 3.0,
+    "status": "ok"
+   }
+  },
+  "status": "ok"
+ },
+ "high_side_bad_slope": {
+  "reason": "no valid 1:3 region for the high IM3 sideband(s)",
+  "sidebands": {
+   "high": {
+    "excluded_steps": {},
+    "reason": "no contiguous run of >= 3 steps with slopes 1+/-0.1 and 3+/-0.3 above the floor and below compression",
+    "status": "IIP3 unavailable"
+   },
+   "low": {
+    "excluded_steps": {
+     "-50.0": "IM3 below extraction floor + margin",
+     "-55.0": "IM3 below extraction floor + margin",
+     "-60.0": "IM3 below extraction floor + margin",
+     "-65.0": "IM3 below extraction floor + margin",
+     "-70.0": "IM3 below extraction floor + margin"
+    },
+    "iip3_dbm": 0.0,
+    "interval_dbm": [
+     -45.0,
+     -10.0
+    ],
+    "n_points": 8,
+    "residual_fund_db": 0.0,
+    "residual_im3_db": 0.0,
+    "slope_fund": 1.0,
+    "slope_im3": 3.0,
+    "status": "ok"
+   }
+  },
+  "status": "IIP3 unavailable"
+ },
+ "ideal": {
+  "convention": "per-tone available input power at the 50 ohm RF port; lower of the two sidebands' line intersections",
+  "iip3_dbm": -2.0,
+  "sidebands": {
+   "high": {
+    "excluded_steps": {
+     "-50.0": "IM3 below extraction floor + margin",
+     "-55.0": "IM3 below extraction floor + margin",
+     "-60.0": "IM3 below extraction floor + margin",
+     "-65.0": "IM3 below extraction floor + margin",
+     "-70.0": "IM3 below extraction floor + margin"
+    },
+    "iip3_dbm": -2.0,
+    "interval_dbm": [
+     -45.0,
+     -10.0
+    ],
+    "n_points": 8,
+    "residual_fund_db": 0.0,
+    "residual_im3_db": 0.0,
+    "slope_fund": 1.0,
+    "slope_im3": 3.0,
+    "status": "ok"
+   },
+   "low": {
+    "excluded_steps": {
+     "-50.0": "IM3 below extraction floor + margin",
+     "-55.0": "IM3 below extraction floor + margin",
+     "-60.0": "IM3 below extraction floor + margin",
+     "-65.0": "IM3 below extraction floor + margin",
+     "-70.0": "IM3 below extraction floor + margin"
+    },
+    "iip3_dbm": -2.0,
+    "interval_dbm": [
+     -45.0,
+     -10.0
+    ],
+    "n_points": 8,
+    "residual_fund_db": 0.0,
+    "residual_im3_db": 0.0,
+    "slope_fund": 1.0,
+    "slope_im3": 3.0,
+    "status": "ok"
+   }
+  },
+  "status": "ok"
+ },
+ "noisy_unavail": {
+  "reason": "no valid 1:3 region for the low, high IM3 sideband(s)",
+  "sidebands": {
+   "high": {
+    "excluded_steps": {},
+    "reason": "no contiguous run of >= 3 steps with slopes 1+/-0.1 and 3+/-0.3 above the floor and below compression",
+    "status": "IIP3 unavailable"
+   },
+   "low": {
+    "excluded_steps": {},
+    "reason": "no contiguous run of >= 3 steps with slopes 1+/-0.1 and 3+/-0.3 above the floor and below compression",
+    "status": "IIP3 unavailable"
+   }
+  },
+  "status": "IIP3 unavailable"
+ },
+ "nonok_break": {
+  "reason": "no valid 1:3 region for the low, high IM3 sideband(s)",
+  "sidebands": {
+   "high": {
+    "excluded_steps": {
+     "-40.0": "status invalid"
+    },
+    "reason": "no contiguous run of >= 3 steps with slopes 1+/-0.1 and 3+/-0.3 above the floor and below compression",
+    "status": "IIP3 unavailable"
+   },
+   "low": {
+    "excluded_steps": {
+     "-40.0": "status invalid"
+    },
+    "reason": "no contiguous run of >= 3 steps with slopes 1+/-0.1 and 3+/-0.3 above the floor and below compression",
+    "status": "IIP3 unavailable"
+   }
+  },
+  "status": "IIP3 unavailable"
+ },
+ "offset": {
+  "convention": "per-tone available input power at the 50 ohm RF port; lower of the two sidebands' line intersections",
+  "iip3_dbm": -1.0,
+  "sidebands": {
+   "high": {
+    "excluded_steps": {
+     "-50.0": "IM3 below extraction floor + margin",
+     "-55.0": "IM3 below extraction floor + margin",
+     "-60.0": "IM3 below extraction floor + margin",
+     "-65.0": "IM3 below extraction floor + margin",
+     "-70.0": "IM3 below extraction floor + margin"
+    },
+    "iip3_dbm": -1.0,
+    "interval_dbm": [
+     -45.0,
+     -10.0
+    ],
+    "n_points": 8,
+    "residual_fund_db": 0.0,
+    "residual_im3_db": 0.0,
+    "slope_fund": 1.0,
+    "slope_im3": 3.0,
+    "status": "ok"
+   },
+   "low": {
+    "excluded_steps": {
+     "-50.0": "IM3 below extraction floor + margin",
+     "-55.0": "IM3 below extraction floor + margin",
+     "-60.0": "IM3 below extraction floor + margin",
+     "-65.0": "IM3 below extraction floor + margin",
+     "-70.0": "IM3 below extraction floor + margin"
+    },
+    "iip3_dbm": 0.0,
+    "interval_dbm": [
+     -45.0,
+     -10.0
+    ],
+    "n_points": 8,
+    "residual_fund_db": 0.0,
+    "residual_im3_db": 0.0,
+    "slope_fund": 1.0,
+    "slope_im3": 3.0,
+    "status": "ok"
+   }
+  },
+  "status": "ok"
+ },
+ "ref_gain_none": {
+  "reason": "no valid 1:3 region for the low, high IM3 sideband(s)",
+  "sidebands": {
+   "high": {
+    "excluded_steps": {
+     "-30.0": "status invalid",
+     "-35.0": "status invalid",
+     "-40.0": "status invalid",
+     "-45.0": "status invalid"
+    },
+    "reason": "no contiguous run of >= 3 steps with slopes 1+/-0.1 and 3+/-0.3 above the floor and below compression",
+    "status": "IIP3 unavailable"
+   },
+   "low": {
+    "excluded_steps": {
+     "-30.0": "status invalid",
+     "-35.0": "status invalid",
+     "-40.0": "status invalid",
+     "-45.0": "status invalid"
+    },
+    "reason": "no contiguous run of >= 3 steps with slopes 1+/-0.1 and 3+/-0.3 above the floor and below compression",
+    "status": "IIP3 unavailable"
+   }
+  },
+  "status": "IIP3 unavailable"
+ },
+ "sideband_offset": {
+  "convention": "per-tone available input power at the 50 ohm RF port; lower of the two sidebands' line intersections",
+  "iip3_dbm": -50.0,
+  "sidebands": {
+   "high": {
+    "excluded_steps": {},
+    "iip3_dbm": -50.0,
+    "interval_dbm": [
+     -70.0,
+     -10.0
+    ],
+    "n_points": 13,
+    "residual_fund_db": 0.0,
+    "residual_im3_db": 0.0,
+    "slope_fund": 1.0,
+    "slope_im3": 3.0,
+    "status": "ok"
+   },
+   "low": {
+    "excluded_steps": {
+     "-50.0": "IM3 below extraction floor + margin",
+     "-55.0": "IM3 below extraction floor + margin",
+     "-60.0": "IM3 below extraction floor + margin",
+     "-65.0": "IM3 below extraction floor + margin",
+     "-70.0": "IM3 below extraction floor + margin"
+    },
+    "iip3_dbm": 0.0,
+    "interval_dbm": [
+     -45.0,
+     -10.0
+    ],
+    "n_points": 8,
+    "residual_fund_db": 0.0,
+    "residual_im3_db": 0.0,
+    "slope_fund": 1.0,
+    "slope_im3": 3.0,
+    "status": "ok"
+   }
+  },
+  "status": "ok"
+ },
+ "too_few": {
+  "reason": "only 2 power step(s); need >= 3",
+  "status": "IIP3 unavailable"
+ }
+}
+""")
+
+_ENGINE_KEYS = ("iip3_free_slope_dbm", "iip3_ideal_slope_dbm", "iip3_topfit_dbm")
+
+
+def _canonical(result):
+    def key(k):
+        return repr(k) if isinstance(k, float) else k  # JSON maps float dict keys to strings
+
+    def walk(node):
+        if isinstance(node, dict):
+            out = {key(k): walk(v) for k, v in node.items()
+                   if k != "per_point_iip3_dbm" and k not in _ENGINE_KEYS}
+            if isinstance(out.get("rejected_intervals"), list):
+                ri = out["rejected_intervals"]
+                out["rejected_intervals"] = {"count": len(ri), "first": ri[:2]}
+            return out
+        if isinstance(node, list):
+            return [walk(v) for v in node]
+        return node
+    return walk(result)
+
+
+def _assert_same(got, want, path="$"):
+    if isinstance(want, dict):
+        assert isinstance(got, dict) and sorted(got) == sorted(want), (path, sorted(got), sorted(want))
+        for k in want:
+            _assert_same(got[k], want[k], f"{path}.{k}")
+    elif isinstance(want, list):
+        assert isinstance(got, list) and len(got) == len(want), path
+        for i, (g, w) in enumerate(zip(got, want)):
+            _assert_same(g, w, f"{path}[{i}]")
+    elif isinstance(want, float):
+        assert got == pytest.approx(want, abs=1e-9), (path, got, want)
+    else:
+        assert got == want, (path, got, want)
+
+
+@pytest.mark.parametrize("name", sorted(_CAPTURED))
+def test_fit_iip3_matches_the_pre_consolidation_capture(name):
+    _assert_same(_canonical(mf.fit_iip3(_case_points(name))), _CAPTURED[name], name)
