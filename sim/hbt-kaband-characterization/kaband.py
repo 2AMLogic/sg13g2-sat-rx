@@ -34,9 +34,12 @@ from __future__ import annotations
 import cmath
 import math
 import re
+import sys
 from dataclasses import dataclass, field
+from pathlib import Path
 
-K_BOLTZMANN = 1.380649e-23  # J/K (exact, SI 2019)
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # sim/ -> harness
+from harness import rf  # noqa: E402
 
 #: Emitter area per emitter finger used for J_C, um^2. sg13g2_hbt_mod.lib's
 #: header states "Emitter size (mask): Nx *(0.07 x 0.90) um^2", and the
@@ -694,7 +697,7 @@ def fit_noise_parameters(samples: list[tuple[complex, float]]) -> dict:
     if ap <= 0:
         raise NoiseFitError(f"fit gives a' = {ap:.4g} <= 0 (no positive optimum resistance)")
     ropt = math.sqrt(ap / b)
-    tmin = (2 * math.sqrt(ap * b) + c) / (4 * K_BOLTZMANN)
+    tmin = (2 * math.sqrt(ap * b) + c) / (4 * rf.K_BOLTZMANN)
     return {
         "a": a, "b": b, "c": c, "d": d,
         "ropt_ohm": ropt,
@@ -707,14 +710,17 @@ def fit_noise_parameters(samples: list[tuple[complex, float]]) -> dict:
 
 def noise_factor(fit: dict, zs: complex, t0_k: float) -> float:
     """F at source impedance ``zs`` predicted by a fit (source noise at T0)."""
+    # The fit numerator sv is a variance (V^2/Hz), not a density, so it
+    # shares the division through the sq form -- a sqrt round-trip would not
+    # be bit-exact (see sim/harness/tests/test_rf.py).
     sv = fit["a"] + fit["b"] * abs(zs) ** 2 + fit["c"] * zs.real + fit["d"] * zs.imag
-    return 1.0 + sv / (4 * K_BOLTZMANN * t0_k * zs.real)
+    return rf.noise_factor_from_inoise_sq(sv, t0_k, zs.real)
 
 
 def measured_noise_factor(isp: float, zs: complex, t0_k: float) -> float:
     """F from one simulated ``inoise_spectrum`` with a noiseless source:
     the source's own thermal noise is added analytically at ``t0_k``."""
-    return 1.0 + isp * isp / (4 * K_BOLTZMANN * t0_k * zs.real)
+    return rf.noise_factor_from_inoise(isp, t0_k, zs.real)
 
 
 def db10(x: float) -> float:
@@ -875,7 +881,7 @@ def analyze_frequency(raw: RawPoint, sweep: Sweep, k: int, fk: float) -> dict:
         "gamma_opt_mag": abs((zopt - z0) / (zopt + z0)),
         "gamma_opt_deg": math.degrees(cmath.phase((zopt - z0) / (zopt + z0))),
         "tmin_k": fit["tmin_k"],
-        "rn_ohm": fit["a"] / (4 * K_BOLTZMANN * T0_IEEE_K),
+        "rn_ohm": fit["a"] / (4 * rf.K_BOLTZMANN * T0_IEEE_K),
         "fit_max_rel_residual": fit["fit_max_rel_residual"],
     })
     if fit["fit_max_rel_residual"] > FIT_RESIDUAL_MAX:
