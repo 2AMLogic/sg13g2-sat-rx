@@ -1,0 +1,5 @@
+{
+  "engine": "klayout-runset",
+  "layout": {"file": "../../probe.gds", "top": "probe_readiness"},
+  "reference": {"netlist": "../../reference-simform-full.spice", "form": "subckt-call", "deck": "sg13g2"}
+}
