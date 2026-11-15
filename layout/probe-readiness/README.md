@@ -8,6 +8,105 @@ added to `signoff/block-manifest.json` from this probe, and neither
 results are append-only evidence: later runs supersede these by adding a record,
 never by editing one.
 
+## Re-run at klt `0.9.0` + the PDK-runset LVS route (2026-11-15, issue #260) — supersedes the section below
+
+This run does two things: re-runs the full eleven-command probe at the bumped
+pin (`layout/toolchain.json` -> `klt_install: "klayout-tools==0.9.0"`, records
+in `runs/klt-0.9.0/`, 21 files), and adds the first **runset-engine LVS** — the
+route the 2026-10-16 operator ruling (klayout-tools#2864) named as the accepted
+path for SG13G2 bipolars, reachable at 0.9.0 because that is the earliest
+release whose `signoff_runset.PINNED_RUNSETS` carries the ihp-sg13g2 entry.
+Still a **non-claiming** probe: `signoff/block-manifest.json` and
+`signoff/tier-report.json` are byte-unchanged and no T1 item cites this.
+
+| Item | Value |
+|---|---|
+| klt | `0.9.0` — the release pin, i.e. klayout-tools tag `v0.9.0` = commit `5dbbad05ff42265c92a6f3d2f20d1bbcd2957d49`, re-derived from the upstream tag at run time (not copied). Run from a throwaway venv (`klayout-tools==0.9.0`); the **host** tool was not used and not modified. |
+| `probe.gds` | regenerated with `generate_probe.py` under that install: **byte-identical** to the committed file, sha256 `9759f9eeb84b259ab2579d147a7f485315fc9da7291fcabd1ec34ddb6a62db0b`. No layout change committed. |
+| klayout (bundled) | 0.30.13 — **unchanged from 0.8.0**, so no new engine-version disclosure vs the declared `klayout==0.30.12` test floor; `klayout_package_min` stays `0.30`. The standalone `/usr/bin/klayout` (0.30.12) only enters under the runset engine, below. |
+| PDK runset (new) | `libs.tech/klayout/tech/lvs/sg13g2.lvs` from the installed ihp-sg13g2 v0.3.0 tree, re-hashed at run time: `sha256:e01bcb1ec5858e8069bade8f7fd7ec28c1026fc2fd0590e8f611d3398a5bbbd7` — identical to the `PINNED_RUNSETS` allowlist digest (klayout-tools#4309) whose entry names commit `5cccb161f7492697cfa52eb14dc03beb00bdca9e` = the `sim/pdk-artifact.json` pin, so `runset_not_pinned` / `runset_hash_mismatch` did not fire. The runset engine ran on the standalone KLayout **0.30.12** binary (recorded in `provenance.runset.klayout_application_version`). |
+
+### The eleven curated-deck commands: every verdict-bearing field reproduces 0.8.0
+
+Exit codes (`exit-codes.txt`) are identical to the 0.8.0 run: `drc 0`,
+`extract 0`, `ringcheck_activ 0`, `ringcheck_m1 0`, `economy 0`, five `lvs-*`
+rows at 3 and `lvs-simform-recognized-cap-rsil3 0` — plus the new
+`lvs-runset-simform-full 3` row.
+
+| Command | Status at 0.9.0 | Evidence (`runs/klt-0.9.0/`) |
+|---|---|---|
+| `klt drc --deck sg13g2` | `clean`, 0 violations, 24 rules checked — same deck, same verdict. | `drc.json` |
+| `klt extract --deck sg13g2` | `device_count: 2` (`cap_cmim`, `rsil`) — **the curated deck still extracts no bipolar**, unchanged. The extracted netlist is byte-identical to both earlier runs (`netlist_sha256` prefix `859630d83757f00e…`). Same three warnings (dantenna near-miss naming the SiGe HBT family, fixed-value `C` card, 7 layers outside the connectivity graph). **G1 unchanged for the curated deck — as ruled.** | `extract.json`, `probe_extracted.spice` |
+| `klt ring-check` x2 | both `continuous`, 0 violations; still `schema_version: 1` and **still no `provenance` block** — G5 (klayout-tools#5650) is not fixed at 0.9.0. | `ringcheck_activ.json`, `ringcheck_m1.json` |
+| `klt economy` | utilization **20.95 %**, bbox 43.78 × 32.08 µm — values identical; at 0.9.0 the record schema flattened (metrics top-level; `tight_bbox_*`, `whitespace_*`, `row_utilization` added). Record-keeping note, not a verdict change. | `economy.json` |
+| `klt lvs` (six curated-deck records) | every `status` / `counts.devices` / `error_count` identical to 0.8.0 (`lvs-simform-recognized-cap-rsil3` `match` exit 0; the other five `mismatch` exit 3). One **new warning-severity** finding in `lvs-simform-full`: `topology.hierarchy_mismatch` (flat layout netlist vs hierarchical reference) — a sharper diagnosis; `error_count` stays 3 and the named `reference.unresolved_subckt_call` for `NPN13G2` is still present. | the six `lvs-*.json` + their `*.request.json` (copied unchanged) |
+
+### The new runset-engine LVS record — `lvs-runset-simform-full.json`
+
+Request (`lvs-runset-simform-full.request.json`): `engine: "klayout-runset"`,
+`layout: {file: ../../probe.gds, top: probe_readiness}`,
+`reference: {netlist: ../../reference-simform-full.spice, form: subckt-call,
+deck: sg13g2}`; the runset is passed **only** via `--deck-file` (the request
+sets no `deck_file`, per the clean-error contract). A first attempt copied the
+curated-deck request including `layout.deck` and was rejected cleanly **before**
+any compare (exit 1: *"layout.deck is not supported by engine 'klayout-runset'
+(the runset does its own extraction; only layout.file, top apply)"*) — the
+committed request is the corrected shape.
+
+| Field | Value |
+|---|---|
+| `status` | **`mismatch`** (exit 3), `mismatch_count: 18`, `error_count: 18` |
+| `counts.devices` | `{layout: 3, reference: 1, matched: 1}` |
+| `coverage.declared_not_recognized` | 40 families — **`npn13G2`, `cap_cmim` and `rsil` are NOT among them** (they are recognized); the list: `dantenna`, `diodevdd_2kv`, `diodevdd_4kv`, `diodevss_2kv`, `diodevss_4kv`, `dpantenna`, `idiodevdd_2kv`, `idiodevdd_4kv`, `idiodevss_2kv`, `idiodevss_4kv`, `inductor`, `inductor3`, `isolbox`, `nmoscl_2`, `nmoscl_4`, `npn13G2l`, `npn13G2v`, `ntap1`, `pnpMPA`, `ptap1`, `res_metal1`, `res_metal2`, `res_metal3`, `res_metal4`, `res_metal5`, `res_topmetal1`, `res_topmetal2`, `rfcmim`, `rfnmos`, `rfnmoshv`, `rfpmos`, `rfpmoshv`, `rhigh`, `rppd`, `schottky_nbl1`, `sg13_hv_nmos`, `sg13_hv_pmos`, `sg13_hv_svaricap`, `sg13_lv_nmos`, `sg13_lv_pmos` |
+| `provenance.runset.content_hash` | `sha256:e01bcb1ec5858e8069bade8f7fd7ec28c1026fc2fd0590e8f611d3398a5bbbd7` (see PDK runset row above) |
+| layout side | **three devices extracted: `$1 npn13G2`, `$2 rsil`, `$3 cap_cmim`** — the HBT is a recognized, named layout device class (`device_classes` includes `npn13G2`), unlike the curated deck's no-device outcome |
+| reference side | `reference_conversion.device_map` is **null** under the runset engine: of the three subckt-calls in `reference-simform-full.spice` only `RSIL` converted to a compare device (and matched — net correspondence `RA`/`RB`); `CAP_CMIM` appears in `device_census.reference` but never enters the compare, and `NPN13G2` in neither, so the layout's HBT and MIM cap carry `device.unmatched` ("has no counterpart") plus the associated net/pin findings |
+
+### G1 verdict, corrected by addition
+
+Everything above ("Gap status at 0.8.0") remains true **for the curated deck**,
+and this run re-confirms it: at 0.9.0 that deck still extracts no bipolar
+device (byte-identical netlist), and the deck route is closed by ruling. What
+changes is the **runset route** — the ruling's named alternative — now
+*measured* against this repo's probe:
+
+- **Recognition: the route is OPEN.** The PDK's own runset recognizes `npn13G2`
+  as a layout device class (extracted device `$1`, class `npn13G2`; absent from
+  `declared_not_recognized`). Issue #4's "permanent upstream
+  bipolar-recognition obstacle" is therefore **not permanent** — it is a
+  curated-deck-only boundary, and the runset side of it works at the pinned
+  toolchain. This measurement also covers the recognition half of upstream
+  klayout-tools#4397, which remains theirs to run on their behalf.
+- **The full compare does not reach `match` yet, and this record does not
+  claim it.** The blocker moved from "the layout side cannot see the HBT"
+  (curated deck) to a narrower, named gap: the runset engine has **no device
+  map for subckt-call references**, so schematic-form references containing
+  runset-recognized devices cannot convert. Filed generically per the friction
+  protocol: **klayout-tools#5796** (reference-side conversion under the runset
+  engine) and **klayout-tools#5795** (lint-envelope flags fields klt's own
+  runset envelope writes: `environment.klayout_binary`, and
+  `provenance.runset.deck_file` normalized to absolute despite a relative CLI
+  value — the content hash is already present and is the reproducibility
+  anchor).
+
+**What a future item-4 claim would still need** (this probe claims nothing):
+a drawn LNA layout; the runset-engine reference conversion (#5796) or an
+equivalent supported reference form; the inductor-realization gate recorded in
+#198; and the deck-vs-runset engine decision recorded beside the claim per the
+#2864 ruling.
+
+### Hygiene of this run
+
+`klt env-provenance lint-envelope runs/klt-0.9.0/*.json` -> 3 findings, all
+tool-written inside the single runset record (embedded request echo carries
+`deck_file` resolved to absolute; `environment.klayout_binary`;
+`provenance.runset.deck_file` normalized absolute) — the **other 18 of the 19
+linted json files** (the 11 curated-deck records and their 7 request echoes)
+lint clean bare, same bar as the 0.8.0 run. With the genuinely machine-wide
+prefixes declared (`--allow-prefix /usr --allow-prefix ~/share/pdk`) the whole
+set is **clean: 0 absolute path(s)**. Both declarations are the linter's own
+documented remedy; the underlying self-inconsistency is klayout-tools#5795.
+
 ## Re-run at the pinned release klt `0.8.0` (2026-11-14, issue #246) — supersedes the tables below
 
 This is the first record taken at the klt pin this repo actually declares
