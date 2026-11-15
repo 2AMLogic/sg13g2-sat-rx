@@ -1,0 +1,17 @@
+* extracted by klt extract --deck sg13g2
+
+* cell probe_readiness
+* pin CB
+* pin CT
+* pin GND
+* pin RA
+* pin RB
+* pin E
+* pin C
+* pin B
+.SUBCKT probe_readiness CB CT GND RA RB E C B
+* device instance $1 r0 *1 17.495,3.495 cap_cmim
+C$1 CB CT 7.440855e-14
+* device instance $2 r0 *1 30.25,0.25 rsil
+X$2 RB RA GND rsil r=24.862745098 L=0.5U W=0.5U
+.ENDS probe_readiness

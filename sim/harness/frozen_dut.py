@@ -24,14 +24,20 @@ edit to the frozen one.
 
 from __future__ import annotations
 
-import hashlib
 from pathlib import Path
 
+from .provenance import sha256_file
 
-def sha256_bytes(path: Path) -> str | None:
-    """The file's sha256, or ``None`` when it cannot be read."""
+
+def sha256_path(path: Path) -> str | None:
+    """The file's sha256, or ``None`` when it cannot be read.
+
+    A path-named delegation to :func:`provenance.sha256_file`, the harness's
+    one streaming hash; the ``None`` fallback is the contract ``resolve``
+    relies on, since candidate snapshots may not be readable.
+    """
     try:
-        return hashlib.sha256(path.read_bytes()).hexdigest()
+        return sha256_file(path)
     except OSError:
         return None
 
@@ -77,6 +83,6 @@ def resolve(declared: Path, declared_sha256: str | None, snapshots: Path) -> Pat
     if not declared_sha256:
         return declared
     for path in _candidates(declared, snapshots):
-        if sha256_bytes(path) == declared_sha256:
+        if sha256_path(path) == declared_sha256:
             return path
     return declared

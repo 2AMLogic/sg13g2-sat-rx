@@ -13,8 +13,17 @@ SIM = Path(__file__).resolve().parents[2]
 BENCHES = T.discover(SIM)
 
 
-def test_all_three_committed_benches_are_discovered():
-    assert {p.name for p in BENCHES} >= {"lna-sparam-nf", "mixer-conversion-iip3", "hbt-kaband-characterization"}
+def test_every_committed_bench_is_discovered():
+    """`BENCHES` is also the parametrize argument below, so a bench that fell
+    out of `discover` would silently stop being parametrized rather than fail
+    anything. Pin the result to the committed universe by set equality instead
+    of a hand-maintained lower bound. Caveat: both sides use `Path.glob`, so
+    this guards `discover`'s pattern and return shape, not `Path.glob` itself."""
+    committed = {p.parent.parent.name for p in SIM.glob("*/testbench/tb.json")}
+    assert {p.name for p in BENCHES} == committed
+    # equality first so a dropped bench is named; the floor then rejects the one
+    # case equality cannot catch -- both sides empty, trivially agreeing
+    assert len(BENCHES) >= 5
 
 
 @pytest.mark.parametrize("bench", BENCHES, ids=lambda p: p.name)

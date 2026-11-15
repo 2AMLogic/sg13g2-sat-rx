@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "file": "probe.gds",
+  "layers": [
+    [
+      8,
+      0
+    ]
+  ],
+  "region_um": null,
+  "cells": null,
+  "dbu_um": 0.001,
+  "status": "continuous",
+  "violation_count": 0,
+  "violations": []
+}
