@@ -12,6 +12,7 @@ import datetime as dt
 import gzip
 import json
 import types
+from pathlib import Path
 
 import pytest
 
@@ -19,7 +20,8 @@ import analysis as A
 import fakes
 import linearity as L
 import run as R
-from conftest import BENCH
+
+BENCH = Path(__file__).resolve().parents[1]
 
 
 @pytest.fixture()

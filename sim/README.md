@@ -170,6 +170,39 @@ row 1, among them — hence the "DRAFT band" wording below). Comparison of the
 mixer against the binding rows becomes meaningful only once its `tb.json` is
 re-pointed at a real mixer schematic.
 
+### Running the tests: one bench per pytest invocation
+
+**One bench directory per `pytest` invocation is the contract.** Each
+`sim/<bench>/tests` is run as its own command (one CI step per bench); a
+multi-bench *run* is unsupported. A multi-bench **collection** check is
+supported and CI-guarded:
+
+```
+python -m pytest sim/*/tests --collect-only -q
+```
+
+Why collection only: pytest's default `prepend` import mode drops every bench
+into one flat top-level module namespace, and fixing that fully would require
+renaming `run_probe.py` and `ci_assert.py`, which exist per bench under the
+same filename. Those names are load-bearing: committed append-only evidence
+records cite them (e.g. `python3 sim/mixer-pumped-rf-admittance/run_probe.py`),
+as do bench READMEs and CI steps, so they cannot be renamed without editing
+records. In a multi-bench run the first bench's module to bind a shared name
+stays in `sys.modules` and every later bench silently exercises the wrong
+bench's code.
+
+Measured with the flat namespace's incidental collection defects removed
+(2026-11-15, issue-287 tree off main @ `c498b96`, pytest 9.1.1): collecting
+all 12 bench test directories in one
+invocation is clean — 875 tests, 0 errors — but running them fails: **49
+failed, 834 passed, 28 subtests passed**, with every failure in exactly the
+three benches whose tests bare-import `run_probe.py` / `ci_assert.py`
+(`mixer-pumped-rf-admittance`, `mixer-cm-interface-probe`,
+`mixer-nf-method`). Each of those benches passes on its own. Making the full
+multi-bench run pass needs its own decision record; until then the
+per-directory invocation above is the supported way to run a bench's tests,
+and the collect-only command is the supported whole-`sim/` check.
+
 ### Where each command runs (local ngspice vs batch fleet)
 
 | Command | Runs |
