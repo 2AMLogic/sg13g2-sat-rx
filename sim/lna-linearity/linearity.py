@@ -28,11 +28,14 @@ with it.
 
 from __future__ import annotations
 
-import cmath
 import json
 import math
 import re
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # sim/ -> harness
+from harness import rf  # noqa: E402
 
 Z0_OHM = 50.0
 NEG_INF_DBM = -400.0
@@ -167,14 +170,16 @@ def placement_coherence(plan: dict, pl: dict, variant: str) -> list[str]:
 def window_dft(samples: list[float], step_s: float, f_hz: float, t0_s: float = 0.0) -> float:
     """Single-sided peak amplitude at ``f_hz`` of ``samples`` (reference implementation).
 
-    The ngspice decks compute the same quantity as ``2*mean(x*cos)``/``2*mean(x*sin)``;
-    this routine is the pure-Python statement of it and is what the tests use to
-    qualify the normalization on known waveforms."""
-    n = len(samples)
-    acc = 0j
-    for k, x in enumerate(samples):
-        acc += x * cmath.exp(-2j * math.pi * f_hz * (t0_s + k * step_s))
-    return 2.0 * abs(acc) / n
+    Delegates to :func:`harness.rf.dft_bin_amplitude` (issue #264 unified the
+    two bench-local single-bin DFTs; this bench's conjugated ``e^{-jwt}``
+    kernel retired in favour of the generated deck's ``2*mean(x*cos)`` /
+    ``2*mean(x*sin)`` pair -- identical magnitudes, stated convention and
+    worked example in the shared docstring). The ngspice decks compute the
+    same quantity; this routine is what the tests use to qualify the
+    normalization on known waveforms. Empty input now raises the shared
+    ``ValueError("no samples")`` (previously ``ZeroDivisionError``; no call
+    site caught it)."""
+    return rf.dft_bin_amplitude(samples, step_s, f_hz, t0_s)
 
 
 def amp(c: float, s: float) -> float:

@@ -1,6 +1,12 @@
 """Characterization of the noiseless-source noise factor across its four
 per-bench implementations, plus the shared ``harness.rf`` module (issue #262).
 
+Issue #264 adds the second half: the single-bin DFT characterization that
+pinned the two bench-local copies (``mixfeas.dft_bin``,
+``linearity.window_dft``) against the shared survivor
+``harness.rf.dft_bin`` BEFORE the wrappers were made to delegate -- the
+magnitude agreement is asserted exact, so a recorded amplitude cannot move.
+
 The characterization half was written against the four pre-existing
 implementations BEFORE the consolidation and is kept as the regression guard
 after it: it proves the move was behaviour-preserving bit-for-bit, and it
@@ -38,13 +44,17 @@ for _p in (
     SIM / "lna-match-tradeoff",
     SIM / "hbt-kaband-characterization",
     SIM / "mixer-nf-method",
+    SIM / "mixer-topology-feasibility",
+    SIM / "lna-linearity",
 ):
     if str(_p) not in sys.path:
         sys.path.insert(0, str(_p))
 
 import kaband  # noqa: E402
 import lna_nf as nf  # noqa: E402
+import linearity as L  # noqa: E402
 import matchstudy as ms  # noqa: E402
+import mixfeas as mf  # noqa: E402
 
 from harness import rf as hrf  # noqa: E402
 
@@ -314,3 +324,96 @@ def test_fit_numerators_route_through_the_sq_variant_not_sqrt():
         hrf.noise_factor_from_inoise_sq(sv, t0, z), want, "sq helper = formula")
     through_sqrt = hrf.noise_factor_from_inoise(math.sqrt(sv), t0, z)
     assert _bits(through_sqrt) != _bits(want), (through_sqrt, want)
+
+
+# ---------------------------------------------------------------------------
+# Single-bin DFT characterization (issue #264): the two bench-local copies
+# vs the shared survivor. The magnitude-agreement vectors were run GREEN
+# before either wrapper was made to delegate; they stay as the regression
+# guard after.
+# ---------------------------------------------------------------------------
+
+#: Issue #264's own waveform: ``0.37 * sin(2 pi 5 t + 0.9)``, 200 samples at
+#: dt = 0.005 s (a 1 s window -- 5 periods, coherent). The deck-verified
+#: survivor convention reads it as a*(sin(phi) + j cos(phi)).
+_A, _F, _PHI, _N, _DT = 0.37, 5.0, 0.9, 200, 0.005
+COHERENT = [_A * math.sin(2 * math.pi * _F * k * _DT + _PHI) for k in range(_N)]
+
+
+def test_dft_bin_pins_the_deck_kernel_convention_on_a_known_wave():
+    z = hrf.dft_bin(COHERENT, _DT, _F)
+    # The exact bits this stated construction yields (the issue's scratch
+    # script built its samples with k/200 division and so reported the same
+    # convention in slightly different last bits); the survivor adopts
+    # mixfeas's kernel, which the agreement test pins bit-for-bit on
+    # identical inputs.
+    assert_bits_equal(z.real, 0.2898309565621686, "issue-wave re (cos-referenced)")
+    assert_bits_equal(z.imag, 0.22999568826014602, "issue-wave im (+sine member)")
+    # The docstring's worked example, independent of the pinned bits: the
+    # conjugate kernel would flip the imaginary sign and fail hard.
+    assert z.real == pytest.approx(_A * math.sin(_PHI), rel=1e-12)
+    assert z.imag == pytest.approx(_A * math.cos(_PHI), rel=1e-12)
+    assert abs(z) == pytest.approx(_A, rel=1e-12)
+    assert hrf.dft_bin_amplitude(COHERENT, _DT, _F) == pytest.approx(_A, rel=1e-12)
+
+
+def test_single_bin_dft_magnitude_agrees_across_all_three_implementations():
+    """Exact magnitude agreement between mixfeas's copy, linearity's copy and
+    the survivor over every characterization vector -- written before the
+    wrappers delegated, kept after as the no-recorded-number-moved proof."""
+    incoherent = [0.6 * math.sin(2 * math.pi * 5.37 * k * _DT + 0.2) for k in range(_N)]
+    dc_offset = [0.25 + v for v in COHERENT]
+    cases = [
+        # (label, samples, dt, freq, t0) -- coherent known bin, deliberately
+        # incoherent bin, DC offset on a tone, the DC bin itself, a non-zero
+        # window start, and a single-sample "window".
+        ("coherent", COHERENT, _DT, _F, 0.0),
+        ("incoherent", incoherent, _DT, 5.37, 0.0),
+        ("dc-offset tone", dc_offset, _DT, _F, 0.0),
+        ("dc bin", dc_offset, _DT, 0.0, 0.0),
+        ("nonzero t0", COHERENT, _DT, _F, 0.1),
+        ("single sample", [0.8], 0.005, 5.0, 0.0),
+    ]
+    for label, samples, dt, f, t0 in cases:
+        got_c = mf.dft_bin(samples, dt, f, t0)  # legacy complex reference
+        got_m = L.window_dft(samples, dt, f, t0)  # legacy magnitude reference
+        z = hrf.dft_bin(samples, dt, f, t0)
+        amp = hrf.dft_bin_amplitude(samples, dt, f, t0)
+        assert isinstance(got_c, complex) and isinstance(got_m, float), label
+        assert isinstance(z, complex) and isinstance(amp, float), label
+        # linearity's copy == the survivor's amplitude accessor, bit-for-bit
+        # (same 2*hypot(re, im)/n scale-and-divide order its numbers carry).
+        assert_bits_equal(got_m, amp, f"window_dft == dft_bin_amplitude ({label})")
+        # mixfeas's copy == the survivor's complex bin, bit-for-bit.
+        assert_bits_equal(got_c.real, z.real, f"dft_bin re ({label})")
+        assert_bits_equal(got_c.imag, z.imag, f"dft_bin im ({label})")
+        # three-way magnitude agreement (abs vs the accessor rounds once
+        # vs twice, so approx here; the exact pins are the two above).
+        assert abs(z) == pytest.approx(amp, rel=1e-12), label
+        assert got_m == pytest.approx(abs(got_c), rel=1e-12), label
+
+
+def test_single_bin_dft_empty_input_raises_the_shared_exception():
+    for call in (
+        lambda: hrf.dft_bin([], _DT, _F),
+        lambda: hrf.dft_bin_amplitude([], _DT, _F),
+        lambda: mf.dft_bin([], _DT, _F),
+        lambda: L.window_dft([], _DT, _F),
+    ):
+        with pytest.raises(ValueError, match="no samples"):
+            call()
+
+
+def test_legacy_wrappers_delegate_with_unchanged_contracts():
+    """Post-delegation guard: both bench entry points stay thin (same
+    signatures and return types) and answer bit-identically to the survivor
+    they now call."""
+    z = mf.dft_bin(COHERENT, _DT, _F, 0.0)
+    assert_bits_equal(z.real, hrf.dft_bin(COHERENT, _DT, _F, 0.0).real, "mixfeas re")
+    assert_bits_equal(z.imag, hrf.dft_bin(COHERENT, _DT, _F, 0.0).imag, "mixfeas im")
+    m = L.window_dft(COHERENT, _DT, _F, 0.0)
+    assert_bits_equal(m, hrf.dft_bin_amplitude(COHERENT, _DT, _F, 0.0), "linearity amp")
+    # the sign-sensitive consumer shape the parser tests use (fake-log
+    # mf_<name>_re/_im pairs from z.real/z.imag) keeps mixfeas's convention:
+    # the imaginary member is the deck's +sine term, positive here (phi=0.9).
+    assert z.imag > 0.0 and z.real > 0.0
