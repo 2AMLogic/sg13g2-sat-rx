@@ -53,16 +53,27 @@ def _jobs_without_timeout(wf):
 def test_every_workflow_job_declares_timeout_minutes():
     """Issue #143: a job without `timeout-minutes` inherits GitHub's
     360-minute default, so a hung pip install or a deadlocked pytest holds a
-    runner for six hours and the commit gets no verdict. Every job in ci.yml
-    and signoff.yml must declare its own bound."""
+    runner for six hours and the commit gets no verdict. Every job in every
+    committed workflow must declare its own bound -- the file list is derived
+    from `.github/workflows/`, so a workflow added tomorrow is covered without
+    editing this test. `known_jobs` stays as the non-vacuity anchor against a
+    silently-failing text parse."""
     known_jobs = {
         "ci.yml": {"harness-tests", "evidence-formats", "sim-smoke"},
         "signoff.yml": {"tier-report"},
     }
-    for wf_name, known in known_jobs.items():
-        wf = (REPO_ROOT / ".github" / "workflows" / wf_name).read_text()
+    wf_dir = REPO_ROOT / ".github" / "workflows"
+    wf_names = sorted(
+        p.name for pattern in ("*.yml", "*.yaml") for p in wf_dir.glob(pattern) if p.is_file()
+    )
+    assert set(known_jobs) <= set(wf_names), wf_names  # the glob is not vacuous
+    for wf_name in wf_names:
+        wf = (wf_dir / wf_name).read_text()
         jobs = _job_blocks(wf)
-        assert known <= set(jobs), (wf_name, sorted(jobs))  # parse not vacuous
+        # a workflow with no parsed job block means the parse failed, not that
+        # the file is exempt -- otherwise a new workflow could escape silently
+        assert jobs, f"{wf_name}: no job blocks parsed"
+        assert known_jobs.get(wf_name, set()) <= set(jobs), (wf_name, sorted(jobs))  # parse not vacuous
         missing = _jobs_without_timeout(wf)
         assert not missing, f"{wf_name}: jobs without timeout-minutes: {', '.join(missing)}"
 
