@@ -18,6 +18,7 @@ BENCH = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(BENCH))
 
 import lna_nf as nf  # noqa: E402
+from harness import rf  # noqa: E402  (lna_nf's own import put sim/ on sys.path)
 
 MANIFEST = json.loads((BENCH / "testbench" / "tb.json").read_text())
 FIXTURE = (BENCH / "testbench" / "lna_ce_placeholder.spice").read_text()
@@ -68,7 +69,7 @@ def test_former_temp27_method_disagrees_by_27_over_300_15_in_linear_f():
     for f_true in (1.2, 2.0, 3.0):
         added = spectrum_for_f(f_true)  # DUT-only noise, noiseless source
         # What the noisy 327.15 K source would have produced for the same DUT:
-        inoise_legacy = math.sqrt(added ** 2 + 4 * nf.K_BOLTZMANN * nf.LEGACY_SOURCE_K * 50.0)
+        inoise_legacy = math.sqrt(added ** 2 + 4 * rf.K_BOLTZMANN * nf.LEGACY_SOURCE_K * 50.0)
         f_old = nf.legacy_f(inoise_legacy)
         assert f_old - f_true == pytest.approx(27.0 / 300.15, rel=1e-12)
         assert f_old - nf.f_from_added_noise(added) == pytest.approx(0.0899550, abs=1e-6)
