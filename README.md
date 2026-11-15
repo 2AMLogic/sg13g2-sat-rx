@@ -110,8 +110,7 @@ spec/          target spec (partially ratified, DR-0003) + porting plan
 ```
 
 The machine-graded tier verdict of record is [`signoff/README.md`](signoff/README.md);
-the narrative roadmap is [`docs/ROADMAP.md`](docs/ROADMAP.md), and the queue view
-generated from label state is [`WORK_PLAN.md`](WORK_PLAN.md).
+the current roadmap, generated from label state, is [`WORK_PLAN.md`](WORK_PLAN.md).
 
 ## Reproduce
 
