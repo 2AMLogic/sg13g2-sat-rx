@@ -663,8 +663,9 @@ def nf_db_from_inoise(inoise: float, t0_k: float = 300.15, z0: float = 50.0) -> 
 
 
 def db20(x: complex | float) -> float:
-    a = abs(x)
-    return 20 * math.log10(a) if a > 0 else float("-inf")
+    # Shared primitive (issue #263): abs first, then the -inf floor for
+    # zero/NaN magnitude -- matchstudy's convention, unchanged.
+    return rf.db20(x)
 
 
 def two_port(fwd: list[list[float]], rev: list[list[float]]) -> list[dict]:

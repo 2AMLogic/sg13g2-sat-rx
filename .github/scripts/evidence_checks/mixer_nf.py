@@ -4,36 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from .common import (PAIR_RE, Problems, RECORD_ID_RE, has_section, load_json_object, need_record_commit, need_sha256, need_str, record_pairs, rel)
-from .passive_p1 import MIXER_PROBE_FILES, MIXER_STATUSES, PASSIVE_PACKAGES
-
-
-def check_probe_log_package(problems, root, exp_dir, rid, rec, md, where_js, where_md, claimed_logs):
-    """Shared probe-log package contract; returns the package path, or None if the directory is missing."""
-    declared = rec.get("probe_logs")
-    expected = f"sim/{exp_dir.name}/probe-logs/{rid}/"
-    if declared != expected:
-        problems.add(where_js, f"JSON probe_logs {declared!r} must be {expected!r}")
-    logs = exp_dir / "probe-logs" / rid
-    claimed_logs.add(rid)
-    if f"probe-logs/{rid}/" not in md:
-        problems.add(where_md, f"Markdown does not reference its probe-logs/{rid}/ package")
-    if not logs.is_dir():
-        problems.add(where_js, f"declared probe-log package {rel(root, logs)}/ does not exist")
-        return None
-    # stderr may legitimately be empty
-    present = {p.name for p in logs.iterdir() if p.is_file()}
-    for name in MIXER_PROBE_FILES:
-        if name not in present:
-            problems.add(rel(root, logs), f"probe-log package is missing {name}")
-        elif name != "stderr.txt" and (logs / name).stat().st_size == 0:
-            problems.add(rel(root, logs / name), "probe-log file is empty")
-    for name in sorted(present - set(MIXER_PROBE_FILES)):
-        problems.add(rel(root, logs / name), "unexpected file in a probe-log package")
-    for p in logs.iterdir():
-        if p.is_dir():
-            problems.add(rel(root, p), "unexpected directory in a probe-log package")
-    return logs
+from .common import (PAIR_RE, Problems, check_probe_log_bench, check_probe_log_package, has_section, load_json_object, need_record_commit, need_sha256, need_str, rel)
+from .passive_p1 import MIXER_STATUSES, PASSIVE_PACKAGES
 
 
 def check_mixer_record(problems: Problems, root: Path, exp_dir: Path, stem: str, files: dict[str, Path],
@@ -116,18 +88,5 @@ def check_mixer_record(problems: Problems, root: Path, exp_dir: Path, stem: str,
 
 
 def check_mixer_nf_method(problems: Problems, root: Path, exp_dir: Path) -> None:
-    records = exp_dir / "records"
-    claimed: set[str] = set()
-    if records.is_dir():
-        for stem, files in record_pairs(problems, root, records).items():
-            check_mixer_record(problems, root, exp_dir, stem, files, claimed)
-    logs_root = exp_dir / "probe-logs"
-    if logs_root.is_dir():
-        for p in sorted(logs_root.iterdir()):
-            if not (p.is_dir() and RECORD_ID_RE.match(p.name)):
-                problems.add(rel(root, p), "probe-logs entry is not a <YYYYMMDD>-<HHMMSS>-<git-sha>/ run directory")
-            elif p.name not in claimed:
-                problems.add(rel(root, p), "probe-log package belongs to no record (orphan or incomplete run)")
-    for sub in ("corners", "netlist-snapshots", PASSIVE_PACKAGES):
-        if (exp_dir / sub).exists():
-            problems.add(rel(root, exp_dir / sub), f"{sub}/ is not part of the mixer-nf-method evidence layout")
+    check_probe_log_bench(problems, root, exp_dir, "mixer-nf-method", check_mixer_record,
+                          ("corners", "netlist-snapshots", PASSIVE_PACKAGES))

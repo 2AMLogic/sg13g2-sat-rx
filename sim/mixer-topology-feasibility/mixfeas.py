@@ -41,8 +41,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # sim/ -> harness
 from harness import rf  # noqa: E402
+from harness.rf import Z0_OHM  # noqa: E402
 
-Z0_OHM = 50.0
 LO_RDIFF_OHM = 100.0
 
 #: Every value printed by a generated deck is named ``mf_<key>``.
@@ -61,44 +61,22 @@ class StudyError(ValueError):
 
 
 # ---------------------------------------------------------------------------
-# Power arithmetic
+# Power arithmetic -- delegated to sim/harness/rf.py (issue #263). The
+# public names and signatures are unchanged, and since issue #268 the
+# watts-to-dBm edge convention is repo-wide: ``dbm`` is rf.dbm_strict
+# (positive finite converts, zero and negative give -inf, NaN propagates) --
+# the same three branches as the ``lna-linearity`` bench's
+# ``linearity.dbm_from_w``, which previously mapped zero, negative AND NaN
+# to a finite -400 dBm. Canonical statement, with the reasoning:
+# sim/README.md -> "Watts-to-dBm edge convention". Each shared primitive's
+# characterization lives in sim/harness/tests/test_rf.py.
 # ---------------------------------------------------------------------------
 
-
-def dbm(watts: float) -> float:
-    """Power in dBm; ``-inf`` for zero or negative, NaN propagates.
-
-    This is the repo-wide watts-to-dBm edge convention (issue #268): the
-    ``lna-linearity`` bench's ``linearity.dbm_from_w`` now has these same three
-    branches, where it previously mapped zero, negative AND NaN to a finite
-    -400 dBm. Canonical statement, with the reasoning: ``sim/README.md`` ->
-    "Watts-to-dBm edge convention". NaN must not become a finite number: a NaN
-    power is a corrupt measurement, and -400 dBm is a plausible-looking one."""
-    if watts != watts:  # NaN
-        return float("nan")
-    if watts <= 0.0:
-        return float("-inf")
-    return 10.0 * math.log10(watts / 1e-3)
-
-
-def watts(dbm_value: float) -> float:
-    return 1e-3 * 10.0 ** (dbm_value / 10.0)
-
-
-def available_power_w(v_open_peak: float, r_source: float) -> float:
-    """Available power of a Thevenin source (peak open-circuit voltage,
-    real source resistance): ``V^2 / (8 R)``."""
-    return v_open_peak * v_open_peak / (8.0 * r_source)
-
-
-def v_open_peak_for(dbm_value: float, r_source: float) -> float:
-    """Inverse of :func:`available_power_w` for a power in dBm."""
-    return math.sqrt(8.0 * r_source * watts(dbm_value))
-
-
-def delivered_power_w(v_peak: float, r_load: float) -> float:
-    """Power delivered into a resistor by a sine of peak amplitude ``v_peak``."""
-    return v_peak * v_peak / (2.0 * r_load)
+dbm = rf.dbm_strict
+watts = rf.watts
+available_power_w = rf.available_power_w
+v_open_peak_for = rf.v_open_peak_for
+delivered_power_w = rf.delivered_power_w
 
 
 def dft_bin(samples: list[float], dt: float, freq_hz: float, t0: float = 0.0) -> complex:

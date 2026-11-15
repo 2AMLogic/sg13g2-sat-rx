@@ -22,8 +22,13 @@ the part a wrong-normalization bug would hide in):
 
 The mixer feasibility bench (``sim/mixer-topology-feasibility/mixfeas.py``)
 uses the same two ideas (coherent bins; a verified 1:3 region); this module
-restates them for an amplifier whose products stay at RF and shares no numbers
-with it.
+restates them for an amplifier whose products stay at RF. Since issue #263 the
+power arithmetic itself is no longer restated here: both benches call the
+shared primitives in ``sim/harness/rf.py`` through this module's wrappers,
+which carry the repo-wide watts-to-dBm edge convention (issue #268): positive
+finite converts, zero and negative give ``-inf``, NaN propagates. The
+canonical statement, with the reasoning, is ``sim/README.md`` ->
+"Watts-to-dBm edge convention".
 """
 
 from __future__ import annotations
@@ -36,21 +41,27 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # sim/ -> harness
 from harness import rf  # noqa: E402
-
-Z0_OHM = 50.0
+from harness.rf import Z0_OHM  # noqa: E402
 
 # ---------------------------------------------------------------------------
-# power conventions
+# power conventions -- the arithmetic is delegated to sim/harness/rf.py
+# (issue #263). The public names and signatures are unchanged. Since #268 the
+# watts-to-dBm edge convention is repo-wide and strict: ``dbm_from_w`` is
+# rf.dbm_strict -- positive finite converts, zero and negative give ``-inf``,
+# NaN propagates. The canonical statement, with the reasoning, lives in
+# sim/README.md -> "Watts-to-dBm edge convention"; each shared primitive's
+# characterization lives in sim/harness/tests/test_rf.py.
 # ---------------------------------------------------------------------------
 
 
 def dbm_from_w(p_w: float) -> float:
     """Power in dBm; ``-inf`` for zero or negative, NaN propagates.
 
-    This is the repo-wide watts-to-dBm edge convention (issue #268) -- the same
-    three branches as ``mixer-topology-feasibility/mixfeas.py``'s ``dbm``.
-    Canonical statement, with the reasoning: ``sim/README.md`` ->
-    "Watts-to-dBm edge convention".
+    Delegates to :func:`harness.rf.dbm_strict` (issue #263 moved the
+    arithmetic there). This is the repo-wide watts-to-dBm edge convention
+    (issue #268) -- the same three branches as
+    ``mixer-topology-feasibility/mixfeas.py``'s ``dbm``. Canonical statement,
+    with the reasoning: ``sim/README.md`` -> "Watts-to-dBm edge convention".
 
     The two rules, and why:
 
@@ -66,11 +77,7 @@ def dbm_from_w(p_w: float) -> float:
       ``analysis._round`` encodes ``-inf`` as the string ``"-inf"`` and NaN as
       ``null``, so neither can reach a record looking like a measurement.
     """
-    if p_w != p_w:  # NaN
-        return float("nan")
-    if p_w <= 0.0:
-        return float("-inf")
-    return 10.0 * math.log10(p_w / 1e-3)
+    return rf.dbm_strict(p_w)
 
 
 def floor_dbm_of(p_dbm: dict) -> float:
@@ -89,21 +96,21 @@ def floor_dbm_of(p_dbm: dict) -> float:
 
 
 def w_from_dbm(p_dbm: float) -> float:
-    return 1e-3 * 10.0 ** (p_dbm / 10.0)
+    return rf.watts(p_dbm)
 
 
 def vs_peak_from_pav_dbm(pav_dbm: float, z0: float = Z0_OHM) -> float:
     """Open-circuit peak amplitude of ONE tone with available power ``pav_dbm``."""
-    return math.sqrt(8.0 * z0 * w_from_dbm(pav_dbm))
+    return rf.v_open_peak_for(pav_dbm, z0)
 
 
 def pav_dbm_from_vs_peak(vs: float, z0: float = Z0_OHM) -> float:
-    return dbm_from_w(vs * vs / (8.0 * z0))
+    return rf.dbm_strict(rf.available_power_w(vs, z0))
 
 
 def delivered_dbm(v_peak: float, z0: float = Z0_OHM) -> float:
     """Power delivered to a ``z0`` load by a component of peak ``v_peak``."""
-    return dbm_from_w(v_peak * v_peak / (2.0 * z0))
+    return rf.dbm_strict(rf.delivered_power_w(v_peak, z0))
 
 
 # ---------------------------------------------------------------------------

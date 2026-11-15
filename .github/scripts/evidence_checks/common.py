@@ -8,6 +8,7 @@ import io
 import json
 import re
 import subprocess
+from collections.abc import Callable
 from pathlib import Path
 
 
@@ -200,6 +201,77 @@ def need_record_commit(problems: Problems, where: str, env: dict, rid: str) -> o
     if not isinstance(commit, str) or not commit.startswith(rid.split("-")[2]):
         problems.add(where, f"environment.git.commit {commit!r} does not match the sha in the record id")
     return commit
+
+
+# ---------------------------------------------------------------------------
+# probe-log bench layout
+# ---------------------------------------------------------------------------
+
+
+# The frozen file set of a probe-log run package (peer of the contract below).
+MIXER_PROBE_FILES = ("deck.spice", "stdout.txt", "stderr.txt", "inventory.json")
+
+
+def check_probe_log_package(problems, root, exp_dir, rid, rec, md, where_js, where_md, claimed_logs):
+    """Shared probe-log package contract; returns the package path, or None if the directory is missing."""
+    declared = rec.get("probe_logs")
+    expected = f"sim/{exp_dir.name}/probe-logs/{rid}/"
+    if declared != expected:
+        problems.add(where_js, f"JSON probe_logs {declared!r} must be {expected!r}")
+    logs = exp_dir / "probe-logs" / rid
+    claimed_logs.add(rid)
+    if f"probe-logs/{rid}/" not in md:
+        problems.add(where_md, f"Markdown does not reference its probe-logs/{rid}/ package")
+    if not logs.is_dir():
+        problems.add(where_js, f"declared probe-log package {rel(root, logs)}/ does not exist")
+        return None
+    # stderr may legitimately be empty
+    present = {p.name for p in logs.iterdir() if p.is_file()}
+    for name in MIXER_PROBE_FILES:
+        if name not in present:
+            problems.add(rel(root, logs), f"probe-log package is missing {name}")
+        elif name != "stderr.txt" and (logs / name).stat().st_size == 0:
+            problems.add(rel(root, logs / name), "probe-log file is empty")
+    for name in sorted(present - set(MIXER_PROBE_FILES)):
+        problems.add(rel(root, logs / name), "unexpected file in a probe-log package")
+    for p in logs.iterdir():
+        if p.is_dir():
+            problems.add(rel(root, p), "unexpected directory in a probe-log package")
+    return logs
+
+
+def reject_foreign_dirs(problems: Problems, root: Path, exp_dir: Path, bench: str, subs: tuple[str, ...]) -> None:
+    """Flag the evidence directories that are not part of ``bench``'s layout.
+
+    Each bench passes its own forbidden tuple; a bench that inherited another
+    bench's set would silently stop rejecting its own foreign directories.
+    """
+    for sub in subs:
+        if (exp_dir / sub).exists():
+            problems.add(rel(root, exp_dir / sub), f"{sub}/ is not part of the {bench} evidence layout")
+
+
+def check_probe_log_bench(problems: Problems, root: Path, exp_dir: Path, bench: str,
+                          check_record: Callable[..., None], foreign: tuple[str, ...]) -> None:
+    """Layout of a probe-log bench: record pairs, ``probe-logs/`` run packages, foreign dirs.
+
+    ``check_record(problems, root, exp_dir, stem, files, claimed)`` carries the
+    per-record rules, which stay per-adapter (issue #109 step 3): their
+    semantics intentionally differ. Only the layout around them is shared.
+    """
+    records = exp_dir / "records"
+    claimed: set[str] = set()
+    if records.is_dir():
+        for stem, files in record_pairs(problems, root, records).items():
+            check_record(problems, root, exp_dir, stem, files, claimed)
+    logs_root = exp_dir / "probe-logs"
+    if logs_root.is_dir():
+        for p in sorted(logs_root.iterdir()):
+            if not (p.is_dir() and RECORD_ID_RE.match(p.name)):
+                problems.add(rel(root, p), "probe-logs entry is not a <YYYYMMDD>-<HHMMSS>-<git-sha>/ run directory")
+            elif p.name not in claimed:
+                problems.add(rel(root, p), "probe-log package belongs to no record (orphan or incomplete run)")
+    reject_foreign_dirs(problems, root, exp_dir, bench, foreign)
 
 
 def git(root: Path, *args: str) -> subprocess.CompletedProcess:

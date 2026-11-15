@@ -5,8 +5,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from .common import (PAIR_RE, Problems, RECORD_ID_RE, has_section, load_json_object, need_record_commit, need_sha256, need_str, record_pairs, rel)
-from .mixer_nf import check_probe_log_package
+from .common import (PAIR_RE, Problems, check_probe_log_bench, check_probe_log_package, has_section, load_json_object, need_record_commit, need_sha256, need_str, rel)
 from .passive_p1 import PASSIVE_PACKAGES
 
 
@@ -216,18 +215,5 @@ def check_pra_record(problems: Problems, root: Path, exp_dir: Path, stem: str, f
 
 
 def check_mixer_pumped_rf_admittance(problems: Problems, root: Path, exp_dir: Path) -> None:
-    records = exp_dir / "records"
-    claimed: set[str] = set()
-    if records.is_dir():
-        for stem, files in record_pairs(problems, root, records).items():
-            check_pra_record(problems, root, exp_dir, stem, files, claimed)
-    logs_root = exp_dir / "probe-logs"
-    if logs_root.is_dir():
-        for p in sorted(logs_root.iterdir()):
-            if not (p.is_dir() and RECORD_ID_RE.match(p.name)):
-                problems.add(rel(root, p), "probe-logs entry is not a <YYYYMMDD>-<HHMMSS>-<git-sha>/ run directory")
-            elif p.name not in claimed:
-                problems.add(rel(root, p), "probe-log package belongs to no record (orphan or incomplete run)")
-    for sub in ("corners", "netlist-snapshots", PASSIVE_PACKAGES):
-        if (exp_dir / sub).exists():
-            problems.add(rel(root, exp_dir / sub), f"{sub}/ is not part of the {PRA_BENCH} evidence layout")
+    check_probe_log_bench(problems, root, exp_dir, PRA_BENCH, check_pra_record,
+                          ("corners", "netlist-snapshots", PASSIVE_PACKAGES))
