@@ -41,8 +41,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # sim/ -> harness
 from harness import rf  # noqa: E402
+from harness.rf import Z0_OHM  # noqa: E402
 
-Z0_OHM = 50.0
 LO_RDIFF_OHM = 100.0
 
 #: Every value printed by a generated deck is named ``mf_<key>``.
@@ -61,37 +61,18 @@ class StudyError(ValueError):
 
 
 # ---------------------------------------------------------------------------
-# Power arithmetic
+# Power arithmetic -- delegated to sim/harness/rf.py (issue #263). The
+# public names, signatures and the strict zero/NaN edge convention are
+# unchanged: ``dbm`` is rf.dbm_strict (NaN propagates, -inf at zero), the
+# V^2/(8R) and V^2/(2R) primitives are shared verbatim. Each convention's
+# characterization lives in sim/harness/tests/test_rf.py.
 # ---------------------------------------------------------------------------
 
-
-def dbm(watts: float) -> float:
-    """Power in dBm; ``-inf`` for exactly zero, NaN propagates."""
-    if watts != watts:  # NaN
-        return float("nan")
-    if watts <= 0.0:
-        return float("-inf")
-    return 10.0 * math.log10(watts / 1e-3)
-
-
-def watts(dbm_value: float) -> float:
-    return 1e-3 * 10.0 ** (dbm_value / 10.0)
-
-
-def available_power_w(v_open_peak: float, r_source: float) -> float:
-    """Available power of a Thevenin source (peak open-circuit voltage,
-    real source resistance): ``V^2 / (8 R)``."""
-    return v_open_peak * v_open_peak / (8.0 * r_source)
-
-
-def v_open_peak_for(dbm_value: float, r_source: float) -> float:
-    """Inverse of :func:`available_power_w` for a power in dBm."""
-    return math.sqrt(8.0 * r_source * watts(dbm_value))
-
-
-def delivered_power_w(v_peak: float, r_load: float) -> float:
-    """Power delivered into a resistor by a sine of peak amplitude ``v_peak``."""
-    return v_peak * v_peak / (2.0 * r_load)
+dbm = rf.dbm_strict
+watts = rf.watts
+available_power_w = rf.available_power_w
+v_open_peak_for = rf.v_open_peak_for
+delivered_power_w = rf.delivered_power_w
 
 
 def dft_bin(samples: list[float], dt: float, freq_hz: float, t0: float = 0.0) -> complex:
