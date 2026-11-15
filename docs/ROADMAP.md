@@ -4,7 +4,7 @@ sg13g2-sat-rx is a satellite-band receive front end (SiGe HBT LNA + downconversi
 mixer) on the IHP SG13G2 open PDK, built to exercise the open flow and
 [klayout-tools](https://github.com/2AMLogic/klayout-tools) end to end.
 
-Status as of 2026-11-15, `main` @ `b11e09c`. The label-generated queue view is
+Status as of 2026-11-15, `main` @ `c498b96`. The label-generated queue view is
 [`WORK_PLAN.md`](../WORK_PLAN.md); merged work is in [`WORK_LOG.md`](../WORK_LOG.md).
 
 ## Where it stands
@@ -20,7 +20,7 @@ klt 0.8.0, re-graded by `signoff.yml`): **tier none, T1 3/11 items met.**
 | 1 Design sources | met | `design/lna_stage1.sch` + derived netlist, LNA first stage only; the mixer has no design source (`signoff/block-coverage.json`) |
 | 2 Layout | unmet | `layout/lna_stage1` (#198) records why it does not claim: 1 of 18 stage elements is drawable at its designed value; the gate is a `spec/` decision record on passive realization |
 | 3 DRC clean | unmet | as item 2; the probe cell and the #198 device-group GDS both run DRC clean but cite nothing |
-| 4 LVS clean | unmet | `npn13G2` does not extract at the pinned release (klt 0.8.0, #246); the curated-deck route is declined by ruling, the runset route is #260 |
+| 4 LVS clean | unmet | the curated deck extracts no bipolar at any run and that route is declined by ruling; the PDK runset **does** recognise `npn13G2` as a layout device class (klt 0.9.0, #260), but reference-side conversion has no device map for subckt-call references ([klayout-tools#5796](https://github.com/2AMLogic/klayout-tools/issues/5796)), so the full compare does not reach `match` |
 | 5 Corner verification vs ratified spec | unmet | every row in `spec/row-coverage.json` is `placeholder_circuit`, `method_absent` or `no_bench` |
 | 6 Monte Carlo evidence | unmet | method qualified (`sim/hbt-mismatch-pair`, `MC_METHOD_WORKS`); row 15 is the one statistical row (DR-0007, proposed) and has no mixer to sample |
 | 7 Post-layout verification | unmet | needs items 2-4 |
@@ -61,14 +61,21 @@ Evidence on `main` (all append-only records under `sim/*/records/`):
   conversion-matrix interface probes are method feasibility only.
 - **Passives** (`sim/passive-p1`): analysis chain and synthetic controls pass;
   the EM solves are `CAPABILITY_UNAVAILABLE` (no openEMS runner).
-- **Layout chain** (`layout/probe-readiness`, re-run at the pinned release
-  klt 0.8.0, #246): probe cell DRC clean, `cmim` and `rsil` match in LVS, and
-  `npn13G2` still extracts as no device. The curated-deck bipolar gap (G1) is
-  **declined by ruling**, so the curated-deck route to an LVS-clean bipolar
-  flow in this repo is closed — a later reader should not wait on it. The
-  accepted route is the PDK's own runset, reachable once the klt pin moves to
-  0.9.0 (#260). New gap from the same run: `klt ring-check` records carry no
-  provenance block
+- **Layout chain** (`layout/probe-readiness`): the probe re-ran at the pinned
+  release klt 0.8.0 (#246) and again at 0.9.0 with the first runset-engine
+  LVS (#260, which also moved `layout/toolchain.json` to
+  `klayout-tools==0.9.0`; `signoff/` was left byte-unchanged — the tier
+  report above still grades at 0.8.0). The probe cell stays DRC clean and
+  the curated deck still extracts no bipolar at either pin, so the
+  curated-deck route (G1) stays **declined by ruling** and closed — a later
+  reader should not wait on it. The runset route is now measured, not
+  pending: the PDK's own runset recognises `npn13G2` as a layout device
+  class (`$1 npn13G2` in `runs/klt-0.9.0/lvs-runset-simform-full.json`),
+  while the reference side has no device map for subckt-call references
+  ([klayout-tools#5796](https://github.com/2AMLogic/klayout-tools/issues/5796)),
+  so the full compare does not reach `match` and T1 item 4 stays unmet.
+  Also still open at 0.9.0: `klt ring-check` records carry no provenance
+  block
   ([klayout-tools#5650](https://github.com/2AMLogic/klayout-tools/issues/5650)).
 - **LNA stage-1 layout study** (`layout/lna_stage1`, #198): non-claiming
   realizability study. Of the stage's 18 elements only one (`Xqr`) is drawable
@@ -81,14 +88,7 @@ Evidence on `main` (all append-only records under `sim/*/records/`):
 
 ## Now
 
-1. **Verify runset-backed LVS recognises `npn13G2` at klt 0.9.0** (#260, in
-   progress; the T1 item 4 route). The 0.8.0 pin's runset allowlist is empty,
-   so item 4 has been unreachable by allowlist, not only by the declined
-   curated deck; 0.9.0 is the earliest release carrying the `ihp-sg13g2`
-   entry. *Done when:* a runset-backed LVS record exists under `layout/`
-   stating whether the PDK's own runset recognises the device; `signoff/`
-   does not change unless it matches. Non-claiming until then.
-2. **Re-run `sim/lna-linearity` on the post-#79 core** (#273). The bench has
+1. **Re-run `sim/lna-linearity` on the post-#79 core** (#273). The bench has
    no DUT pin, so its existing record froze the pre-#79 deck as the DUT
    identity and is no longer reproducible from the live tree. *Done when:* a
    new declaration pinned to the post-#79 netlist hash and one campaign
@@ -136,10 +136,7 @@ Evidence on `main` (all append-only records under `sim/*/records/`):
 | #38 auditor Python runtime | operator hold |
 | #4 T1 tracker | an operator decision on how the tracker leaves the triage queue; its body still quotes an older grade, and `signoff/tier-report.json` is the verdict |
 | LNA stage-1 passive realization — the T1 item 2/3 gate | a `spec/` decision record; operator call per the #198 realizability study, since every option changes the circuit and would invalidate the post-#79 characterization |
-
-As read today no open issue carries `loom:issue` — the last two that did
-(#259, #261) have moved to `loom:building`. The filed next items are #260
-(in progress) and #273 (triage).
+| Runset-engine reference-side conversion (the T1 item 4 gap after #260) | [klayout-tools#5796](https://github.com/2AMLogic/klayout-tools/issues/5796); upstream work, this repo files and waits |
 
 ## Not planned
 
