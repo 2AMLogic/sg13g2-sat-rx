@@ -60,7 +60,7 @@ committed request is the corrected shape.
 | `coverage.declared_not_recognized` | 40 families — **`npn13G2`, `cap_cmim` and `rsil` are NOT among them** (they are recognized); the list: `dantenna`, `diodevdd_2kv`, `diodevdd_4kv`, `diodevss_2kv`, `diodevss_4kv`, `dpantenna`, `idiodevdd_2kv`, `idiodevdd_4kv`, `idiodevss_2kv`, `idiodevss_4kv`, `inductor`, `inductor3`, `isolbox`, `nmoscl_2`, `nmoscl_4`, `npn13G2l`, `npn13G2v`, `ntap1`, `pnpMPA`, `ptap1`, `res_metal1`, `res_metal2`, `res_metal3`, `res_metal4`, `res_metal5`, `res_topmetal1`, `res_topmetal2`, `rfcmim`, `rfnmos`, `rfnmoshv`, `rfpmos`, `rfpmoshv`, `rhigh`, `rppd`, `schottky_nbl1`, `sg13_hv_nmos`, `sg13_hv_pmos`, `sg13_hv_svaricap`, `sg13_lv_nmos`, `sg13_lv_pmos` |
 | `provenance.runset.content_hash` | `sha256:e01bcb1ec5858e8069bade8f7fd7ec28c1026fc2fd0590e8f611d3398a5bbbd7` (see PDK runset row above) |
 | layout side | **three devices extracted: `$1 npn13G2`, `$2 rsil`, `$3 cap_cmim`** — the HBT is a recognized, named layout device class (`device_classes` includes `npn13G2`), unlike the curated deck's no-device outcome |
-| reference side | `reference_conversion.device_map` is **null** under the runset engine: of the three subckt-calls in `reference-simform-full.spice` only `RSIL` converted to a compare device (and matched — net correspondence `RA`/`RB`); `NPN13G2` and `CAP_CMIM` never became reference devices, so the layout's HBT and MIM cap carry `device.unmatched` ("has no counterpart") plus the associated net/pin findings |
+| reference side | `reference_conversion.device_map` is **null** under the runset engine: of the three subckt-calls in `reference-simform-full.spice` only `RSIL` converted to a compare device (and matched — net correspondence `RA`/`RB`); `CAP_CMIM` appears in `device_census.reference` but never enters the compare, and `NPN13G2` in neither, so the layout's HBT and MIM cap carry `device.unmatched` ("has no counterpart") plus the associated net/pin findings |
 
 ### G1 verdict, corrected by addition
 
@@ -102,7 +102,7 @@ tool-written inside the single runset record (embedded request echo carries
 `deck_file` resolved to absolute; `environment.klayout_binary`;
 `provenance.runset.deck_file` normalized absolute) — the **other 18 of the 19
 linted json files** (the 11 curated-deck records and their 7 request echoes)
-lint clean bare**, same bar as the 0.8.0 run. With the genuinely machine-wide
+lint clean bare, same bar as the 0.8.0 run. With the genuinely machine-wide
 prefixes declared (`--allow-prefix /usr --allow-prefix ~/share/pdk`) the whole
 set is **clean: 0 absolute path(s)**. Both declarations are the linter's own
 documented remedy; the underlying self-inconsistency is klayout-tools#5795.
