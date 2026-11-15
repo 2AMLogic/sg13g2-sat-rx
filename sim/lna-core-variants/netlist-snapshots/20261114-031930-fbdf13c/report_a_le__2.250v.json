@@ -1,0 +1,580 @@
+{
+  "schema_version": 3,
+  "netlist": {
+    "path": "sim/lna-core-variants/_build/collect-main/body_a_le__2.250v.spice",
+    "scope": "repo"
+  },
+  "status": "pass",
+  "corner_count": 9,
+  "passed": 9,
+  "failed": 0,
+  "errored": 0,
+  "inconclusive": 0,
+  "diagnostic_counts": {
+    "by_code": {},
+    "by_severity": {},
+    "corners_with_diagnostics": 0
+  },
+  "metrics": {
+    "sim__corner__count": 9,
+    "sim__corner__passed_count": 9,
+    "sim__corner__failed_count": 0,
+    "sim__corner__errored_count": 0,
+    "sim__corner__inconclusive_count": 0
+  },
+  "environment": {
+    "engine": "ngspice",
+    "engine_version": "47",
+    "ngspice_binary": "/usr/local/bin/ngspice",
+    "engine_build": {
+      "version_banner": "******\n** ngspice-47 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2026, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Fri Nov 13 23:19:32 UTC 2026\n******",
+      "binary_sha256": "39ca1adb826660324c3626f72bd946ec40704f0f3fc8e243c623f76e24b3eee2",
+      "probe": "ok",
+      "reason": null
+    },
+    "models_lib": {
+      "path": null,
+      "scope": "external"
+    },
+    "models_lib_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+    "models_lib_sha256_scope": "client",
+    "netlist_sha256": "02414b60638d2e4b6218908db3af1a7d18dce39dd3cdffe5ba3cf4b0b906bc33",
+    "netlist_closure": [
+      {
+        "path": "sim/lna-core-variants/_build/collect-main/body_a_le__2.250v.spice",
+        "scope": "repo",
+        "sha256": "02414b60638d2e4b6218908db3af1a7d18dce39dd3cdffe5ba3cf4b0b906bc33"
+      }
+    ],
+    "netlist_identity": "sha256:c6a49a27847c135790116a65b64c45147c4069b17ae4e9f03e40f2df308a7489",
+    "staged_model_inputs": [
+      {
+        "name": "cornerHBT.lib",
+        "field": "models.lib",
+        "kind": "library",
+        "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278",
+        "rewritten": true,
+        "source_sha256": "bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+        "transform": "include-path-rewrite"
+      },
+      {
+        "name": "sg13g2_hbt_mod.lib",
+        "field": "models.lib",
+        "kind": "dependency",
+        "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79",
+        "rewritten": false,
+        "source_sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+      },
+      {
+        "name": "sg13g2_hbt_mod_mismatch.lib",
+        "field": "models.lib",
+        "kind": "dependency",
+        "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2",
+        "rewritten": false,
+        "source_sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+      },
+      {
+        "name": "sg13g2_hbt_stat.lib",
+        "field": "models.lib",
+        "kind": "dependency",
+        "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db",
+        "rewritten": false,
+        "source_sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+      }
+    ],
+    "remote": {
+      "provider": "aws-batch-fleet",
+      "job_id": "klt-sim-d49d2486dab8",
+      "region": "us-east-1",
+      "instance_id": "i-0783d7892c3a220a3",
+      "instance_type": "c7i.4xlarge",
+      "availability_zone": "us-east-1d",
+      "ami_id": "ami-09c14f55df4958cbd",
+      "lifecycle": "spot",
+      "spot": true,
+      "state": "done",
+      "exit_code": "0",
+      "concurrency": "1",
+      "physical_cores": "8",
+      "elapsed_seconds": 9,
+      "client_submitted_at": "2026-11-14T03:19:32.496256Z",
+      "client_launched_at": "2026-11-14T03:20:04.962611Z",
+      "client_status_terminal_at": "2026-11-14T03:20:37.088110Z",
+      "client_collected_at": "2026-11-14T03:20:38.422033Z",
+      "runner_klt_version": "0.9.0",
+      "client_klt_version": "0.9.2.dev1022+g2a9c52b27ce7",
+      "runner_compatibility": "match",
+      "runner_request_features": {
+        "required": [
+          "options.stage_model_inputs"
+        ],
+        "missing": [],
+        "status": "supported"
+      },
+      "worker_environment": {
+        "capture": "ok",
+        "simulator": {
+          "requested_binary": "ngspice",
+          "binary_source": "PATH",
+          "selected_path": "/usr/local/bin/ngspice",
+          "version_banner": "******\n** ngspice-47 : Circuit level simulation program\n** Compiled with KLU Direct Linear Solver\n** The U. C. Berkeley CAD Group\n** Copyright 1985-1994, Regents of the University of California.\n** Copyright 2001-2026, The ngspice team.\n** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html\n** Please file your bug-reports at http://ngspice.sourceforge.net/bugrep.html\n** Creation Date: Fri Nov 13 23:19:32 UTC 2026\n******\n",
+          "version_probe": "ok"
+        },
+        "pdk": {
+          "variant": "ihp-sg13g2",
+          "root": "/opt/pdk",
+          "stamp_scheme": null,
+          "stamp_sha256": null,
+          "stamp_text": null,
+          "models_staged": true,
+          "stamp_scope": "image"
+        },
+        "cpu_model": "Intel(R) Xeon(R) Platinum 8488C",
+        "omp_num_threads": null,
+        "image_manifest": null,
+        "model_inputs": [
+          {
+            "name": "cornerHBT.lib",
+            "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+          },
+          {
+            "name": "sg13g2_hbt_mod.lib",
+            "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+          },
+          {
+            "name": "sg13g2_hbt_mod_mismatch.lib",
+            "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+          },
+          {
+            "name": "sg13g2_hbt_stat.lib",
+            "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+          }
+        ],
+        "diagnostics": [
+          "pdk stamp unreadable: FileNotFoundError"
+        ],
+        "pdk_stamp_comparison": {
+          "basis": "staged_model_inputs",
+          "status": "match"
+        },
+        "engine_build_comparison": {
+          "status": "match"
+        }
+      },
+      "runner_model_inputs": [
+        {
+          "name": "cornerHBT.lib",
+          "sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278"
+        },
+        {
+          "name": "sg13g2_hbt_mod.lib",
+          "sha256": "ae9288f885dd30fab24b07ed1e7e02e69eac9154022a0a6da576985183b0bd79"
+        },
+        {
+          "name": "sg13g2_hbt_mod_mismatch.lib",
+          "sha256": "1e493f25150b25b64985acd3f1e7ed2eb2e6ca4b712adf45b2de2ce2ba1a0eb2"
+        },
+        {
+          "name": "sg13g2_hbt_stat.lib",
+          "sha256": "80d1893eb06a3417d05400335d8e58c8309b9c80061ca96ceff8f8fd68c9a7db"
+        }
+      ],
+      "runner_models_lib_sha256": "347635434f475a17ec4fe1d9cf904b4d4a98d4a35bb8b4a0cbd8cdfd1b4e5278",
+      "job_ceiling": {
+        "basis": "conservative_serial_bound",
+        "unit_count": 9,
+        "per_unit_timeout_s": 3600,
+        "overhead_s": 120.0,
+        "job_bound_s": 32520.0,
+        "max_job_seconds": 3600.0,
+        "max_job_seconds_source": "fleet_config",
+        "exceeds_ceiling": true,
+        "check": "warn",
+        "max_units_per_job": 0,
+        "recommended_hosts": null,
+        "warning": "batch job bound 32520s (options.timeout_s 3600s x 9 units + 120s; a conservative fully-serial upper bound, not a runtime estimate) exceeds the fleet's whole-job ceiling of 3600s (max_job_seconds from fleet_config); a job still running at the ceiling is killed and every unit is reported batch_job_timeout. No remote.hosts value fits: a single unit's bound exceeds the ceiling -- lower options.timeout_s to at most 3480s"
+      },
+      "models_lib_comparison": {
+        "status": "not_comparable",
+        "reason": "models_staged"
+      }
+    },
+    "engine_host": "worker",
+    "client_ngspice_binary": "/home/ubuntu/.local/bin/ngspice",
+    "backend": {
+      "resolved": "batch",
+      "source": "flag",
+      "requested": "batch"
+    }
+  },
+  "coverage": {
+    "corners_simulated": 9,
+    "measurements_declared": 1,
+    "measurements_with_limits": 0,
+    "unrecognized_limit_keys": [],
+    "schema_version": 1,
+    "known": true,
+    "checked": [
+      "measurement:[0,\"hbt_typ/novdd/-40C\",\"lm_rail_v\"]/observation",
+      "measurement:[1,\"hbt_typ/novdd/27C\",\"lm_rail_v\"]/observation",
+      "measurement:[2,\"hbt_typ/novdd/125C\",\"lm_rail_v\"]/observation",
+      "measurement:[3,\"hbt_bcs/novdd/-40C\",\"lm_rail_v\"]/observation",
+      "measurement:[4,\"hbt_bcs/novdd/27C\",\"lm_rail_v\"]/observation",
+      "measurement:[5,\"hbt_bcs/novdd/125C\",\"lm_rail_v\"]/observation",
+      "measurement:[6,\"hbt_wcs/novdd/-40C\",\"lm_rail_v\"]/observation",
+      "measurement:[7,\"hbt_wcs/novdd/27C\",\"lm_rail_v\"]/observation",
+      "measurement:[8,\"hbt_wcs/novdd/125C\",\"lm_rail_v\"]/observation"
+    ],
+    "skipped": [],
+    "inapplicable": [
+      {
+        "id": "measurement:[0,\"hbt_typ/novdd/-40C\",\"lm_rail_v\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[1,\"hbt_typ/novdd/27C\",\"lm_rail_v\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[2,\"hbt_typ/novdd/125C\",\"lm_rail_v\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[3,\"hbt_bcs/novdd/-40C\",\"lm_rail_v\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[4,\"hbt_bcs/novdd/27C\",\"lm_rail_v\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[5,\"hbt_bcs/novdd/125C\",\"lm_rail_v\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[6,\"hbt_wcs/novdd/-40C\",\"lm_rail_v\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[7,\"hbt_wcs/novdd/27C\",\"lm_rail_v\"]/limits",
+        "reason": "characterization_without_limits"
+      },
+      {
+        "id": "measurement:[8,\"hbt_wcs/novdd/125C\",\"lm_rail_v\"]/limits",
+        "reason": "characterization_without_limits"
+      }
+    ],
+    "unknown": [],
+    "nothing_checked": false,
+    "nothing_checked_reasons": []
+  },
+  "provenance": {
+    "klt_version": "0.9.2.dev1022+g2a9c52b27ce7",
+    "klt_git_commit": "2a9c52b27ce7986b4372ae5d73129dac4773e02c",
+    "klt_reinstall_spec": "klayout-tools @ git+https://github.com/2AMLogic/klayout-tools@2a9c52b27ce7986b4372ae5d73129dac4773e02c",
+    "klayout_version": "0.30.13",
+    "pdk": {
+      "name": "ihp-sg13g2",
+      "source": "search root: ~/share/pdk",
+      "version": "fetched:0.3.0"
+    },
+    "deck": {
+      "name": "cornerHBT.lib",
+      "content_hash": "sha256:bae3d705445de8d6b8de4aa798a0e3e5e7cab617d6495d9c56473bc5377de462",
+      "released": false
+    },
+    "input": {
+      "content_hash": "sha256:02414b60638d2e4b6218908db3af1a7d18dce39dd3cdffe5ba3cf4b0b906bc33",
+      "role": "netlist"
+    }
+  },
+  "measurements": [
+    {
+      "name": "lm_rail_v",
+      "unit": "V",
+      "limits": null,
+      "status": "pass",
+      "worst_case": {
+        "corner_id": "hbt_typ/novdd/-40C",
+        "value": 2.25,
+        "margin": null
+      },
+      "min": {
+        "corner_id": "hbt_typ/novdd/-40C",
+        "value": 2.25
+      },
+      "max": {
+        "corner_id": "hbt_typ/novdd/-40C",
+        "value": 2.25
+      }
+    }
+  ],
+  "corners": [
+    {
+      "corner_id": "hbt_typ/novdd/-40C",
+      "process": "hbt_typ",
+      "supply_v": {},
+      "temperature_c": -40.0,
+      "status": "pass",
+      "runtime_s": 0.17,
+      "peak_rss_bytes": 49438720,
+      "engine_exit_code": 0,
+      "engine_killed_by_signal": null,
+      "measurements": [
+        {
+          "name": "lm_rail_v",
+          "value": 2.25,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        }
+      ],
+      "diagnostics": [],
+      "artifacts": {
+        "log": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-79/sim/lna-core-variants/_build/collect-main/set/request_a_le__2.250v/hbt_typ_novdd_n40C/ngspice.log",
+        "raw": null,
+        "waveform": null,
+        "deck": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-79/sim/lna-core-variants/_build/collect-main/set/request_a_le__2.250v/hbt_typ_novdd_n40C/corner.cir"
+      },
+      "monte_carlo": null
+    },
+    {
+      "corner_id": "hbt_typ/novdd/27C",
+      "process": "hbt_typ",
+      "supply_v": {},
+      "temperature_c": 27.0,
+      "status": "pass",
+      "runtime_s": 0.18,
+      "peak_rss_bytes": 49569792,
+      "engine_exit_code": 0,
+      "engine_killed_by_signal": null,
+      "measurements": [
+        {
+          "name": "lm_rail_v",
+          "value": 2.25,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        }
+      ],
+      "diagnostics": [],
+      "artifacts": {
+        "log": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-79/sim/lna-core-variants/_build/collect-main/set/request_a_le__2.250v/hbt_typ_novdd_27C/ngspice.log",
+        "raw": null,
+        "waveform": null,
+        "deck": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-79/sim/lna-core-variants/_build/collect-main/set/request_a_le__2.250v/hbt_typ_novdd_27C/corner.cir"
+      },
+      "monte_carlo": null
+    },
+    {
+      "corner_id": "hbt_typ/novdd/125C",
+      "process": "hbt_typ",
+      "supply_v": {},
+      "temperature_c": 125.0,
+      "status": "pass",
+      "runtime_s": 0.236,
+      "peak_rss_bytes": 49569792,
+      "engine_exit_code": 0,
+      "engine_killed_by_signal": null,
+      "measurements": [
+        {
+          "name": "lm_rail_v",
+          "value": 2.25,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        }
+      ],
+      "diagnostics": [],
+      "artifacts": {
+        "log": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-79/sim/lna-core-variants/_build/collect-main/set/request_a_le__2.250v/hbt_typ_novdd_125C/ngspice.log",
+        "raw": null,
+        "waveform": null,
+        "deck": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-79/sim/lna-core-variants/_build/collect-main/set/request_a_le__2.250v/hbt_typ_novdd_125C/corner.cir"
+      },
+      "monte_carlo": null
+    },
+    {
+      "corner_id": "hbt_bcs/novdd/-40C",
+      "process": "hbt_bcs",
+      "supply_v": {},
+      "temperature_c": -40.0,
+      "status": "pass",
+      "runtime_s": 0.211,
+      "peak_rss_bytes": 49569792,
+      "engine_exit_code": 0,
+      "engine_killed_by_signal": null,
+      "measurements": [
+        {
+          "name": "lm_rail_v",
+          "value": 2.25,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        }
+      ],
+      "diagnostics": [],
+      "artifacts": {
+        "log": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-79/sim/lna-core-variants/_build/collect-main/set/request_a_le__2.250v/hbt_bcs_novdd_n40C/ngspice.log",
+        "raw": null,
+        "waveform": null,
+        "deck": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-79/sim/lna-core-variants/_build/collect-main/set/request_a_le__2.250v/hbt_bcs_novdd_n40C/corner.cir"
+      },
+      "monte_carlo": null
+    },
+    {
+      "corner_id": "hbt_bcs/novdd/27C",
+      "process": "hbt_bcs",
+      "supply_v": {},
+      "temperature_c": 27.0,
+      "status": "pass",
+      "runtime_s": 0.335,
+      "peak_rss_bytes": 49569792,
+      "engine_exit_code": 0,
+      "engine_killed_by_signal": null,
+      "measurements": [
+        {
+          "name": "lm_rail_v",
+          "value": 2.25,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        }
+      ],
+      "diagnostics": [],
+      "artifacts": {
+        "log": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-79/sim/lna-core-variants/_build/collect-main/set/request_a_le__2.250v/hbt_bcs_novdd_27C/ngspice.log",
+        "raw": null,
+        "waveform": null,
+        "deck": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-79/sim/lna-core-variants/_build/collect-main/set/request_a_le__2.250v/hbt_bcs_novdd_27C/corner.cir"
+      },
+      "monte_carlo": null
+    },
+    {
+      "corner_id": "hbt_bcs/novdd/125C",
+      "process": "hbt_bcs",
+      "supply_v": {},
+      "temperature_c": 125.0,
+      "status": "pass",
+      "runtime_s": 0.406,
+      "peak_rss_bytes": 49569792,
+      "engine_exit_code": 0,
+      "engine_killed_by_signal": null,
+      "measurements": [
+        {
+          "name": "lm_rail_v",
+          "value": 2.25,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        }
+      ],
+      "diagnostics": [],
+      "artifacts": {
+        "log": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-79/sim/lna-core-variants/_build/collect-main/set/request_a_le__2.250v/hbt_bcs_novdd_125C/ngspice.log",
+        "raw": null,
+        "waveform": null,
+        "deck": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-79/sim/lna-core-variants/_build/collect-main/set/request_a_le__2.250v/hbt_bcs_novdd_125C/corner.cir"
+      },
+      "monte_carlo": null
+    },
+    {
+      "corner_id": "hbt_wcs/novdd/-40C",
+      "process": "hbt_wcs",
+      "supply_v": {},
+      "temperature_c": -40.0,
+      "status": "pass",
+      "runtime_s": 0.213,
+      "peak_rss_bytes": 49569792,
+      "engine_exit_code": 0,
+      "engine_killed_by_signal": null,
+      "measurements": [
+        {
+          "name": "lm_rail_v",
+          "value": 2.25,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        }
+      ],
+      "diagnostics": [],
+      "artifacts": {
+        "log": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-79/sim/lna-core-variants/_build/collect-main/set/request_a_le__2.250v/hbt_wcs_novdd_n40C/ngspice.log",
+        "raw": null,
+        "waveform": null,
+        "deck": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-79/sim/lna-core-variants/_build/collect-main/set/request_a_le__2.250v/hbt_wcs_novdd_n40C/corner.cir"
+      },
+      "monte_carlo": null
+    },
+    {
+      "corner_id": "hbt_wcs/novdd/27C",
+      "process": "hbt_wcs",
+      "supply_v": {},
+      "temperature_c": 27.0,
+      "status": "pass",
+      "runtime_s": 0.17,
+      "peak_rss_bytes": 49569792,
+      "engine_exit_code": 0,
+      "engine_killed_by_signal": null,
+      "measurements": [
+        {
+          "name": "lm_rail_v",
+          "value": 2.25,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        }
+      ],
+      "diagnostics": [],
+      "artifacts": {
+        "log": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-79/sim/lna-core-variants/_build/collect-main/set/request_a_le__2.250v/hbt_wcs_novdd_27C/ngspice.log",
+        "raw": null,
+        "waveform": null,
+        "deck": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-79/sim/lna-core-variants/_build/collect-main/set/request_a_le__2.250v/hbt_wcs_novdd_27C/corner.cir"
+      },
+      "monte_carlo": null
+    },
+    {
+      "corner_id": "hbt_wcs/novdd/125C",
+      "process": "hbt_wcs",
+      "supply_v": {},
+      "temperature_c": 125.0,
+      "status": "pass",
+      "runtime_s": 0.226,
+      "peak_rss_bytes": 55730176,
+      "engine_exit_code": 0,
+      "engine_killed_by_signal": null,
+      "measurements": [
+        {
+          "name": "lm_rail_v",
+          "value": 2.25,
+          "unit": "V",
+          "status": "pass",
+          "margin": null
+        }
+      ],
+      "diagnostics": [],
+      "artifacts": {
+        "log": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-79/sim/lna-core-variants/_build/collect-main/set/request_a_le__2.250v/hbt_wcs_novdd_125C/ngspice.log",
+        "raw": null,
+        "waveform": null,
+        "deck": "/home/ubuntu/GitHub/sg13g2-sat-rx/.loom/worktrees/issue-79/sim/lna-core-variants/_build/collect-main/set/request_a_le__2.250v/hbt_wcs_novdd_125C/corner.cir"
+      },
+      "monte_carlo": null
+    }
+  ],
+  "diagnostics": [
+    {
+      "code": "process_leg_check",
+      "severity": "warning",
+      "message": "process legs produced bit-identical values for every finite measurement at each supply/temperature: hbt_bcs, hbt_typ, hbt_wcs. They may not have been applied (check each leg's sections/libs); ignore if the legs legitimately coincide.",
+      "legs": [
+        [
+          "hbt_bcs",
+          "hbt_typ",
+          "hbt_wcs"
+        ]
+      ]
+    }
+  ]
+}

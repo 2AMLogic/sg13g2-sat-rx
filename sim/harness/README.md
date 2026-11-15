@@ -25,6 +25,7 @@ re-derive it.
 | `runner.py` | `compose_deck()` — assembles one complete ngspice deck from a testbench fragment, the resolved PDK's models, and one PVT point's corner sections. `run_point()` / `run_grid()` execute it and parse measurements. |
 | `evidence.py` | `BaseExtensions` — an open, unstructured evidence-record extension slot (`extra` dict + `notes`), so a fresh block has a working evidence path before it has ratified its own schema. |
 | `report.py` | Record-id minting (`<YYYYMMDD>-<HHMMSS>-<short-sha>`), grid summaries, per-axis sensitivity, spec-check evaluation, frozen netlist + manifest snapshots, and an append-only Markdown writer. |
+| `rf.py` | Shared RF physics arithmetic: the Boltzmann constant (the single declaration in the tree) and the noiseless-source noise factor `F = 1 + inoise^2 / (4 k T0 Z)`, with `t0_k` a required argument (benches use different reference temperatures on purpose) and no input guard (per-site guard behaviour stays at the sites). |
 | `cli.py` | `list` / `run` / `selftest` subcommands wiring the above together. |
 
 Every module's docstring opens with a `GENERIC CORE` paragraph (what it is

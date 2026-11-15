@@ -6,6 +6,7 @@
   "testbenches": [
     "sim/hbt-kaband-characterization/README.md",
     "sim/hbt-mismatch-pair/README.md",
+    "sim/lna-core-variants/README.md",
     "sim/lna-headroom/README.md",
     "sim/lna-linearity/README.md",
     "sim/lna-match-tradeoff/README.md",

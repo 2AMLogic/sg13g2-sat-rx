@@ -3,10 +3,27 @@
 First xschem schematic in this repo: **one npn13G2 cascode LNA stage with ideal
 behavioral matching**. It is a *device-feasibility* design, not a spec-compliant
 LNA: row 2 assumes two stages, and nothing here claims any `spec/target-spec.md`
-row met. The evidence for this circuit is the lna-sparam-nf record
-`sim/lna-sparam-nf/records/20261010-012923-6cad7fc.md` (27-point HBT x T x V
-grid on the off-host batch fleet, plus the per-device operating-point table and
-the k / |Delta| / mu sweep).
+row met.
+
+**The core changed once, in #79** (see "The #79 core change" below): `Le1` =
+67 pH of emitter degeneration was added ahead of `Re1`, and `Rbias` went
+2k -> 10k with an `Rbr` base-current compensation that holds the nominal
+Ic(Q1). Read every record cited on this page against that:
+
+- The current small-signal record is
+  `sim/lna-sparam-nf/records/20261114-211735-8a92c6e.md` (minted 2026-11-14
+  at git `8a92c6e`, #250): the same 27-point HBT x T x V grid, per-device
+  operating-point table and k / |Delta| / mu sweep, re-run on the
+  **post-#79 core** through `klt sim` on the batch fleet. It supersedes
+  `records/20261010-012923-6cad7fc.md` for this stage's S21 / S11 / NF / k
+  figures because the DUT changed -- not the method; the superseded record
+  stays valid as evidence for the earlier core and is neither edited nor
+  deleted.
+- The linearity, headroom and input-match records
+  (`sim/lna-linearity/records/`, `sim/lna-headroom/records/`,
+  `sim/lna-match-tradeoff/records/`) still describe the **pre-change** core;
+  see "Bench dispositions after the #79 core change" below for the decision
+  on each.
 
 ## Files
 
@@ -14,7 +31,7 @@ the k / |Delta| / mu sweep).
 |---|---|
 | `lna_stage1.sch`, `lna_stage1.sym` | the schematic and its symbol (xschem 3.4.4) |
 | `export_netlist.sh` | regenerates `netlist/lna_stage1.spice` through `klt netlist --block` (and normalizes the absolute `** sch_path:` line); `--check` fails if the committed netlist is stale |
-| `netlist/lna_stage1.spice` | the derived subcircuit netlist (T1 item 1: "the netlist derived from them") |
+| `netlist/lna_stage1.spice` | the derived subcircuit netlist (T1 item 1: "the netlist derived from them"), regenerated on every design change; `signoff/evidence/item1-design-sources.json` re-attests the sources and the freshness check |
 
 `sim/lna-sparam-nf/testbench/lna_stage1.spice` embeds `netlist/lna_stage1.spice`
 verbatim (the harness takes one fragment, no `.include`);
@@ -61,30 +78,51 @@ schematic is knowingly short of row 2's assumption.
 * **Q1 (CE) bias**: diode-connected `Xqr` (Nx = 1) fed from `vdd` through
   `Rref` = 8 k sets the reference current (~0.2 mA); `Rer` = 24 ohm in its
   emitter mirrors Q1's `Re1` = 3 ohm scaled by 8 (so the 8:1 area ratio is a
-  current ratio, 1:8). `Rbias` = 2 k isolates the RF base node from the
-  reference (its DC drop at I_B ~ 2 uA is ~4 mV). The mirror tracks V_BE over
+  current ratio, 1:8). `Rbias` = 10 k isolates the RF base node from the
+  reference, and is the larger of the two values #79 compared: it is the
+  dominant base-feed noise source at the hot corner, and 10 k instead of 2 k
+  is worth about 0.5 dB of Fmin there. The DC drop it adds at I_B ~ 2 uA
+  (~20 mV, five times the 2 k drop) is given back by `Rbr` = 60.9 k from the
+  reference node `nr` to Qref's base `br`: Qref's base current through `Rbr`
+  raises its V_BE by the same amount Q1's base loses in `Rbias`, so the
+  mirror still sets the frozen nominal Ic(Q1) = 1.563 mA (verified: the #79
+  record reports 1.563 mA at hbt_typ/27 C/2.5 V for the frozen core and for
+  the chosen variant alike). The mirror tracks V_BE over
   temperature and process by construction; the reference current follows the
   supply (so I_C moves ~ +/- 12 % with the +/- 10 % supply, visible in the
   operating-point table).
 * **Q2 (CB) bias**: `R1b` = 1.5 k / `R2b` = 7 k divider of `vdd` with `Cb2` =
   10 pF bypass: V_B2 = 0.82 x vdd. With V_BE2 ~ 0.8 V this sets
   V_CE1 = V_B2 - V_BE2 - V_E1 and V_CE2 = vdd - V_B2 + V_BE2.
+* **Emitter degeneration** `Le1` = 67 pH sits between Q1's emitter and
+  `Re1`, so it carries the full emitter current but drops no DC: the
+  operating point, and therefore every row-17 number below, is the same with
+  and without it. It is an **ideal lossless inductor** -- no PDK inductor
+  model exists (#46) -- so its loss, its Q and its layout parasitics are
+  unrepresented, and it is not a layout-ready element. What it buys is
+  small-signal: it rotates the core's input impedance so the power-match and
+  noise-match points stop fighting (Re(Z_in) at node `in2` goes from ~22 to
+  ~50 ohm at nominal) and it raises the worst in-rail k from 4.1 to ~9.9.
 * **Collector feed** `Lfeed` is ideal with zero DC drop, so
   V_CE1 + V_CE2 = vdd - (I_E x Re1): at 2.5 V that is ~2.49 V split about 1.25 /
   1.25 V at typ / 27 C.
-* **Verified, not argued**: the record's per-device table (all 27 cells x 3
-  devices) checks V_CE <= 1.4 V, V_CE in 0.4-2.0 V, V_BE in 0.65-0.96 V,
+* **Verified, not argued**: the post-#79 record's per-device table
+  (`records/20261114-211735-8a92c6e.md`, 27 cells x 3 devices, minted
+  2026-11-14) checks V_CE <= 1.4 V, V_CE in 0.4-2.0 V, V_BE in 0.65-0.96 V,
   I_C < 3 mA x Nx and fT > 21.2 GHz. At supplies <= 2.5 V every device-cell
-  passes (max Q1 V_CE 1.342 V). The 2.75 V rows are a labelled excursion: six
-  Q1 cells exceed 1.4 V there (up to 1.537 V at 125 C). A two-device stack at
-  2.75 V and a 1.4 V per-device cap leaves about 0.05 V of total margin
-  (2 x 1.4 - 2.75), which no fixed divider can hold across -40..125 C; the
-  record reports it rather than hiding it. Whether 2.75 V is in row 17's scope
-  is an open operator question (spec ambiguity, not decided here).
-* Self-heating at the chosen bias is measured per cell (max dTj 5.8 K, at the
-  2.75 V excursion; 4.1 K at <= 2.5 V), so the characterization record's
-  run-wide 284 K maximum (at high current density, far from these optima) does
-  not apply at this bias.
+  passes (max Q1 V_CE 1.340 V, at hbt_bcs / 125 C / 2.5 V) — the same
+  reading the pre-#79 record gave (its 1.342 V), which is the DC-untouched
+  claim of #79 holding on the full grid. The 2.75 V rows are a labelled
+  excursion: six Q1 cells exceed 1.4 V there (up to 1.527 V at 125 C;
+  pre-#79: 1.537 V). A two-device stack at 2.75 V and a 1.4 V per-device cap
+  leaves about 0.05 V of total margin (2 x 1.4 - 2.75), which no fixed
+  divider can hold across -40..125 C; the record reports it rather than
+  hiding it. Whether 2.75 V is in row 17's scope is an open operator
+  question (spec ambiguity, not decided here).
+* Self-heating at the chosen bias is measured per cell (max dTj 7.0 K, at the
+  2.75 V excursion; 4.2 K at <= 2.5 V — post-#79 record, 2026-11-14), so the
+  characterization record's run-wide 284 K maximum (at high current density,
+  far from these optima) does not apply at this bias.
 
 ## Matching (ideal / behavioral, labelled as such)
 
@@ -107,33 +145,125 @@ stage with bare ports (hbt_typ, 27 C, 2.5 V; one local ngspice run, not a grid):
   total shunt capacitance at 19.45 GHz.
 * The values are **not re-tuned per corner**, so the process / temperature /
   supply spread in S11, S22 and S21 includes match detuning. Narrowband input
-  (|S11| ~ -5 dB at the band edges with ~ -25 dB at the centre, typ) is a
+  (grid means of the post-#79 record: |S11| ~ -5.4 to -6.9 dB at the band
+  edges with ~ -8.1 dB at the centre; the section was sized against the
+  pre-`Le1` input impedance, whose centre depth was ~ -25 dB at typ) is a
   property of this ideal Q ~ 6 input section, not something to fix with the
   numbers; the passive study owns that.
 
 ## What the record shows (reported, not claimed)
 
-From the record's Summary and tables (27 cells, 2.75 V included):
+From the post-#79 record `records/20261114-211735-8a92c6e.md` (#250; minted
+2026-11-14 at git `8a92c6e`; 27 cells, 2.75 V included; every figure below is
+that record's, on ideal matching elements, no spec row claimed):
 
-* S21 at the three band points spans about 12.9 to 26.2 dB across the grid; the
-  hbt_wcs / 125 C / 2.25 V cell is the low end at the band top.
-* NF at 19.45 GHz spans about 2.6 to 4.8 dB (mean 3.6): above row 3's DRAFT 2.5 dB
-  in essentially every cell. The device-level floor in the characterization record
-  is well below that; the gap is the input-match choice, Rbias / Rd noise and the
-  absence of a noise-optimal source impedance.
-* k > 1 and |Delta| < 1 in band and across the 1-100 GHz sweep (201 logarithmic
-  points, 100 per decade) in every cell, min k 3.48 at 66 GHz. **That is the
-  ideal-element circuit with a damping resistor and no parasitics, and the
-  sweep stops at 1 GHz and 100 GHz**; it is reported against row 6, not claimed.
-  The cascode's stabilization came from `Rd`, not from layout-realistic
-  design. The record labels any cell with k <= 1 or |Delta| >= 1
-  `POTENTIALLY UNSTABLE` and reports MSG for it; none qualified here.
-* DC power 3.8-7.5 mW for the stage including bias (row 18's 40 mW budget is for
-  LNA + mixer together).
+* S21 at the three band points spans about 11.6 to 20.5 dB across the grid;
+  the hbt_wcs / 125 C / 2.25 V cell is the low end at the band top, and
+  hbt_bcs / -40 C / 2.75 V the high end at the centre. The whole span sits
+  about 1.3-5.7 dB below the pre-#79 record's (12.9-26.2 dB): the gain cost
+  of the `Le1`/`Rbias` change on the matched stage.
+* NF at 19.45 GHz spans 1.89 to 4.09 dB (mean 2.87): the best cell
+  (hbt_bcs / -40 C / 2.75 V) dips below row 3's DRAFT 2.5 dB, the worst
+  (hbt_wcs / 125 C / 2.25 V) sits about 1.6 dB above it. The device-level
+  floor in the characterization record is well below all of these; the gap
+  is still the input-match choice, `Rbias` / `Rd` noise and the absence of a
+  noise-optimal source impedance. The network-independent side of the same
+  trade-off is #79's own bound record
+  (`sim/lna-core-variants/records/20261114-031930-fbdf13c.md`).
+* k > 1 and |Delta| < 1 in band and across the 1-100 GHz sweep (201
+  logarithmic points, 100 per decade) in every cell — 0 of 27 labelled
+  POTENTIALLY UNSTABLE. In-band min k is 15.9 (hbt_wcs / -40 C / 2.75 V, at
+  the band top); the lowest k anywhere in any sweep is 8.9, at the 100 GHz
+  sweep edge (hbt_typ / -40 C / 2.75 V) — up from the pre-#79 record's 3.48
+  at 66 GHz: `Le1` stabilized the core, exactly what #79's bound study
+  predicted. **That is still the ideal-element circuit with a damping
+  resistor and no parasitics, and the sweep still stops at 1 GHz and
+  100 GHz**; reported against row 6, not claimed. The record labels any cell
+  with k <= 1 or |Delta| >= 1 POTENTIALLY UNSTABLE and reports MSG for it;
+  none qualified here.
+* DC power 3.8-8.8 mW for the stage including bias (row 18's 40 mW budget is
+  for LNA + mixer together; the pre-#79 record read 3.8-7.5 mW on its
+  slightly lower operating current).
+
+## The #79 core change
+
+`sim/lna-match-tradeoff` (#74) showed that **no** lossless input network of
+any order can reach NF <= 2.5 dB with S11 <= -10 dB at 8 of the 18 in-rail
+PVT points: the gap binds in the core, not the match. #79 screened the three
+candidate classes against that same network-independent bound, with matching
+still ideal and unsized, and `sim/lna-core-variants` recorded the comparison.
+
+- **Evidence:** `sim/lna-core-variants/records/20261114-031930-fbdf13c.md`
+  (8 variants x 3 supplies x 9 PVT units = 216 points on the batch fleet).
+- **Declaration:** `sim/lna-core-variants/STUDY.md` and
+  `testbench/variants.json`, committed before the record, including the
+  selection rule that picked the change.
+- **Per-variant table and the reasoning:** `design/lna_match_tradeoff.md`
+  -> "The core change (#79): per-variant comparison".
+
+The chosen variant is `ac`, the fewest-change variant whose bound closes at
+every in-rail point: `Le1` = 67 pH **and** `Rbias` 10 k with `Rbr`
+compensation. Degeneration alone (`a_le`) leaves 2 of 18 points infeasible
+because it does not lower the hot-corner Fmin; the quieter base feed alone
+(`c_rbias`) lowers Fmin by ~0.5 dB but leaves 8 of 18 infeasible because the
+noise and power-match points still conflict. Both device-size and
+current-density variants made the bound *worse*. Together, `ac` reaches a
+worst in-rail bound of 2.459 dB against the 2.5 dB screen.
+
+**What that is and is not.** It is a necessary condition met on ideal
+elements at the declared PVT grid: a per-frequency bound, not a realized
+network. **No spec row is claimed met.** The worst-case margin is 0.041 dB,
+`Le1`'s loss and Q are unrepresented, the band (row 1) is still OPEN, and a
+realizable input network must still track the feasible region across the
+band. The derived values (`Le1` from the textbook degeneration condition at
+the nominal point, `Rbr` from holding the frozen nominal Ic) were fixed at
+the nominal point before the corner campaign, so the campaign tests the
+change rather than a fit to the corner it is judged at.
+
+## Bench dispositions after the #79 core change (#250, 2026-11-14)
+
+The core change adds series impedance at the emitter at RF while leaving the
+DC operating point nominally untouched. The per-bench decision, recorded so
+the next reader does not re-derive it (issue #250; verified against origin/main
+@ `88c2be4`, 2026-11-14):
+
+- `sim/lna-sparam-nf` — **re-run.** `Le1` directly moves S11/S21/NF/k. The
+  record above is that re-run; it supersedes
+  `records/20261010-012923-6cad7fc.md` as a new core revision (not a method
+  correction), and the old record stays valid as evidence for the pre-#79
+  core.
+- `sim/lna-linearity` — **re-run, filed as its own campaign (#273,
+  `loom:triage`), not run here.** It is the strongest candidate: the bench has
+  no DUT pin (`testbench/plan.json` declares `netlist` + `subckt`, no
+  `sha256`; noted in its README), so it measures whatever the live netlist
+  is, and emitter degeneration is expected to move IIP3/P1dB. Its existing
+  record (`20261010-174208-0f67eaf`) froze the pre-#79 deck (`ad4fe1be…`) as
+  the DUT identity and stays valid for that circuit; it is no longer
+  reproducible from the live tree.
+- `sim/lna-headroom` — **no re-run for now.** The study's subject is the DC
+  bias divider / `Rd` headroom, and the operating point is the one thing #79
+  claims not to move — a claim the new record now verifies directly across
+  the full 27-cell grid (row-17 and card-box checks pass at <= 2.5 V; max
+  Q1 V_CE 1.340 V at 2.5 V, matching the pre-#79 record's 1.342 V). Its
+  frozen plan stays pinned to the pre-#79 deck; re-declaring it on the new
+  core would duplicate evidence the small-signal record already carries.
+  Revisit if the bias network or `Rd` changes again.
+- `sim/lna-match-tradeoff` — **no re-run.** #79's own record
+  (`sim/lna-core-variants/records/20261114-031930-fbdf13c.md`) already
+  re-ran this study's method — the network-independent NF-vs-S11 bound
+  screen — on the new core (8 variants x 3 supplies x 9 PVT units, its
+  variants.json pinning the pre-#79 baseline by design). A second campaign
+  would re-measure the same bound.
 
 ## What this does not do
 
-* No second stage, no real inductors, no layout, no mismatch / statistical
-  sections, no noise match, no linearity (P1dB / IIP3) bench.
+* No second stage, no real inductors (`Le1` included), no layout, no mismatch /
+  statistical sections, no sized input network, and no linearity bench result
+  on the current core.
+* **No IIP3 / P1dB characterization of the post-#79 core.** The full
+  S-parameter / NF / stability / operating-point grid now exists for it
+  (`records/20261114-211735-8a92c6e.md`, #250); linearity does not — the
+  lna-linearity record still measures the earlier core, and re-running it is
+  #273 (see the dispositions above).
 * Not a wideband result: the match is detuned at the band edges and varies over
   corners; no flatness is claimed between the three band points.

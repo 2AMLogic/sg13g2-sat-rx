@@ -28,12 +28,38 @@ for _p in (str(LIN_DIR), str(SIM_DIR)):
 import linearity as L  # noqa: E402
 import small_signal as SS  # noqa: E402
 
+from harness import frozen_dut  # noqa: E402
+
 # the sibling bench's own run.py/analysis.py must not shadow this bench's modules
 if str(LIN_DIR) in sys.path:
     sys.path.remove(str(LIN_DIR))
 
 PLAN_PATH = BENCH_DIR / "testbench" / "plan.json"
-DUT_PATH = REPO_ROOT / "design" / "netlist" / "lna_stage1.spice"
+SNAPSHOTS = BENCH_DIR / "netlist-snapshots"
+
+#: Where the plan says the DUT was taken from.
+DESIGN_NETLIST = REPO_ROOT / "design" / "netlist" / "lna_stage1.spice"
+
+
+def resolve_dut() -> Path:
+    """The DUT this study declared, located by the sha256 its plan pins.
+
+    Shared plumbing: see :mod:`harness.frozen_dut`. This study's variants and
+    its records are taken on ONE deck. While the design still carries that
+    deck the live netlist is it; once a core change lands in
+    `design/lna_stage1.sch` (issue #79), the declared bytes are the copy each
+    record froze under ``netlist-snapshots/``. The pin is never relaxed, only
+    located -- if nothing matches, the design netlist comes back and
+    :func:`plan_problems` reports the mismatch.
+    """
+    try:
+        want = json.loads(PLAN_PATH.read_text())["dut"]["sha256"]
+    except (OSError, ValueError, KeyError):
+        want = None
+    return frozen_dut.resolve(DESIGN_NETLIST, want, SNAPSHOTS)
+
+
+DUT_PATH = resolve_dut()
 VARIANTS_DIR = BENCH_DIR / "variants"
 CONTROL = "control"
 SPARAM = "sparam_"
@@ -102,7 +128,12 @@ def _refinement_problems(hp: dict) -> list[str]:
         out.append("the refinement must declare whether an Rd < 200 ohm extension is in scope")
     ss = ref.get("small_signal") or {}
     for k in ("fixture", "manifest"):
-        p = REPO_ROOT / (ss.get(k) or {}).get("file", "")
+        declared = REPO_ROOT / (ss.get(k) or {}).get("file", "")
+        # located by the declared sha256, as SS.load_refs does: the plan names
+        # a live bench's file, which moves when a core change lands in the
+        # design (issue #79), while the declared bytes stay frozen in this
+        # study's own record snapshots
+        p = frozen_dut.resolve(declared, (ss.get(k) or {}).get("sha256"), SNAPSHOTS)
         if not p.is_file():
             out.append(f"small-signal {k} file is missing: {ss.get(k, {}).get('file')}")
         elif sha256_bytes(p.read_bytes()) != ss[k].get("sha256"):

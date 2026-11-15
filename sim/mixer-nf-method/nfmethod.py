@@ -42,11 +42,15 @@ from __future__ import annotations
 
 import dataclasses
 import math
+import sys
+from pathlib import Path
 from typing import Iterable, Mapping, Sequence
 
 import numpy as np
 
-K_B = 1.380649e-23  # J/K (exact, SI 2019)
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # sim/ -> harness
+from harness.rf import K_BOLTZMANN as K_B  # noqa: E402
+
 T0_K = 300.15       # reference temperature, K (27 C)
 
 METHOD_VALIDATION = "METHOD_VALIDATION"

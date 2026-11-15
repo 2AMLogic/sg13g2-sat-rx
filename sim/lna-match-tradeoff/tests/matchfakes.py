@@ -16,6 +16,7 @@ import math
 from pathlib import Path
 
 import matchstudy as ms
+from harness import rf  # noqa: E402  (matchstudy's own import put sim/ on sys.path)
 
 Z0 = 50.0
 
@@ -75,7 +76,7 @@ def total(cand: ms.Candidate, f: float, process: str, temp_c: float, vdd: float)
     gs = ms.gamma(ms.source_impedance(cand, f, Z0), Z0)
     gopt = ms.gamma(npar["zopt"], Z0)
     fl = ms.nf_lin_at(gs, npar["fmin"], npar["rn"] / Z0, gopt)
-    return s, math.sqrt((fl - 1) * 4 * ms.K_BOLTZMANN * 300.15 * Z0)
+    return s, math.sqrt((fl - 1) * 4 * rf.K_BOLTZMANN * 300.15 * Z0)
 
 
 def fmt(x: float) -> str:

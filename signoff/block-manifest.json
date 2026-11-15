@@ -8,7 +8,7 @@
     },
     "9": {
       "file": "signoff/evidence/item9-testbenches-shipped.json",
-      "content_hash": "sha256:9e4be5f59e6e5775f05bceeb4fbd7917251dab95fc28a9262df655522a46fa3a"
+      "content_hash": "sha256:f9322af319b4011d3192ac40d4f0a00f6d089ccce24f80bfdc63dad45818e436"
     },
     "10": {
       "file": "signoff/evidence/item10-repo-hygiene.json",

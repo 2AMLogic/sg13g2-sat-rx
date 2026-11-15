@@ -32,13 +32,20 @@ import localrun  # noqa: E402
 import matchstudy as ms  # noqa: E402
 
 STUDY_JSON = BENCH_DIR / "testbench" / "study.json"
-FROZEN = REPO_ROOT / "design" / "netlist" / "lna_stage1.spice"
 BASELINE_RECORD = "20261010-012923-6cad7fc"
 BASELINE_LOGS = SIM_DIR / "lna-sparam-nf" / "corners" / BASELINE_RECORD
 
 
 def _frozen() -> str:
-    return FROZEN.read_text()
+    """The DUT this study declared, located by its sha256 (``matchcollect``).
+
+    Not simply `design/netlist/lna_stage1.spice`: once a core change lands
+    there (issue #79) the live file is no longer the deck this study's records
+    were taken on, and re-running it against a different circuit would make
+    the campaign incomparable with its own baseline.
+    """
+    import matchcollect as mc  # noqa: PLC0415 - lazy, as elsewhere in this driver
+    return mc.FROZEN.read_text()
 
 
 def _nominal(st: ms.Study) -> tuple[str, float, float]:

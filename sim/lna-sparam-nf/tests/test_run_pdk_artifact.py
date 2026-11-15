@@ -311,7 +311,7 @@ def _stored_log_names(tb):
 
 
 def _args():
-    return argparse.Namespace(supersedes="", claim="", klt_cmd="klt")
+    return argparse.Namespace(supersedes="", supersedes_new_dut="", claim="", klt_cmd="klt")
 
 
 @pytest.mark.parametrize("case", sorted(NEGATIVE))
