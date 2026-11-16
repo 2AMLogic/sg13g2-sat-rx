@@ -70,7 +70,9 @@ Evidence on `main` (all append-only records under `sim/*/records/`):
   curated-deck route (G1) stays **declined by ruling** and closed — a later
   reader should not wait on it. The runset route is now measured, not
   pending: the PDK's own runset recognises `npn13G2` as a layout device
-  class (`$1 npn13G2` in `runs/klt-0.9.0/lvs-runset-simform-full.json`),
+  class (`coverage.recognized_device_classes.layout` includes `npn13G2`, and
+  `declared_not_recognized` does not, in
+  `layout/probe-readiness/runs/klt-0.9.0/lvs-runset-simform-full.json`),
   while the reference side has no device map for subckt-call references
   ([klayout-tools#5796](https://github.com/2AMLogic/klayout-tools/issues/5796)),
   so the full compare does not reach `match` and T1 item 4 stays unmet.
@@ -81,10 +83,16 @@ Evidence on `main` (all append-only records under `sim/*/records/`):
   realizability study. Of the stage's 18 elements only one (`Xqr`) is drawable
   at its designed value: 8 resistors and 4 capacitors have no PDK primitive
   selected in the schematic, and the 3 inductors have no PDK model at all.
-  The device-group GDS (17 `npn13G2` instances and a substrate guard ring)
-  runs DRC and the ERC supply checks clean. T1 item 2's gate is therefore a
-  `spec/` decision record on passive realization — an operator call, not an
-  agent's.
+  The two HBTs (`Xq1`, `Xq2`) have a PDK model but are not drawable as
+  designed: `Nx=8` needs the PDK's parametrized `npn13G2` PCell, which is
+  uninstantiable in this environment (`missing_dependency: "cni"`), so the
+  study drew each as eight parallel `Nx=1` units — a different structure with
+  different base resistance and emitter interconnect parasitics
+  (`multiplicity_not_drawable_as_designed`), an environment-level constraint
+  no passive decision record resolves. The device-group GDS (17 `npn13G2`
+  instances and a substrate guard ring) runs DRC and the ERC supply checks
+  clean. T1 item 2's gate is therefore a `spec/` decision record on passive
+  realization — an operator call, not an agent's.
 
 ## Now
 
@@ -107,8 +115,11 @@ Evidence on `main` (all append-only records under `sim/*/records/`):
   (19, 20)** via `klt economy`. Unblocked by the layout.
 - **Live-verify the stored harness manifest (#230).** The event gate is met:
   `manifests/artifacts/` holds its first manifest
-  (`lna-sparam-nf-20261114-211735-8a92c6e.manifest.json`). What remains is
-  the live fleet-worker `klt artifact verify` and its evidence record.
+  (`lna-sparam-nf-20261114-211735-8a92c6e.manifest.json`). The issue still
+  carries `loom:blocked` on a 2026-10-23 park record naming #110 (the openEMS
+  runner) — a park the manifest's arrival supersedes, and clearing it is the
+  first step. What remains is the live fleet-worker `klt artifact verify` and
+  its evidence record.
 - **Headroom table below Rd = 200 ohm.** Needs its own frozen plan version
   (`design/lna_headroom_study.md`), and should be drawn on the post-#79 core.
 
@@ -134,7 +145,7 @@ Evidence on `main` (all append-only records under `sim/*/records/`):
 | DR-0001, 0004, 0006, 0007, 0008 | two-key ratification; no key has been turned on any of them |
 | DR-0008 validation plan | separate authorization of simulation spend, which the record does not grant |
 | #38 auditor Python runtime | operator hold |
-| #4 T1 tracker | an operator decision on how the tracker leaves the triage queue; its body still quotes an older grade, and `signoff/tier-report.json` is the verdict |
+| #4 T1 tracker | nothing — resting on `loom:blocked` as a tracking artifact by operator triage of 2026-10-15 (its park record); the body still quotes an older grade, and `signoff/tier-report.json` is the verdict |
 | LNA stage-1 passive realization — the T1 item 2/3 gate | a `spec/` decision record; operator call per the #198 realizability study, since every option changes the circuit and would invalidate the post-#79 characterization |
 | Runset-engine reference-side conversion (the T1 item 4 gap after #260) | [klayout-tools#5796](https://github.com/2AMLogic/klayout-tools/issues/5796); upstream work, this repo files and waits |
 
