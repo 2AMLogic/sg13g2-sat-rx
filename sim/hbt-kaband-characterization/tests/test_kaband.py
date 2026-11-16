@@ -33,6 +33,25 @@ def sweep(profile="reduced"):
     return kaband.sweep_from_manifest(manifest(), profile)
 
 
+# --- z0 defaults track the single declaration (issue #286) --------------------
+
+
+def test_class_a_z0_defaults_are_the_single_declaration():
+    """Class A (issue #286): the sweep's declared port impedance and its
+    loader default must come from rf.Z0_OHM, not a re-spelled 50.0."""
+    assert kaband.Sweep.__dataclass_fields__["z0_ohm"].default is rf.Z0_OHM
+    m = manifest()
+    del m["sweep"]["full"]["z0_ohm"]
+    assert kaband.sweep_from_manifest(m, "reduced").z0_ohm == rf.Z0_OHM
+
+
+def test_class_b_y_to_s_default_stays_independent():
+    """Class B (issue #286): y_to_s is generic two-port algebra; its default
+    keeps its own 50 ohm and must not silently become the port convention."""
+    assert kaband.y_to_s.__defaults__[-1] == rf.Z0_OHM
+    assert kaband.y_to_s.__defaults__[-1] is not rf.Z0_OHM
+
+
 # A synthetic, physically valid noisy two-port: Sv(Zs) = a + b|Zs|^2 + c R + d X.
 # Chosen so that Zopt = 120 + 80j ohm and Tmin = 35 K exactly.
 R_OPT, X_OPT, T_MIN = 120.0, 80.0, 35.0
