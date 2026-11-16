@@ -24,8 +24,11 @@ The mixer feasibility bench (``sim/mixer-topology-feasibility/mixfeas.py``)
 uses the same two ideas (coherent bins; a verified 1:3 region); this module
 restates them for an amplifier whose products stay at RF. Since issue #263 the
 power arithmetic itself is no longer restated here: both benches call the
-shared primitives in ``sim/harness/rf.py`` (through this module's wrappers,
-which keep the floor convention declared at :data:`NEG_INF_DBM`).
+shared primitives in ``sim/harness/rf.py`` through this module's wrappers,
+which carry the repo-wide watts-to-dBm edge convention (issue #268): positive
+finite converts, zero and negative give ``-inf``, NaN propagates. The
+canonical statement, with the reasoning, is ``sim/README.md`` ->
+"Watts-to-dBm edge convention".
 """
 
 from __future__ import annotations
@@ -37,22 +40,59 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # sim/ -> harness
-from harness import rf  # noqa: E402
+from harness import iip3, rf  # noqa: E402
 from harness.rf import Z0_OHM  # noqa: E402
-
-NEG_INF_DBM = -400.0
 
 # ---------------------------------------------------------------------------
 # power conventions -- the arithmetic is delegated to sim/harness/rf.py
-# (issue #263). The public names, signatures and the floor edge convention
-# are unchanged: zero, negative and NaN all floor to NEG_INF_DBM, which
-# stays declared here until split E decides the convention itself. Each
-# convention's characterization lives in sim/harness/tests/test_rf.py.
+# (issue #263). The public names and signatures are unchanged. Since #268 the
+# watts-to-dBm edge convention is repo-wide and strict: ``dbm_from_w`` is
+# rf.dbm_strict -- positive finite converts, zero and negative give ``-inf``,
+# NaN propagates. The canonical statement, with the reasoning, lives in
+# sim/README.md -> "Watts-to-dBm edge convention"; each shared primitive's
+# characterization lives in sim/harness/tests/test_rf.py.
 # ---------------------------------------------------------------------------
 
 
 def dbm_from_w(p_w: float) -> float:
-    return rf.dbm_floored(p_w, NEG_INF_DBM)
+    """Power in dBm; ``-inf`` for zero or negative, NaN propagates.
+
+    Delegates to :func:`harness.rf.dbm_strict` (issue #263 moved the
+    arithmetic there). This is the repo-wide watts-to-dBm edge convention
+    (issue #268) -- the same three branches as
+    ``mixer-topology-feasibility/mixfeas.py``'s ``dbm``. Canonical statement,
+    with the reasoning: ``sim/README.md`` -> "Watts-to-dBm edge convention".
+
+    The two rules, and why:
+
+    * **NaN propagates.** A NaN power is a corrupt measurement and must stay
+      visibly corrupt. Until #268 this function returned a finite
+      ``NEG_INF_DBM = -400.0`` for NaN -- ``p_w > 0`` is false for NaN, so NaN
+      fell into the floor branch -- and a finite, plausible-looking -400 dBm
+      survives a finiteness guard, a JSON round-trip and a plot axis without
+      complaint. That is the one failure mode an evidence repo cannot afford.
+    * **Zero and negative give ``-inf``**, not a finite floor sentinel. The
+      JSON-serializability problem that motivated ``NEG_INF_DBM`` is handled at
+      the serialization boundary instead, where it actually arises:
+      ``analysis._round`` encodes ``-inf`` as the string ``"-inf"`` and NaN as
+      ``null``, so neither can reach a record looking like a measurement.
+    """
+    return rf.dbm_strict(p_w)
+
+
+def floor_dbm_of(p_dbm: dict) -> float:
+    """Higher of the two floor-bin powers, with NaN propagating (issue #268).
+
+    ``max`` is not NaN-safe and is not even order-symmetric: ``max(nan, -50.0)``
+    is NaN but ``max(-50.0, nan)`` is ``-50.0``. Under the :func:`dbm_from_w`
+    convention a NaN amplitude yields a NaN power, so a bare ``max`` would let
+    whichever floor bin came first decide whether the corruption stays visible.
+    Propagating it explicitly closes that one step downstream of the conversion.
+    """
+    lo, hi = p_dbm["fl_lo"], p_dbm["fl_hi"]
+    if lo != lo or hi != hi:  # NaN in either floor bin
+        return float("nan")
+    return max(lo, hi)
 
 
 def w_from_dbm(p_dbm: float) -> float:
@@ -65,12 +105,12 @@ def vs_peak_from_pav_dbm(pav_dbm: float, z0: float = Z0_OHM) -> float:
 
 
 def pav_dbm_from_vs_peak(vs: float, z0: float = Z0_OHM) -> float:
-    return rf.dbm_floored(rf.available_power_w(vs, z0), NEG_INF_DBM)
+    return rf.dbm_strict(rf.available_power_w(vs, z0))
 
 
 def delivered_dbm(v_peak: float, z0: float = Z0_OHM) -> float:
     """Power delivered to a ``z0`` load by a component of peak ``v_peak``."""
-    return rf.dbm_floored(rf.delivered_power_w(v_peak, z0), NEG_INF_DBM)
+    return rf.dbm_strict(rf.delivered_power_w(v_peak, z0))
 
 
 # ---------------------------------------------------------------------------
@@ -404,11 +444,18 @@ def run_summary(vals: dict[str, float], run: dict, *, log_has_abort: bool = Fals
     if dead and log_has_abort:
         return dict(base, status="sim_failed", reason="simulator aborted the transient (solver timestep too small / no convergence)",
                     amp_v={}, p_dbm={}, floor_dbm=None)
+    # This finiteness check is what keeps a NaN/inf mark out of every published
+    # number: it returns before any :func:`delivered_dbm` call below, and the
+    # :mod:`ci_assert` recompute reads an ``amp_v`` that came through here. It
+    # is no longer the only thing standing between a NaN and a plausible-looking
+    # record -- since issue #268 the conversion itself propagates NaN -- but it
+    # is still what keeps a corrupt run out of the record entirely rather than
+    # into it as a NaN, so do not weaken it without reading that issue.
     if any(v is None or not math.isfinite(v) for v in present) or vals.get(f"m_{rid}_n") != n:
         return None
     amps = {b: amp(vals[f"m_{rid}_{b}_c"], vals[f"m_{rid}_{b}_s"]) for b in run["bins"]}
     out = dict(base, status="ok", amp_v=amps, p_dbm={b: delivered_dbm(a) for b, a in amps.items()})
-    out["floor_dbm"] = max(out["p_dbm"]["fl_lo"], out["p_dbm"]["fl_hi"])
+    out["floor_dbm"] = floor_dbm_of(out["p_dbm"])
     if run["monitors"]:
         lim = {}
         for name, _ in DEVICE_MONITORS:
@@ -541,19 +588,18 @@ def _finite(x) -> bool:
     return isinstance(x, (int, float)) and math.isfinite(x)
 
 
-def linfit(xs: list[float], ys: list[float]) -> tuple[float, float, float]:
-    """Least squares y = a + s x; returns (a, s, max |residual|).
+def _usable_floor(x) -> bool:
+    """A floor power usable by an estimator: finite, or ``-inf`` (issue #268).
 
-    Sums use ``math.fsum`` (correctly rounded): the builtin ``sum`` of floats changed to
-    compensated summation in Python 3.12, so with it a re-derivation on another interpreter
-    could differ in the last kept digit and a frozen record would not reproduce.
+    ``-inf`` is what :func:`dbm_from_w` returns for an identically-zero floor
+    bin, i.e. "no measurable numerical floor", which cannot disqualify a point:
+    the ``fund >= floor + margin`` comparison in :func:`point_status` is correct
+    at ``-inf``. Before #268 a zero floor bin became a finite -400 dBm and
+    passed :func:`_finite`, so admitting ``-inf`` here is what keeps that input's
+    verdict unchanged under the new convention instead of turning a usable point
+    into a rejected one. NaN and ``None`` remain unusable.
     """
-    n = len(xs)
-    mx, my = math.fsum(xs) / n, math.fsum(ys) / n
-    sxx = math.fsum((x - mx) ** 2 for x in xs)
-    s = math.fsum((x - mx) * (y - my) for x, y in zip(xs, ys)) / sxx
-    a = my - s * mx
-    return a, s, max(abs(y - (a + s * x)) for x, y in zip(xs, ys))
+    return _finite(x) or x == float("-inf")
 
 
 def _baseline(rows: list[dict], gain_key: str, usable: list[bool], n: int, flat_db: float) -> dict | None:
@@ -578,8 +624,8 @@ def point_status(r: dict, *, fund_key: str, im3_key: str | None, margin_db: floa
     """Reason a point is not usable by an estimator, or None."""
     if r.get("sim_failed"):
         return "simulation failed: " + str(r["sim_failed"])
-    need = [fund_key, "floor_dbm"] + ([im3_key] if im3_key else [])
-    if not all(_finite(r.get(k)) for k in need):
+    need = [fund_key] + ([im3_key] if im3_key else [])
+    if not all(_finite(r.get(k)) for k in need) or not _usable_floor(r.get("floor_dbm")):
         return "nonfinite or missing value"
     if r[fund_key] < r["floor_dbm"] + margin_db:
         return "fundamental below numerical floor + margin"
@@ -590,7 +636,11 @@ def point_status(r: dict, *, fund_key: str, im3_key: str | None, margin_db: floa
     return None
 
 
-def fit_iip3(rows: list[dict], params: dict, limits: dict | None, *, enforce_limits: bool = True) -> dict:
+_NEW_INTERCEPT_KEYS = ("iip3_ideal_slope_dbm", "iip3_topfit_dbm")  # not in the pre-#276 shape
+
+
+def fit_iip3(rows: list[dict], params: dict, limits: dict | None, *, enforce_limits: bool = True,
+             diagnostics: bool = False) -> dict:
     """Two-tone IIP3 from a verified contiguous 1:3-slope region, per IM3 sideband.
 
     ``rows``: per swept per-tone available power ``pin_dbm``: p_f1_dbm, p_f2_dbm,
@@ -609,7 +659,18 @@ def fit_iip3(rows: list[dict], params: dict, limits: dict | None, *, enforce_lim
     intersection of the two free-slope lines (``free_fixed_tol_db``); the
     reported value is the lower of the two sidebands. Anything else is
     'unavailable' with a reason: never a single-point or below-floor
-    extrapolation."""
+    extrapolation.
+
+    The run-selection/gate pipeline and the least-squares fit are delegated
+    to :mod:`harness.iip3` (issue #276); this wrapper keeps the params-dict
+    plumbing, its ideal-slope headline, the free-vs-fixed cross-check and
+    per-point spread as injected campaign gates, and its status vocabulary.
+    ``diagnostics=True`` additionally publishes the engine's third intercept
+    definition on each ok sideband (``iip3_topfit_dbm``, alongside the
+    existing ``iip3_free_slope_dbm`` and the headline now also named
+    ``iip3_ideal_slope_dbm``); the default keeps the exact pre-#276 key set,
+    which frozen records pin structurally (their verify re-derives every
+    placement from the frozen logs)."""
     rows = sorted((dict(r) for r in rows), key=lambda r: r["pin_dbm"])
     p = params
     if len(rows) < p["min_points"]:
@@ -635,38 +696,20 @@ def fit_iip3(rows: list[dict], params: dict, limits: dict | None, *, enforce_lim
             usable.append(w is None)
             if w:
                 excluded[f"{r['pin_dbm']:g}"] = w
-        best, rejected = None, []
-        n = len(rows)
-        for i in range(n):
-            for j in range(i + p["min_points"], n + 1):
-                if not all(usable[i:j]):
-                    break
-                seg = rows[i:j]
-                xs = [r["pin_dbm"] for r in seg]
-                a1, s1, r1 = linfit(xs, [r[fund] for r in seg])
-                a3, s3, r3 = linfit(xs, [r[im3] for r in seg])
-                per_pt = [r["pin_dbm"] + (r[fund] - r[im3]) / 2.0 for r in seg]
-                if not (p["slope_fund"][0] <= s1 <= p["slope_fund"][1] and p["slope_im3"][0] <= s3 <= p["slope_im3"][1]):
-                    rejected.append({"interval_dbm": [xs[0], xs[-1]], "reason": f"slopes {s1:.3f}/{s3:.3f} out of tolerance"})
-                    continue
-                if max(r1, r3) > p["max_residual_db"]:
-                    rejected.append({"interval_dbm": [xs[0], xs[-1]], "reason": f"residual {max(r1, r3):.3f} dB too large"})
-                    continue
-                fixed = math.fsum(per_pt) / len(per_pt)
-                free = (a1 - a3) / (s3 - s1)
-                if abs(fixed - free) > p["free_fixed_tol_db"]:
-                    rejected.append({"interval_dbm": [xs[0], xs[-1]],
-                                     "reason": f"fixed-slope IIP3 {fixed:.2f} and free-slope intersection {free:.2f} dBm disagree"})
-                    continue
-                if max(per_pt) - min(per_pt) > p["max_point_spread_db"]:
-                    rejected.append({"interval_dbm": [xs[0], xs[-1]], "reason": "per-point IIP3 spread too large"})
-                    continue
-                cand = {"interval_dbm": [xs[0], xs[-1]], "n_points": len(seg), "slope_fund": s1, "slope_im3": s3,
-                        "residual_fund_db": r1, "residual_im3_db": r3, "iip3_dbm": fixed,
-                        "iip3_free_slope_dbm": free, "per_point_iip3_dbm": per_pt,
-                        "extrapolation_db": fixed - xs[-1]}
-                if best is None or cand["n_points"] > best["n_points"]:
-                    best = cand
+        def _gate(per_pt, fixed, free, interval_dbm):
+            """Campaign-only candidate gates, injected into the shared engine's
+            pipeline: the free-vs-fixed cross-check and the per-point spread."""
+            if abs(fixed - free) > p["free_fixed_tol_db"]:
+                return f"fixed-slope IIP3 {fixed:.2f} and free-slope intersection {free:.2f} dBm disagree"
+            if max(per_pt) - min(per_pt) > p["max_point_spread_db"]:
+                return "per-point IIP3 spread too large"
+            return None
+
+        best, rejected = iip3.select_run(
+            xs=[r["pin_dbm"] for r in rows], fund_ys=[r.get(fund) for r in rows],
+            im3_ys=[r.get(im3) for r in rows], usable=usable,
+            min_points=p["min_points"], slope_fund=p["slope_fund"], slope_im3=p["slope_im3"],
+            max_residual_db=p["max_residual_db"], extra_gate=_gate)
         entry = {"baseline": base, "excluded_points": excluded, "rejected_intervals": rejected}
         if best is None:
             entry.update(status="unavailable",
@@ -674,7 +717,10 @@ def fit_iip3(rows: list[dict], params: dict, limits: dict | None, *, enforce_lim
                                 f"1+/-{p['slope_fund'][1] - 1:.2g} and 3+/-{p['slope_im3'][1] - 3:.2g} above the "
                                 "numerical floor, below compression and inside the operating limits")
         else:
-            entry.update(best, status="ok")
+            entry.update({k: v for k, v in best.items() if diagnostics or k not in _NEW_INTERCEPT_KEYS},
+                         iip3_dbm=best["iip3_ideal_slope_dbm"],
+                         extrapolation_db=best["iip3_ideal_slope_dbm"] - best["interval_dbm"][-1],
+                         status="ok")
         sides[side] = entry
     ok = [s for s in sides.values() if s["status"] == "ok"]
     if len(ok) < 2:

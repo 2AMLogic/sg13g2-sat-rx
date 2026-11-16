@@ -40,7 +40,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # sim/ -> harness
-from harness import rf  # noqa: E402
+from harness import iip3, rf  # noqa: E402
 from harness.rf import Z0_OHM  # noqa: E402
 
 LO_RDIFF_OHM = 100.0
@@ -62,9 +62,13 @@ class StudyError(ValueError):
 
 # ---------------------------------------------------------------------------
 # Power arithmetic -- delegated to sim/harness/rf.py (issue #263). The
-# public names, signatures and the strict zero/NaN edge convention are
-# unchanged: ``dbm`` is rf.dbm_strict (NaN propagates, -inf at zero), the
-# V^2/(8R) and V^2/(2R) primitives are shared verbatim. Each convention's
+# public names and signatures are unchanged, and since issue #268 the
+# watts-to-dBm edge convention is repo-wide: ``dbm`` is rf.dbm_strict
+# (positive finite converts, zero and negative give -inf, NaN propagates) --
+# the same three branches as the ``lna-linearity`` bench's
+# ``linearity.dbm_from_w``, which previously mapped zero, negative AND NaN
+# to a finite -400 dBm. Canonical statement, with the reasoning:
+# sim/README.md -> "Watts-to-dBm edge convention". Each shared primitive's
 # characterization lives in sim/harness/tests/test_rf.py.
 # ---------------------------------------------------------------------------
 
@@ -903,19 +907,8 @@ def _finite(x) -> bool:
 # ---------------------------------------------------------------------------
 
 
-def _linfit(xs: list[float], ys: list[float]) -> tuple[float, float, float]:
-    """Least squares y = a + s x; returns (a, s, max |residual|)."""
-    n = len(xs)
-    mx, my = sum(xs) / n, sum(ys) / n
-    sxx = sum((x - mx) ** 2 for x in xs)
-    s = sum((x - mx) * (y - my) for x, y in zip(xs, ys)) / sxx
-    a = my - s * mx
-    res = max(abs(y - (a + s * x)) for x, y in zip(xs, ys))
-    return a, s, res
-
-
 def fit_iip3(points: list[dict], *, slope_fund=(0.9, 1.1), slope_im3=(2.7, 3.3), min_points=3,
-             floor_margin_db=10.0, compression_db=1.0, max_residual_db=0.5) -> dict:
+             floor_margin_db=10.0, compression_db=1.0, max_residual_db=0.5, diagnostics=False) -> dict:
     """IIP3 only from a verified 1:3-slope region (spec/porting-plan.md 4.1).
 
     ``points``: per input power step (per-tone available power ``pin_dbm``):
@@ -930,7 +923,17 @@ def fit_iip3(points: list[dict], *, slope_fund=(0.9, 1.1), slope_im3=(2.7, 3.3),
     (IM3) with residuals <= ``max_residual_db``. The intercept is the
     intersection of the two fitted lines; the reported (conservative) IIP3 is
     the lower of the two sidebands. Otherwise ``IIP3 unavailable`` with the
-    reason -- never a single-point or below-floor extrapolation."""
+    reason -- never a single-point or below-floor extrapolation.
+
+    The run-selection/gate pipeline and the least-squares fit are delegated
+    to :mod:`harness.iip3` (issue #276); this wrapper keeps the bench's
+    public signature, its free-slope-intersection headline and its status
+    vocabulary. ``diagnostics=True`` additionally publishes the engine's
+    other two intercept definitions on each ok sideband
+    (``iip3_ideal_slope_dbm``, ``iip3_topfit_dbm``, plus the explicit
+    ``iip3_free_slope_dbm`` for shape parity with ``linearity``); the default
+    keeps the exact pre-#276 key set, which frozen records pin structurally
+    (their verify re-derives every placement from the frozen logs)."""
     pts = sorted(points, key=lambda p: p["pin_dbm"])
     if len(pts) < min_points:
         return {"status": "IIP3 unavailable", "reason": f"only {len(pts)} power step(s); need >= {min_points}"}
@@ -956,33 +959,19 @@ def fit_iip3(points: list[dict], *, slope_fund=(0.9, 1.1), slope_im3=(2.7, 3.3),
             usable.append(why is None)
             if why:
                 reasons[p["pin_dbm"]] = why
-        best = None
-        n = len(pts)
-        for i in range(n):
-            for j in range(i + min_points, n + 1):
-                if not all(usable[i:j]):
-                    break
-                seg = pts[i:j]
-                xs = [p["pin_dbm"] for p in seg]
-                a1, s1, r1 = _linfit(xs, [p[fund_key] for p in seg])
-                a3, s3, r3 = _linfit(xs, [p[im3_key] for p in seg])
-                if not (slope_fund[0] <= s1 <= slope_fund[1] and slope_im3[0] <= s3 <= slope_im3[1]):
-                    continue
-                if max(r1, r3) > max_residual_db:
-                    continue
-                cand = {"interval_dbm": [xs[0], xs[-1]], "n_points": len(seg), "slope_fund": s1,
-                        "slope_im3": s3, "residual_fund_db": r1, "residual_im3_db": r3,
-                        "iip3_dbm": (a1 - a3) / (s3 - s1),
-                        "per_point_iip3_dbm": [x + (p[fund_key] - p[im3_key]) / 2 for x, p in zip(xs, seg)]}
-                if best is None or cand["n_points"] > best["n_points"]:
-                    best = cand
+        best, _rejected = iip3.select_run(
+            xs=[p["pin_dbm"] for p in pts], fund_ys=[p.get(fund_key) for p in pts],
+            im3_ys=[p.get(im3_key) for p in pts], usable=usable, min_points=min_points,
+            slope_fund=slope_fund, slope_im3=slope_im3, max_residual_db=max_residual_db)
         if best is None:
             sidebands[side] = {"status": "IIP3 unavailable",
                                "reason": "no contiguous run of >= %d steps with slopes 1+/-0.1 and 3+/-0.3 "
                                          "above the floor and below compression" % min_points,
                                "excluded_steps": reasons}
         else:
-            sidebands[side] = dict(best, status="ok", excluded_steps=reasons)
+            entry = {k: v for k, v in best.items() if diagnostics or k not in iip3.INTERCEPT_KEYS}
+            sidebands[side] = dict(entry, iip3_dbm=best["iip3_free_slope_dbm"], status="ok",
+                                   excluded_steps=reasons)
     ok = [s for s in sidebands.values() if s["status"] == "ok"]
     if len(ok) < 2:
         bad = [k for k, s in sidebands.items() if s["status"] != "ok"]

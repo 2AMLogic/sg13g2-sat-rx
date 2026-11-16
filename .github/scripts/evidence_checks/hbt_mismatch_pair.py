@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from .common import PAIR_RE, Problems, load_json_object, record_pairs, rel
+from .common import PAIR_RE, Problems, SOLVER_ARTIFACTS_DIR, check_probe_log_bench, load_json_object, rel
 
 #: Mirrors mcpair.STATUSES (the checker is stdlib-only and imports nothing
 #: from sim/); keep in sync.
@@ -112,18 +112,15 @@ def js_text(path: Path) -> str:
 
 
 def check_hbt_mismatch_pair(problems: Problems, root: Path, exp_dir: Path) -> None:
-    """Adapter entry: records/ + probe-logs/ packages of the mismatch-pair probe."""
-    claimed_logs: set[str] = set()
-    records = exp_dir / "records"
-    if records.is_dir():
-        for stem, files in record_pairs(problems, root, records).items():
-            check_mcpair_record(problems, root, exp_dir, stem, files, claimed_logs)
-    # any probe-logs dir no record claims is orphan scratch (e.g. a --no-write
-    # validation run) -- it must not linger in the committed tree
-    pl = exp_dir / "probe-logs"
-    if pl.is_dir():
-        for d in sorted(pl.iterdir()):
-            if d.is_dir() and d.name not in claimed_logs:
-                problems.add(rel(root, d),
-                             "probe-log package belongs to no record in records/ (commit it "
-                             "with its record, or do not commit it at all)")
+    """Adapter entry: records/ + probe-logs/ packages of the mismatch-pair probe.
+
+    A fourth caller of the shared probe-log bench layout (issue #265): the
+    records walk, the claimed set and the probe-logs scan live in
+    ``check_probe_log_bench`` now, and the bench gains the foreign-evidence-dir
+    rejection its siblings already had. None of ``corners/``,
+    ``netlist-snapshots/`` or ``solver-artifacts/`` is part of this bench's
+    layout (``bench/`` and ``tests/`` are code, not evidence), so the shared
+    denylist tuple applies on this bench's own merits, not by copying.
+    """
+    check_probe_log_bench(problems, root, exp_dir, "hbt-mismatch-pair",
+                          check_mcpair_record, ("corners", "netlist-snapshots", SOLVER_ARTIFACTS_DIR))

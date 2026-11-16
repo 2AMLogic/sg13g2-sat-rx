@@ -10,6 +10,7 @@ copy again. No PDK, no simulator.
 
 from __future__ import annotations
 
+import ast
 import datetime as _dt
 import hashlib
 import re
@@ -41,6 +42,55 @@ def test_sha256_matches_hashlib_across_chunk_boundaries(tmp_path):
     assert provenance.sha256_file(p) == hashlib.sha256(data).hexdigest()
 
 
+def _reads_own_param(node: ast.AST, params: set[str]) -> bool:
+    """True when *node* is a call that reads data from one of *params*.
+
+    ``open(<param>, ...)`` or ``<param>.open() / .read_bytes() / .read_text()``
+    -- the two shapes the harness's file hashers use to reach the bytes.
+    """
+    if not isinstance(node, ast.Call):
+        return False
+    func = node.func
+    if isinstance(func, ast.Name):
+        return (func.id == "open" and bool(node.args)
+                and isinstance(node.args[0], ast.Name)
+                and node.args[0].id in params)
+    if isinstance(func, ast.Attribute):
+        return (func.attr in {"open", "read_bytes", "read_text"}
+                and isinstance(func.value, ast.Name)
+                and func.value.id in params)
+    return False
+
+
+def _module_level_sha256_file_hashers(path: Path) -> set[str]:
+    """Module-level def names in *path* that hash data read from their own params.
+
+    A def is a file-hasher candidate when its body reaches the attribute
+    ``hashlib.sha256`` and reads one of its own parameters via
+    :func:`_reads_own_param`. Nested defs' own parameters are not the outer
+    def's, so a nested helper hashing its own argument is not attributed
+    here.
+    """
+    hashers: set[str] = set()
+    for node in ast.parse(path.read_text()).body:
+        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            continue
+        params = {a.arg for a in [*node.args.posonlyargs, *node.args.args,
+                                  *node.args.kwonlyargs]}
+        params -= {"self", "cls"}
+        if not params:
+            continue
+        body = list(ast.walk(node))
+        if any(_reads_own_param(n, params) for n in body) and any(
+                isinstance(n, ast.Attribute)
+                and n.attr == "sha256"
+                and isinstance(n.value, ast.Name)
+                and n.value.id == "hashlib"
+                for n in body):
+            hashers.add(node.name)
+    return hashers
+
+
 def test_sha256_is_the_single_definition_in_the_harness():
     assert provenance.sha256 is provenance.sha256_file
     assert pdkartifact.sha256_file is provenance.sha256_file
@@ -55,6 +105,22 @@ def test_sha256_is_the_single_definition_in_the_harness():
         if "def sha256_file(" in p.read_text()
     }
     assert definitions == {"provenance.py", "evidence_store.py"}
+    # The name needle above is blind to a second file hasher under any
+    # other name, so this AST check also requires: no harness module
+    # defines a module-level def that hashes data read from its own
+    # parameter, whatever it is called. The two survivors are exactly the
+    # allow-listed pair; the inline digests of literals (evidence_store's
+    # empty-bytes constant and uri-scheme probe) and the @property
+    # netlist/manifest digests (no parameter beyond ``self``) are excluded
+    # structurally, and frozen_dut.sha256_path delegates without ever
+    # touching hashlib.
+    hashers = {
+        (p.name, name)
+        for p in harness_dir.glob("*.py")
+        for name in _module_level_sha256_file_hashers(p)
+    }
+    assert hashers == {("provenance.py", "sha256_file"),
+                       ("evidence_store.py", "sha256_file")}
 
 
 # ---- git provenance: the probe record shape is exactly {"commit", "dirty"} -------------------
