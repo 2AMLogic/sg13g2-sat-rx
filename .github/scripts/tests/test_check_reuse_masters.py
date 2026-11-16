@@ -153,9 +153,13 @@ class TinyTree(unittest.TestCase):
         self.assertEqual(self.messages(), "")
 
     def test_upstream_master_overlap_is_the_mispin(self) -> None:
-        (self.root / "corners.py").write_text("CORNERS = []\n", encoding="utf-8")
+        # The real mis-pin shape: a master under sim/harness/ (the base the
+        # upstream module list is relative to) whose bare filename also
+        # appears in upstream.modules.
+        (self.root / "sim" / "harness").mkdir(parents=True)
+        (self.root / "sim" / "harness" / "corners.py").write_text("CORNERS = []\n", encoding="utf-8")
         self.write_lock(tiny_lock(
-            [{"mechanic": "m_c", "master": "corners.py", "symbols": ["CORNERS"], "what": "upstream module"}],
+            [{"mechanic": "m_c", "master": "sim/harness/corners.py", "symbols": ["CORNERS"], "what": "upstream module"}],
             upstream={"repo": "2AMLogic/gf180-sar-adc", "package": "sim-harness-core",
                       "modules": ["corners.py"]}))
         self.assertIn("corners.py", self.messages())
@@ -228,6 +232,17 @@ class CommittedTree(unittest.TestCase):
             "K_BOLTZMANN = 1.380649e-23", "K_BOLTZMANN_GONE = 1.380649e-23"), encoding="utf-8")
         msgs = self.messages()
         self.assertIn("K_BOLTZMANN", msgs)
+
+    def test_appending_a_declared_master_basename_to_upstream_goes_red(self) -> None:
+        # The committed-tree form of the mis-pin control: take the real lock,
+        # pin one of its own declared sim/harness/ masters as upstream-owned,
+        # and the overlap rule must go red.
+        doc = json.loads((self.root / LOCK).read_text(encoding="utf-8"))
+        doc["upstream"]["modules"].append("rf.py")
+        (self.root / LOCK).write_text(json.dumps(doc, indent=2), encoding="utf-8")
+        msgs = self.messages()
+        self.assertIn("rf.py", msgs)
+        self.assertIn("upstream-owned", msgs)
 
 
 if __name__ == "__main__":

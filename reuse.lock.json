@@ -5,7 +5,7 @@
       "mechanic": "harness_evidence_store",
       "master": "sim/harness/evidence_store.py",
       "symbols": ["ENV_BROKER", "ENV_REPO", "MANIFEST_DIR", "KLT_ARTIFACT_MIN_COMMIT", "StoreError", "manifest_path", "sha256_file", "probe_broker", "preflight", "check_klt_uri_scheme"],
-      "what": "Artifact-store client: manifests dir, broker probe, preflight and klt: URIs; single home of what used to be per-driver copies."
+      "what": "Artifact-store client: manifests dir, broker probe, preflight and klt: URIs; single home of what used to be per-driver copies. Its sha256_file is an independent local copy (different signature); harness_provenance declares its own — the lock is per-mechanic, so neither entry is the master of the other's."
     },
     {
       "mechanic": "harness_frozen_dut",
@@ -51,7 +51,7 @@
     }
   ],
   "upstream": {
-    "_comment": "These sim/harness/ modules are scaffolded from sim-harness-core (distilled from 2AMLogic/gf180-sar-adc by everyblock/scaffold.sh). Their master is upstream, not here: a consumer pins them against the upstream repo, never against this one. A module lands in this list only by the ownership test above (adding commit 9dad16b) — a later addition to the README generic-core table stays this repo's master.",
+    "_comment": "These sim/harness/ modules are scaffolded from sim-harness-core (distilled from 2AMLogic/gf180-sar-adc by everyblock/scaffold.sh). Their master is upstream, not here: a consumer pins them against the upstream repo, never against this one. 'modules' entries are bare filenames relative to sim/harness/ ('corners.py' names sim/harness/corners.py); the pointer check's overlap rule matches them against the basenames of declared masters under sim/harness/ only, so a master elsewhere is never a false overlap. A module lands in this list only by the ownership test above (adding commit 9dad16b) — a later addition to the README generic-core table stays this repo's master.",
     "repo": "2AMLogic/gf180-sar-adc",
     "package": "sim-harness-core",
     "modules": ["pdk.py", "corners.py", "toolchain.py", "testbench.py", "runner.py", "evidence.py", "report.py", "cli.py"]

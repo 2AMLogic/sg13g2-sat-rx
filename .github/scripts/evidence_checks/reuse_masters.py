@@ -109,11 +109,18 @@ def check_reuse_masters(root: Path) -> Problems:
     if isinstance(upstream, dict):
         modules = upstream.get("modules")
         if isinstance(modules, list):
+            # upstream.modules holds bare filenames relative to sim/harness/
+            # (the scaffold base), so the overlap rule matches them against
+            # the basenames of declared masters under sim/harness/ only; a
+            # master elsewhere (tools/, sim/<block>/) is a different file.
+            harness_masters = {Path(m).name: m for m in declared
+                               if m.startswith("sim/harness/")}
             for mod in modules:
                 if not isinstance(mod, str):
                     problems.add(f"{LOCK_PATH}:upstream", "'modules' must be a list of path strings")
                     break
-                if mod in declared:
+                if mod in harness_masters:
                     problems.add(f"{LOCK_PATH}:upstream", f"module {mod!r} is both upstream-owned and "
-                                 "declared as this repo's master — exactly the mis-pin this convention prevents")
+                                 f"declared as this repo's master {harness_masters[mod]!r} — "
+                                 "exactly the mis-pin this convention prevents")
     return problems
