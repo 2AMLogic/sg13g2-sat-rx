@@ -8,6 +8,10 @@ Chronological record of merged pull requests and closed issues, maintained by th
 
 ### 2026-11-15
 
+- **PR #283**: rf: unify the two single-bin reference DFTs into harness/rf (deck-verified +j kernel)
+- **Issue #264** (closed): Unify the two reference single-bin DFTs into harness/rf.py: measured as exact conjugates (e^+jwt vs e^-jwt), not the same expression their docstrings claim
+- **PR #282**: layout: bump klt pin to 0.9.0 and record the PDK-runset LVS route
+- **Issue #260** (closed): layout: bump the klt pin to 0.9.0 and verify runset-backed LVS recognises npn13G2 (T1 item 4 route)
 - **PR #281**: test: derive the bench-discovery and workflow-timeout guard universes from the tree
 - **Issue #261** (closed): Two guard tests name a universe they do not inspect: bench discovery checks 3 of 5 benches, workflow timeouts a hardcoded 2-file list
 - **PR #275**: consolidate K_BOLTZMANN and the noiseless-source noise factor into sim/harness/rf
