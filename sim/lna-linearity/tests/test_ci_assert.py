@@ -10,6 +10,7 @@ needs the real pinned ngspice (the one-process run itself) is exercised by
 
 from __future__ import annotations
 
+import math
 import re
 
 import pytest
@@ -115,6 +116,29 @@ def test_amplitude_sabotage_fails_gain_and_leaves_the_db_answers_alone():
         assert not ev["pass"]
         if kind == "two":
             assert abs(ev["error_db"]) <= ev["tol_db"]
+
+
+def test_sabotage_amplitude_does_not_launder_a_nan_into_a_finite_power():
+    """Issue #268: ``sabotage_amplitude`` recomputes dBm from an ``amp_v`` with
+    no finiteness guard of its own (``run_summary``'s guard is upstream of the
+    summaries it is handed). Before #268 a NaN amplitude came back as a finite
+    -400.0 dBm here; now it stays NaN, in the bin AND in the reduced
+    ``floor_dbm``, whichever floor bin carries it. The point is that the
+    conversion is safe on its own, so a second unguarded caller like this one
+    cannot reintroduce the hazard."""
+    summ, _ = A.summaries_for_key(RED, "control_one", fake_combined_log())
+    assert summ, "the fake log must produce summaries for this to test anything"
+    for bin_name in ("f0", "fl_lo", "fl_hi"):
+        poisoned = [dict(s, amp_v=dict(s["amp_v"], **{bin_name: float("nan")})) for s in summ]
+        out = CIA.sabotage_amplitude(poisoned, CIA.AMP_SABOTAGE_SCALE)
+        for o in out:
+            assert math.isnan(o["p_dbm"][bin_name]), bin_name
+            assert not any(v == -400.0 for v in o["p_dbm"].values())
+            if bin_name.startswith("fl"):
+                assert math.isnan(o["floor_dbm"]), bin_name
+            # a poisoned point is then rejected by the estimator gate, not used
+            assert L.point_status(dict(o, p_f0_dbm=o["p_dbm"]["f0"]), fund_key="p_f0_dbm",
+                                  im3_key=None, margin_db=10.0, limits=None) is not None
 
 
 def test_power_axis_sabotage_fails_the_input_referred_answers():

@@ -294,5 +294,58 @@ def check_probe_log_bench(problems: Problems, root: Path, exp_dir: Path, bench: 
     reject_foreign_dirs(problems, root, exp_dir, bench, foreign)
 
 
+def reject_orphan_sidecars(problems: Problems, root: Path, exp_dir: Path, ids: set[str]) -> None:
+    """Flag ``corners/`` and ``netlist-snapshots/`` entries that no record of this
+    bench claims, matching the entry name exactly against a record id.
+
+    Exact match on purpose: ``core.py``'s harness-native loop looks the same but
+    matches a record-id *prefix* (``RECORD_ID_PREFIX_RE``), and folding it in here
+    would flag committed ``<id>.spice``/``<id>.tb.json`` snapshots as orphans.
+    """
+    for sub in ("corners", "netlist-snapshots"):
+        d = exp_dir / sub
+        if d.is_dir():
+            for p in sorted(d.iterdir()):
+                if p.name not in ids:
+                    problems.add(rel(root, p), f"{sub} entry belongs to no record in this experiment (orphan evidence)")
+
+
+def check_sidecar_group_bench(problems: Problems, root: Path, exp_dir: Path, bench: str,
+                              declaration: str, record_file_re: re.Pattern,
+                              sidecar_hint: str, check_record: Callable[..., None],
+                              foreign: tuple[str, ...]) -> None:
+    """Layout of a sidecar-group bench: per-record ``<id>.md``/``<id>.json`` pairs plus one
+    ``<id><sidecar>`` data file each, an ``orphan-evidence`` rejection and foreign dirs.
+
+    ``check_record(problems, root, exp_dir, rid)`` carries the per-record rules,
+    which stay per-adapter (issue #109 step 3): their semantics intentionally
+    differ. Everything around them -- the ``ids`` set, the records walk, the
+    ``.md``-required rule and the orphan/foreign tails -- is shared, and every
+    bench-varying token (declaration filename, record regex, sidecar name, bench
+    name) is passed in, so no diagnostic string changes per caller.
+    """
+    if not (exp_dir / declaration).is_file():
+        problems.add(rel(root, exp_dir), f"{bench} has no {declaration} declaration")
+    records = exp_dir / "records"
+    ids: set[str] = set()
+    if records.is_dir():
+        groups: dict[str, set[str]] = {}
+        for p in sorted(records.iterdir()):
+            m = record_file_re.match(p.name)
+            if not m:
+                problems.add(rel(root, p), f"unexpected file in {bench} records/ "
+                             f"(only <id>.md, <id>.json, {sidecar_hint})")
+                continue
+            groups.setdefault(m.group(1), set()).add(m.group(2))
+        for rid, parts in sorted(groups.items()):
+            if ".md" not in parts:
+                problems.add(rel(root, records), f"evidence for {rid} belongs to no record (no {rid}.md)")
+                continue
+            ids.add(rid)
+            check_record(problems, root, exp_dir, rid)
+    reject_orphan_sidecars(problems, root, exp_dir, ids)
+    reject_foreign_dirs(problems, root, exp_dir, bench, foreign)
+
+
 def git(root: Path, *args: str) -> subprocess.CompletedProcess:
     return subprocess.run(["git", *args], cwd=root, capture_output=True, text=True)
