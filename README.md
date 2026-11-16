@@ -103,6 +103,8 @@ layout/        klt layout-chain readiness probe + toolchain pin (no LNA layout y
 manifests/     artifact-store manifests for stored sim evidence
 measurements/  silicon characterization (empty until tape-out)
 ratification/  the two non-author review-key rubrics (EE + market)
+reuse.lock.json declared masters of the shared sim mechanics sibling repos consume
+               (issue #277); consumers pin a sha against it; guarded in CI
 signoff/       machine-graded T1 block manifest + tier verdict of record
 sim/           analog testbenches + PVT corner results
 spec/          target spec (partially ratified, DR-0003) + porting plan

@@ -194,6 +194,7 @@ from .mixer_pra import check_mixer_pumped_rf_admittance
 from .native import check_native_record
 from .passive_p1 import check_passive_p1
 from .readmes import check_bench_readmes
+from .reuse_masters import check_reuse_masters
 from .spec_rows import (COVERAGE_PATH, OVERCLAIM_RE, SPEC_PATH, VERDICTS, rows_mentioned, spec_table_rows)
 
 
@@ -484,6 +485,9 @@ def main(argv: list[str] | None = None) -> int:
     cov = check_row_coverage(root)
     print(f"row-coverage: {'FAILED' if cov else 'ok'} ({len(cov.items)} problem(s))")
     problems.items += cov.items
+    masters = check_reuse_masters(root)
+    print(f"reuse-masters: {'FAILED' if masters else 'ok'} ({len(masters.items)} problem(s))")
+    problems.items += masters.items
     if not args.skip_history:
         hist, note = check_append_only(root, args.base, args.require_base)
         print(f"append-only: {note}")
