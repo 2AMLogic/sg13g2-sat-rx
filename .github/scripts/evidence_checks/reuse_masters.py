@@ -16,34 +16,37 @@ and as upstream-owned, the exact mis-pin the convention prevents.
 
 from __future__ import annotations
 
+import ast
 import json
-import re
 from pathlib import Path
 
 from .common import Problems
 
 LOCK_PATH = "reuse.lock.json"
 
-# Top-level definition: ``def name``, ``class name`` or an assignment
-# ``name = ...`` / ``name: T = ...``. A ``from ... import X as Y`` line is a
-# re-export, not a definition, and deliberately does not match.
-DEF_RE = re.compile(
-    r"^(?:def|class)\s+([A-Za-z_]\w*)\b"
-    r"|^([A-Za-z_]\w*)\s*(?::[^=]+?)?=(?!=)"
-)
+def defined_symbols(path: Path) -> set[str] | None:
+    """Top-level names defined in a Python file, or None if it cannot be read/parsed.
 
-
-def defined_symbols(path: Path) -> set[str]:
-    """Top-level names defined in a Python file (def/class/assignment)."""
+    Walks ``ast.parse(...).body`` only: ``def`` / ``async def`` / ``class``,
+    ``name = ...`` (``Name`` targets, including chained ``a = b = ...``) and
+    ``name: T = ...``. A bare annotation (``x: int``) binds nothing and does
+    not count; tuple targets and ``from ... import X as Y`` re-exports are not
+    definitions. Docstring prose that looks like an assignment is never a
+    definition, because it is not a statement.
+    """
     try:
-        text = path.read_text(encoding="utf-8", errors="replace")
-    except OSError:
-        return set()
+        tree = ast.parse(path.read_text(encoding="utf-8", errors="replace"), filename=str(path))
+    except (OSError, SyntaxError, ValueError):
+        return None
     names: set[str] = set()
-    for line in text.splitlines():
-        m = DEF_RE.match(line)
-        if m:
-            names.add(m.group(1) or m.group(2))
+    for node in tree.body:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            names.add(node.name)
+        elif isinstance(node, ast.Assign):
+            names.update(t.id for t in node.targets if isinstance(t, ast.Name))
+        elif isinstance(node, ast.AnnAssign) and node.value is not None \
+                and isinstance(node.target, ast.Name):
+            names.add(node.target.id)
     return names
 
 
@@ -101,14 +104,23 @@ def check_reuse_masters(root: Path) -> Problems:
         if symbols is None:
             continue
         defined = defined_symbols(master_path)
+        if defined is None:
+            problems.add(where, f"master {master!r} does not parse as Python "
+                         "(unreadable or syntax error); declared symbols cannot be checked")
+            continue
         for s in symbols:
             if s not in defined:
                 problems.add(where, f"declared symbol {s!r} is not defined at top level in master {master!r}")
 
     upstream = doc.get("upstream")
-    if isinstance(upstream, dict):
+    if upstream is not None and not isinstance(upstream, dict):
+        problems.add(f"{LOCK_PATH}:upstream", "must be an object (the upstream/master overlap rule "
+                     "cannot run on a malformed section)")
+    elif isinstance(upstream, dict):
         modules = upstream.get("modules")
-        if isinstance(modules, list):
+        if modules is not None and not isinstance(modules, list):
+            problems.add(f"{LOCK_PATH}:upstream", "'modules' must be a list of path strings")
+        elif isinstance(modules, list):
             # upstream.modules holds bare filenames relative to sim/harness/
             # (the scaffold base), so the overlap rule matches them against
             # the basenames of declared masters under sim/harness/ only; a
