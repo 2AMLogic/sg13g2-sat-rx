@@ -590,6 +590,10 @@ def test_z0_is_declared_exactly_once_and_shared_by_identity():
 #: survivor convention reads it as a*(sin(phi) + j cos(phi)).
 _A, _F, _PHI, _N, _DT = 0.37, 5.0, 0.9, 200, 0.005
 COHERENT = [_A * math.sin(2 * math.pi * _F * k * _DT + _PHI) for k in range(_N)]
+#: Deliberately off-bin tone (5.37 Hz in the same 1 s window): one of the
+#: two characterization vectors where ``dft_bin_amplitude`` and
+#: ``abs(dft_bin(...))`` differ in the last bit (issue #284).
+INCOHERENT = [0.6 * math.sin(2 * math.pi * 5.37 * k * _DT + 0.2) for k in range(_N)]
 
 
 def test_dft_bin_pins_the_deck_kernel_convention_on_a_known_wave():
@@ -609,18 +613,32 @@ def test_dft_bin_pins_the_deck_kernel_convention_on_a_known_wave():
     assert hrf.dft_bin_amplitude(COHERENT, _DT, _F) == pytest.approx(_A, rel=1e-12)
 
 
+def test_dft_bin_amplitude_pins_the_accessor_rounding_order_bits():
+    """Issue #284: the accessor is ``2*hypot(re, im)/n``, NOT
+    ``abs(dft_bin(...))`` -- scaling before ``hypot`` rounds twice where this
+    rounds once. These are the two characterization vectors where the two
+    forms differ in the last bit, so they are what stops a future
+    ``return abs(dft_bin(...))`` simplification landing green (``coherent``
+    does not discriminate: its accessor equals its own ``abs()``)."""
+    assert_bits_equal(
+        hrf.dft_bin_amplitude(INCOHERENT, _DT, 5.37), 0.610897536868886,
+        "incoherent amplitude (accessor rounding order)")
+    assert_bits_equal(
+        hrf.dft_bin_amplitude(COHERENT, _DT, _F, 0.1), 0.37,
+        "nonzero t0 amplitude (accessor rounding order)")
+
+
 def test_single_bin_dft_magnitude_agrees_across_all_three_implementations():
     """Exact magnitude agreement between mixfeas's copy, linearity's copy and
     the survivor over every characterization vector -- written before the
     wrappers delegated, kept after as the no-recorded-number-moved proof."""
-    incoherent = [0.6 * math.sin(2 * math.pi * 5.37 * k * _DT + 0.2) for k in range(_N)]
     dc_offset = [0.25 + v for v in COHERENT]
     cases = [
         # (label, samples, dt, freq, t0) -- coherent known bin, deliberately
         # incoherent bin, DC offset on a tone, the DC bin itself, a non-zero
         # window start, and a single-sample "window".
         ("coherent", COHERENT, _DT, _F, 0.0),
-        ("incoherent", incoherent, _DT, 5.37, 0.0),
+        ("incoherent", INCOHERENT, _DT, 5.37, 0.0),
         ("dc-offset tone", dc_offset, _DT, _F, 0.0),
         ("dc bin", dc_offset, _DT, 0.0, 0.0),
         ("nonzero t0", COHERENT, _DT, _F, 0.1),
@@ -633,8 +651,7 @@ def test_single_bin_dft_magnitude_agrees_across_all_three_implementations():
         amp = hrf.dft_bin_amplitude(samples, dt, f, t0)
         assert isinstance(got_c, complex) and isinstance(got_m, float), label
         assert isinstance(z, complex) and isinstance(amp, float), label
-        # linearity's copy == the survivor's amplitude accessor, bit-for-bit
-        # (same 2*hypot(re, im)/n scale-and-divide order its numbers carry).
+        # post-#283 window_dft delegates to dft_bin_amplitude, so this pins the delegation (keeps it a delegation), not a cross-implementation guard.
         assert_bits_equal(got_m, amp, f"window_dft == dft_bin_amplitude ({label})")
         # mixfeas's copy == the survivor's complex bin, bit-for-bit.
         assert_bits_equal(got_c.real, z.real, f"dft_bin re ({label})")
