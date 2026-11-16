@@ -1034,10 +1034,15 @@ def negative_controls(plan: dict) -> list[dict]:
         r["status"] == "unavailable")
     lim = plan["extraction"]["operating_limits"]
     rows = synthetic_rows(plan, a1, a3, 1e-6, kind="one")
+    quiescent = {"ic_" + q + "_" + m: 0.012 for q in ("q1", "q2") for m in ("max", "min")}
     for x in rows:
         x["excursion_v"] = {f"{n}_{q}": v for n, q, v in (("vce_q1", "max", 1.2), ("vce_q1", "min", 1.2), ("vce_q2", "max", 1.2),
                                                          ("vce_q2", "min", 1.2), ("vbe_q1", "max", 0.8), ("vbe_q1", "min", 0.8),
                                                          ("vbe_q2", "max", 0.8), ("vbe_q2", "min", 0.8))}
+        if current_cfg(plan):
+            # plan_version >= 2 rejects a point without finite collector-current diagnostics no matter
+            # what; this control tests the V_CE limit, so its synthetic rows must carry them.
+            x["current_a"] = dict(quiescent)
         if x["pin_dbm"] >= -30.0:
             x["excursion_v"]["vce_q2_max"] = 1.6
     r = fit_p1db(rows, plan["extraction"]["p1db"], lim, enforce_limits=True)

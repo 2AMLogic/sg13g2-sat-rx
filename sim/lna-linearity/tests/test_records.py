@@ -3,7 +3,9 @@
 ``run.finalize`` writes a record from closed-form fake logs into a temporary tree and
 ``run.verify_record`` must re-derive the published verdicts from the frozen logs alone;
 tampering with a frozen log, the plan or a body must be noticed. Every committed record is
-verified the same way. No simulator, PDK or network.
+verified the same way. The new-core-revision note branch (issue #273) is pinned here too:
+``--supersedes-new-dut ID`` stamps the note and the ``Supersedes`` field, a bare
+``collect`` still says it supersedes nothing. No simulator, PDK or network.
 """
 
 from __future__ import annotations
@@ -21,9 +23,12 @@ import linearity as L
 import run as R
 from conftest import BENCH
 
+OLD_RECORD = "20261010-174208-0f67eaf"
+
 
 @pytest.fixture()
-def built(tmp_path, monkeypatch):
+def built(request, tmp_path, monkeypatch):
+    supersedes_new_dut = getattr(request, "param", "")
     plan = L.load_plan(BENCH / "testbench" / "plan.json")
     monkeypatch.setattr(R, "RECORDS", tmp_path / "records")
     monkeypatch.setattr(R, "LOGS", tmp_path / "corners")
@@ -36,7 +41,8 @@ def built(tmp_path, monkeypatch):
     work = tmp_path / "work"
     work.mkdir()
     args = types.SimpleNamespace(klt_cmd="echo klt-test", backend="batch", timeout_s=60, no_stage_models=True,
-                                 runner_version_check="warn")
+                                 runner_version_check="warn", wait_for_capacity=600,
+                                 supersedes_new_dut=supersedes_new_dut)
     reqs = R.write_requests(plan, work, "batch", args)
     reports = {}
     for key in reqs:
@@ -95,6 +101,33 @@ def test_failing_control_gives_a_controls_failed_record_not_a_verdict(tmp_path, 
     texts["control_two"] = fakes.fake_log(plan, "control_two", a1=10.0, a3=-900.0, floor_v=1e-9)
     res = A.analyze(plan, texts)
     assert not res["ngspice_control"]["pass"]
+
+
+# ---- the new-core-revision note branch (issue #273) --------------------------
+
+
+@pytest.mark.parametrize("built", [OLD_RECORD], indirect=True)
+def test_new_dut_note_names_superseded_record_and_reason(built):
+    rid, tmp = built
+    rec = json.loads((tmp / "records" / f"{rid}.json").read_text())
+    assert rec["supersedes"] == OLD_RECORD
+    md = (tmp / "records" / f"{rid}.md").read_text()
+    assert f"**Supersedes**: {OLD_RECORD}" in md
+    assert "NEW-CORE-REVISION RECORD (issue #273)" in md
+    assert OLD_RECORD in md
+    assert "the circuit changed, not the method" in md
+    assert "stays valid as evidence for the earlier (pre-#79) core" in md
+    assert "supersedes NOTHING" not in md
+
+
+def test_bare_collect_still_says_supersedes_nothing(built):
+    rid, tmp = built
+    rec = json.loads((tmp / "records" / f"{rid}.json").read_text())
+    assert rec["supersedes"] == ""
+    md = (tmp / "records" / f"{rid}.md").read_text()
+    assert "**Supersedes**: nothing (no new core revision declared)" in md
+    assert "supersedes NOTHING" in md
+    assert "NEW-CORE-REVISION RECORD" not in md
 
 
 @pytest.mark.parametrize("rid", sorted(p.stem for p in (BENCH / "records").glob("*.json")) if (BENCH / "records").is_dir() else [])

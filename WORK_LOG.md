@@ -6,8 +6,50 @@ Chronological record of merged pull requests and closed issues, maintained by th
 
 - [2026-09](work_log/WORK_LOG_2026-09.md)
 
+### 2026-11-16
+
+- **PR #319**: ci: run the block-coverage honesty check in check_format
+- **Issue #310** (closed): Wire in or remove unused block_coverage evidence check (never called by CI checker)
+- **PR #320**: test(sim): isolate bench pytest namespaces so multi-bench runs pass
+- **Issue #302** (closed): Multi-bench pytest run (not just collection) fails in 3 benches that bare-import run_probe.py / ci_assert.py
+- **PR #318**: fix: use ast to decide declared-master symbols in reuse guard
+- **Issue #312** (closed): reuse_masters: column-0 docstring text counts as a top-level definition (measured), plus two adjacent precision gaps
+- **PR #316**: docs: point README roadmap line at docs/ROADMAP.md, keep WORK_PLAN.md as queue view
+- **Issue #309** (closed): README calls WORK_PLAN.md "the current roadmap" and does not link docs/ROADMAP.md
+- **PR #317**: docs: list DR-0006 and DR-0007 in the spec/README decision-record index
+- **Issue #315** (closed): spec/README.md decision-record index omits DR-0006, DR-0007 (and any new record)
+- **PR #289**: feat: declare reuse masters (reuse.lock.json) with a CI pointer check
+- **Issue #277** (closed): No stamped-copy convention or reuse.lock.json declaring the masters of the mechanics sibling repos consume from this repo
+- **PR #304**: test: pin the dft_bin_amplitude accessor's rounding-order bits
+- **Issue #284** (closed): Pin harness.rf.dft_bin_amplitude's exact bits: an abs(dft_bin(...)) simplification would move recorded amplitudes with green tests
+- **PR #297**: test: make the pow-vs-multiply probe platform-conditional via a seeded F-divergence selector
+- **Issue #279** (closed): test_rf.py's concrete pow-vs-multiply probe hard-asserts a libm property, so a correctly-rounded pow would fail CI
+- **PR #305**: test: catch aliased sha256 file hashers in the harness via an AST check
+- **PR #303**: lna-linearity: pin the DUT by declaration, run the post-#79 core campaign, supersede the pre-#79 record
+- **PR #245**: docs: roadmap as of 2026-11-13
+- **Issue #291** (closed): The harness single-hash guard matches one spelling (def sha256_file) — a differently-named file hash still passes it
+- **Issue #273** (closed): Re-run sim/lna-linearity on the post-#79 core (new declaration, one campaign)
+- **PR #293**: refactor: single-source the two-tone IIP3 estimator into sim/harness/iip3.py
+- **Issue #276** (closed): Two independent fit_iip3 implementations use different IIP3 estimators (free-slope intersection vs ideal-slope intercept) and can return different values for the same sweep rows
+- **PR #295**: docs: drop stale tool-provenance prose from lna_stage1 note and nf fixture
+- **Issue #256** (closed): design/lna_stage1.md: two stale tool-provenance lines in the Files table
+- **PR #301**: refactor: share the sidecar-group bench layout and tighten hbt-mismatch-pair's evidence gate
+- **Issue #265** (closed): Extend the evidence checker's layout consolidation to the sidecar-group benches and the hbt-mismatch-pair adapter
+- **PR #271**: fix: propagate NaN in watts-to-dBm instead of returning a finite -400 dBm
+- **Issue #268** (closed): Pick one zero/NaN convention for watts-to-dBm: linearity.dbm_from_w turns NaN into a finite -400 dBm while mixfeas.dbm propagates it (latent, guarded upstream today)
+- **PR #298**: fix: assert guard-ring containment on drawn bus boxes by identity, naming escapes
+- **Issue #278** (closed): layout/lna_stage1/generate.py: guard-ring containment check asserts 'at least one bus inside', not 'every bus inside'
+
 ### 2026-11-15
 
+- **PR #296**: refactor: re-home the evidence checker's shared scalar helpers into common.py
+- **Issue #272** (closed): Delete the duplicate corner-id formatter in the evidence checker, and re-home the five shared names its bench adapters import from each other
+- **PR #285**: refactor(sim): consolidate dB and power conversions into harness/rf, preserving each site's zero/NaN edge
+- **Issue #263** (closed): Consolidate the dB and power conversions (two naming schemes, three db* helpers, three Z0_OHM copies) into harness/rf.py, preserving each site's zero/NaN edge
+- **PR #267**: refactor(evidence-checks): give the probe-log bench layout one home in common.py
+- **Issue #255** (closed): Consolidate the evidence checker's three identical probe-log bench entry points and re-home its shared helper into common.py
+- **PR #280**: refactor(harness): rename sha256_bytes to sha256_path and widen the single-hash guard past three modules
+- **Issue #259** (closed): Rename frozen_dut.sha256_bytes (it hashes a file, not bytes) and widen the harness single-hash guard past the 3 modules it inspects
 - **PR #283**: rf: unify the two single-bin reference DFTs into harness/rf (deck-verified +j kernel)
 - **Issue #264** (closed): Unify the two reference single-bin DFTs into harness/rf.py: measured as exact conjugates (e^+jwt vs e^-jwt), not the same expression their docstrings claim
 - **PR #282**: layout: bump klt pin to 0.9.0 and record the PDK-runset LVS route
