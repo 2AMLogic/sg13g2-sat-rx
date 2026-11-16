@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import re
 from pathlib import Path
 
-from .common import (PAIR_RE, Problems, RECORD_ID_RE, has_section, load_json_object, need_sha256, need_str, record_pairs, rel)
+from .common import (PAIR_RE, Problems, RECORD_ID_RE, SOLVER_ARTIFACTS_DIR, has_section, load_json_object, need_sha256, need_str, record_pairs, reject_foreign_dirs, rel, sha256_of)
 
 
 # ---------------------------------------------------------------------------
@@ -15,10 +14,7 @@ from .common import (PAIR_RE, Problems, RECORD_ID_RE, has_section, load_json_obj
 # ---------------------------------------------------------------------------
 PASSIVE_STATUSES = ("QUALIFIED", "UNCONVERGED", "FIT_FAILED", "CAPABILITY_UNAVAILABLE")
 PASSIVE_CONTROLS_STATUSES = ("CONTROLS-PASS", "CONTROLS-FAIL")
-MIXER_STATUSES = ("METHOD_VALIDATION", "MODEL_ABSENT", "UNCONVERGED", "CAPABILITY_UNAVAILABLE")
-MIXER_PROBE_FILES = ("deck.spice", "stdout.txt", "stderr.txt", "inventory.json")
 PASSIVE_SCHEMA = "passive-p1-solver-artifacts/1"
-PASSIVE_PACKAGES = "solver-artifacts"
 PASSIVE_INCOMPLETE = ".INCOMPLETE"
 # Campaign records committed before #58 froze nothing; they stay valid as legacy. Any other
 # non-controls passive record must be record_schema 2 with a package (explicit set, not a clock).
@@ -78,19 +74,11 @@ def passive_required_paths(status: str, stages: list[str], has_compare: bool) ->
     return sorted(set(req))
 
 
-def _sha256_of(path: Path) -> str:
-    h = hashlib.sha256()
-    with path.open("rb") as fh:
-        for chunk in iter(lambda: fh.read(1 << 20), b""):
-            h.update(chunk)
-    return h.hexdigest()
-
-
 def check_passive_package(problems: Problems, root: Path, exp_dir: Path, pid: str, status: str, rec: dict,
                           md: str, where_js: str, where_md: str) -> None:
     """record_schema 2: validate the frozen package named by the record (see module docstring)."""
     ap = rec.get("artifact_package")
-    expected = f"sim/{exp_dir.name}/{PASSIVE_PACKAGES}/{pid}/"
+    expected = f"sim/{exp_dir.name}/{SOLVER_ARTIFACTS_DIR}/{pid}/"
     if not isinstance(ap, dict):
         problems.add(where_js, "record_schema 2 needs an 'artifact_package' object")
         return
@@ -107,7 +95,7 @@ def check_passive_package(problems: Problems, root: Path, exp_dir: Path, pid: st
         problems.add(where_md, f"Markdown does not name its frozen package {expected}")
     if isinstance(ap.get("manifest_sha256"), str) and f"`{ap['manifest_sha256']}`" not in md:
         problems.add(where_md, "Markdown does not carry the JSON artifact_package.manifest_sha256")
-    pkg = exp_dir / PASSIVE_PACKAGES / pid
+    pkg = exp_dir / SOLVER_ARTIFACTS_DIR / pid
     where_pkg = rel(root, pkg)
     if pkg.is_symlink() or not pkg.is_dir():
         problems.add(where_js, f"declared artifact package {where_pkg}/ does not exist")
@@ -118,7 +106,7 @@ def check_passive_package(problems: Problems, root: Path, exp_dir: Path, pid: st
     if not mpath.is_file() or mpath.is_symlink():
         problems.add(where_pkg, "package has no manifest.json (incomplete publication)")
         return
-    if isinstance(ap.get("manifest_sha256"), str) and _sha256_of(mpath) != ap["manifest_sha256"]:
+    if isinstance(ap.get("manifest_sha256"), str) and sha256_of(mpath) != ap["manifest_sha256"]:
         problems.add(rel(root, mpath), "manifest sha256 does not match the record's artifact_package.manifest_sha256")
     man = load_json_object(problems, root, mpath)
     if man is None:
@@ -159,7 +147,7 @@ def check_passive_package(problems: Problems, root: Path, exp_dir: Path, pid: st
         if fp.is_symlink() or not fp.is_file():
             problems.add(where_man, f"listed file {path} is missing from the package")
             continue
-        if isinstance(e.get("sha256"), str) and _sha256_of(fp) != e["sha256"]:
+        if isinstance(e.get("sha256"), str) and sha256_of(fp) != e["sha256"]:
             problems.add(rel(root, fp), "sha256 does not match the manifest (package bytes were altered)")
         elif isinstance(e.get("bytes"), int) and fp.stat().st_size != e["bytes"]:
             problems.add(rel(root, fp), "size does not match the manifest")
@@ -348,18 +336,16 @@ def check_passive_p1(problems: Problems, root: Path, exp_dir: Path) -> None:
     claimed: set[str] = set()
     for stem, files in record_pairs(problems, root, records).items():
         check_passive_record(problems, root, exp_dir, stem, files, claimed)
-    pk = exp_dir / PASSIVE_PACKAGES
+    pk = exp_dir / SOLVER_ARTIFACTS_DIR
     if pk.exists():
         if not pk.is_dir():
-            problems.add(rel(root, pk), f"{PASSIVE_PACKAGES} must be a directory of <id>/ run packages")
+            problems.add(rel(root, pk), f"{SOLVER_ARTIFACTS_DIR} must be a directory of <id>/ run packages")
         else:
             for p in sorted(pk.iterdir()):
                 if p.is_symlink() or not (p.is_dir() and RECORD_ID_RE.match(p.name)):
-                    problems.add(rel(root, p), f"{PASSIVE_PACKAGES} entry is not a <YYYYMMDD>-<HHMMSS>-<git-sha>/ "
+                    problems.add(rel(root, p), f"{SOLVER_ARTIFACTS_DIR} entry is not a <YYYYMMDD>-<HHMMSS>-<git-sha>/ "
                                  "run directory")
                 elif p.name not in claimed:
                     problems.add(rel(root, p), "solver-artifact package belongs to no record "
                                  "(orphan or interrupted publication)")
-    for sub in ("corners", "netlist-snapshots", "probe-logs"):
-        if (exp_dir / sub).exists():
-            problems.add(rel(root, exp_dir / sub), f"{sub}/ is not part of the passive-p1 evidence layout")
+    reject_foreign_dirs(problems, root, exp_dir, "passive-p1", ("corners", "netlist-snapshots", "probe-logs"))
