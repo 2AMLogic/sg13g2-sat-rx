@@ -6,7 +6,7 @@ import json
 import re
 from pathlib import Path
 
-from .common import Problems, SOLVER_ARTIFACTS_DIR, all_numbers_allow_nan, corner_id, duplicates, load_json_object, read_gzip_text, reject_foreign_dirs, rel, sha256_of
+from .common import Problems, SOLVER_ARTIFACTS_DIR, all_numbers_allow_nan, check_sidecar_group_bench, corner_id, duplicates, load_json_object, read_gzip_text, rel, sha256_of
 from .lna_match import LNAMATCH_STATUSES
 
 
@@ -201,29 +201,6 @@ def check_lnacore_record(problems: Problems, root: Path, exp_dir: Path, rid: str
 
 
 def check_lna_core_variants(problems: Problems, root: Path, exp_dir: Path) -> None:
-    if not (exp_dir / "testbench" / "variants.json").is_file():
-        problems.add(rel(root, exp_dir), "lna-core-variants has no testbench/variants.json declaration")
-    records = exp_dir / "records"
-    ids: set[str] = set()
-    if records.is_dir():
-        groups: dict[str, set[str]] = {}
-        for p in sorted(records.iterdir()):
-            m = LNACORE_RECORD_FILE_RE.match(p.name)
-            if not m:
-                problems.add(rel(root, p), "unexpected file in lna-core-variants records/ "
-                             "(only <id>.md, <id>.json, <id>-points.json.gz)")
-                continue
-            groups.setdefault(m.group(1), set()).add(m.group(2))
-        for rid, parts in sorted(groups.items()):
-            if ".md" not in parts:
-                problems.add(rel(root, records), f"evidence for {rid} belongs to no record (no {rid}.md)")
-                continue
-            ids.add(rid)
-            check_lnacore_record(problems, root, exp_dir, rid)
-    for sub in ("corners", "netlist-snapshots"):
-        d = exp_dir / sub
-        if d.is_dir():
-            for p in sorted(d.iterdir()):
-                if p.name not in ids:
-                    problems.add(rel(root, p), f"{sub} entry belongs to no record in this experiment (orphan evidence)")
-    reject_foreign_dirs(problems, root, exp_dir, "lna-core-variants", ("probe-logs", SOLVER_ARTIFACTS_DIR))
+    check_sidecar_group_bench(problems, root, exp_dir, "lna-core-variants", "testbench/variants.json",
+                              LNACORE_RECORD_FILE_RE, "<id>-points.json.gz", check_lnacore_record,
+                              ("probe-logs", SOLVER_ARTIFACTS_DIR))
