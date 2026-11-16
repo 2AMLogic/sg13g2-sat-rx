@@ -157,8 +157,9 @@ grounds:
   failing there. The relative bound never fails a correct ratio.
 - **Measured cost today is zero.** Every real window residual is exactly
   `0.0`; no recorded run moves. The one behavioural consequence is stated
-  under Consequences: the mixer campaign's gate loosens by 18x at `n = 2e4`
-  in a physically meaningless band (see below).
+  under Consequences: the mixer campaign's gate loosens by 20x at
+  `n = 2e4` and 80x at `n = 8e4` in a physically meaningless band (see
+  below).
 
 The synthetic window case (`n = 20000 + 1e-5`, residual ≈ `1e-5`) is the
 checkable demonstration that neither window bound dominates: it fails the
@@ -267,12 +268,15 @@ Checkable conditions, each independently sufficient:
   stays as it is. Interim records are still qualified against a private
   criterion while this record states what it should be — that tension is the
   cost of the two-key gate, not a licence to consolidate early.
-- **The mixer campaign's window gate loosens by 18x at `n = 2e4`** (from
-  absolute `1e-6`, i.e. `5e-11` relative, to `1e-9` relative; 18x at `n=2e4`,
-  4.5x at `n=8e4`). The newly-admitted band — window ratios off-grid by
-  between `5e-11` and `1e-9` relative — sits 3–4 decades above fp noise and
-  ≥3 decades below the smallest meaningful decimal typo: physically
-  meaningless territory, but stated plainly because it is a real loosening.
+- **The mixer campaign's window gate loosens by 20x at `n = 2e4` and 80x at
+  `n = 8e4`** (from absolute `1e-6` to relative `1e-9`: the absolute bound is
+  `1e-6/n` — `5e-11` relative at `n = 2e4`, `1.25e-11` relative at
+  `n = 8e4` — so the loosening grows linearly with `n`). The newly-admitted
+  band — window ratios off-grid by between `5e-11` and `1e-9` relative at
+  `n = 2e4`, or between `1.25e-11` and `1e-9` relative at `n = 8e4` — sits
+  3–4 decades above fp noise and ≥3 decades below the smallest meaningful
+  decimal typo: physically meaningless territory, but stated plainly because
+  it is a real loosening.
 - **New plans are bounded**: an 8-samples-per-period margin and a
   grid-aligned discard are now plan-validation requirements (Trigger names
   the exact limits), which constrains future timing choices — e.g. a
@@ -288,7 +292,7 @@ Checkable conditions, each independently sufficient:
   `sim/mixer-topology-feasibility/netlist-snapshots/{20261010-010744-a10c193,20261010-025859-2113f00}/tb.json`.
 - Criteria transcribed/applied from: `sim/lna-linearity/linearity.py:121`,
   `sim/lna-linearity/linearity.py:157`, `sim/mixer-topology-feasibility/mixfeas.py:465`
-  (parse-time gate `mixfeas.py:343`; `RunSpec` `mixfeas.py:361`), third
+  (parse-time gate `mixfeas.py:342`; `RunSpec` `mixfeas.py:361`), third
   consumer `sim/lna-headroom/headroom.py:170` — at base commit `c498b96`.
 - Numbering: highest existing record on `main` was `0008` at the base commit;
   `0009` chosen per `TEMPLATE.md`'s numbering rule and re-checked at PR time

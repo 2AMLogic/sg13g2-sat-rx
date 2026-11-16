@@ -73,6 +73,12 @@ EXPECTED_REAL_CASES = 27          # 18 LNA (3 placements x 3 variants x 2 kinds)
 EXPECTED_HEADROOM_ROWS = 12       # 2 records x 3 placements x 2 kinds, base variant only
 EXPECTED_WORST_F_STEP = 0.0212    # f21p20's RF tone at 21.2 GHz (cross-eval union set), step 1 ps
 EXPECTED_WORST_SAMPLES_PER_PERIOD = 1.0 / EXPECTED_WORST_F_STEP  # ~47.2
+# Window-gate loosening the record's Consequences section quotes, derived
+# from the two tolerances: old bound MIX_TOL absolute vs new LIN_TOL*max(1,n)
+# absolute, i.e. MIX_TOL/n relative at n = 2e4 and 8e4 -> 20x and 80x,
+# growing linearly with n.
+EXPECTED_WINDOW_LOOSENING = {2e4: LIN_TOL * 2e4 / MIX_TOL,   # 20x
+                             8e4: LIN_TOL * 8e4 / MIX_TOL}   # 80x
 
 
 # ---------------------------------------------------------------------------
@@ -320,7 +326,7 @@ def test_mixfeas_transcription_matches_committed():
                 kinds.add("tone-cycle")
             else:
                 raise AssertionError(f"unclassified committed problem: {p}")
-        tones = (band.rf_hz, band.two_tone_hz[0], band.two_tone_lo_hz)
+        tones = run.tones  # the exact tone set the committed function tests (mixfeas.py:388)
         mine = set(mixfeas_style_problems(bin_freqs.values(), tones, run.window_s, run.tstep_s))
         assert mine == kinds, f"{run.run_id}: transcription {mine} != committed {kinds}"
     assert MF.coherence_problems(clean) == []          # sanity: the clean spec passes
@@ -383,6 +389,14 @@ def test_decision_record_matches_measurement():
     assert "Status**: proposed" in text, "record must be proposed, not ratified"
     for quoted in ("27", "0.0212", "1e-9", "8 samples per period", "47.2"):
         assert quoted in text, f"record does not quote {quoted!r}"
+    # the Consequences section's window-gate loosening, derived from the two
+    # tolerances so record and measurement cannot drift: 20x at n = 2e4,
+    # 80x at n = 8e4, with the old bound quoted in relative terms
+    for n, factor in EXPECTED_WINDOW_LOOSENING.items():
+        assert f"{factor:g}x" in text, (
+            f"record does not quote the {factor:g}x window-gate loosening (n={n:g})")
+        assert f"{MIX_TOL / n:g}" in text, (
+            f"record does not quote the {MIX_TOL / n:g} old relative window bound")
     # numbering: one greater than the highest existing record on main
     nums = sorted(int(p.name[:4]) for p in (ROOT / "spec" / "decision-records").glob("*.md")
                   if p.name[:4].isdigit())
