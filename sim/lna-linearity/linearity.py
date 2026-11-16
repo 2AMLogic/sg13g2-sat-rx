@@ -40,7 +40,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # sim/ -> harness
-from harness import rf  # noqa: E402
+from harness import iip3, rf  # noqa: E402
 from harness.rf import Z0_OHM  # noqa: E402
 
 # ---------------------------------------------------------------------------
@@ -602,21 +602,6 @@ def _usable_floor(x) -> bool:
     return _finite(x) or x == float("-inf")
 
 
-def linfit(xs: list[float], ys: list[float]) -> tuple[float, float, float]:
-    """Least squares y = a + s x; returns (a, s, max |residual|).
-
-    Sums use ``math.fsum`` (correctly rounded): the builtin ``sum`` of floats changed to
-    compensated summation in Python 3.12, so with it a re-derivation on another interpreter
-    could differ in the last kept digit and a frozen record would not reproduce.
-    """
-    n = len(xs)
-    mx, my = math.fsum(xs) / n, math.fsum(ys) / n
-    sxx = math.fsum((x - mx) ** 2 for x in xs)
-    s = math.fsum((x - mx) * (y - my) for x, y in zip(xs, ys)) / sxx
-    a = my - s * mx
-    return a, s, max(abs(y - (a + s * x)) for x, y in zip(xs, ys))
-
-
 def _baseline(rows: list[dict], gain_key: str, usable: list[bool], n: int, flat_db: float) -> dict | None:
     """First run of ``n`` consecutive usable points whose gain spread <= ``flat_db``."""
     for i in range(0, len(rows) - n + 1):
@@ -651,7 +636,11 @@ def point_status(r: dict, *, fund_key: str, im3_key: str | None, margin_db: floa
     return None
 
 
-def fit_iip3(rows: list[dict], params: dict, limits: dict | None, *, enforce_limits: bool = True) -> dict:
+_NEW_INTERCEPT_KEYS = ("iip3_ideal_slope_dbm", "iip3_topfit_dbm")  # not in the pre-#276 shape
+
+
+def fit_iip3(rows: list[dict], params: dict, limits: dict | None, *, enforce_limits: bool = True,
+             diagnostics: bool = False) -> dict:
     """Two-tone IIP3 from a verified contiguous 1:3-slope region, per IM3 sideband.
 
     ``rows``: per swept per-tone available power ``pin_dbm``: p_f1_dbm, p_f2_dbm,
@@ -670,7 +659,18 @@ def fit_iip3(rows: list[dict], params: dict, limits: dict | None, *, enforce_lim
     intersection of the two free-slope lines (``free_fixed_tol_db``); the
     reported value is the lower of the two sidebands. Anything else is
     'unavailable' with a reason: never a single-point or below-floor
-    extrapolation."""
+    extrapolation.
+
+    The run-selection/gate pipeline and the least-squares fit are delegated
+    to :mod:`harness.iip3` (issue #276); this wrapper keeps the params-dict
+    plumbing, its ideal-slope headline, the free-vs-fixed cross-check and
+    per-point spread as injected campaign gates, and its status vocabulary.
+    ``diagnostics=True`` additionally publishes the engine's third intercept
+    definition on each ok sideband (``iip3_topfit_dbm``, alongside the
+    existing ``iip3_free_slope_dbm`` and the headline now also named
+    ``iip3_ideal_slope_dbm``); the default keeps the exact pre-#276 key set,
+    which frozen records pin structurally (their verify re-derives every
+    placement from the frozen logs)."""
     rows = sorted((dict(r) for r in rows), key=lambda r: r["pin_dbm"])
     p = params
     if len(rows) < p["min_points"]:
@@ -696,38 +696,20 @@ def fit_iip3(rows: list[dict], params: dict, limits: dict | None, *, enforce_lim
             usable.append(w is None)
             if w:
                 excluded[f"{r['pin_dbm']:g}"] = w
-        best, rejected = None, []
-        n = len(rows)
-        for i in range(n):
-            for j in range(i + p["min_points"], n + 1):
-                if not all(usable[i:j]):
-                    break
-                seg = rows[i:j]
-                xs = [r["pin_dbm"] for r in seg]
-                a1, s1, r1 = linfit(xs, [r[fund] for r in seg])
-                a3, s3, r3 = linfit(xs, [r[im3] for r in seg])
-                per_pt = [r["pin_dbm"] + (r[fund] - r[im3]) / 2.0 for r in seg]
-                if not (p["slope_fund"][0] <= s1 <= p["slope_fund"][1] and p["slope_im3"][0] <= s3 <= p["slope_im3"][1]):
-                    rejected.append({"interval_dbm": [xs[0], xs[-1]], "reason": f"slopes {s1:.3f}/{s3:.3f} out of tolerance"})
-                    continue
-                if max(r1, r3) > p["max_residual_db"]:
-                    rejected.append({"interval_dbm": [xs[0], xs[-1]], "reason": f"residual {max(r1, r3):.3f} dB too large"})
-                    continue
-                fixed = math.fsum(per_pt) / len(per_pt)
-                free = (a1 - a3) / (s3 - s1)
-                if abs(fixed - free) > p["free_fixed_tol_db"]:
-                    rejected.append({"interval_dbm": [xs[0], xs[-1]],
-                                     "reason": f"fixed-slope IIP3 {fixed:.2f} and free-slope intersection {free:.2f} dBm disagree"})
-                    continue
-                if max(per_pt) - min(per_pt) > p["max_point_spread_db"]:
-                    rejected.append({"interval_dbm": [xs[0], xs[-1]], "reason": "per-point IIP3 spread too large"})
-                    continue
-                cand = {"interval_dbm": [xs[0], xs[-1]], "n_points": len(seg), "slope_fund": s1, "slope_im3": s3,
-                        "residual_fund_db": r1, "residual_im3_db": r3, "iip3_dbm": fixed,
-                        "iip3_free_slope_dbm": free, "per_point_iip3_dbm": per_pt,
-                        "extrapolation_db": fixed - xs[-1]}
-                if best is None or cand["n_points"] > best["n_points"]:
-                    best = cand
+        def _gate(per_pt, fixed, free, interval_dbm):
+            """Campaign-only candidate gates, injected into the shared engine's
+            pipeline: the free-vs-fixed cross-check and the per-point spread."""
+            if abs(fixed - free) > p["free_fixed_tol_db"]:
+                return f"fixed-slope IIP3 {fixed:.2f} and free-slope intersection {free:.2f} dBm disagree"
+            if max(per_pt) - min(per_pt) > p["max_point_spread_db"]:
+                return "per-point IIP3 spread too large"
+            return None
+
+        best, rejected = iip3.select_run(
+            xs=[r["pin_dbm"] for r in rows], fund_ys=[r.get(fund) for r in rows],
+            im3_ys=[r.get(im3) for r in rows], usable=usable,
+            min_points=p["min_points"], slope_fund=p["slope_fund"], slope_im3=p["slope_im3"],
+            max_residual_db=p["max_residual_db"], extra_gate=_gate)
         entry = {"baseline": base, "excluded_points": excluded, "rejected_intervals": rejected}
         if best is None:
             entry.update(status="unavailable",
@@ -735,7 +717,10 @@ def fit_iip3(rows: list[dict], params: dict, limits: dict | None, *, enforce_lim
                                 f"1+/-{p['slope_fund'][1] - 1:.2g} and 3+/-{p['slope_im3'][1] - 3:.2g} above the "
                                 "numerical floor, below compression and inside the operating limits")
         else:
-            entry.update(best, status="ok")
+            entry.update({k: v for k, v in best.items() if diagnostics or k not in _NEW_INTERCEPT_KEYS},
+                         iip3_dbm=best["iip3_ideal_slope_dbm"],
+                         extrapolation_db=best["iip3_ideal_slope_dbm"] - best["interval_dbm"][-1],
+                         status="ok")
         sides[side] = entry
     ok = [s for s in sides.values() if s["status"] == "ok"]
     if len(ok) < 2:
