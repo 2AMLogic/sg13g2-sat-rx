@@ -118,6 +118,48 @@ class TinyTree(unittest.TestCase):
         ]))
         self.assertIn("hlp", self.messages())
 
+    def one_master(self, text: str, symbols: list[str]) -> list[str]:
+        (self.root / "a.py").write_text(text, encoding="utf-8")
+        self.write_lock(tiny_lock([
+            {"mechanic": "m_a", "master": "a.py", "symbols": symbols, "what": "case"},
+        ]))
+        return chk.check_reuse_masters(self.root).items
+
+    def test_docstring_prose_is_not_a_definition(self) -> None:
+        text = '"""Notes.\nF = inoise^2 / (4 k T0 Z0).\nF_old = F_true + x\n"""\nreal = 1\n'
+        self.assertEqual(self.one_master(text, ["real"]), [])
+        items = self.one_master(text, ["F"])
+        self.assertEqual(len(items), 1)
+        self.assertIn("'F'", items[0])
+
+    def test_async_def_is_a_definition(self) -> None:
+        self.assertEqual(self.one_master("async def run():\n    pass\n", ["run"]), [])
+
+    def test_unparseable_master_is_one_problem(self) -> None:
+        items = self.one_master("def broken(:\n", ["broken", "other"])
+        self.assertEqual(len(items), 1)
+        self.assertIn("a.py", items[0])
+        self.assertIn("does not parse", items[0])
+
+    def test_annotation_only_and_tuple_targets_are_not_definitions(self) -> None:
+        text = "x: int\ny: int = 3\na, b = 1, 2\n"
+        self.assertEqual(self.one_master(text, ["y"]), [])
+        self.assertEqual(len(self.one_master(text, ["x"])), 1)
+        self.assertEqual(len(self.one_master(text, ["a"])), 1)
+
+    def test_upstream_not_an_object_is_one_problem(self) -> None:
+        self.write_lock(tiny_lock([], upstream=["corners.py"]))
+        items = chk.check_reuse_masters(self.root).items
+        self.assertEqual(len(items), 1)
+        self.assertIn("reuse.lock.json:upstream", items[0])
+
+    def test_upstream_modules_not_a_list_is_one_problem(self) -> None:
+        self.write_lock(tiny_lock([], upstream={"repo": "u", "modules": "corners.py"}))
+        items = chk.check_reuse_masters(self.root).items
+        self.assertEqual(len(items), 1)
+        self.assertIn("reuse.lock.json:upstream", items[0])
+        self.assertIn("'modules'", items[0])
+
     def test_undeclared_mechanic_is_not_an_error(self) -> None:
         (self.root / "a.py").write_text(MASTER_A, encoding="utf-8")
         (self.root / "extra.py").write_text("def undeclared(x):\n    return x\n", encoding="utf-8")
