@@ -8,6 +8,10 @@ Chronological record of merged pull requests and closed issues, maintained by th
 
 ### 2026-11-16
 
+- **PR #319**: ci: run the block-coverage honesty check in check_format
+- **Issue #310** (closed): Wire in or remove unused block_coverage evidence check (never called by CI checker)
+- **PR #320**: test(sim): isolate bench pytest namespaces so multi-bench runs pass
+- **Issue #302** (closed): Multi-bench pytest run (not just collection) fails in 3 benches that bare-import run_probe.py / ci_assert.py
 - **PR #318**: fix: use ast to decide declared-master symbols in reuse guard
 - **Issue #312** (closed): reuse_masters: column-0 docstring text counts as a top-level definition (measured), plus two adjacent precision gaps
 - **PR #316**: docs: point README roadmap line at docs/ROADMAP.md, keep WORK_PLAN.md as queue view
