@@ -32,6 +32,7 @@ import check_evidence_formats as chk  # noqa: E402
 import collect  # noqa: E402
 import mixfeas as mf  # noqa: E402
 import test_collect as tc  # noqa: E402
+from _helpers import mirror_signoff  # noqa: E402
 
 
 @pytest.fixture
@@ -63,6 +64,7 @@ def repo(tmp_path, monkeypatch):
         claim="synthetic", supersedes="", started=dt.datetime(2026, 10, 10, tzinfo=dt.timezone.utc),
         git={"commit": "abcdef0" * 5 + "abcde", "short": "abcdef0", "branch": "t", "dirty": False})
     shutil.copyfile(BENCH / "README.md", exp / "README.md")  # cold-start README invariant (issue #85)
+    mirror_signoff(root, REPO)
     return root, exp, rid
 
 

@@ -109,6 +109,19 @@ class KnownAnswers(unittest.TestCase):
         y = P.extract(mk, "rc", "primary")["y"]
         self.assertAlmostEqual(abs(y["uu"] / P.rc_expected()["uu"] - 1), 0, places=9)
 
+    def test_synth_marks_de_embeds_through_the_fixtures_z0_slot(self):
+        # Issue #286: synth_marks must read the FIXTURES z0 slot -- the same slot
+        # port_vi de-embeds through -- so the synthetic and extracted paths cannot
+        # disagree about the port impedance. Moving the slot must move the marks,
+        # and extraction must still recover the known answer at the moved z0.
+        base = P.synth_marks()
+        with mock.patch.dict(P.FIXTURES, {"rc": ("kp", "vksense", "krs", 25.0)}):
+            moved = P.synth_marks()
+            self.assertTrue(any(moved[k] != base[k] for k in moved),
+                            "synth_marks ignored the FIXTURES z0 slot")
+            ev = evaluate(moved)
+        self.assertTrue(ev["controls"]["pass"], failing(ev))
+
 
 class Sabotages(unittest.TestCase):
     def setUp(self):

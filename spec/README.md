@@ -23,6 +23,10 @@ spec/
     0004-lna-mixer-interface-convention.md   LNA-mixer interface (proposed)
     0005-passive-p1-feasibility.md   p1 spiral feasibility; passive-family
                               choice deferred (no EM result yet)
+    0006-lo-source-class-and-port-convention.md   LO source class and port
+                              convention (proposed)
+    0007-statistical-row-classification.md   statistical (Monte Carlo)
+                              classification of every spec row (proposed)
     0008-lo-drive-path-after-no-acceptable-drive.md   mixer LO-drive path
                               after #61 (proposed; comparative, selects nothing)
 ```

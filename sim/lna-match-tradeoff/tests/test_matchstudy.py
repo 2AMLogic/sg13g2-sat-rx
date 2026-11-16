@@ -27,6 +27,7 @@ import matchfakes as fakes  # noqa: E402
 import lna_nf  # noqa: E402
 import matchcollect as mc  # noqa: E402
 import matchstudy as ms  # noqa: E402
+from harness import rf  # noqa: E402  (matchstudy's own import put sim/ on sys.path)
 
 RAW = json.loads((BENCH / "testbench" / "study.json").read_text())
 ST = ms.study_from_manifest(RAW)
@@ -34,6 +35,26 @@ ST = ms.study_from_manifest(RAW)
 #: `design/netlist/lna_stage1.spice` holds today (issue #79 lands a core
 #: change there, and this study's records were taken before it).
 FROZEN = mc.FROZEN.read_text()
+
+
+# --- z0 defaults track the single declaration (issue #286) --------------------
+
+
+def test_class_a_z0_defaults_are_the_single_declaration():
+    """Class A (issue #286): each port-convention default must BE rf.Z0_OHM --
+    the object from the single declaration -- so a later system-Z0 change
+    cannot leave a bench default silently spelling the old 50 ohm."""
+    for fn in (ms.source_impedance, ms.synthesize, ms.pad_dut, ms.nf_db_from_inoise):
+        assert fn.__defaults__[-1] is rf.Z0_OHM, fn.__name__
+
+
+def test_class_b_two_port_defaults_stay_independent():
+    """Class B (issue #286): gamma/z_from_gamma are caller's-choice
+    normalization algebra; their default keeps its own 50 ohm and must not
+    silently become the port convention."""
+    for fn in (ms.gamma, ms.z_from_gamma):
+        assert fn.__defaults__[-1] == rf.Z0_OHM
+        assert fn.__defaults__[-1] is not rf.Z0_OHM, fn.__name__
 
 
 # --- declaration --------------------------------------------------------------

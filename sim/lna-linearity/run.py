@@ -5,6 +5,7 @@
     python3 sim/lna-linearity/run.py controls
     python3 sim/lna-linearity/run.py build [--workdir DIR]
     python3 sim/lna-linearity/run.py collect [--backend batch] [--dry-run]
+                                             [--supersedes-new-dut RECORD_ID]
     python3 sim/lna-linearity/run.py verify [RECORD_ID ...]
 
 ``check-plan`` verifies, before anything is simulated, that every declared tone
@@ -42,7 +43,7 @@ sys.path.insert(0, str(BENCH_DIR))
 
 import analysis as A  # noqa: E402
 import linearity as L  # noqa: E402
-from harness import klt_driver  # noqa: E402
+from harness import frozen_dut, klt_driver  # noqa: E402
 from harness.provenance import git_out as _git_out, sha256_file  # noqa: E402
 from harness.report import RecordExists, allocate_record_id, git_provenance  # noqa: E402
 
@@ -71,8 +72,50 @@ git_out = partial(_git_out, cwd=REPO_ROOT)
 # ---------------------------------------------------------------------------
 
 
+def resolve_dut(plan: dict) -> Path:
+    """The DUT deck the selected plan declares, located by its pinned sha256.
+
+    Shared plumbing: see :mod:`harness.frozen_dut`. This bench characterizes
+    the design tree's own deck: the pin declares WHICH circuit the campaign
+    measures. Unlike the headroom/core-variant studies it never re-measures a
+    frozen snapshot deck, so in every state this input check accepts,
+    :data:`DUT_PATH` is the deck the pin names; a pin that only a record
+    snapshot satisfies is itself the mismatch :func:`dut_pin_problems`
+    reports (a campaign of a different core is a new declaration, never a
+    silent re-point of this bench onto an old circuit).
+    """
+    return frozen_dut.resolve(DUT_PATH, (plan.get("dut") or {}).get("sha256"), SNAPS)
+
+
+def dut_pin_problems(plan: dict) -> list[str]:
+    """The bench's own DUT-pin input check.
+
+    ``harness.frozen_dut.resolve`` never raises -- on no match it returns the
+    declared path unchanged so the study's own input check reports the
+    mismatch. This is that check: a plan that pins ``dut.sha256`` refuses
+    here, naming the declared path and both hashes, before anything is
+    submitted or written. A plan with no pin (the frozen v1/v2 declarations)
+    keeps today's behavior.
+    """
+    want = (plan.get("dut") or {}).get("sha256")
+    if not want:
+        return []
+    rel = DUT_PATH.relative_to(REPO_ROOT).as_posix()
+    actual = sha256_file(DUT_PATH)
+    if actual == want:
+        return []
+    resolved = resolve_dut(plan)
+    note = ""
+    if resolved != DUT_PATH:
+        note = (f" (the pin matches only the frozen copy {resolved.relative_to(REPO_ROOT).as_posix()}; "
+                "this bench measures the design tree's own deck)")
+    return [f"DUT pin mismatch: the plan declares sha256 {want} for {rel}, but the deck at that path hashes to "
+            f"{actual}{note}; nothing was submitted or written -- a campaign of a different core is a new declaration "
+            "(testbench/plan-v*.json), never a re-point of this one"]
+
+
 def plan_problems(plan: dict) -> list[str]:
-    out = []
+    out = dut_pin_problems(plan)
     for pl in plan["placements"]:
         out += L.band_problems(plan, pl)
         for v in L.VARIANTS:
@@ -153,7 +196,8 @@ def write_requests(plan: dict, work: Path, backend: str, args) -> dict[str, Path
 def submit(key: str, req: Path, work: Path, backend: str, args) -> Path:
     """One klt request on an explicit backend; reuses a complete report (resume).
     Any failure raises: there is no local fallback."""
-    return klt_driver.submit_request(req, work / f"report_{key}.json", key, backend, args.klt_cmd, work)
+    return klt_driver.submit_request(req, work / f"report_{key}.json", key, backend, args.klt_cmd, work,
+                                     wait_for_capacity=args.wait_for_capacity)
 
 
 def read_unit(report: Path) -> tuple[dict, str]:
@@ -214,6 +258,19 @@ def _f(x, fmt="{:.2f}") -> str:
     return "n/a" if x is None or isinstance(x, str) else fmt.format(x)
 
 
+def supersedes_note(supersedes: str) -> str:
+    """The record-note for the ``--supersedes-new-dut`` branch, mirroring sim/lna-sparam-nf/run.py's
+    NEW-CORE-REVISION note: same bench and method, new core revision of the DUT -- the circuit
+    changed, not the method, and the superseded record stays valid for the earlier core."""
+    if supersedes:
+        return (f"NEW-CORE-REVISION RECORD (issue #273): this record runs the SAME bench and method on a NEW core "
+                f"revision of the DUT (design/netlist/lna_stage1.spice) and supersedes {supersedes} for that reason "
+                "-- the circuit changed, not the method. The superseded record stays valid as evidence for the "
+                "earlier (pre-#79) core; no existing record is edited or deleted.")
+    return ("This record supersedes NOTHING: no new core revision was declared, so the earlier lna-linearity "
+            "records stay the latest word on their own circuits and are untouched.")
+
+
 def render_md(rid: str, status: str, rec: dict) -> str:
     plan = rec["plan_declaration"]
     ctl = rec["controls"]
@@ -230,6 +287,9 @@ def render_md(rid: str, status: str, rec: dict) -> str:
         "",
         "**Spec rows**: row 7 (LNA IIP3, target >= -15 dBm) and row 8 (LNA input P1dB, target >= -25 dBm), both referred "
         "to per-tone / single-tone AVAILABLE source power at the 50 ohm port.",
+        "",
+        f"**Supersedes**: {rec['supersedes'] or 'nothing (no new core revision declared)'}",
+        supersedes_note(rec["supersedes"]),
         "",
         "## Declaration",
         f"- Plan: `{rec['plan']['file']}` sha256 `{rec['plan']['sha256']}`, declared at commit `{rec['plan']['commit']}` "
@@ -455,7 +515,7 @@ def finalize(plan, work, reqs, texts, reports, pyc, pdk, started, args) -> int:
     sweeps = {n: p.pop("sweeps") for n, p in res["placements"].items()}
     rec = {
         "record_id": rid, "status": status, "scope": SCOPE, "started_utc": started.isoformat(),
-        "spec_rows_claimed_met": [],
+        "spec_rows_claimed_met": [], "supersedes": getattr(args, "supersedes_new_dut", ""),
         "plan": plan_provenance(), "plan_declaration": plan, "dut": dut_identity(),
         "python_controls": pyc, "controls": res["ngspice_control"], "placements": res["placements"], "rows": res["rows"],
         "klt_requests": requests, "sweeps_file": f"{rid}-sweeps.json.gz",
@@ -564,9 +624,16 @@ def build_parser() -> argparse.ArgumentParser:
         p.add_argument("--runner-version-check", default="", choices=("", "enforce", "warn"))
         p.add_argument("--plan", default="", help="plan file (default testbench/plan.json, the frozen version 1)")
         p.add_argument("--workdir", default="")
+        p.add_argument("--wait-for-capacity", type=int, default=600,
+                       help="seconds each batch klt sim submit waits for fleet capacity with backoff instead "
+                            "of failing with batch_no_capacity (host rule: 600)")
         p.add_argument("--dry-run", action="store_true")
         p.add_argument("--allow-dirty", action="store_true", help=argparse.SUPPRESS)
         p.set_defaults(fn=fn)
+    # the loop above leaves `p` at the collect subparser: the supersedes flag is collect-only
+    p.add_argument("--supersedes-new-dut", default="",
+                   help="record id this record supersedes because the DUT changed (new core revision), not "
+                        "the method: writes the NEW-CORE-REVISION note and sets Supersedes (issue #273)")
     v = sub.add_parser("verify")
     v.add_argument("records", nargs="*")
     v.set_defaults(fn=cmd_verify)

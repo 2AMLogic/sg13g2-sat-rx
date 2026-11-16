@@ -16,6 +16,7 @@ sys.path.insert(0, str(BENCH))
 
 import corestudy as cs  # noqa: E402
 import matchstudy as ms  # noqa: E402
+from harness import rf  # noqa: E402  (corestudy's own import put sim/ on sys.path)
 
 ST = ms.load_study(cs.METHOD_STUDY)
 RAW = json.loads(cs.DECLARATION.read_text())
@@ -25,6 +26,16 @@ FROZEN = cs.FROZEN.read_text()
 
 def sha(p: Path) -> str:
     return hashlib.sha256(p.read_bytes()).hexdigest()
+
+
+# --- z0 default tracks the single declaration (issue #286) --------------------
+
+
+def test_scan_metric_z0_default_is_the_single_declaration():
+    """Class A (issue #286): scan_metric de-embeds the driven-port reflection
+    coefficient at the system port impedance -- its default must BE rf.Z0_OHM,
+    not a re-spelled 50.0."""
+    assert cs.scan_metric.__defaults__[-1] is rf.Z0_OHM
 
 
 # --- declaration ------------------------------------------------------------

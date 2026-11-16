@@ -9,14 +9,17 @@ and log parsing. No simulator, PDK or network.
 from __future__ import annotations
 
 import copy
+import json
 import math
 from pathlib import Path
+import types
 
 import pytest
 
 import analysis as A
 import fakes
 import linearity as L
+import run as R
 
 BENCH = Path(__file__).resolve().parents[1]
 
@@ -484,3 +487,1000 @@ def test_aborted_transient_is_a_published_sweep_outcome_not_corruption():
             x.update(p_f0_dbm=None, sim_failed="aborted")
     p = L.fit_p1db(one, PLAN["extraction"]["p1db"], None, enforce_limits=False)
     assert p["status"] == "bounded" and "rejected" in p["reason"]
+
+
+# ---- DUT pin, supersedes surface and the batch capacity wait (issue #273) ----
+
+LIVE_SHA = R.sha256_file(R.REPO_ROOT / "design" / "netlist" / "lna_stage1.spice")
+PRE79_SHA = "ad4fe1be5754f21fc4b2dd67863234858dc399e2a8232d3b20cf530014b8c447"
+
+
+def test_plan_v3_declares_the_live_deck():
+    """plan-v3 is v2 byte-for-byte except plan_version/issue/dut.sha256/supersedes_interpretation,
+    and its pin is the sha256 of the live design deck, re-derived here from the tree."""
+    v2 = L.load_plan(BENCH / "testbench" / "plan-v2.json")
+    v3 = L.load_plan(BENCH / "testbench" / "plan-v3.json")
+    assert v3["plan_version"] == 3 and v3["issue"] == 273
+    assert v3["dut"]["sha256"] == LIVE_SHA
+    for k in set(v2) | set(v3):
+        if k in ("plan_version", "issue", "dut", "supersedes_interpretation"):
+            continue
+        assert v2[k] == v3[k], k
+    assert {k: v for k, v in v2["dut"].items() if k != "sha256"} == \
+           {k: v for k, v in v3["dut"].items() if k != "sha256"}
+    assert R.dut_pin_problems(v3) == []
+
+
+def test_unpinned_plans_keep_todays_behavior():
+    """The frozen v1/v2 declarations carry no dut.sha256: the pin check passes them through
+    untouched, so verify/collect of the pre-#79 record keeps working."""
+    for name in ("plan.json", "plan-v2.json"):
+        plan = L.load_plan(BENCH / "testbench" / name)
+        assert "sha256" not in plan["dut"]
+        assert R.dut_pin_problems(plan) == []
+    assert R.plan_problems(L.load_plan(BENCH / "testbench" / "plan-v2.json")) == []
+
+
+def test_python_controls_pass_on_every_committed_declaration():
+    """The closed-form controls (no simulator) pass under v1, v2 and v3 alike: the
+    out-of-limit negative control's synthetic rows carry the collector-current diagnostics
+    that a plan_version >= 2 policy always requires, so it tests the V_CE limit it names."""
+    for name in ("plan.json", "plan-v2.json", "plan-v3.json"):
+        res = R.python_controls(L.load_plan(BENCH / "testbench" / name))
+        assert res["pass"], name
+
+
+def test_pin_mismatch_refuses_naming_path_and_both_hashes(tmp_path, monkeypatch, capsys):
+    """frozen_dut.resolve never raises, so the refusal is the bench's own input check: a plan
+    whose pin the deck at the declared path does not carry refuses before anything is written.
+    A pre-#79 pin (which only the old record's frozen snapshot satisfies) is itself a mismatch:
+    this bench measures the design tree's deck, never a frozen copy."""
+    good = L.load_plan(BENCH / "testbench" / "plan-v3.json")
+    for bad_sha, snap_note in ((PRE79_SHA, True), ("f" * 64, False)):
+        plan = copy.deepcopy(good)
+        plan["dut"]["sha256"] = bad_sha
+        probs = R.dut_pin_problems(plan)
+        assert len(probs) == 1, probs
+        assert "DUT pin mismatch" in probs[0]
+        assert "design/netlist/lna_stage1.spice" in probs[0]
+        assert bad_sha in probs[0] and LIVE_SHA in probs[0]
+        assert ("frozen copy" in probs[0]) == snap_note
+        bad = tmp_path / "plan-bad.json"
+        bad.write_text(json.dumps(plan))
+        for attr in ("RECORDS", "LOGS", "SNAPS"):
+            monkeypatch.setattr(R, attr, tmp_path / attr)
+        monkeypatch.setattr(R, "PLAN_PATH", R.PLAN_PATH)  # main() rebinds it; restore after
+        assert R.main(["collect", "--plan", str(bad), "--backend", "batch", "--dry-run"]) == 1
+        err = capsys.readouterr().err
+        assert "DUT pin mismatch" in err and bad_sha in err and LIVE_SHA in err
+        assert "nothing was submitted or written" in err
+        for attr in ("RECORDS", "LOGS", "SNAPS"):
+            assert not (tmp_path / attr).exists()
+
+
+def _stub_collect_submits(monkeypatch, tmp_path):
+    """A collect whose klt submissions are captured; the fake submit succeeds and the record
+    finalize is stubbed, so every one of the serial submits runs and its command line is recorded."""
+    cmds: list[list[str]] = []
+    monkeypatch.setattr(R, "dirty_code", lambda: [])
+    monkeypatch.setattr(R, "SCRATCH", tmp_path)
+    monkeypatch.setattr(R.klt_driver, "find_pdk_or_exit",
+                        lambda *a, **k: types.SimpleNamespace(path=tmp_path, model_lib=tmp_path / "cornerHBT.lib"))
+
+    class Done:
+        returncode, stderr = 0, ""
+
+    monkeypatch.setattr(R.subprocess, "run", lambda cmd, *a, **k: cmds.append(list(cmd)) or Done())
+    monkeypatch.setattr(R, "read_unit", lambda rep: ({"corners": [{}]}, ""))
+    monkeypatch.setattr(R, "finalize", lambda *a, **k: 0)
+    return cmds
+
+
+def test_batch_submit_carries_wait_for_capacity_default_600(monkeypatch, tmp_path):
+    cmds = _stub_collect_submits(monkeypatch, tmp_path)
+    assert R.main(["collect", "--backend", "batch"]) == 0
+    sim = [c for c in cmds if "sim" in c]
+    assert len(sim) == 8  # analytic control + 3 placements x two/one kinds
+    for cmd in sim:
+        assert "--wait-for-capacity" in cmd
+        assert cmd[cmd.index("--wait-for-capacity") + 1] == "600"
+
+
+def test_local_backend_submit_omits_wait_for_capacity(monkeypatch, tmp_path):
+    cmds = _stub_collect_submits(monkeypatch, tmp_path)
+    assert R.main(["collect", "--backend", "local"]) == 0
+    for cmd in (c for c in cmds if "sim" in c):
+        assert "--wait-for-capacity" not in cmd
+
+
+def test_capacity_and_supersedes_flag_surface():
+    args = R.build_parser().parse_args(["collect"])
+    assert args.wait_for_capacity == 600
+    assert R.build_parser().parse_args(["collect", "--wait-for-capacity", "900"]).wait_for_capacity == 900
+    assert R.build_parser().parse_args(["collect", "--supersedes-new-dut", "X"]).supersedes_new_dut == "X"
+    with pytest.raises(SystemExit):  # collect-only flag: build must not take it
+        R.build_parser().parse_args(["build", "--supersedes-new-dut", "X"])
+# ---------------------------------------------------------------------------
+# characterization: the pre-consolidation capture (issue #276)
+# ---------------------------------------------------------------------------
+
+
+def gen_rows_lin(s1, s3, iip3, gain=20.0, step=4.0, n=8, start=-60.0, im3_noise=None,
+                 floor=-200.0, sim_fail_idx=(), exc=None):
+    """Fractional-slope two-line rows crossing exactly at ``iip3`` (issue-#276
+    probe generator: the two lines fund = y0 + s1 (pin - iip3) and
+    im3 = y0 + s3 (pin - iip3) meet at pin = iip3 for ANY slope pair)."""
+    x0, y0 = iip3, iip3 + gain
+    noise = im3_noise if im3_noise is not None else [0.0] * n
+    rows = []
+    for i in range(n):
+        p = start + step * i
+        r = {"pin_dbm": p,
+             "p_f1_dbm": y0 + s1 * (p - x0), "p_f2_dbm": y0 + s1 * (p - x0),
+             "p_im3l_dbm": y0 + s3 * (p - x0) + noise[i],
+             "p_im3h_dbm": y0 + s3 * (p - x0) + noise[i],
+             "floor_dbm": floor, "excursion_v": None if exc is None else dict(exc)}
+        if i in sim_fail_idx:
+            r["sim_failed"] = "sabotage"
+        rows.append(r)
+    return rows
+
+
+_CASE_D_NOISE = [0.30, -0.35, 0.20, -0.10, 0.15, -0.25, 0.10, -0.05]
+
+_FIT_PARAMS = {"min_points": 3, "floor_margin_db": 10.0, "compression_db": 1.0,
+               "slope_fund": [0.9, 1.1], "slope_im3": [2.7, 3.3], "max_residual_db": 0.5,
+               "free_fixed_tol_db": 1.0, "max_point_spread_db": 1.5,
+               "baseline_points": 3, "baseline_flat_db": 0.15}
+
+_GOOD_EXC = {"vce_q1_max": 1.0, "vce_q1_min": 0.8, "vbe_q1_max": 0.8, "vbe_q1_min": 0.7,
+             "vce_q2_max": 1.0, "vce_q2_min": 0.8, "vbe_q2_max": 0.8, "vbe_q2_min": 0.7}
+_BAD_EXC = dict(_GOOD_EXC, vce_q1_max=1.5)  # q1 V_CE peak over the row-17 1.4 V limit
+
+
+def _case(name):
+    """The characterization inputs as (rows, params, limits, enforce_limits),
+    rebuilt identically to the capture run."""
+    if name == "plan_rows":
+        return (L.synthetic_rows(PLAN, C["a1"], C["a3"], 1e-6, kind="two"),
+                PLAN["extraction"]["iip3"], None, False)
+    if name == "plan_rows_unrestricted":
+        return (L.synthetic_rows(PLAN, C["a1"], C["a3"], 1e-6, kind="two"),
+                PLAN["extraction"]["iip3"], PLAN["extraction"]["operating_limits"], False)
+    if name == "too_few":
+        return (L.synthetic_rows(PLAN, C["a1"], C["a3"], 1e-6, kind="two")[:2],
+                PLAN["extraction"]["iip3"], None, False)
+    if name == "case_d":
+        return (gen_rows_lin(0.988, 3.02, 10.0, im3_noise=_CASE_D_NOISE), dict(_FIT_PARAMS), None, False)
+    if name == "case_c":
+        # 1.08 / 2.80 noiseless: every shared gate passes but the free-slope
+        # and ideal-slope intercepts sit ~9 dB apart -> free_fixed_tol_db rejects
+        params = dict(_FIT_PARAMS, baseline_flat_db=0.20)  # a slope-1.08 gain still gives a flat baseline
+        return (gen_rows_lin(1.08, 2.80, 10.0, step=1.0, n=12, start=-55.0), params, None, False)
+    if name == "sideband_offset":
+        rows = gen_rows_lin(1.0, 3.0, 0.0, n=8)
+        for r in rows:
+            r["p_im3h_dbm"] += 100.0  # high sideband intercept 50 dB lower -> conservative min
+        return (rows, dict(_FIT_PARAMS), None, False)
+    if name == "high_side_bad_slope":
+        rows = gen_rows_lin(1.0, 3.0, 0.0, n=8)
+        for r in rows:
+            r["p_im3h_dbm"] = r["p_f2_dbm"] + 20.0  # slope-1 "IM3": high sideband out of tolerance
+        return (rows, PLAN["extraction"]["iip3"], None, False)
+    if name == "sim_fail_break":
+        return (gen_rows_lin(1.0, 3.0, 0.0, n=6, sim_fail_idx=(2,)), dict(_FIT_PARAMS), None, False)
+    if name == "limits_unmonitored":
+        return (gen_rows_lin(1.0, 3.0, 0.0, n=6), dict(_FIT_PARAMS),
+                PLAN["extraction"]["operating_limits"], True)
+    if name == "limits_violating_middle":
+        return (gen_rows_lin(1.0, 3.0, 0.0, n=6, exc=_BAD_EXC), dict(_FIT_PARAMS),
+                PLAN["extraction"]["operating_limits"], True)
+    if name == "limits_ok":
+        return (gen_rows_lin(1.0, 3.0, 0.0, n=6, exc=_GOOD_EXC), dict(_FIT_PARAMS),
+                PLAN["extraction"]["operating_limits"], True)
+    raise AssertionError(name)
+
+
+# Captured from the bench-local fit_iip3 BEFORE it was re-homed onto the
+# shared sim/harness/iip3.py engine; kept as the regression guard after the
+# move. Linearity already accumulated with math.fsum, so the move must be
+# behaviour-preserving bit-for-bit: floats compare with ==, not approx.
+# per_point_iip3_dbm is dropped (a deterministic function of the pinned fit),
+# rejected_intervals collapse to their first two reasons plus the count (the
+# full enumeration is an O(n^2) scan artifact), and the intercept keys the
+# engine adds (iip3_ideal_slope_dbm, iip3_topfit_dbm) are stripped so the
+# capture pins the pre-change key set exactly; their values are asserted in
+# sim/harness/tests/test_iip3.py.
+
+_CAPTURED = json.loads(r"""
+{
+ "case_c": {
+  "reason": "no valid 1:3 region for the low, high IM3 sideband(s)",
+  "sidebands": {
+   "high": {
+    "baseline": {
+     "first_index": 0,
+     "gain_db": 14.879999999999995,
+     "n_points": 3,
+     "pin_dbm": [
+      -55.0,
+      -54.0,
+      -53.0
+     ],
+     "spread_db": 0.1599999999999966
+    },
+    "excluded_points": {},
+    "reason": "no contiguous run of >= 3 usable steps with slopes 1+/-0.1 and 3+/-0.3 above the numerical floor, below compression and inside the operating limits",
+    "rejected_intervals": {
+     "count": 55,
+     "first": [
+      {
+       "interval_dbm": [
+        -55.0,
+        -53.0
+       ],
+       "reason": "fixed-slope IIP3 1.04 and free-slope intersection 10.00 dBm disagree"
+      },
+      {
+       "interval_dbm": [
+        -55.0,
+        -52.0
+       ],
+       "reason": "fixed-slope IIP3 1.11 and free-slope intersection 10.00 dBm disagree"
+      }
+     ]
+    },
+    "status": "unavailable"
+   },
+   "low": {
+    "baseline": {
+     "first_index": 0,
+     "gain_db": 14.879999999999995,
+     "n_points": 3,
+     "pin_dbm": [
+      -55.0,
+      -54.0,
+      -53.0
+     ],
+     "spread_db": 0.1599999999999966
+    },
+    "excluded_points": {},
+    "reason": "no contiguous run of >= 3 usable steps with slopes 1+/-0.1 and 3+/-0.3 above the numerical floor, below compression and inside the operating limits",
+    "rejected_intervals": {
+     "count": 55,
+     "first": [
+      {
+       "interval_dbm": [
+        -55.0,
+        -53.0
+       ],
+       "reason": "fixed-slope IIP3 1.04 and free-slope intersection 10.00 dBm disagree"
+      },
+      {
+       "interval_dbm": [
+        -55.0,
+        -52.0
+       ],
+       "reason": "fixed-slope IIP3 1.11 and free-slope intersection 10.00 dBm disagree"
+      }
+     ]
+    },
+    "status": "unavailable"
+   }
+  },
+  "status": "unavailable"
+ },
+ "case_d": {
+  "convention": "per-tone available input power at the 50 ohm source; lower of the two sidebands",
+  "iip3_dbm": 10.895999999999999,
+  "sideband_spread_db": 0.0,
+  "sidebands": {
+   "high": {
+    "baseline": {
+     "first_index": 0,
+     "gain_db": 20.792,
+     "n_points": 3,
+     "pin_dbm": [
+      -60.0,
+      -56.0,
+      -52.0
+     ],
+     "spread_db": 0.09600000000000364
+    },
+    "excluded_points": {},
+    "extrapolation_db": 42.896,
+    "iip3_dbm": 10.895999999999999,
+    "iip3_free_slope_dbm": 10.106830708545873,
+    "interval_dbm": [
+     -60.0,
+     -32.0
+    ],
+    "n_points": 8,
+    "rejected_intervals": {
+     "count": 5,
+     "first": [
+      {
+       "interval_dbm": [
+        -56.0,
+        -48.0
+       ],
+       "reason": "fixed-slope IIP3 11.03 and free-slope intersection 9.10 dBm disagree"
+      },
+      {
+       "interval_dbm": [
+        -56.0,
+        -44.0
+       ],
+       "reason": "fixed-slope IIP3 10.97 and free-slope intersection 9.14 dBm disagree"
+      }
+     ]
+    },
+    "residual_fund_db": 3.552713678800501e-15,
+    "residual_im3_db": 0.3886904761904475,
+    "slope_fund": 0.9879999999999999,
+    "slope_im3": 3.0161309523809523,
+    "status": "ok"
+   },
+   "low": {
+    "baseline": {
+     "first_index": 0,
+     "gain_db": 20.792,
+     "n_points": 3,
+     "pin_dbm": [
+      -60.0,
+      -56.0,
+      -52.0
+     ],
+     "spread_db": 0.09600000000000364
+    },
+    "excluded_points": {},
+    "extrapolation_db": 42.896,
+    "iip3_dbm": 10.895999999999999,
+    "iip3_free_slope_dbm": 10.106830708545873,
+    "interval_dbm": [
+     -60.0,
+     -32.0
+    ],
+    "n_points": 8,
+    "rejected_intervals": {
+     "count": 5,
+     "first": [
+      {
+       "interval_dbm": [
+        -56.0,
+        -48.0
+       ],
+       "reason": "fixed-slope IIP3 11.03 and free-slope intersection 9.10 dBm disagree"
+      },
+      {
+       "interval_dbm": [
+        -56.0,
+        -44.0
+       ],
+       "reason": "fixed-slope IIP3 10.97 and free-slope intersection 9.14 dBm disagree"
+      }
+     ]
+    },
+    "residual_fund_db": 3.552713678800501e-15,
+    "residual_im3_db": 0.3886904761904475,
+    "slope_fund": 0.9879999999999999,
+    "slope_im3": 3.0161309523809523,
+    "status": "ok"
+   }
+  },
+  "status": "ok"
+ },
+ "high_side_bad_slope": {
+  "reason": "no valid 1:3 region for the high IM3 sideband(s)",
+  "sidebands": {
+   "high": {
+    "baseline": {
+     "first_index": 0,
+     "gain_db": 20.0,
+     "n_points": 3,
+     "pin_dbm": [
+      -60.0,
+      -56.0,
+      -52.0
+     ],
+     "spread_db": 0.0
+    },
+    "excluded_points": {},
+    "reason": "no contiguous run of >= 4 usable steps with slopes 1+/-0.1 and 3+/-0.3 above the numerical floor, below compression and inside the operating limits",
+    "rejected_intervals": {
+     "count": 15,
+     "first": [
+      {
+       "interval_dbm": [
+        -60.0,
+        -48.0
+       ],
+       "reason": "slopes 1.000/1.000 out of tolerance"
+      },
+      {
+       "interval_dbm": [
+        -60.0,
+        -44.0
+       ],
+       "reason": "slopes 1.000/1.000 out of tolerance"
+      }
+     ]
+    },
+    "status": "unavailable"
+   },
+   "low": {
+    "baseline": {
+     "first_index": 0,
+     "gain_db": 20.0,
+     "n_points": 3,
+     "pin_dbm": [
+      -60.0,
+      -56.0,
+      -52.0
+     ],
+     "spread_db": 0.0
+    },
+    "excluded_points": {},
+    "extrapolation_db": 32.0,
+    "iip3_dbm": 0.0,
+    "iip3_free_slope_dbm": 0.0,
+    "interval_dbm": [
+     -60.0,
+     -32.0
+    ],
+    "n_points": 8,
+    "rejected_intervals": {
+     "count": 0,
+     "first": []
+    },
+    "residual_fund_db": 0.0,
+    "residual_im3_db": 0.0,
+    "slope_fund": 1.0,
+    "slope_im3": 3.0,
+    "status": "ok"
+   }
+  },
+  "status": "unavailable"
+ },
+ "limits_ok": {
+  "convention": "per-tone available input power at the 50 ohm source; lower of the two sidebands",
+  "iip3_dbm": 0.0,
+  "sideband_spread_db": 0.0,
+  "sidebands": {
+   "high": {
+    "baseline": {
+     "first_index": 0,
+     "gain_db": 20.0,
+     "n_points": 3,
+     "pin_dbm": [
+      -60.0,
+      -56.0,
+      -52.0
+     ],
+     "spread_db": 0.0
+    },
+    "excluded_points": {},
+    "extrapolation_db": 40.0,
+    "iip3_dbm": 0.0,
+    "iip3_free_slope_dbm": 0.0,
+    "interval_dbm": [
+     -60.0,
+     -40.0
+    ],
+    "n_points": 6,
+    "rejected_intervals": {
+     "count": 0,
+     "first": []
+    },
+    "residual_fund_db": 0.0,
+    "residual_im3_db": 0.0,
+    "slope_fund": 1.0,
+    "slope_im3": 3.0,
+    "status": "ok"
+   },
+   "low": {
+    "baseline": {
+     "first_index": 0,
+     "gain_db": 20.0,
+     "n_points": 3,
+     "pin_dbm": [
+      -60.0,
+      -56.0,
+      -52.0
+     ],
+     "spread_db": 0.0
+    },
+    "excluded_points": {},
+    "extrapolation_db": 40.0,
+    "iip3_dbm": 0.0,
+    "iip3_free_slope_dbm": 0.0,
+    "interval_dbm": [
+     -60.0,
+     -40.0
+    ],
+    "n_points": 6,
+    "rejected_intervals": {
+     "count": 0,
+     "first": []
+    },
+    "residual_fund_db": 0.0,
+    "residual_im3_db": 0.0,
+    "slope_fund": 1.0,
+    "slope_im3": 3.0,
+    "status": "ok"
+   }
+  },
+  "status": "ok"
+ },
+ "limits_unmonitored": {
+  "reason": "no valid 1:3 region for the low, high IM3 sideband(s)",
+  "sidebands": {
+   "high": {
+    "baseline": null,
+    "excluded_points": {
+     "-40": "outside DUT operating limits: device excursions not monitored",
+     "-44": "outside DUT operating limits: device excursions not monitored",
+     "-48": "outside DUT operating limits: device excursions not monitored",
+     "-52": "outside DUT operating limits: device excursions not monitored",
+     "-56": "outside DUT operating limits: device excursions not monitored",
+     "-60": "outside DUT operating limits: device excursions not monitored"
+    },
+    "reason": "no contiguous run of >= 3 usable steps with slopes 1+/-0.1 and 3+/-0.3 above the numerical floor, below compression and inside the operating limits",
+    "rejected_intervals": {
+     "count": 0,
+     "first": []
+    },
+    "status": "unavailable"
+   },
+   "low": {
+    "baseline": null,
+    "excluded_points": {
+     "-40": "outside DUT operating limits: device excursions not monitored",
+     "-44": "outside DUT operating limits: device excursions not monitored",
+     "-48": "outside DUT operating limits: device excursions not monitored",
+     "-52": "outside DUT operating limits: device excursions not monitored",
+     "-56": "outside DUT operating limits: device excursions not monitored",
+     "-60": "outside DUT operating limits: device excursions not monitored"
+    },
+    "reason": "no contiguous run of >= 3 usable steps with slopes 1+/-0.1 and 3+/-0.3 above the numerical floor, below compression and inside the operating limits",
+    "rejected_intervals": {
+     "count": 0,
+     "first": []
+    },
+    "status": "unavailable"
+   }
+  },
+  "status": "unavailable"
+ },
+ "limits_violating_middle": {
+  "reason": "no valid 1:3 region for the low, high IM3 sideband(s)",
+  "sidebands": {
+   "high": {
+    "baseline": null,
+    "excluded_points": {
+     "-40": "outside DUT operating limits: q1 V_CE peak 1.5000 V > 1.4 V (row 17)",
+     "-44": "outside DUT operating limits: q1 V_CE peak 1.5000 V > 1.4 V (row 17)",
+     "-48": "outside DUT operating limits: q1 V_CE peak 1.5000 V > 1.4 V (row 17)",
+     "-52": "outside DUT operating limits: q1 V_CE peak 1.5000 V > 1.4 V (row 17)",
+     "-56": "outside DUT operating limits: q1 V_CE peak 1.5000 V > 1.4 V (row 17)",
+     "-60": "outside DUT operating limits: q1 V_CE peak 1.5000 V > 1.4 V (row 17)"
+    },
+    "reason": "no contiguous run of >= 3 usable steps with slopes 1+/-0.1 and 3+/-0.3 above the numerical floor, below compression and inside the operating limits",
+    "rejected_intervals": {
+     "count": 0,
+     "first": []
+    },
+    "status": "unavailable"
+   },
+   "low": {
+    "baseline": null,
+    "excluded_points": {
+     "-40": "outside DUT operating limits: q1 V_CE peak 1.5000 V > 1.4 V (row 17)",
+     "-44": "outside DUT operating limits: q1 V_CE peak 1.5000 V > 1.4 V (row 17)",
+     "-48": "outside DUT operating limits: q1 V_CE peak 1.5000 V > 1.4 V (row 17)",
+     "-52": "outside DUT operating limits: q1 V_CE peak 1.5000 V > 1.4 V (row 17)",
+     "-56": "outside DUT operating limits: q1 V_CE peak 1.5000 V > 1.4 V (row 17)",
+     "-60": "outside DUT operating limits: q1 V_CE peak 1.5000 V > 1.4 V (row 17)"
+    },
+    "reason": "no contiguous run of >= 3 usable steps with slopes 1+/-0.1 and 3+/-0.3 above the numerical floor, below compression and inside the operating limits",
+    "rejected_intervals": {
+     "count": 0,
+     "first": []
+    },
+    "status": "unavailable"
+   }
+  },
+  "status": "unavailable"
+ },
+ "plan_rows": {
+  "convention": "per-tone available input power at the 50 ohm source; lower of the two sidebands",
+  "iip3_dbm": -11.792666717708823,
+  "sideband_spread_db": 0.0,
+  "sidebands": {
+   "high": {
+    "baseline": {
+     "first_index": 0,
+     "gain_db": 13.978142587001685,
+     "n_points": 3,
+     "pin_dbm": [
+      -56.0,
+      -55.0,
+      -54.0
+     ],
+     "spread_db": 0.0005745922812465665
+    },
+    "excluded_points": {
+     "-43": "IM3 below numerical floor + margin",
+     "-44": "IM3 below numerical floor + margin",
+     "-45": "IM3 below numerical floor + margin",
+     "-46": "IM3 below numerical floor + margin",
+     "-47": "IM3 below numerical floor + margin",
+     "-48": "IM3 below numerical floor + margin",
+     "-49": "IM3 below numerical floor + margin",
+     "-50": "IM3 below numerical floor + margin",
+     "-51": "IM3 below numerical floor + margin",
+     "-52": "IM3 below numerical floor + margin",
+     "-53": "IM3 below numerical floor + margin",
+     "-54": "IM3 below numerical floor + margin",
+     "-55": "IM3 below numerical floor + margin",
+     "-56": "IM3 below numerical floor + margin"
+    },
+    "extrapolation_db": 24.207333282291177,
+    "iip3_dbm": -11.792666717708823,
+    "iip3_free_slope_dbm": -11.896524518811999,
+    "interval_dbm": [
+     -42.0,
+     -36.0
+    ],
+    "n_points": 7,
+    "rejected_intervals": {
+     "count": 0,
+     "first": []
+    },
+    "residual_fund_db": 0.007558521412555308,
+    "residual_im3_db": 0.008522339248330013,
+    "slope_fund": 0.9878714989041978,
+    "slope_im3": 2.995535298417678,
+    "status": "ok"
+   },
+   "low": {
+    "baseline": {
+     "first_index": 0,
+     "gain_db": 13.978142587001685,
+     "n_points": 3,
+     "pin_dbm": [
+      -56.0,
+      -55.0,
+      -54.0
+     ],
+     "spread_db": 0.0005745922812465665
+    },
+    "excluded_points": {
+     "-43": "IM3 below numerical floor + margin",
+     "-44": "IM3 below numerical floor + margin",
+     "-45": "IM3 below numerical floor + margin",
+     "-46": "IM3 below numerical floor + margin",
+     "-47": "IM3 below numerical floor + margin",
+     "-48": "IM3 below numerical floor + margin",
+     "-49": "IM3 below numerical floor + margin",
+     "-50": "IM3 below numerical floor + margin",
+     "-51": "IM3 below numerical floor + margin",
+     "-52": "IM3 below numerical floor + margin",
+     "-53": "IM3 below numerical floor + margin",
+     "-54": "IM3 below numerical floor + margin",
+     "-55": "IM3 below numerical floor + margin",
+     "-56": "IM3 below numerical floor + margin"
+    },
+    "extrapolation_db": 24.207333282291177,
+    "iip3_dbm": -11.792666717708823,
+    "iip3_free_slope_dbm": -11.896524518811999,
+    "interval_dbm": [
+     -42.0,
+     -36.0
+    ],
+    "n_points": 7,
+    "rejected_intervals": {
+     "count": 0,
+     "first": []
+    },
+    "residual_fund_db": 0.007558521412555308,
+    "residual_im3_db": 0.008522339248330013,
+    "slope_fund": 0.9878714989041978,
+    "slope_im3": 2.995535298417678,
+    "status": "ok"
+   }
+  },
+  "status": "ok"
+ },
+ "plan_rows_unrestricted": {
+  "convention": "per-tone available input power at the 50 ohm source; lower of the two sidebands",
+  "iip3_dbm": -11.792666717708823,
+  "sideband_spread_db": 0.0,
+  "sidebands": {
+   "high": {
+    "baseline": {
+     "first_index": 0,
+     "gain_db": 13.978142587001685,
+     "n_points": 3,
+     "pin_dbm": [
+      -56.0,
+      -55.0,
+      -54.0
+     ],
+     "spread_db": 0.0005745922812465665
+    },
+    "excluded_points": {
+     "-43": "IM3 below numerical floor + margin",
+     "-44": "IM3 below numerical floor + margin",
+     "-45": "IM3 below numerical floor + margin",
+     "-46": "IM3 below numerical floor + margin",
+     "-47": "IM3 below numerical floor + margin",
+     "-48": "IM3 below numerical floor + margin",
+     "-49": "IM3 below numerical floor + margin",
+     "-50": "IM3 below numerical floor + margin",
+     "-51": "IM3 below numerical floor + margin",
+     "-52": "IM3 below numerical floor + margin",
+     "-53": "IM3 below numerical floor + margin",
+     "-54": "IM3 below numerical floor + margin",
+     "-55": "IM3 below numerical floor + margin",
+     "-56": "IM3 below numerical floor + margin"
+    },
+    "extrapolation_db": 24.207333282291177,
+    "iip3_dbm": -11.792666717708823,
+    "iip3_free_slope_dbm": -11.896524518811999,
+    "interval_dbm": [
+     -42.0,
+     -36.0
+    ],
+    "n_points": 7,
+    "rejected_intervals": {
+     "count": 0,
+     "first": []
+    },
+    "residual_fund_db": 0.007558521412555308,
+    "residual_im3_db": 0.008522339248330013,
+    "slope_fund": 0.9878714989041978,
+    "slope_im3": 2.995535298417678,
+    "status": "ok"
+   },
+   "low": {
+    "baseline": {
+     "first_index": 0,
+     "gain_db": 13.978142587001685,
+     "n_points": 3,
+     "pin_dbm": [
+      -56.0,
+      -55.0,
+      -54.0
+     ],
+     "spread_db": 0.0005745922812465665
+    },
+    "excluded_points": {
+     "-43": "IM3 below numerical floor + margin",
+     "-44": "IM3 below numerical floor + margin",
+     "-45": "IM3 below numerical floor + margin",
+     "-46": "IM3 below numerical floor + margin",
+     "-47": "IM3 below numerical floor + margin",
+     "-48": "IM3 below numerical floor + margin",
+     "-49": "IM3 below numerical floor + margin",
+     "-50": "IM3 below numerical floor + margin",
+     "-51": "IM3 below numerical floor + margin",
+     "-52": "IM3 below numerical floor + margin",
+     "-53": "IM3 below numerical floor + margin",
+     "-54": "IM3 below numerical floor + margin",
+     "-55": "IM3 below numerical floor + margin",
+     "-56": "IM3 below numerical floor + margin"
+    },
+    "extrapolation_db": 24.207333282291177,
+    "iip3_dbm": -11.792666717708823,
+    "iip3_free_slope_dbm": -11.896524518811999,
+    "interval_dbm": [
+     -42.0,
+     -36.0
+    ],
+    "n_points": 7,
+    "rejected_intervals": {
+     "count": 0,
+     "first": []
+    },
+    "residual_fund_db": 0.007558521412555308,
+    "residual_im3_db": 0.008522339248330013,
+    "slope_fund": 0.9878714989041978,
+    "slope_im3": 2.995535298417678,
+    "status": "ok"
+   }
+  },
+  "status": "ok"
+ },
+ "sideband_offset": {
+  "convention": "per-tone available input power at the 50 ohm source; lower of the two sidebands",
+  "iip3_dbm": -50.0,
+  "sideband_spread_db": 50.0,
+  "sidebands": {
+   "high": {
+    "baseline": {
+     "first_index": 0,
+     "gain_db": 20.0,
+     "n_points": 3,
+     "pin_dbm": [
+      -60.0,
+      -56.0,
+      -52.0
+     ],
+     "spread_db": 0.0
+    },
+    "excluded_points": {},
+    "extrapolation_db": -18.0,
+    "iip3_dbm": -50.0,
+    "iip3_free_slope_dbm": -50.0,
+    "interval_dbm": [
+     -60.0,
+     -32.0
+    ],
+    "n_points": 8,
+    "rejected_intervals": {
+     "count": 0,
+     "first": []
+    },
+    "residual_fund_db": 0.0,
+    "residual_im3_db": 0.0,
+    "slope_fund": 1.0,
+    "slope_im3": 3.0,
+    "status": "ok"
+   },
+   "low": {
+    "baseline": {
+     "first_index": 0,
+     "gain_db": 20.0,
+     "n_points": 3,
+     "pin_dbm": [
+      -60.0,
+      -56.0,
+      -52.0
+     ],
+     "spread_db": 0.0
+    },
+    "excluded_points": {},
+    "extrapolation_db": 32.0,
+    "iip3_dbm": 0.0,
+    "iip3_free_slope_dbm": 0.0,
+    "interval_dbm": [
+     -60.0,
+     -32.0
+    ],
+    "n_points": 8,
+    "rejected_intervals": {
+     "count": 0,
+     "first": []
+    },
+    "residual_fund_db": 0.0,
+    "residual_im3_db": 0.0,
+    "slope_fund": 1.0,
+    "slope_im3": 3.0,
+    "status": "ok"
+   }
+  },
+  "status": "ok"
+ },
+ "sim_fail_break": {
+  "convention": "per-tone available input power at the 50 ohm source; lower of the two sidebands",
+  "iip3_dbm": 0.0,
+  "sideband_spread_db": 0.0,
+  "sidebands": {
+   "high": {
+    "baseline": {
+     "first_index": 3,
+     "gain_db": 20.0,
+     "n_points": 3,
+     "pin_dbm": [
+      -48.0,
+      -44.0,
+      -40.0
+     ],
+     "spread_db": 0.0
+    },
+    "excluded_points": {
+     "-52": "simulation failed: sabotage"
+    },
+    "extrapolation_db": 40.0,
+    "iip3_dbm": 0.0,
+    "iip3_free_slope_dbm": 0.0,
+    "interval_dbm": [
+     -48.0,
+     -40.0
+    ],
+    "n_points": 3,
+    "rejected_intervals": {
+     "count": 0,
+     "first": []
+    },
+    "residual_fund_db": 0.0,
+    "residual_im3_db": 0.0,
+    "slope_fund": 1.0,
+    "slope_im3": 3.0,
+    "status": "ok"
+   },
+   "low": {
+    "baseline": {
+     "first_index": 3,
+     "gain_db": 20.0,
+     "n_points": 3,
+     "pin_dbm": [
+      -48.0,
+      -44.0,
+      -40.0
+     ],
+     "spread_db": 0.0
+    },
+    "excluded_points": {
+     "-52": "simulation failed: sabotage"
+    },
+    "extrapolation_db": 40.0,
+    "iip3_dbm": 0.0,
+    "iip3_free_slope_dbm": 0.0,
+    "interval_dbm": [
+     -48.0,
+     -40.0
+    ],
+    "n_points": 3,
+    "rejected_intervals": {
+     "count": 0,
+     "first": []
+    },
+    "residual_fund_db": 0.0,
+    "residual_im3_db": 0.0,
+    "slope_fund": 1.0,
+    "slope_im3": 3.0,
+    "status": "ok"
+   }
+  },
+  "status": "ok"
+ },
+ "too_few": {
+  "reason": "only 2 sweep point(s); need >= 4",
+  "status": "unavailable"
+ }
+}
+""")
+
+_NEW_ENGINE_KEYS = ("iip3_ideal_slope_dbm", "iip3_topfit_dbm")
+
+
+def _canonical(result):
+    def key(k):
+        return repr(k) if isinstance(k, float) else k  # JSON maps float dict keys to strings
+
+    def walk(node):
+        if isinstance(node, dict):
+            out = {key(k): walk(v) for k, v in node.items()
+                   if k != "per_point_iip3_dbm" and k not in _NEW_ENGINE_KEYS}
+            if isinstance(out.get("rejected_intervals"), list):
+                ri = out["rejected_intervals"]
+                out["rejected_intervals"] = {"count": len(ri), "first": ri[:2]}
+            return out
+        if isinstance(node, list):
+            return [walk(v) for v in node]
+        return node
+    return walk(result)
+
+
+def _assert_same(got, want, path="$"):
+    if isinstance(want, dict):
+        assert isinstance(got, dict) and sorted(got) == sorted(want), (path, sorted(got), sorted(want))
+        for k in want:
+            _assert_same(got[k], want[k], f"{path}.{k}")
+    elif isinstance(want, list):
+        assert isinstance(got, list) and len(got) == len(want), path
+        for i, (g, w) in enumerate(zip(got, want)):
+            _assert_same(g, w, f"{path}[{i}]")
+    elif isinstance(want, float):
+        assert got == want, (path, got, want)
+    else:
+        assert got == want, (path, got, want)
+
+
+@pytest.mark.parametrize("name", sorted(_CAPTURED))
+def test_fit_iip3_matches_the_pre_consolidation_capture(name):
+    rows, params, limits, enforce = _case(name)
+    got = L.fit_iip3(rows, params, limits, enforce_limits=enforce)
+    _assert_same(_canonical(got), _CAPTURED[name], name)

@@ -26,7 +26,7 @@ sys.path.insert(0, str(SCRIPTS))
 sys.path.insert(0, str(BENCH))
 
 import check_evidence_formats as chk  # noqa: E402
-from _helpers import CheckerCase, commit, edit_json, mirror_manifests, run  # noqa: E402
+from _helpers import CheckerCase, commit, edit_json, mirror_manifests, mirror_signoff, run  # noqa: E402
 import pumped as P  # noqa: E402
 
 
@@ -109,6 +109,7 @@ class Base(CheckerCase):
         shutil.copytree(REPO / "sim" / "lna-sparam-nf", self.root / "sim" / "lna-sparam-nf",
                         ignore=shutil.ignore_patterns("_build", "_selftest", "__pycache__"))
         mirror_manifests(self.root, REPO)
+        mirror_signoff(self.root, REPO)
         self.exp = exp
         self.rec = exp / "records"
 

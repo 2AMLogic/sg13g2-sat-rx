@@ -172,6 +172,55 @@ behaviour is a separate question at separate call sites — deliberately left as
 it is rather than folded in here, because "raise" and "`-inf`" are not the same
 answer and choosing between them needs those call sites read on their own.
 
+## Reference-impedance (z0) defaults — classification
+
+`sim/harness/rf.py`'s `Z0_OHM` is the single declaration of the 50 Ω system
+port convention (issue #263). The `z0 = 50.0` *function defaults and locals*
+in the bench modules are a separate population, classified here once so the
+question is not re-asked per reader (issue #286). Three classes:
+
+**Class A — the port convention; the default must be `rf.Z0_OHM` itself** (so a
+later system-Z0 change cannot leave a bench default behind; the identity is
+asserted in each bench's tests):
+
+| site | why it is the port convention |
+|---|---|
+| `matchstudy.source_impedance` | z0 is a physical source resistance (`z = 1/(1/z0 + jwC1)`) |
+| `matchstudy.synthesize` | z0 gates realizability and sizes the L-section elements against the 50 Ω system |
+| `matchstudy.pad_dut` | z0 sizes real resistors (`rsh = z0*(k+1)/(k-1)` → `Rp1`/`Rp2`, `rse` → `Rser`) |
+| `matchstudy.nf_db_from_inoise` | the noiseless reference source impedance in `F = 1 + inoise²/(4kT0z0)` |
+| `kaband.Sweep.z0_ohm` (+ its loader default) | the sweep's declared port impedance, read live from `tb.json` |
+| `hbt-kaband-characterization/run.py` `k4r` | the `4kTR` thermal-noise reference impedance |
+| `corestudy.scan_metric` | de-embeds the driven-port reflection coefficient via `z_from_gamma(s11, z0)` |
+
+**Class B — a generic normalization impedance, legitimately the caller's
+choice; keeps its independent `50.0` default with an in-code comment**:
+`matchstudy.gamma`, `matchstudy.z_from_gamma`, `kaband.y_to_s`. Pure two-port
+algebra — nothing in them presumes this block's port convention, and every
+live caller passes the port `z0` explicitly.
+
+**Class C — not a reference impedance at all; unchanged**:
+`kaband.py`'s `zr` in the noise-parameter fit is a least-squares conditioning
+scale (`u = z/zr`, unwound as `b = bs/zr², c = cs/zr, d = ds/zr` — it cancels
+out of the fit). Binding it to `rf.Z0_OHM` would be a category error; it
+carries an in-code comment saying so.
+
+**Deliberate survivals, not classes A–C**: `sim/mixer-pumped-rf-admittance`'s
+`FIXTURES` z0 slot is the port convention but **deck-coupled** — the Python
+mirror of a physical termination resistor spelled in the fixture netlists
+(`Rks kp krs 50`), so it stays a literal that tracks the deck; that file's
+`synth_marks` reads the slot rather than re-spelling it, which closes the one
+place the port convention was declared twice inside a single file (the live
+`port_vi` path vs. the test-only synthetic path could disagree with every test
+green). The `.param z0=50` SPICE-deck literals
+(`lna-linearity/linearity.py`, `lna-match-tradeoff/matchstudy.py`,
+`lna-sparam-nf/make_stage1_fixture.py`) are netlist text a Python import
+cannot reach and are out of scope (#286); `sim/passive-p1/scripts/` keeps its
+stdlib-only boundary; `sim/lna-match-tradeoff/tests/matchfakes.py` is a test
+fixture. The live source of the port impedance in every bench run remains each
+bench's required config key (`z0_ohm` / `study.z0`) — none of this moves the
+source of truth into Python.
+
 ## Benches
 
 | Experiment | What it measures | Status |
@@ -217,38 +266,42 @@ row 1, among them — hence the "DRAFT band" wording below). Comparison of the
 mixer against the binding rows becomes meaningful only once its `tb.json` is
 re-pointed at a real mixer schematic.
 
-### Running the tests: one bench per pytest invocation
+### Running the tests: per bench, or all benches in one invocation
 
-**One bench directory per `pytest` invocation is the contract.** Each
-`sim/<bench>/tests` is run as its own command (one CI step per bench); a
-multi-bench *run* is unsupported. A multi-bench **collection** check is
-supported and CI-guarded:
+CI runs each `sim/<bench>/tests` as its own step, and that remains the
+simplest way to run one bench. A multi-bench **run** in a single `pytest`
+invocation is also supported, because `sim/conftest.py` isolates each bench's
+module namespace (issue #302) and
+`sim/harness/tests/test_multibench_isolation.py` guards it: with it,
+`python3 -m pytest sim/*/tests -q` passes (942 passed, 0 failed at the tree
+that landed it). The collection-only check is a separate, complementary CI
+guard (it catches collection-time collisions in 0.5 s, before any test
+runs):
 
 ```
 python -m pytest sim/*/tests --collect-only -q
 ```
 
-Why collection only: pytest's default `prepend` import mode drops every bench
-into one flat top-level module namespace, and fixing that fully would require
-renaming `run_probe.py` and `ci_assert.py`, which exist per bench under the
-same filename. Those names are load-bearing: committed append-only evidence
-records cite them (e.g. `python3 sim/mixer-pumped-rf-admittance/run_probe.py`),
-as do bench READMEs and CI steps, so they cannot be renamed without editing
-records. In a multi-bench run the first bench's module to bind a shared name
-stays in `sys.modules` and every later bench silently exercises the wrong
-bench's code.
+Why the isolation is needed: pytest's default `prepend` import mode drops every
+bench into one flat top-level module namespace, and several names exist per
+bench under the same filename (`run_probe.py`, `ci_assert.py`). Those names are
+load-bearing: committed append-only evidence records cite them (e.g.
+`python3 sim/mixer-pumped-rf-admittance/run_probe.py`), as do bench READMEs and
+CI steps, so they are not renamed; `sim/conftest.py` resolves each colliding
+name to the importing bench's own file instead. This PR removes the incidental
+collision classes in the test tree itself (bare `from conftest import ...`,
+duplicate test-module basenames, and `lna-headroom` stripping another bench's
+`sys.path` entry), so the isolation does not have to paper over them.
 
-Measured with the flat namespace's incidental collection defects removed
-(2026-11-15, issue-287 tree off main @ `c498b96`, pytest 9.1.1): collecting
-all 12 bench test directories in one
-invocation is clean — 875 tests, 0 errors — but running them fails: **49
-failed, 834 passed, 28 subtests passed**, with every failure in exactly the
-three benches whose tests bare-import `run_probe.py` / `ci_assert.py`
-(`mixer-pumped-rf-admittance`, `mixer-cm-interface-probe`,
-`mixer-nf-method`). Each of those benches passes on its own. Making the full
-multi-bench run pass needs its own decision record; until then the
-per-directory invocation above is the supported way to run a bench's tests,
-and the collect-only command is the supported whole-`sim/` check.
+Measured before the isolation conftest existed (2026-11-15, issue-287 tree off
+main @ `c498b96`, pytest 9.1.1), with only those incidental defects removed:
+collecting all 12 bench test directories in one invocation was clean (875
+tests, 0 errors) but running them failed (**49 failed, 834 passed, 28 subtests
+passed**), every failure in the three benches whose tests bare-import
+`run_probe.py` / `ci_assert.py` (`mixer-pumped-rf-admittance`,
+`mixer-cm-interface-probe`, `mixer-nf-method`). That residual is what
+`sim/conftest.py` now closes; the figures are kept as the historical
+motivation, not a current limitation.
 
 ### Where each command runs (local ngspice vs batch fleet)
 
