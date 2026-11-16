@@ -17,7 +17,7 @@
         "role": "hygiene",
         "path": ".github/scripts/check_evidence_formats.py",
         "passed": true,
-        "content_hash": "sha256:c14a27d4a833a40833cca1e74b88cbc402885de2f875f275a97f4950479b7b73"
+        "content_hash": "sha256:6144eca498b9b72647fa0571cae6fab637646f8ec8cc2990470e31cfa57e4672"
       },
       {
         "check": "present",
@@ -38,7 +38,7 @@
         "role": "hygiene",
         "path": "README.md",
         "passed": true,
-        "content_hash": "sha256:fc4dd4e98b94b0b6281540e755a2f5d8f85847084f162f6e4ff5faa63894baf0"
+        "content_hash": "sha256:852e54eab33af6f97c972a67965fe332759b274c935fcc508ce75016523ff5d6"
       },
       {
         "check": "present",
