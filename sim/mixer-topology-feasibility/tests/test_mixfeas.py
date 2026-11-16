@@ -50,6 +50,25 @@ def test_available_and_delivered_power_conventions():
     assert mf.dbm(0.0) == float("-inf")
 
 
+def test_dbm_edge_convention_is_the_repo_wide_one():
+    """Issue #268: one watts-to-dBm edge convention repo-wide -- zero and
+    negative give -inf, NaN PROPAGATES, and nothing at the edge comes back as a
+    finite number a reader could mistake for a measurement. `lna-linearity`'s
+    `dbm_from_w` was changed to match these branches (it used to map all three
+    to a finite -400.0); this is the other half of the pair, pinned so a future
+    change has to move a test deliberately. See sim/README.md ->
+    "Watts-to-dBm edge convention"."""
+    assert mf.dbm(0.0) == float("-inf")
+    assert mf.dbm(-0.0) == float("-inf")
+    assert mf.dbm(-1.0) == float("-inf")
+    assert math.isnan(mf.dbm(float("nan")))
+    assert not math.isfinite(mf.dbm(float("nan")))
+    assert mf.dbm(float("nan")) != -400.0
+    assert mf.dbm(float("inf")) == float("inf")
+    for w in (1e-30, 1e-12, 1e-3, 1.0, 1e3):
+        assert mf.dbm(w) == 10.0 * math.log10(w / 1e-3)
+
+
 def test_lo_total_differential_available_power():
     # issue #35: P_av = Vdiff_open_peak^2 / (8 * Rdiff), Rdiff = 100 ohm, total (not per leg)
     for p in (-30.0, -3.0, 0.0, 6.0):
