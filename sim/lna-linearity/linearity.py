@@ -22,46 +22,55 @@ the part a wrong-normalization bug would hide in):
 
 The mixer feasibility bench (``sim/mixer-topology-feasibility/mixfeas.py``)
 uses the same two ideas (coherent bins; a verified 1:3 region); this module
-restates them for an amplifier whose products stay at RF and shares no numbers
-with it.
+restates them for an amplifier whose products stay at RF. Since issue #263 the
+power arithmetic itself is no longer restated here: both benches call the
+shared primitives in ``sim/harness/rf.py`` (through this module's wrappers,
+which keep the floor convention declared at :data:`NEG_INF_DBM`).
 """
 
 from __future__ import annotations
 
-import cmath
 import json
 import math
 import re
+import sys
 from pathlib import Path
 
-Z0_OHM = 50.0
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # sim/ -> harness
+from harness import rf  # noqa: E402
+from harness.rf import Z0_OHM  # noqa: E402
+
 NEG_INF_DBM = -400.0
 
 # ---------------------------------------------------------------------------
-# power conventions
+# power conventions -- the arithmetic is delegated to sim/harness/rf.py
+# (issue #263). The public names, signatures and the floor edge convention
+# are unchanged: zero, negative and NaN all floor to NEG_INF_DBM, which
+# stays declared here until split E decides the convention itself. Each
+# convention's characterization lives in sim/harness/tests/test_rf.py.
 # ---------------------------------------------------------------------------
 
 
 def dbm_from_w(p_w: float) -> float:
-    return 10.0 * math.log10(p_w / 1e-3) if p_w > 0 else NEG_INF_DBM
+    return rf.dbm_floored(p_w, NEG_INF_DBM)
 
 
 def w_from_dbm(p_dbm: float) -> float:
-    return 1e-3 * 10.0 ** (p_dbm / 10.0)
+    return rf.watts(p_dbm)
 
 
 def vs_peak_from_pav_dbm(pav_dbm: float, z0: float = Z0_OHM) -> float:
     """Open-circuit peak amplitude of ONE tone with available power ``pav_dbm``."""
-    return math.sqrt(8.0 * z0 * w_from_dbm(pav_dbm))
+    return rf.v_open_peak_for(pav_dbm, z0)
 
 
 def pav_dbm_from_vs_peak(vs: float, z0: float = Z0_OHM) -> float:
-    return dbm_from_w(vs * vs / (8.0 * z0))
+    return rf.dbm_floored(rf.available_power_w(vs, z0), NEG_INF_DBM)
 
 
 def delivered_dbm(v_peak: float, z0: float = Z0_OHM) -> float:
     """Power delivered to a ``z0`` load by a component of peak ``v_peak``."""
-    return dbm_from_w(v_peak * v_peak / (2.0 * z0))
+    return rf.dbm_floored(rf.delivered_power_w(v_peak, z0), NEG_INF_DBM)
 
 
 # ---------------------------------------------------------------------------
@@ -167,14 +176,16 @@ def placement_coherence(plan: dict, pl: dict, variant: str) -> list[str]:
 def window_dft(samples: list[float], step_s: float, f_hz: float, t0_s: float = 0.0) -> float:
     """Single-sided peak amplitude at ``f_hz`` of ``samples`` (reference implementation).
 
-    The ngspice decks compute the same quantity as ``2*mean(x*cos)``/``2*mean(x*sin)``;
-    this routine is the pure-Python statement of it and is what the tests use to
-    qualify the normalization on known waveforms."""
-    n = len(samples)
-    acc = 0j
-    for k, x in enumerate(samples):
-        acc += x * cmath.exp(-2j * math.pi * f_hz * (t0_s + k * step_s))
-    return 2.0 * abs(acc) / n
+    Delegates to :func:`harness.rf.dft_bin_amplitude` (issue #264 unified the
+    two bench-local single-bin DFTs; this bench's conjugated ``e^{-jwt}``
+    kernel retired in favour of the generated deck's ``2*mean(x*cos)`` /
+    ``2*mean(x*sin)`` pair -- identical magnitudes, stated convention and
+    worked example in the shared docstring). The ngspice decks compute the
+    same quantity; this routine is what the tests use to qualify the
+    normalization on known waveforms. Empty input now raises the shared
+    ``ValueError("no samples")`` (previously ``ZeroDivisionError``; no call
+    site caught it)."""
+    return rf.dft_bin_amplitude(samples, step_s, f_hz, t0_s)
 
 
 def amp(c: float, s: float) -> float:

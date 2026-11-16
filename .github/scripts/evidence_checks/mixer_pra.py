@@ -2,12 +2,9 @@
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
 
-from .common import (PAIR_RE, Problems, RECORD_ID_RE, has_section, load_json_object, need_record_commit, need_sha256, need_str, record_pairs, rel)
-from .mixer_nf import check_probe_log_package
-from .passive_p1 import PASSIVE_PACKAGES
+from .common import (PAIR_RE, Problems, SHA1_RE, SOLVER_ARTIFACTS_DIR, check_probe_log_bench, check_probe_log_package, has_section, is_number_not_nan, load_json_object, need_record_commit, need_sha256, need_str, rel)
 
 
 # ---------------------------------------------------------------------------
@@ -34,15 +31,10 @@ PRA_DUT_CHECKS = {
     "response_to_baseline": ("min_ratio", "response_to_baseline_min", "ge"),
 }
 PRA_ELEMENTS = ("uu", "ul", "lu", "ll")
-SHA1_RE = re.compile(r"^[0-9a-f]{40}$")
-
-
-def _num(v: object) -> bool:
-    return isinstance(v, (int, float)) and not isinstance(v, bool) and v == v
 
 
 def _cabs(v: object) -> float | None:
-    if isinstance(v, list) and len(v) == 2 and all(_num(x) for x in v):
+    if isinstance(v, list) and len(v) == 2 and all(is_number_not_nan(x) for x in v):
         return abs(complex(v[0], v[1]))
     return None
 
@@ -61,7 +53,7 @@ def check_pra_evaluation(problems: Problems, where: str, status: str, rec: dict)
     """Thresholds, controls, DUT checks and status-follows-from-numbers. Never the science."""
     thr = rec.get("thresholds")
     if not isinstance(thr, dict) or set(thr) != set(PRA_THRESHOLDS) or not all(
-            _num(thr[k]) and thr[k] > 0 for k in thr):
+            is_number_not_nan(thr[k]) and thr[k] > 0 for k in thr):
         problems.add(where, f"JSON 'thresholds' must carry exactly {', '.join(PRA_THRESHOLDS)} as positive numbers")
         thr = None
     prov = rec.get("thresholds_provenance")
@@ -103,7 +95,7 @@ def check_pra_evaluation(problems: Problems, where: str, status: str, rec: dict)
         problems.add(where, f"evaluation.dut.y must carry {', '.join(PRA_ELEMENTS)} as [re, im] pairs")
         return ev
     kappa, u = dut.get("kappa"), dut.get("kappa_uncertainty")
-    if not _num(kappa) or not _num(u):
+    if not is_number_not_nan(kappa) or not is_number_not_nan(u):
         problems.add(where, "evaluation.dut.kappa / kappa_uncertainty must be numbers")
         return ev
     if mags["uu"] and mags["ll"]:
@@ -116,7 +108,7 @@ def check_pra_evaluation(problems: Problems, where: str, status: str, rec: dict)
         return ev
     for name, (field, key, cmp) in PRA_DUT_CHECKS.items():
         c = checks[name]
-        if not isinstance(c, dict) or not _num(c.get(field)) or not isinstance(c.get("pass"), bool):
+        if not isinstance(c, dict) or not is_number_not_nan(c.get(field)) or not isinstance(c.get("pass"), bool):
             problems.add(where, f"evaluation.dut.checks[{name!r}] needs a numeric {field!r} and a bool 'pass'")
             continue
         if thr is not None:
@@ -216,18 +208,5 @@ def check_pra_record(problems: Problems, root: Path, exp_dir: Path, stem: str, f
 
 
 def check_mixer_pumped_rf_admittance(problems: Problems, root: Path, exp_dir: Path) -> None:
-    records = exp_dir / "records"
-    claimed: set[str] = set()
-    if records.is_dir():
-        for stem, files in record_pairs(problems, root, records).items():
-            check_pra_record(problems, root, exp_dir, stem, files, claimed)
-    logs_root = exp_dir / "probe-logs"
-    if logs_root.is_dir():
-        for p in sorted(logs_root.iterdir()):
-            if not (p.is_dir() and RECORD_ID_RE.match(p.name)):
-                problems.add(rel(root, p), "probe-logs entry is not a <YYYYMMDD>-<HHMMSS>-<git-sha>/ run directory")
-            elif p.name not in claimed:
-                problems.add(rel(root, p), "probe-log package belongs to no record (orphan or incomplete run)")
-    for sub in ("corners", "netlist-snapshots", PASSIVE_PACKAGES):
-        if (exp_dir / sub).exists():
-            problems.add(rel(root, exp_dir / sub), f"{sub}/ is not part of the {PRA_BENCH} evidence layout")
+    check_probe_log_bench(problems, root, exp_dir, PRA_BENCH, check_pra_record,
+                          ("corners", "netlist-snapshots", SOLVER_ARTIFACTS_DIR))

@@ -25,7 +25,9 @@ Conventions (``testbench/ports_common.spice`` is the circuit side):
 - Spectral extraction: uniform resampling (ngspice ``linearize``) of the
   retained window ``[settle, settle + window)``, rectangular window over an
   integer number of periods of every tone (checked: :func:`coherence_problems`),
-  single-bin DFT ``A = (2/N) * sum x[k] * exp(-j 2 pi f t_k)`` so a sine of
+  single-bin DFT ``A = (2/N) * sum x[k] * exp(+j 2 pi f t_k)`` (the deck's
+  ``2*mean(x*cos)``/``2*mean(x*sin)`` pair; issue #264 verified the sign
+  against the generated deck text) so a sine of
   peak amplitude ``a`` on a bin reads ``|A| = a`` exactly.
 """
 
@@ -33,9 +35,14 @@ from __future__ import annotations
 
 import math
 import re
+import sys
 from dataclasses import dataclass, field
+from pathlib import Path
 
-Z0_OHM = 50.0
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # sim/ -> harness
+from harness import rf  # noqa: E402
+from harness.rf import Z0_OHM  # noqa: E402
+
 LO_RDIFF_OHM = 100.0
 
 #: Every value printed by a generated deck is named ``mf_<key>``.
@@ -54,37 +61,18 @@ class StudyError(ValueError):
 
 
 # ---------------------------------------------------------------------------
-# Power arithmetic
+# Power arithmetic -- delegated to sim/harness/rf.py (issue #263). The
+# public names, signatures and the strict zero/NaN edge convention are
+# unchanged: ``dbm`` is rf.dbm_strict (NaN propagates, -inf at zero), the
+# V^2/(8R) and V^2/(2R) primitives are shared verbatim. Each convention's
+# characterization lives in sim/harness/tests/test_rf.py.
 # ---------------------------------------------------------------------------
 
-
-def dbm(watts: float) -> float:
-    """Power in dBm; ``-inf`` for exactly zero, NaN propagates."""
-    if watts != watts:  # NaN
-        return float("nan")
-    if watts <= 0.0:
-        return float("-inf")
-    return 10.0 * math.log10(watts / 1e-3)
-
-
-def watts(dbm_value: float) -> float:
-    return 1e-3 * 10.0 ** (dbm_value / 10.0)
-
-
-def available_power_w(v_open_peak: float, r_source: float) -> float:
-    """Available power of a Thevenin source (peak open-circuit voltage,
-    real source resistance): ``V^2 / (8 R)``."""
-    return v_open_peak * v_open_peak / (8.0 * r_source)
-
-
-def v_open_peak_for(dbm_value: float, r_source: float) -> float:
-    """Inverse of :func:`available_power_w` for a power in dBm."""
-    return math.sqrt(8.0 * r_source * watts(dbm_value))
-
-
-def delivered_power_w(v_peak: float, r_load: float) -> float:
-    """Power delivered into a resistor by a sine of peak amplitude ``v_peak``."""
-    return v_peak * v_peak / (2.0 * r_load)
+dbm = rf.dbm_strict
+watts = rf.watts
+available_power_w = rf.available_power_w
+v_open_peak_for = rf.v_open_peak_for
+delivered_power_w = rf.delivered_power_w
 
 
 def dft_bin(samples: list[float], dt: float, freq_hz: float, t0: float = 0.0) -> complex:
@@ -92,18 +80,12 @@ def dft_bin(samples: list[float], dt: float, freq_hz: float, t0: float = 0.0) ->
     ``a * sin(2 pi f t + phi)`` on a coherent bin returns
     ``a * (sin(phi) + j cos(phi))`` (``abs`` = peak amplitude ``a``).
 
-    The same expression the generated deck evaluates in ngspice; this pure
-    Python copy is what the analytic parser tests exercise."""
-    n = len(samples)
-    if n == 0:
-        raise ValueError("no samples")
-    re_acc = im_acc = 0.0
-    w = 2.0 * math.pi * freq_hz
-    for k, x in enumerate(samples):
-        ph = w * (k * dt + t0)
-        re_acc += x * math.cos(ph)
-        im_acc += x * math.sin(ph)
-    return complex(2.0 * re_acc / n, 2.0 * im_acc / n)
+    Delegates to :func:`harness.rf.dft_bin` (issue #264 unified the two
+    bench-local single-bin DFTs; the kernel is the generated deck's
+    ``2*mean(x*cos)``/``2*mean(x*sin)`` pair -- the stated convention and
+    worked example live in the shared docstring). This pure-Python reference
+    is what the analytic parser tests exercise."""
+    return rf.dft_bin(samples, dt, freq_hz, t0)
 
 
 # ---------------------------------------------------------------------------
