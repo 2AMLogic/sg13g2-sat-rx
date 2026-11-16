@@ -326,7 +326,7 @@ def test_mixfeas_transcription_matches_committed():
                 kinds.add("tone-cycle")
             else:
                 raise AssertionError(f"unclassified committed problem: {p}")
-        tones = run.tones  # the exact tone set the committed function tests (mixfeas.py:388)
+        tones = run.tones  # the exact tone set the committed function tests (RunSpec.tones)
         mine = set(mixfeas_style_problems(bin_freqs.values(), tones, run.window_s, run.tstep_s))
         assert mine == kinds, f"{run.run_id}: transcription {mine} != committed {kinds}"
     assert MF.coherence_problems(clean) == []          # sanity: the clean spec passes
