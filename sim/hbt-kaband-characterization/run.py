@@ -191,7 +191,7 @@ def run_probe(tb, pdk) -> tuple[bool, list[str]]:
         if m and current is not None:
             values[current][m.group(1)] = float(m.group(2))
     report, ok = [], True
-    k4r = 4 * rf.K_BOLTZMANN * 50.0
+    k4r = 4 * rf.K_BOLTZMANN * rf.Z0_OHM
     for t in PROBE_TEMPS_C:
         v = values.get(t, {})
         need = ("kp_ra", "kp_rb", "kp_rc", "kp_qa", "kp_qb")

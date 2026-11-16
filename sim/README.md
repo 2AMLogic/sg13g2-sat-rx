@@ -172,6 +172,55 @@ behaviour is a separate question at separate call sites — deliberately left as
 it is rather than folded in here, because "raise" and "`-inf`" are not the same
 answer and choosing between them needs those call sites read on their own.
 
+## Reference-impedance (z0) defaults — classification
+
+`sim/harness/rf.py`'s `Z0_OHM` is the single declaration of the 50 Ω system
+port convention (issue #263). The `z0 = 50.0` *function defaults and locals*
+in the bench modules are a separate population, classified here once so the
+question is not re-asked per reader (issue #286). Three classes:
+
+**Class A — the port convention; the default must be `rf.Z0_OHM` itself** (so a
+later system-Z0 change cannot leave a bench default behind; the identity is
+asserted in each bench's tests):
+
+| site | why it is the port convention |
+|---|---|
+| `matchstudy.source_impedance` | z0 is a physical source resistance (`z = 1/(1/z0 + jwC1)`) |
+| `matchstudy.synthesize` | z0 gates realizability and sizes the L-section elements against the 50 Ω system |
+| `matchstudy.pad_dut` | z0 sizes real resistors (`rsh = z0*(k+1)/(k-1)` → `Rp1`/`Rp2`, `rse` → `Rser`) |
+| `matchstudy.nf_db_from_inoise` | the noiseless reference source impedance in `F = 1 + inoise²/(4kT0z0)` |
+| `kaband.Sweep.z0_ohm` (+ its loader default) | the sweep's declared port impedance, read live from `tb.json` |
+| `hbt-kaband-characterization/run.py` `k4r` | the `4kTR` thermal-noise reference impedance |
+| `corestudy.scan_metric` | de-embeds the driven-port reflection coefficient via `z_from_gamma(s11, z0)` |
+
+**Class B — a generic normalization impedance, legitimately the caller's
+choice; keeps its independent `50.0` default with an in-code comment**:
+`matchstudy.gamma`, `matchstudy.z_from_gamma`, `kaband.y_to_s`. Pure two-port
+algebra — nothing in them presumes this block's port convention, and every
+live caller passes the port `z0` explicitly.
+
+**Class C — not a reference impedance at all; unchanged**:
+`kaband.py`'s `zr` in the noise-parameter fit is a least-squares conditioning
+scale (`u = z/zr`, unwound as `b = bs/zr², c = cs/zr, d = ds/zr` — it cancels
+out of the fit). Binding it to `rf.Z0_OHM` would be a category error; it
+carries an in-code comment saying so.
+
+**Deliberate survivals, not classes A–C**: `sim/mixer-pumped-rf-admittance`'s
+`FIXTURES` z0 slot is the port convention but **deck-coupled** — the Python
+mirror of a physical termination resistor spelled in the fixture netlists
+(`Rks kp krs 50`), so it stays a literal that tracks the deck; that file's
+`synth_marks` reads the slot rather than re-spelling it, which closes the one
+place the port convention was declared twice inside a single file (the live
+`port_vi` path vs. the test-only synthetic path could disagree with every test
+green). The `.param z0=50` SPICE-deck literals
+(`lna-linearity/linearity.py`, `lna-match-tradeoff/matchstudy.py`,
+`lna-sparam-nf/make_stage1_fixture.py`) are netlist text a Python import
+cannot reach and are out of scope (#286); `sim/passive-p1/scripts/` keeps its
+stdlib-only boundary; `sim/lna-match-tradeoff/tests/matchfakes.py` is a test
+fixture. The live source of the port impedance in every bench run remains each
+bench's required config key (`z0_ohm` / `study.z0`) — none of this moves the
+source of truth into Python.
+
 ## Benches
 
 | Experiment | What it measures | Status |
