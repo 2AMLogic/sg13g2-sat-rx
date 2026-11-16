@@ -25,6 +25,7 @@ sys.path.insert(0, str(SCRIPTS))
 sys.path.insert(0, str(REPO / "sim"))
 
 import check_evidence_formats as chk  # noqa: E402
+from _helpers import mirror_signoff  # noqa: E402
 from harness import corners as C  # noqa: E402
 from harness import report as R  # noqa: E402
 from harness import testbench as T  # noqa: E402
@@ -45,6 +46,7 @@ def make_bench(root: Path) -> tuple[Path, T.Testbench]:
         "nominal_supply_v": 2.5, "corners": ["hbt"], "claim": "round-trip claim",
     }))
     (exp / "README.md").write_text("# roundtrip-bench\n\n## Cold start\n\n```\ntrue\n```\n")
+    mirror_signoff(root, REPO)
     return exp, T.load(exp)
 
 
