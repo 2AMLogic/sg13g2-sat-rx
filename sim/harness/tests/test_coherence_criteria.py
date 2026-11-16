@@ -3,12 +3,13 @@
 Both `sim/` benches decide whether an analysed spectral bin is coherent with
 the retained window, and each carries its own private ``coherence_problems``:
 
-- ``sim/lna-linearity/linearity.py:121`` -- relative tolerance ``tol=1e-9``
-  everywhere, Nyquist margin 8 samples per period, plus a settling-discard
-  check;
-- ``sim/mixer-topology-feasibility/mixfeas.py:465`` -- absolute ``tol=1e-6``
-  on the window test (relative on cycles), bare Nyquist (2 samples per
-  period), no discard check, and a coherence test on the run tones.
+- ``coherence_problems`` in ``sim/lna-linearity/linearity.py`` -- relative
+  tolerance ``tol=1e-9`` everywhere, Nyquist margin 8 samples per period, plus
+  a settling-discard check;
+- ``coherence_problems`` in ``sim/mixer-topology-feasibility/mixfeas.py`` --
+  absolute ``tol=1e-6`` on the window test (relative on cycles), bare Nyquist
+  (2 samples per period), no discard check, and a coherence test on the run
+  tones.
 
 Neither convention is ratified anywhere in ``spec/``; every recorded result of
 three campaigns (lna-linearity, lna-headroom, mixer-topology-feasibility) is
@@ -87,7 +88,7 @@ EXPECTED_WINDOW_LOOSENING = {2e4: LIN_TOL * 2e4 / MIX_TOL,   # 20x
 
 
 def mixfeas_style_problems(bins, tones, window_s, tstep_s, tol=MIX_TOL):
-    """mixfeas.coherence_problems (mixfeas.py:465) restated over plain
+    """mixfeas.coherence_problems restated over plain
     (bins, tones, window, step) so the LNA analysis bins can be evaluated
     under the mixer convention. Transcribed verbatim from the committed
     function; cross-checked against it by
@@ -205,6 +206,7 @@ def mixer_rows(record_ids):
             rows.append(dict(campaign="mixer-topology-feasibility",
                              record=", ".join(record_ids),
                              case=f"{band.name}/{kind}", bins=bin_freqs,
+                             union_freqs=union,
                              window_s=run.window_s, step_s=run.tstep_s,
                              discard_s=run.settle_s, n=n, d=d,
                              own=own, other=other,
@@ -277,6 +279,23 @@ def test_real_nyquist_margins():
     for row in lna + headroom + mix:
         assert row["f_step"] < LIN_NYQUIST_F_STEP, f"{row['case']} outside the proposed bound"
         assert row["f_step"] < MIX_NYQUIST_F_STEP, f"{row['case']} outside bare Nyquist"
+
+
+def test_real_analysed_frequencies_are_positive():
+    """Sub-test 3's `f <= 0` exclusion moves nothing measured: no committed
+    plan proposes a non-positive analysed bin or tone (the record's
+    Consequences quotes this). The transcription itself rejects what the
+    criterion rejects."""
+    lna, headroom, mix = build_real_rows()
+    for row in lna + headroom + mix:
+        for f in row["bins"].values():
+            assert f > 0, f"{row['campaign']}/{row['case']}: non-positive bin {f!r}"
+    for row in mix:
+        for f in row["union_freqs"].values():
+            assert f > 0, f"{row['campaign']}/{row['case']}: non-positive tone {f!r}"
+    window_s, step_s = 2e-8, 1e-12
+    assert mixfeas_style_problems((0.0,), (), window_s, step_s) == ["nyquist"]
+    assert mixfeas_style_problems((-1.5e10,), (), window_s, step_s) == ["nyquist"]
 
 
 def test_headroom_rows_equal_lna_base_rows():
@@ -387,8 +406,14 @@ def test_decision_record_matches_measurement():
     assert REPO_RECORD.exists(), "spec/decision-records/0009-coherent-bin-criterion.md missing"
     text = REPO_RECORD.read_text()
     assert "Status**: proposed" in text, "record must be proposed, not ratified"
-    for quoted in ("27", "0.0212", "1e-9", "8 samples per period", "47.2"):
+    for quoted in ("27", "0.0212", "1e-9", "8 samples per period", "47.2", "f <= 0"):
         assert quoted in text, f"record does not quote {quoted!r}"
+    # sub-test 3 must rule on the non-positive-frequency exclusion, not omit
+    # it: pin the two-sided reject clause as it appears in the Decision (the
+    # bare "f <= 0" also occurs in the Context quoting mixfeas's old guard).
+    assert "`f <= 0` or `f * step_s > 1.0 / 8.0`" in text, (
+        "Decision sub-test 3 must reject `f <= 0` alongside the "
+        "8-samples-per-period bound")
     # the Consequences section's window-gate loosening, derived from the two
     # tolerances so record and measurement cannot drift: 20x at n = 2e4,
     # 80x at n = 8e4, with the old bound quoted in relative terms

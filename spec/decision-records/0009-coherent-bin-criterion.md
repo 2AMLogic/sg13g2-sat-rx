@@ -68,8 +68,10 @@ tones as separate quantities), with one tolerance value `tol = 1e-9`:
    `abs(c - round(c)) > 1e-9 * max(1, c)`, where `c = f * window_s`. Both
    existing conventions are already relative here; the value follows the
    single-tolerance rule below.
-3. **Nyquist margin — 8 samples per period.** Reject when
-   `f * step_s > 1.0 / 8.0`.
+3. **Nyquist margin — 8 samples per period, positive frequencies only.**
+   Reject when `f <= 0` or `f * step_s > 1.0 / 8.0`. The `f <= 0` exclusion is
+   mixfeas's lower guard, retained verbatim (linearity's criterion has no such
+   test today — see Consequences).
 4. **Settling discard — part of the criterion.** Reject when
    `abs(d - round(d)) > 1e-9 * max(1, d)`, where `d = settle_discard_s /
    step_s`, for any campaign that discards a settling prefix before the
@@ -171,8 +173,11 @@ The analysed quantities are single-bin DFT amplitudes over the retained
 window on the resampled grid. A bare Nyquist guard (2 samples per period)
 only excludes `f >= Nyquist` and `f <= 0`; it gives the extraction no margin
 against neighbouring products folding into the analysed bin or against
-resampler artifacts as a bin approaches Nyquist. 8 samples per period is the
-margin the LNA benches already apply. Measured cost: none — the worst real
+resampler artifacts as a bin approaches Nyquist. The guard's lower half is
+kept — sub-test 3 rejects `f <= 0` outright, because a non-positive analysed
+bin completes an integer number of cycles and the window and cycle tests
+cannot catch it — while the upper bound is tightened from 2 to 8 samples per
+period, the margin the LNA benches already apply. Measured cost: none — the worst real
 bin sits 5.9x inside the bound, and no campaign proposes a bin within 2x of
 it (the revisit trigger below names the exact limit). The synthetic Nyquist
 case (4 samples per period: `f*step = 0.25`) is the checkable demonstration
@@ -209,7 +214,9 @@ still diverges — but the choice carries no re-qualification burden.
   cycles, bare Nyquist, tone-coherence test, no discard check) — rejected per
   sub-test: the window mode does not scale with `n` (failure mode near
   `n ≈ 1e9`, meaning drift below `n = 1000`); bare Nyquist gives the
-  single-bin DFT extraction no margin; the missing discard check leaves an
+  single-bin DFT extraction no margin — its upper bound is replaced by the
+  8-samples-per-period test and its `f <= 0` lower exclusion is kept in
+  sub-test 3; the missing discard check leaves an
   off-grid settle prefix undetected in the campaign that actually discards
   one. Its tone-coherence test is kept: the criterion applies to every
   analysed frequency, and the mixer caller passes its tones into the same
@@ -277,8 +284,16 @@ Checkable conditions, each independently sufficient:
   3–4 decades above fp noise and ≥3 decades below the smallest meaningful
   decimal typo: physically meaningless territory, but stated plainly because
   it is a real loosening.
-- **New plans are bounded**: an 8-samples-per-period margin and a
-  grid-aligned discard are now plan-validation requirements (Trigger names
+- **The mixer campaign's non-positive-frequency exclusion is retained — and
+  generalised**: sub-test 3 keeps mixfeas's `f <= 0` bin guard verbatim and
+  applies it to every analysed frequency, tones included. mixfeas tests bins
+  only, and linearity's criterion has no positive-frequency requirement at
+  all — a non-positive bin completes an integer number of cycles, so its
+  window and cycle tests are silent. Measured cost: zero — no committed plan
+  proposes a non-positive analysed bin or tone (asserted by the measurement).
+- **New plans are bounded**: an 8-samples-per-period margin, a grid-aligned
+  discard and positive analysed frequencies are now plan-validation
+  requirements (Trigger names
   the exact limits), which constrains future timing choices — e.g. a
   long-settling 1 ms/1 fs window (`n = 1e9`) is admissible under the relative
   bound but must clear the margin re-derivation first.
