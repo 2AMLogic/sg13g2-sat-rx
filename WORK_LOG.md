@@ -8,6 +8,11 @@ Chronological record of merged pull requests and closed issues, maintained by th
 
 ### 2026-11-16
 
+- **PR #305**: test: catch aliased sha256 file hashers in the harness via an AST check
+- **PR #303**: lna-linearity: pin the DUT by declaration, run the post-#79 core campaign, supersede the pre-#79 record
+- **PR #245**: docs: roadmap as of 2026-11-13
+- **Issue #291** (closed): The harness single-hash guard matches one spelling (def sha256_file) — a differently-named file hash still passes it
+- **Issue #273** (closed): Re-run sim/lna-linearity on the post-#79 core (new declaration, one campaign)
 - **PR #293**: refactor: single-source the two-tone IIP3 estimator into sim/harness/iip3.py
 - **Issue #276** (closed): Two independent fit_iip3 implementations use different IIP3 estimators (free-slope intersection vs ideal-slope intercept) and can return different values for the same sweep rows
 - **PR #295**: docs: drop stale tool-provenance prose from lna_stage1 note and nf fixture
