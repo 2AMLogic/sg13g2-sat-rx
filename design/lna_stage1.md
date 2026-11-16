@@ -29,8 +29,8 @@ Ic(Q1). Read every record cited on this page against that:
 
 | File | What |
 |---|---|
-| `lna_stage1.sch`, `lna_stage1.sym` | the schematic and its symbol (xschem 3.4.4) |
-| `export_netlist.sh` | regenerates `netlist/lna_stage1.spice` through `klt netlist --block` (and normalizes the absolute `** sch_path:` line); `--check` fails if the committed netlist is stale |
+| `lna_stage1.sch`, `lna_stage1.sym` | the schematic and its symbol (tool provenance: the committed netlist's `* tools:` header, regenerated on every export) |
+| `export_netlist.sh` | regenerates `netlist/lna_stage1.spice` through `klt netlist --block --relative-paths --no-provenance-header` — those flags keep the committed netlist byte-reproducible from any checkout, so the wrapper itself only prepends the header comments; `--check` fails if the committed netlist is stale |
 | `netlist/lna_stage1.spice` | the derived subcircuit netlist (T1 item 1: "the netlist derived from them"), regenerated on every design change; `signoff/evidence/item1-design-sources.json` re-attests the sources and the freshness check |
 
 `sim/lna-sparam-nf/testbench/lna_stage1.spice` embeds `netlist/lna_stage1.spice`
