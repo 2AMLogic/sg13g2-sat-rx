@@ -36,12 +36,14 @@ POWER / dB CONVERSIONS (issue #263, split B of #257):
   carrying ONE stated zero convention (``db10`` guards nothing;
   ``db20`` floors non-positive magnitudes -- including NaN -- to -inf).
 - :func:`dbm_strict` / :func:`dbm_floored` -- watts to dBm under the two
-  live edge conventions, named so the choice is visible at the call site:
+  edge conventions, named so the choice is visible at the call site:
   ``dbm_strict`` (NaN propagates, -inf at zero) and ``dbm_floored`` (the
-  caller's required ``floor`` swallows zero, negative and NaN). Which
-  convention a record rests on is split E of #257's decision; until then
-  every existing site keeps its own, and this module provides both
-  without preferring either.
+  caller's required ``floor`` swallows zero, negative and NaN). Split E of
+  #257 left the choice open; issue #268 settled it -- every watts-to-dBm
+  site in the tree uses ``dbm_strict`` (canonical statement:
+  ``sim/README.md`` -> "Watts-to-dBm edge convention") -- and this module
+  keeps both as separately named entry points, ``dbm_floored``
+  characterized by tests but unused by any site today.
 - :func:`watts`, :func:`available_power_w`, :func:`v_open_peak_for`,
   :func:`delivered_power_w` -- the power arithmetic both power benches
   shared bit-for-bit under two naming schemes (available power
@@ -147,12 +149,14 @@ def db20(x: complex | float) -> float:
 
 
 def dbm_strict(power_w: float) -> float:
-    """Power in dBm, strict edge convention (mixfeas's, shared verbatim).
+    """Power in dBm, strict edge convention -- the repo-wide one (issue #268).
 
     Exactly zero or negative returns -inf; NaN PROPAGATES (the explicit
     ``power_w != power_w`` branch); +inf propagates. The strict sibling of
     :func:`dbm_floored` -- which convention a record rests on is chosen by
-    the name at the call site, never by a policy default here.
+    the name at the call site, never by a policy default here. Since #268
+    every watts-to-dBm site in the tree uses this convention; the canonical
+    statement is ``sim/README.md`` -> "Watts-to-dBm edge convention".
     """
     if power_w != power_w:  # NaN
         return float("nan")
@@ -162,13 +166,14 @@ def dbm_strict(power_w: float) -> float:
 
 
 def dbm_floored(power_w: float, floor: float) -> float:
-    """Power in dBm with the caller's floor (linearity's convention).
+    """Power in dBm with the caller's floor (no current watts-to-dBm site).
 
     Zero, negative AND NaN all return ``floor`` -- the NaN case because
     ``power_w > 0`` is false for NaN; +inf propagates. ``floor`` is
-    REQUIRED with no default: which floor a bench pins (linearity passes
-    its ``NEG_INF_DBM``) is split E of #257's decision, not something this
-    helper chooses.
+    REQUIRED with no default. Kept as a named entry point: split E of
+    #257 reserved it for a bench that needs a finite floor, and issue #268
+    chose the strict convention for the tree instead, so no site passes
+    one today -- the characterization tests keep its behaviour pinned.
     """
     if power_w > 0.0:
         return 10.0 * math.log10(power_w / 1e-3)
