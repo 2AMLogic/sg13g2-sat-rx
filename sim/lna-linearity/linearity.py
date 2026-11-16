@@ -22,8 +22,10 @@ the part a wrong-normalization bug would hide in):
 
 The mixer feasibility bench (``sim/mixer-topology-feasibility/mixfeas.py``)
 uses the same two ideas (coherent bins; a verified 1:3 region); this module
-restates them for an amplifier whose products stay at RF and shares no numbers
-with it.
+restates them for an amplifier whose products stay at RF. Since issue #263 the
+power arithmetic itself is no longer restated here: both benches call the
+shared primitives in ``sim/harness/rf.py`` (through this module's wrappers,
+which keep the floor convention declared at :data:`NEG_INF_DBM`).
 """
 
 from __future__ import annotations
@@ -36,35 +38,39 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # sim/ -> harness
 from harness import iip3, rf  # noqa: E402
+from harness.rf import Z0_OHM  # noqa: E402
 
-Z0_OHM = 50.0
 NEG_INF_DBM = -400.0
 
 # ---------------------------------------------------------------------------
-# power conventions
+# power conventions -- the arithmetic is delegated to sim/harness/rf.py
+# (issue #263). The public names, signatures and the floor edge convention
+# are unchanged: zero, negative and NaN all floor to NEG_INF_DBM, which
+# stays declared here until split E decides the convention itself. Each
+# convention's characterization lives in sim/harness/tests/test_rf.py.
 # ---------------------------------------------------------------------------
 
 
 def dbm_from_w(p_w: float) -> float:
-    return 10.0 * math.log10(p_w / 1e-3) if p_w > 0 else NEG_INF_DBM
+    return rf.dbm_floored(p_w, NEG_INF_DBM)
 
 
 def w_from_dbm(p_dbm: float) -> float:
-    return 1e-3 * 10.0 ** (p_dbm / 10.0)
+    return rf.watts(p_dbm)
 
 
 def vs_peak_from_pav_dbm(pav_dbm: float, z0: float = Z0_OHM) -> float:
     """Open-circuit peak amplitude of ONE tone with available power ``pav_dbm``."""
-    return math.sqrt(8.0 * z0 * w_from_dbm(pav_dbm))
+    return rf.v_open_peak_for(pav_dbm, z0)
 
 
 def pav_dbm_from_vs_peak(vs: float, z0: float = Z0_OHM) -> float:
-    return dbm_from_w(vs * vs / (8.0 * z0))
+    return rf.dbm_floored(rf.available_power_w(vs, z0), NEG_INF_DBM)
 
 
 def delivered_dbm(v_peak: float, z0: float = Z0_OHM) -> float:
     """Power delivered to a ``z0`` load by a component of peak ``v_peak``."""
-    return dbm_from_w(v_peak * v_peak / (2.0 * z0))
+    return rf.dbm_floored(rf.delivered_power_w(v_peak, z0), NEG_INF_DBM)
 
 
 # ---------------------------------------------------------------------------

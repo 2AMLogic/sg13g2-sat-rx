@@ -6,9 +6,8 @@ import json
 import re
 from pathlib import Path
 
-from .common import Problems, duplicates, load_json_object, read_gzip_text, rel
-from .lna_match import LNAMATCH_STATUSES, _all_numbers, _lnamatch_cid
-from .passive_p1 import PASSIVE_PACKAGES, _sha256_of
+from .common import Problems, SOLVER_ARTIFACTS_DIR, all_numbers_allow_nan, corner_id, duplicates, load_json_object, read_gzip_text, reject_foreign_dirs, rel, sha256_of
+from .lna_match import LNAMATCH_STATUSES
 
 
 # ---------------------------------------------------------------------------
@@ -36,7 +35,7 @@ LNACORE_BOUND_KEYS = ("f_hz", "nf_bound_db", "fmin_db", "rn_ohm", "gt_at_nf_boun
 def lnacore_expected_ids(variants: dict, study: dict) -> list[str]:
     """(frozen variants) x (frozen #74 PVT grid); mirrors corestudy.expected_points."""
     pvt = study["pvt"]
-    return [f"{v['name']}__{_lnamatch_cid(p, float(t), float(vv))}" for v in variants["variants"]
+    return [f"{v['name']}__{corner_id(p, float(t), float(vv))}" for v in variants["variants"]
             for p in pvt["processes"] for t in pvt["temperatures_c"] for vv in pvt["supplies_v"]]
 
 
@@ -79,7 +78,7 @@ def check_lnacore_points(problems: Problems, root: Path, path: Path, points: obj
             continue
         sm = x.get("summary")
         scalars = [v for v in sm.values() if not isinstance(v, list)] if isinstance(sm, dict) else []
-        if not isinstance(sm, dict) or not sm or not _all_numbers(scalars):
+        if not isinstance(sm, dict) or not sm or not all_numbers_allow_nan(scalars):
             problems.add(wp, f"{pid}: ok point with a missing or non-finite summary")
         b = x.get("bound")
         if not isinstance(b, dict) or not isinstance(b.get("f_hz"), list):
@@ -90,7 +89,7 @@ def check_lnacore_points(problems: Problems, root: Path, path: Path, points: obj
             problems.add(wp, f"{pid}: bound grid has {n} points, the declaration says {dense_n}")
         for key in LNACORE_BOUND_KEYS:
             arr = b.get(key)
-            if not isinstance(arr, list) or len(arr) != n or not _all_numbers(arr):
+            if not isinstance(arr, list) or len(arr) != n or not all_numbers_allow_nan(arr):
                 problems.add(wp, f"{pid}: bound.{key} missing, wrong length or non-finite")
         if not isinstance(x.get("op"), dict) or "pass" not in x["op"]:
             problems.add(wp, f"{pid}: ok point without an operating-point verdict")
@@ -151,10 +150,10 @@ def check_lnacore_record(problems: Problems, root: Path, exp_dir: Path, rid: str
     for key, name in (("variants_json_sha256", "variants.json"), ("method_study_sha256", "study.json"),
                       ("design_netlist_sha256", "lna_stage1.spice")):
         f = snap / name
-        if f.is_file() and fi.get(key) != _sha256_of(f):
+        if f.is_file() and fi.get(key) != sha256_of(f):
             problems.add(wj, f"frozen_inputs.{key} does not match the frozen netlist-snapshots/<id>/{name}")
     if (snap / "variants.json").is_file() and (data.get("declaration") or {}).get("sha256") != \
-            _sha256_of(snap / "variants.json"):
+            sha256_of(snap / "variants.json"):
         problems.add(wj, "declaration.sha256 does not match the frozen netlist-snapshots/<id>/variants.json")
     chosen = (data.get("selection") or {}).get("chosen")
     if variants is not None and chosen is not None:
@@ -227,6 +226,4 @@ def check_lna_core_variants(problems: Problems, root: Path, exp_dir: Path) -> No
             for p in sorted(d.iterdir()):
                 if p.name not in ids:
                     problems.add(rel(root, p), f"{sub} entry belongs to no record in this experiment (orphan evidence)")
-    for sub in ("probe-logs", PASSIVE_PACKAGES):
-        if (exp_dir / sub).exists():
-            problems.add(rel(root, exp_dir / sub), f"{sub}/ is not part of the lna-core-variants evidence layout")
+    reject_foreign_dirs(problems, root, exp_dir, "lna-core-variants", ("probe-logs", SOLVER_ARTIFACTS_DIR))

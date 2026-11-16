@@ -5,8 +5,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from .common import Problems, has_section, load_json_object, read_gzip_text, rel
-from .passive_p1 import PASSIVE_PACKAGES
+from .common import Problems, SOLVER_ARTIFACTS_DIR, has_section, load_json_object, read_gzip_text, reject_foreign_dirs, rel
 
 
 # ---------------------------------------------------------------------------
@@ -116,6 +115,4 @@ def check_lna_headroom(problems: Problems, root: Path, exp_dir: Path) -> None:
             for p in sorted(d.iterdir()):
                 if p.name not in ids:
                     problems.add(rel(root, p), f"{sub} entry belongs to no record in this experiment (orphan evidence)")
-    for sub in ("probe-logs", PASSIVE_PACKAGES):
-        if (exp_dir / sub).exists():
-            problems.add(rel(root, exp_dir / sub), f"{sub}/ is not part of the {HEADROOM_BENCH} evidence layout")
+    reject_foreign_dirs(problems, root, exp_dir, HEADROOM_BENCH, ("probe-logs", SOLVER_ARTIFACTS_DIR))
