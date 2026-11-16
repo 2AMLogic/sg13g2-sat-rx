@@ -10,8 +10,8 @@
     {
       "mechanic": "harness_frozen_dut",
       "master": "sim/harness/frozen_dut.py",
-      "symbols": ["sha256_bytes", "resolve"],
-      "what": "Frozen-DUT netlist resolution: resolve a declared netlist against its sha256, falling back to the record's snapshot."
+      "symbols": ["sha256_path", "resolve"],
+      "what": "Frozen-DUT netlist resolution: resolve a declared netlist against its sha256, falling back to the record's snapshot. (sha256_bytes was renamed sha256_path by the harness single-hash-guard refactor — it hashes a file at a path, not bytes in memory.)"
     },
     {
       "mechanic": "harness_klt_driver",
