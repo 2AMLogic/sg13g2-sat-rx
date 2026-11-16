@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import gzip
+import hashlib
 import io
 import json
 import re
@@ -15,12 +16,15 @@ from pathlib import Path
 
 RECORD_ID_RE = re.compile(r"^\d{8}-\d{6}-[0-9a-f]{7,40}$")
 RECORD_ID_PREFIX_RE = re.compile(r"^(\d{8}-\d{6}-[0-9a-f]{7,40})")
+SHA1_RE = re.compile(r"^[0-9a-f]{40}$")
 PROTECTED_RE = re.compile(r"^sim/[^/]+/(records|corners|netlist-snapshots|probe-logs|solver-artifacts)/")
 NATIVE_STATUSES = ("pass", "fail", "error")
+MIXER_STATUSES = ("METHOD_VALIDATION", "MODEL_ABSENT", "UNCONVERGED", "CAPABILITY_UNAVAILABLE")
 NATIVE_SNAPSHOT_NOTE = b"* This is a verbatim copy taken at record time. Do not edit."
 NATIVE_SECTIONS = ("Evidence", "Result", "Summary", "Environment")
 KABAND_SECTIONS = ("Grid", "Provenance", "Data quality", "Limitations", "Sidecars")
 KABAND_SIDECAR_SUFFIXES = ("-points.csv.gz", "-cells.csv", "-best.csv")
+SOLVER_ARTIFACTS_DIR = "solver-artifacts"
 NUM_RE = re.compile(r"-?\d+(?:\.\d+)?")
 
 
@@ -72,6 +76,14 @@ def expand_matrix(processes: list[str], temps: list[float], supplies: list[float
 
 def numbers(text: str) -> list[float]:
     return [float(x) for x in NUM_RE.findall(text)]
+
+
+def is_number_not_nan(v: object) -> bool:
+    return isinstance(v, (int, float)) and not isinstance(v, bool) and v == v
+
+
+def all_numbers_allow_nan(values) -> bool:
+    return all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in values)
 
 
 def duplicates(items: list) -> list:
@@ -195,6 +207,14 @@ def need_sha256(problems: Problems, where: str, value: object, label: str) -> No
         problems.add(where, f"{label} is missing or not a 64-hex sha256")
 
 
+def sha256_of(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
 def need_record_commit(problems: Problems, where: str, env: dict, rid: str) -> object:
     git = env.get("git")
     commit = git.get("commit") if isinstance(git, dict) else None
@@ -271,6 +291,59 @@ def check_probe_log_bench(problems: Problems, root: Path, exp_dir: Path, bench: 
                 problems.add(rel(root, p), "probe-logs entry is not a <YYYYMMDD>-<HHMMSS>-<git-sha>/ run directory")
             elif p.name not in claimed:
                 problems.add(rel(root, p), "probe-log package belongs to no record (orphan or incomplete run)")
+    reject_foreign_dirs(problems, root, exp_dir, bench, foreign)
+
+
+def reject_orphan_sidecars(problems: Problems, root: Path, exp_dir: Path, ids: set[str]) -> None:
+    """Flag ``corners/`` and ``netlist-snapshots/`` entries that no record of this
+    bench claims, matching the entry name exactly against a record id.
+
+    Exact match on purpose: ``core.py``'s harness-native loop looks the same but
+    matches a record-id *prefix* (``RECORD_ID_PREFIX_RE``), and folding it in here
+    would flag committed ``<id>.spice``/``<id>.tb.json`` snapshots as orphans.
+    """
+    for sub in ("corners", "netlist-snapshots"):
+        d = exp_dir / sub
+        if d.is_dir():
+            for p in sorted(d.iterdir()):
+                if p.name not in ids:
+                    problems.add(rel(root, p), f"{sub} entry belongs to no record in this experiment (orphan evidence)")
+
+
+def check_sidecar_group_bench(problems: Problems, root: Path, exp_dir: Path, bench: str,
+                              declaration: str, record_file_re: re.Pattern,
+                              sidecar_hint: str, check_record: Callable[..., None],
+                              foreign: tuple[str, ...]) -> None:
+    """Layout of a sidecar-group bench: per-record ``<id>.md``/``<id>.json`` pairs plus one
+    ``<id><sidecar>`` data file each, an ``orphan-evidence`` rejection and foreign dirs.
+
+    ``check_record(problems, root, exp_dir, rid)`` carries the per-record rules,
+    which stay per-adapter (issue #109 step 3): their semantics intentionally
+    differ. Everything around them -- the ``ids`` set, the records walk, the
+    ``.md``-required rule and the orphan/foreign tails -- is shared, and every
+    bench-varying token (declaration filename, record regex, sidecar name, bench
+    name) is passed in, so no diagnostic string changes per caller.
+    """
+    if not (exp_dir / declaration).is_file():
+        problems.add(rel(root, exp_dir), f"{bench} has no {declaration} declaration")
+    records = exp_dir / "records"
+    ids: set[str] = set()
+    if records.is_dir():
+        groups: dict[str, set[str]] = {}
+        for p in sorted(records.iterdir()):
+            m = record_file_re.match(p.name)
+            if not m:
+                problems.add(rel(root, p), f"unexpected file in {bench} records/ "
+                             f"(only <id>.md, <id>.json, {sidecar_hint})")
+                continue
+            groups.setdefault(m.group(1), set()).add(m.group(2))
+        for rid, parts in sorted(groups.items()):
+            if ".md" not in parts:
+                problems.add(rel(root, records), f"evidence for {rid} belongs to no record (no {rid}.md)")
+                continue
+            ids.add(rid)
+            check_record(problems, root, exp_dir, rid)
+    reject_orphan_sidecars(problems, root, exp_dir, ids)
     reject_foreign_dirs(problems, root, exp_dir, bench, foreign)
 
 

@@ -51,6 +51,7 @@ for _p in (
         sys.path.insert(0, str(_p))
 
 import kaband  # noqa: E402
+import linearity as lin  # noqa: E402
 import lna_nf as nf  # noqa: E402
 import linearity as L  # noqa: E402
 import matchstudy as ms  # noqa: E402
@@ -327,6 +328,168 @@ def test_fit_numerators_route_through_the_sq_variant_not_sqrt():
 
 
 # ---------------------------------------------------------------------------
+# Power / dB characterization (issue #263) -- written BEFORE the move, so a
+# delegation that changes a number fails here instead of in a record.
+# ---------------------------------------------------------------------------
+
+#: Positive-finite power vectors (W) and dBm vectors shared by the power
+#: tables; the edge probes are per-table below.
+POWERS_W = (1e-15, 1e-12, 2.5e-9, 1e-6, 1e-3, 0.01, 1.0, 2.5, 100.0)
+DBMS = (-30.0, -10.0, 0.0, 3.0, 10.0, 30.0)
+#: Edge probes for watts->dBm: zero, negative, NaN, both infinities.
+DBM_EDGES_W = (0.0, -1.0, float("nan"), float("inf"), float("-inf"))
+#: Peak voltages and real resistances for the V^2/R tables.
+VOLTS = (0.0, 1e-6, 0.025, 1.0, 3.0)
+RS = (25.0, 50.0, 100.0)
+#: dB-scale input probes: positive finite, zero, negative, NaN, +inf.
+DB_INPUTS = (1e-6, 0.5, 2.0, 1e6, 0.0, -1.0, float("nan"), float("inf"))
+
+
+def test_power_helpers_agree_on_the_positive_finite_domain():
+    """Every former copy and the shared primitive are bit-identical on
+    positive finite inputs -- the domain split B unifies."""
+    for w in POWERS_W:
+        assert_bits_equal(hrf.dbm_strict(w), mf.dbm(w), f"strict {w=}")
+        assert_bits_equal(hrf.dbm_strict(w), lin.dbm_from_w(w), f"strict vs lin {w=}")
+    for dbm_value in DBMS:
+        assert_bits_equal(hrf.watts(dbm_value), mf.watts(dbm_value),
+                          f"watts {dbm_value=}")
+        assert_bits_equal(hrf.watts(dbm_value), lin.w_from_dbm(dbm_value),
+                          f"watts vs lin {dbm_value=}")
+    for v in VOLTS:
+        for r in RS:
+            assert_bits_equal(hrf.available_power_w(v, r), mf.available_power_w(v, r),
+                              f"pav {v=} {r=}")
+            assert_bits_equal(hrf.delivered_power_w(v, r), mf.delivered_power_w(v, r),
+                              f"pdel {v=} {r=}")
+    for p_dbm in DBMS:
+        for r in RS:
+            assert_bits_equal(hrf.v_open_peak_for(p_dbm, r), mf.v_open_peak_for(p_dbm, r),
+                              f"vopen {p_dbm=} {r=}")
+        assert_bits_equal(hrf.v_open_peak_for(p_dbm, hrf.Z0_OHM),
+                          lin.vs_peak_from_pav_dbm(p_dbm), f"vopen vs lin {p_dbm=}")
+    for vs in VOLTS:
+        assert_bits_equal(
+            hrf.dbm_strict(hrf.available_power_w(vs, hrf.Z0_OHM)),
+            lin.pav_dbm_from_vs_peak(vs), f"pav_dbm vs lin {vs=}")
+        assert_bits_equal(
+            hrf.dbm_strict(hrf.delivered_power_w(vs, hrf.Z0_OHM)),
+            lin.delivered_dbm(vs), f"delivered_dbm vs lin {vs=}")
+
+
+def test_watts_to_dbm_edge_convention_is_repo_wide():
+    """Issue #268 settled the watts->dBm edge convention split E left open:
+    strict everywhere -- positive finite converts, zero and negative give
+    ``-inf``, NaN propagates -- so ``mf.dbm`` and ``lin.dbm_from_w`` agree on
+    every input, edges included, and linearity's former finite -400.0 floor
+    (``linearity.NEG_INF_DBM``) is gone with the site. The canonical
+    statement is ``sim/README.md`` -> "Watts-to-dBm edge convention"."""
+    nan = float("nan")
+    inf, minf = float("inf"), float("-inf")
+    # Both former sites now agree with the shared primitive on every edge.
+    for w in (*DBM_EDGES_W, -0.0, -1e-30):
+        assert_bits_equal(hrf.dbm_strict(w), mf.dbm(w), f"strict edge {w=}")
+        assert_bits_equal(hrf.dbm_strict(w), lin.dbm_from_w(w),
+                          f"strict edge vs lin {w=}")
+    assert mf.dbm(0.0) == minf
+    assert mf.dbm(-1.0) == minf
+    assert math.isnan(mf.dbm(nan))
+    assert mf.dbm(inf) == inf
+    assert mf.dbm(minf) == minf
+    assert not hasattr(lin, "NEG_INF_DBM")
+    # The floor primitive stays available as a named entry point for any
+    # future site that needs one: the caller's floor is honoured verbatim
+    # for every non-positive/NaN input, and no default floor exists.
+    for floor in (-400.0, -300.0, 0.0):
+        for w in (0.0, -1.0, nan, minf):
+            assert hrf.dbm_floored(w, floor) == floor, (floor, w)
+    with pytest.raises(TypeError):
+        hrf.dbm_floored(0.5)  # no default floor: the caller must name it
+
+
+def test_watts_edges_and_round_trips():
+    inf, minf = float("inf"), float("-inf")
+    assert hrf.watts(minf) == 0.0
+    assert math.isnan(hrf.watts(float("nan")))
+    assert hrf.watts(inf) == inf
+    for w in POWERS_W:
+        # log10/10** is not a bit-exact round trip at every mantissa; the
+        # characterization claim is agreement between copies, and the
+        # round trip to ~1 ulp.
+        rt = hrf.watts(hrf.dbm_strict(w))
+        assert rt == pytest.approx(w, rel=1e-14), (w, rt)
+    for dbm_value in DBMS:
+        rt = hrf.dbm_strict(hrf.watts(dbm_value))
+        assert rt == pytest.approx(dbm_value, rel=1e-12, abs=1e-12), (dbm_value, rt)
+        # The composed voltage round trip through the shared primitives.
+        vs = hrf.v_open_peak_for(dbm_value, hrf.Z0_OHM)
+        pav = hrf.dbm_floored(hrf.available_power_w(vs, hrf.Z0_OHM), -400.0)
+        assert pav == pytest.approx(dbm_value, rel=1e-12, abs=1e-12), (dbm_value, pav)
+
+
+def test_available_vs_delivered_gap_is_exactly_10log10_4():
+    for v in (0.025, 1.0, 3.0):
+        for r in RS:
+            pav = hrf.dbm_floored(hrf.available_power_w(v, r), -400.0)
+            pdel = hrf.dbm_floored(hrf.delivered_power_w(v, r), -400.0)
+            assert pdel - pav == pytest.approx(10.0 * math.log10(4.0), rel=1e-9), (v, r)
+    # The issue's concrete probe: 1 V peak into 50 ohm delivers exactly 10 dBm.
+    assert lin.delivered_dbm(1.0) == 10.0
+    assert hrf.dbm_floored(hrf.delivered_power_w(1.0, hrf.Z0_OHM), -400.0) == 10.0
+
+
+def test_db10_db20_delegation_preserves_each_guard():
+    inf = float("inf")
+    # db10 family: no guard -- zero/negative raise, NaN propagates as NaN.
+    for x in DB_INPUTS:
+        if math.isnan(x):
+            assert math.isnan(kaband.db10(x)) and math.isnan(hrf.db10(x)), x
+            continue
+        try:
+            want = hrf.db10(x)
+        except ValueError:
+            with pytest.raises(ValueError):
+                kaband.db10(x)
+            continue
+        assert_bits_equal(kaband.db10(x), want, f"kaband db10 {x=}")
+    with pytest.raises(ValueError):
+        kaband.db10(0.0)
+    with pytest.raises(ValueError):
+        kaband.db10(-1.0)
+    pytest.importorskip("numpy")
+    import nfmethod
+
+    assert_bits_equal(nfmethod.db(2.0), hrf.db10(2.0), "nfmethod db")
+    with pytest.raises(ValueError):
+        nfmethod.db(0.0)
+    assert math.isnan(nfmethod.db(float("nan")))
+    # db20 family: non-positive magnitude (including NaN) floors to -inf.
+    for x in DB_INPUTS:
+        assert_bits_equal(ms.db20(x), hrf.db20(x), f"matchstudy db20 {x=}")
+    assert ms.db20(0.0) == float("-inf")
+    # Negative amplitudes are legitimate inputs: db20 takes abs first, so
+    # |x| > 0 converts normally; the -inf floor is for zero/NaN magnitude.
+    assert ms.db20(-1.0) == 0.0
+    assert ms.db20(complex(0.0, 0.0)) == float("-inf")
+    assert ms.db20(float("nan")) == float("-inf")  # nan > 0 is False
+    assert ms.db20(inf) == inf
+    assert_bits_equal(ms.db20(complex(3.0, 4.0)), hrf.db20(5.0), "db20 complex")
+
+
+def test_z0_is_declared_exactly_once_and_shared_by_identity():
+    hits = []
+    for path in sorted(SIM.rglob("*.py")):
+        for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            if re.match(r"Z0_OHM\s*=", line):
+                hits.append(f"{path.relative_to(SIM)}:{lineno}")
+    assert len(hits) == 1, hits
+    assert hits[0].startswith(str(Path("harness") / "rf.py") + ":"), hits
+    # Every bench's public name binds the same object -- no re-declaration
+    # hiding behind an import.
+    assert mf.Z0_OHM is hrf.Z0_OHM
+    assert lin.Z0_OHM is hrf.Z0_OHM
+    assert nf.Z0_OHM is hrf.Z0_OHM
+
 # Single-bin DFT characterization (issue #264): the two bench-local copies
 # vs the shared survivor. The magnitude-agreement vectors were run GREEN
 # before either wrapper was made to delegate; they stay as the regression

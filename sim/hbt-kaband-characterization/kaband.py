@@ -724,7 +724,9 @@ def measured_noise_factor(isp: float, zs: complex, t0_k: float) -> float:
 
 
 def db10(x: float) -> float:
-    return 10.0 * math.log10(x)
+    # Shared primitive (issue #263): same expression, same no-guard
+    # convention -- zero/negative raise, NaN propagates as NaN.
+    return rf.db10(x)
 
 
 # ---------------------------------------------------------------------------

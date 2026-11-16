@@ -125,6 +125,53 @@ deliberate pin change (next section).
 4. A pin change that alters measured values is a spec-adjacent event: it must
    not be used to relax the ratified spec (`spec/` decision records govern).
 
+## Watts-to-dBm edge convention
+
+One convention, repo-wide, for converting a power in watts to dBm (issue #268):
+
+| input | dBm | why |
+|---|---|---|
+| positive finite | `10 log10(P/1e-3)` | the only branch that is a measurement |
+| `0.0` or negative | `-inf` | "no power here" — not a number a reader can mistake for a measurement |
+| `NaN` | `NaN` (propagates) | a corrupt measurement must stay visibly corrupt |
+
+The NaN row is the point of the convention. `lna-linearity`'s `dbm_from_w`
+previously read `10*log10(p/1e-3) if p_w > 0 else NEG_INF_DBM`, with
+`NEG_INF_DBM = -400.0`; because `p_w > 0` is false for NaN, a NaN power came
+out as a **finite, plausible-looking** -400 dBm, which survives a finiteness
+guard, a JSON round-trip and a plot axis without complaint. A NaN in a record
+is a defect any reader catches; -400 dBm is a number. `NEG_INF_DBM` is gone,
+and the implementations in `lna-linearity/linearity.py` (`dbm_from_w`) and
+`mixer-topology-feasibility/mixfeas.py` (`dbm`) now have identical branches.
+
+**`-inf` is not a serialization problem here, so it is not solved inside the
+arithmetic.** It is solved at the boundary where it arises: the record writer's
+rounding pass (`lna-linearity/analysis.py`'s `_round`) encodes `-inf` as the
+string `"-inf"`, `+inf` as `"+inf"` and NaN as `null`, so neither a floor nor a
+corruption reaches `records/` looking like a measurement. Both encodings then
+render as `n/a` in the Markdown report (`lna-linearity/run.py`'s `_f` treats a
+string or `None` as unavailable; `mixer-topology-feasibility` formats any
+non-finite float as `n/a` directly), which a finite -400 dBm would not have.
+
+Two consequences for call sites, both load-bearing:
+
+- A floor power of `-inf` means "no measurable numerical floor" and must not
+  disqualify a sweep point — `linearity._usable_floor` admits `-inf` where a
+  plain `math.isfinite` would have rejected it, keeping that input's verdict
+  what it was when the floor was a finite -400 dBm.
+- `max` is not NaN-safe (`max(nan, x)` is NaN, `max(x, nan)` is `x`), so
+  reducing the two floor bins to one `floor_dbm` goes through
+  `linearity.floor_dbm_of`, which propagates NaN rather than letting argument
+  order decide.
+
+Not covered by this convention: the dimensionless-ratio-to-dB helpers
+`hbt-kaband-characterization/kaband.py`'s `db10` and `mixer-nf-method/nfmethod.py`'s
+`db` (both raise on zero) and `lna-match-tradeoff/matchstudy.py`'s `db20`
+(returns `-inf`). Those convert a ratio, not a power in watts, and their zero
+behaviour is a separate question at separate call sites — deliberately left as
+it is rather than folded in here, because "raise" and "`-inf`" are not the same
+answer and choosing between them needs those call sites read on their own.
+
 ## Benches
 
 | Experiment | What it measures | Status |

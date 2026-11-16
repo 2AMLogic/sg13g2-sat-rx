@@ -38,6 +38,87 @@ def test_available_power_convention():
     assert L.delivered_dbm(1.0) == pytest.approx(10.0)
 
 
+# ---- watts-to-dBm edge convention (issue #268) ------------------------------
+#
+# One convention repo-wide (sim/README.md -> "Watts-to-dBm edge convention"):
+# positive finite converts, zero/negative give -inf, NaN PROPAGATES. Until #268
+# dbm_from_w returned a finite NEG_INF_DBM = -400.0 for all three, so a NaN
+# power became a plausible-looking number in a recorded result. These tests pin
+# the choice: a future change has to move them deliberately.
+
+
+def test_dbm_from_w_zero_and_negative_are_minus_inf():
+    assert L.dbm_from_w(0.0) == float("-inf")
+    assert L.dbm_from_w(-1.0) == float("-inf")
+    assert L.dbm_from_w(-0.0) == float("-inf")
+
+
+def test_dbm_from_w_propagates_nan_and_never_returns_a_finite_floor():
+    nan = float("nan")
+    assert math.isnan(L.dbm_from_w(nan))
+    # the regression this issue exists for: NOT a finite number, and in
+    # particular not the retired -400.0 sentinel
+    assert not math.isfinite(L.dbm_from_w(nan))
+    assert L.dbm_from_w(nan) != -400.0
+    assert not hasattr(L, "NEG_INF_DBM")
+
+
+def test_dbm_from_w_plus_inf_is_plus_inf():
+    assert L.dbm_from_w(float("inf")) == float("inf")
+
+
+def test_dbm_from_w_positive_finite_is_unchanged_by_the_convention():
+    # the branch every recorded number came through: bit-for-bit the pre-#268
+    # expression, and bit-for-bit mixfeas.dbm (the convention both now share)
+    for p_w in (1e-30, 1e-12, 1e-3, 1.0, 1e3):
+        assert L.dbm_from_w(p_w) == 10.0 * math.log10(p_w / 1e-3)
+
+
+def test_delivered_dbm_inherits_the_convention():
+    assert L.delivered_dbm(0.0) == float("-inf")
+    assert math.isnan(L.delivered_dbm(float("nan")))
+    assert math.isnan(L.pav_dbm_from_vs_peak(float("nan")))
+
+
+def test_floor_dbm_of_propagates_nan_in_either_bin():
+    nan = float("nan")
+    assert L.floor_dbm_of({"fl_lo": -90.0, "fl_hi": -80.0}) == -80.0
+    assert L.floor_dbm_of({"fl_lo": float("-inf"), "fl_hi": float("-inf")}) == float("-inf")
+    # bare max() is order-dependent on NaN -- max(nan, x) is NaN but
+    # max(x, nan) is x -- so both orders must still report the corruption
+    assert math.isnan(L.floor_dbm_of({"fl_lo": nan, "fl_hi": -80.0}))
+    assert math.isnan(L.floor_dbm_of({"fl_lo": -80.0, "fl_hi": nan}))
+
+
+def test_point_status_treats_an_unmeasurable_floor_as_usable_but_nan_as_not():
+    row = {"pin_dbm": -40.0, "p_f0_dbm": -20.0, "floor_dbm": float("-inf"), "excursion_v": None}
+    kw = dict(fund_key="p_f0_dbm", im3_key=None, margin_db=10.0, limits=None)
+    # -inf floor == no measurable numerical floor: cannot disqualify a point
+    # (this is the verdict a zero floor bin got when the floor was -400.0)
+    assert L.point_status(row, **kw) is None
+    assert L.point_status(dict(row, floor_dbm=-400.0), **kw) is None
+    assert L.point_status(dict(row, floor_dbm=float("nan")), **kw) == "nonfinite or missing value"
+    assert L.point_status(dict(row, floor_dbm=None), **kw) == "nonfinite or missing value"
+
+
+def test_a_nan_mark_never_yields_a_finite_power_through_run_summary():
+    """The linearity.py finiteness guard is upstream of every conversion, so a
+    NaN mark produces no row at all -- and if it ever reached the conversion,
+    #268 makes it come out NaN rather than a finite -400 dBm."""
+    run = {"id": "r0", "variant": "base", "kind": "one", "pin_dbm": -40.0, "vs_peak_v": 1e-3,
+           "bins": ["f0", "fl_lo", "fl_hi"], "window_s": 1e-9, "step_s": 1e-12, "monitors": False}
+    n = int(round(run["window_s"] / run["step_s"]))
+    vals = {f"m_r0_{b}_{q}": 1e-4 for b in run["bins"] for q in ("c", "s")}
+    vals["m_r0_n"] = n
+    assert L.run_summary(dict(vals), run) is not None          # the clean case does produce a row
+    vals["m_r0_f0_c"] = float("nan")
+    assert L.run_summary(dict(vals), run) is None              # guarded: no row, so no record
+    # and the conversion itself no longer launders the NaN
+    amps = {"f0": float("nan"), "fl_lo": 1e-6, "fl_hi": 1e-6}
+    p_dbm = {b: L.delivered_dbm(a) for b, a in amps.items()}
+    assert math.isnan(p_dbm["f0"])
+
+
 def test_plan_is_declared_in_band_and_coherent():
     assert [] == [p for pl in PLAN["placements"] for p in L.band_problems(PLAN, pl)]
     for pl in PLAN["placements"]:
