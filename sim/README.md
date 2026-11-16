@@ -266,6 +266,43 @@ row 1, among them — hence the "DRAFT band" wording below). Comparison of the
 mixer against the binding rows becomes meaningful only once its `tb.json` is
 re-pointed at a real mixer schematic.
 
+### Running the tests: per bench, or all benches in one invocation
+
+CI runs each `sim/<bench>/tests` as its own step, and that remains the
+simplest way to run one bench. A multi-bench **run** in a single `pytest`
+invocation is also supported, because `sim/conftest.py` isolates each bench's
+module namespace (issue #302) and
+`sim/harness/tests/test_multibench_isolation.py` guards it: with it,
+`python3 -m pytest sim/*/tests -q` passes (942 passed, 0 failed at the tree
+that landed it). The collection-only check is a separate, complementary CI
+guard (it catches collection-time collisions in 0.5 s, before any test
+runs):
+
+```
+python -m pytest sim/*/tests --collect-only -q
+```
+
+Why the isolation is needed: pytest's default `prepend` import mode drops every
+bench into one flat top-level module namespace, and several names exist per
+bench under the same filename (`run_probe.py`, `ci_assert.py`). Those names are
+load-bearing: committed append-only evidence records cite them (e.g.
+`python3 sim/mixer-pumped-rf-admittance/run_probe.py`), as do bench READMEs and
+CI steps, so they are not renamed; `sim/conftest.py` resolves each colliding
+name to the importing bench's own file instead. This PR removes the incidental
+collision classes in the test tree itself (bare `from conftest import ...`,
+duplicate test-module basenames, and `lna-headroom` stripping another bench's
+`sys.path` entry), so the isolation does not have to paper over them.
+
+Measured before the isolation conftest existed (2026-11-15, issue-287 tree off
+main @ `c498b96`, pytest 9.1.1), with only those incidental defects removed:
+collecting all 12 bench test directories in one invocation was clean (875
+tests, 0 errors) but running them failed (**49 failed, 834 passed, 28 subtests
+passed**), every failure in the three benches whose tests bare-import
+`run_probe.py` / `ci_assert.py` (`mixer-pumped-rf-admittance`,
+`mixer-cm-interface-probe`, `mixer-nf-method`). That residual is what
+`sim/conftest.py` now closes; the figures are kept as the historical
+motivation, not a current limitation.
+
 ### Where each command runs (local ngspice vs batch fleet)
 
 | Command | Runs |

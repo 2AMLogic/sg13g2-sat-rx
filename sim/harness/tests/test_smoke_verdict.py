@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import in_check_window
+from harness.testsupport import in_check_window
 
 from harness import cli
 from harness import corners as C
