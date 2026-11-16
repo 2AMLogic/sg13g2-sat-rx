@@ -58,6 +58,8 @@ from toolchain_pin import (  # noqa: E402  (path set above)
     resolve_pr_gds,
 )
 
+from containment import boxes_outside  # noqa: E402  (same directory)
+
 try:
     import klayout.db as kdb
 except ImportError:  # pragma: no cover - environment guard
@@ -123,7 +125,16 @@ VIA1_UM = 0.19
 
 
 def rect(cell, layer, x1, y1, x2, y2):
+    """Draw one rectangle in microns and return it as a ``(l, b, r, t)`` tuple.
+
+    Returning exactly what was drawn is what lets :func:`build` check bus
+    containment by identity -- the boxes this script drew are the ones it
+    judges -- instead of re-scanning a layer, which a recursive iterator
+    fills with PDK primitive internals that are legitimately outside the
+    ring.
+    """
     cell.shapes(cell.layout().layer(*layer)).insert(kdb.DBox(x1, y1, x2, y2))
+    return (x1, y1, x2, y2)
 
 
 def label(cell, layer, text, x, y):
@@ -174,23 +185,33 @@ def wire_group(cell, group, xs):
     """
     y0 = group["y"]
     x_lo, x_hi = bus_extent(xs)
+    refdes = group["refdes"]
 
     # Collector: Metal1, from just inside the upper pin up to +3.5 um.
     c_y = (y0 + HBT["C_m1_y"][0] + 0.04, y0 + 3.5)
-    rect(cell, L_METAL1, x_lo, c_y[0], x_hi, c_y[1])
+    c_box = rect(cell, L_METAL1, x_lo, c_y[0], x_hi, c_y[1])
     label(cell, L_TEXT_M1, group["C"], xs[0], c_y[1] - 0.5)
 
     # Base: Metal1, from -3.5 um up to just inside the lower pin.
     b_y = (y0 - 3.5, y0 + HBT["B_m1_y"][1] - 0.04)
-    rect(cell, L_METAL1, x_lo, b_y[0], x_hi, b_y[1])
+    b_box = rect(cell, L_METAL1, x_lo, b_y[0], x_hi, b_y[1])
     label(cell, L_TEXT_M1, group["B"], xs[0], b_y[0] + 0.5)
 
     # Emitter: Metal2 bar straight across the centre Metal2 pins.
     e_y = (y0 + HBT["E_m2_y"][0] - 0.02, y0 + HBT["E_m2_y"][1] + 0.02)
-    rect(cell, L_METAL2, x_lo, e_y[0], x_hi, e_y[1])
+    e_box = rect(cell, L_METAL2, x_lo, e_y[0], x_hi, e_y[1])
     label(cell, L_TEXT_M2, group["E"], xs[0], y0)
 
-    return {"collector_y": c_y, "base_y": b_y, "emitter_y": e_y}
+    return {
+        "collector_y": c_y,
+        "base_y": b_y,
+        "emitter_y": e_y,
+        "boxes": [
+            (f"{refdes}.C ({group['C']})", c_box),
+            (f"{refdes}.B ({group['B']})", b_box),
+            (f"{refdes}.E ({group['E']})", e_box),
+        ],
+    }
 
 
 def stitch_cascode(cell, lower, upper, lower_xs, upper_xs):
@@ -202,31 +223,54 @@ def stitch_cascode(cell, lower, upper, lower_xs, upper_xs):
     emitter bar's own east end, and a column of Via1 cuts sits inside both.
     """
     strap_x = (upper_xs[-1] + 2.5, upper_xs[-1] + 4.5)
+    boxes = []
     # Extend the Metal1 collector bus east to sit under the strap.
-    rect(
-        cell,
-        L_METAL1,
-        lower_xs[-1] + 1.5,
-        lower["collector_y"][0],
-        strap_x[1] + 0.5,
-        lower["collector_y"][1],
+    boxes.append(
+        (
+            "c1 cascode Metal1 collector extension",
+            rect(
+                cell,
+                L_METAL1,
+                lower_xs[-1] + 1.5,
+                lower["collector_y"][0],
+                strap_x[1] + 0.5,
+                lower["collector_y"][1],
+            ),
+        )
     )
     # Metal2 strap from the collector bus up to the emitter bar's latitude.
-    rect(cell, L_METAL2, strap_x[0], lower["collector_y"][0], strap_x[1],
-         upper["emitter_y"][1])
+    boxes.append(
+        (
+            "c1 cascode Metal2 strap",
+            rect(
+                cell,
+                L_METAL2,
+                strap_x[0],
+                lower["collector_y"][0],
+                strap_x[1],
+                upper["emitter_y"][1],
+            ),
+        )
+    )
     # ...and a Metal2 bridge east from the emitter bar's own end to the strap.
     # Without it the strap stops 1 um short of the bar and `c1` extracts as two
     # separate nets -- which `klt extract` reports as a split_net_labels
     # warning rather than as an error, so it is asserted below too.
-    rect(
-        cell,
-        L_METAL2,
-        upper_xs[-1] + 1.5 - 0.1,
-        upper["emitter_y"][0],
-        strap_x[1],
-        upper["emitter_y"][1],
+    boxes.append(
+        (
+            "c1 emitter-bar bridge (Metal2)",
+            rect(
+                cell,
+                L_METAL2,
+                upper_xs[-1] + 1.5 - 0.1,
+                upper["emitter_y"][0],
+                strap_x[1],
+                upper["emitter_y"][1],
+            ),
+        )
     )
-    # Via1 column, inside both metals on every side.
+    # Via1 column, inside both metals on every side. The cuts are not bus
+    # geometry and are not collected for the containment check.
     cx = 0.5 * (strap_x[0] + strap_x[1])
     y_lo = lower["collector_y"][0] + 0.5
     y_hi = lower["collector_y"][1] - 0.5
@@ -242,7 +286,7 @@ def stitch_cascode(cell, lower, upper, lower_xs, upper_xs):
             cx + 0.5 * VIA1_UM,
             y + VIA1_UM,
         )
-    return strap_x
+    return {"strap_x": strap_x, "boxes": boxes}
 
 
 def place_supply_rail(cell, x_lo, x_hi, y_centre):
@@ -254,8 +298,9 @@ def place_supply_rail(cell, x_lo, x_hi, y_centre):
     second declared supply to resolve, and the claim must say it carries no
     load -- it is not evidence that the stage's supply distribution works.
     """
-    rect(cell, L_METAL1, x_lo, y_centre - 1.0, x_hi, y_centre + 1.0)
+    rail = rect(cell, L_METAL1, x_lo, y_centre - 1.0, x_hi, y_centre + 1.0)
     label(cell, L_TEXT_M1, "vdd", x_lo + 2.0, y_centre)
+    return ("vdd supply rail", rail)
 
 
 def place_ring(cell, inner):
@@ -454,20 +499,25 @@ def build(pr_gds, out_path, reference_path=None):
     top = ly.create_cell("lna_stage1_devices")
 
     placed = {}
+    bus_boxes = []
     for group in GROUPS:
         xs = place_group(top, group)
-        placed[group["refdes"]] = (group, xs, wire_group(top, group, xs))
+        wired = wire_group(top, group, xs)
+        placed[group["refdes"]] = (group, xs, wired)
+        bus_boxes.extend(wired["boxes"])
 
-    strap_x = stitch_cascode(
+    cascode = stitch_cascode(
         top,
         placed["Xq1"][2],
         placed["Xq2"][2],
         placed["Xq1"][1],
         placed["Xq2"][1],
     )
+    bus_boxes.extend(cascode["boxes"])
+    strap_x = cascode["strap_x"]
 
     # vdd rail, north of the bias device, inside the ring.
-    place_supply_rail(top, -1.5, strap_x[1] + 0.5, 48.0)
+    bus_boxes.append(place_supply_rail(top, -1.5, strap_x[1] + 0.5, 48.0))
 
     ring = place_ring(top, RING_INNER)
 
@@ -475,35 +525,33 @@ def build(pr_gds, out_path, reference_path=None):
     # written -- see assert_nets_connected for why this is not left to DRC.
     nets = assert_nets_connected(ly, top)
 
-    # Every bus must sit inside the ring's Metal1 inner edge with clearance;
-    # assert it rather than trusting the arithmetic above (a geometry bug here
-    # would surface as a DRC spacing violation much later).
+    # Every bus this script drew must sit inside the ring's Metal1 inner edge
+    # with clearance; assert it rather than trusting the arithmetic above (a
+    # geometry bug here would surface as a DRC spacing violation much later).
+    # The boxes judged are exactly the ones rect() returned as the buses were
+    # drawn -- never a layer scan. A recursive scan would also see every PDK
+    # primitive's own Metal1/Metal2 (the ring's 360 ptap pins and the HBTs'
+    # internal shapes among them, all legitimately outside `inner`), so it
+    # cannot tell an escaped bus from geometry that belongs outside; identity
+    # collection can, and it is what lets a failure name the escaped bus.
     inner = ring["metal1_inner"]
-    bbox_buses = kdb.DBox()
-    for layer in (L_METAL1, L_METAL2):
-        li = ly.layer(*layer)
-        it = top.begin_shapes_rec(li)
-        while not it.at_end():
-            shape = it.shape()
-            if shape.is_box():
-                box = shape.box.transformed(it.trans())
-                dbox = kdb.DBox(
-                    box.left / DBU_PER_UM,
-                    box.bottom / DBU_PER_UM,
-                    box.right / DBU_PER_UM,
-                    box.top / DBU_PER_UM,
-                )
-                # The ring band itself is outside `inner` by construction.
-                if not (
-                    dbox.left < inner[0]
-                    or dbox.bottom < inner[1]
-                    or dbox.right > inner[2]
-                    or dbox.top > inner[3]
-                ):
-                    bbox_buses += dbox
-            it.next()
-    if bbox_buses.empty():
-        raise ToolchainError("no bus geometry landed inside the guard ring")
+    try:
+        escaped = boxes_outside(bus_boxes, inner)
+    except ValueError as exc:
+        raise ToolchainError(
+            f"guard-ring containment not checkable: {exc}"
+        ) from exc
+    if escaped:
+        detail = "; ".join(
+            "{} {}..{} x {}..{} um".format(
+                name, box[0], box[2], box[1], box[3]
+            )
+            for name, box in escaped
+        )
+        raise ToolchainError(
+            "bus geometry landed outside the guard ring's Metal1 inner "
+            f"edge {list(inner)}: {detail}"
+        )
 
     # prune every cell not in this study's subtree so the written stream
     # carries only it (cells pruned bottom-up by index)
