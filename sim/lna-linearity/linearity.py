@@ -24,8 +24,11 @@ The mixer feasibility bench (``sim/mixer-topology-feasibility/mixfeas.py``)
 uses the same two ideas (coherent bins; a verified 1:3 region); this module
 restates them for an amplifier whose products stay at RF. Since issue #263 the
 power arithmetic itself is no longer restated here: both benches call the
-shared primitives in ``sim/harness/rf.py`` (through this module's wrappers,
-which keep the floor convention declared at :data:`NEG_INF_DBM`).
+shared primitives in ``sim/harness/rf.py`` through this module's wrappers,
+which carry the repo-wide watts-to-dBm edge convention (issue #268): positive
+finite converts, zero and negative give ``-inf``, NaN propagates. The
+canonical statement, with the reasoning, is ``sim/README.md`` ->
+"Watts-to-dBm edge convention".
 """
 
 from __future__ import annotations
@@ -40,19 +43,56 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # sim/ -> harness
 from harness import rf  # noqa: E402
 from harness.rf import Z0_OHM  # noqa: E402
 
-NEG_INF_DBM = -400.0
-
 # ---------------------------------------------------------------------------
 # power conventions -- the arithmetic is delegated to sim/harness/rf.py
-# (issue #263). The public names, signatures and the floor edge convention
-# are unchanged: zero, negative and NaN all floor to NEG_INF_DBM, which
-# stays declared here until split E decides the convention itself. Each
-# convention's characterization lives in sim/harness/tests/test_rf.py.
+# (issue #263). The public names and signatures are unchanged. Since #268 the
+# watts-to-dBm edge convention is repo-wide and strict: ``dbm_from_w`` is
+# rf.dbm_strict -- positive finite converts, zero and negative give ``-inf``,
+# NaN propagates. The canonical statement, with the reasoning, lives in
+# sim/README.md -> "Watts-to-dBm edge convention"; each shared primitive's
+# characterization lives in sim/harness/tests/test_rf.py.
 # ---------------------------------------------------------------------------
 
 
 def dbm_from_w(p_w: float) -> float:
-    return rf.dbm_floored(p_w, NEG_INF_DBM)
+    """Power in dBm; ``-inf`` for zero or negative, NaN propagates.
+
+    Delegates to :func:`harness.rf.dbm_strict` (issue #263 moved the
+    arithmetic there). This is the repo-wide watts-to-dBm edge convention
+    (issue #268) -- the same three branches as
+    ``mixer-topology-feasibility/mixfeas.py``'s ``dbm``. Canonical statement,
+    with the reasoning: ``sim/README.md`` -> "Watts-to-dBm edge convention".
+
+    The two rules, and why:
+
+    * **NaN propagates.** A NaN power is a corrupt measurement and must stay
+      visibly corrupt. Until #268 this function returned a finite
+      ``NEG_INF_DBM = -400.0`` for NaN -- ``p_w > 0`` is false for NaN, so NaN
+      fell into the floor branch -- and a finite, plausible-looking -400 dBm
+      survives a finiteness guard, a JSON round-trip and a plot axis without
+      complaint. That is the one failure mode an evidence repo cannot afford.
+    * **Zero and negative give ``-inf``**, not a finite floor sentinel. The
+      JSON-serializability problem that motivated ``NEG_INF_DBM`` is handled at
+      the serialization boundary instead, where it actually arises:
+      ``analysis._round`` encodes ``-inf`` as the string ``"-inf"`` and NaN as
+      ``null``, so neither can reach a record looking like a measurement.
+    """
+    return rf.dbm_strict(p_w)
+
+
+def floor_dbm_of(p_dbm: dict) -> float:
+    """Higher of the two floor-bin powers, with NaN propagating (issue #268).
+
+    ``max`` is not NaN-safe and is not even order-symmetric: ``max(nan, -50.0)``
+    is NaN but ``max(-50.0, nan)`` is ``-50.0``. Under the :func:`dbm_from_w`
+    convention a NaN amplitude yields a NaN power, so a bare ``max`` would let
+    whichever floor bin came first decide whether the corruption stays visible.
+    Propagating it explicitly closes that one step downstream of the conversion.
+    """
+    lo, hi = p_dbm["fl_lo"], p_dbm["fl_hi"]
+    if lo != lo or hi != hi:  # NaN in either floor bin
+        return float("nan")
+    return max(lo, hi)
 
 
 def w_from_dbm(p_dbm: float) -> float:
@@ -65,12 +105,12 @@ def vs_peak_from_pav_dbm(pav_dbm: float, z0: float = Z0_OHM) -> float:
 
 
 def pav_dbm_from_vs_peak(vs: float, z0: float = Z0_OHM) -> float:
-    return rf.dbm_floored(rf.available_power_w(vs, z0), NEG_INF_DBM)
+    return rf.dbm_strict(rf.available_power_w(vs, z0))
 
 
 def delivered_dbm(v_peak: float, z0: float = Z0_OHM) -> float:
     """Power delivered to a ``z0`` load by a component of peak ``v_peak``."""
-    return rf.dbm_floored(rf.delivered_power_w(v_peak, z0), NEG_INF_DBM)
+    return rf.dbm_strict(rf.delivered_power_w(v_peak, z0))
 
 
 # ---------------------------------------------------------------------------
@@ -404,11 +444,18 @@ def run_summary(vals: dict[str, float], run: dict, *, log_has_abort: bool = Fals
     if dead and log_has_abort:
         return dict(base, status="sim_failed", reason="simulator aborted the transient (solver timestep too small / no convergence)",
                     amp_v={}, p_dbm={}, floor_dbm=None)
+    # This finiteness check is what keeps a NaN/inf mark out of every published
+    # number: it returns before any :func:`delivered_dbm` call below, and the
+    # :mod:`ci_assert` recompute reads an ``amp_v`` that came through here. It
+    # is no longer the only thing standing between a NaN and a plausible-looking
+    # record -- since issue #268 the conversion itself propagates NaN -- but it
+    # is still what keeps a corrupt run out of the record entirely rather than
+    # into it as a NaN, so do not weaken it without reading that issue.
     if any(v is None or not math.isfinite(v) for v in present) or vals.get(f"m_{rid}_n") != n:
         return None
     amps = {b: amp(vals[f"m_{rid}_{b}_c"], vals[f"m_{rid}_{b}_s"]) for b in run["bins"]}
     out = dict(base, status="ok", amp_v=amps, p_dbm={b: delivered_dbm(a) for b, a in amps.items()})
-    out["floor_dbm"] = max(out["p_dbm"]["fl_lo"], out["p_dbm"]["fl_hi"])
+    out["floor_dbm"] = floor_dbm_of(out["p_dbm"])
     if run["monitors"]:
         lim = {}
         for name, _ in DEVICE_MONITORS:
@@ -541,6 +588,20 @@ def _finite(x) -> bool:
     return isinstance(x, (int, float)) and math.isfinite(x)
 
 
+def _usable_floor(x) -> bool:
+    """A floor power usable by an estimator: finite, or ``-inf`` (issue #268).
+
+    ``-inf`` is what :func:`dbm_from_w` returns for an identically-zero floor
+    bin, i.e. "no measurable numerical floor", which cannot disqualify a point:
+    the ``fund >= floor + margin`` comparison in :func:`point_status` is correct
+    at ``-inf``. Before #268 a zero floor bin became a finite -400 dBm and
+    passed :func:`_finite`, so admitting ``-inf`` here is what keeps that input's
+    verdict unchanged under the new convention instead of turning a usable point
+    into a rejected one. NaN and ``None`` remain unusable.
+    """
+    return _finite(x) or x == float("-inf")
+
+
 def linfit(xs: list[float], ys: list[float]) -> tuple[float, float, float]:
     """Least squares y = a + s x; returns (a, s, max |residual|).
 
@@ -578,8 +639,8 @@ def point_status(r: dict, *, fund_key: str, im3_key: str | None, margin_db: floa
     """Reason a point is not usable by an estimator, or None."""
     if r.get("sim_failed"):
         return "simulation failed: " + str(r["sim_failed"])
-    need = [fund_key, "floor_dbm"] + ([im3_key] if im3_key else [])
-    if not all(_finite(r.get(k)) for k in need):
+    need = [fund_key] + ([im3_key] if im3_key else [])
+    if not all(_finite(r.get(k)) for k in need) or not _usable_floor(r.get("floor_dbm")):
         return "nonfinite or missing value"
     if r[fund_key] < r["floor_dbm"] + margin_db:
         return "fundamental below numerical floor + margin"

@@ -62,9 +62,13 @@ class StudyError(ValueError):
 
 # ---------------------------------------------------------------------------
 # Power arithmetic -- delegated to sim/harness/rf.py (issue #263). The
-# public names, signatures and the strict zero/NaN edge convention are
-# unchanged: ``dbm`` is rf.dbm_strict (NaN propagates, -inf at zero), the
-# V^2/(8R) and V^2/(2R) primitives are shared verbatim. Each convention's
+# public names and signatures are unchanged, and since issue #268 the
+# watts-to-dBm edge convention is repo-wide: ``dbm`` is rf.dbm_strict
+# (positive finite converts, zero and negative give -inf, NaN propagates) --
+# the same three branches as the ``lna-linearity`` bench's
+# ``linearity.dbm_from_w``, which previously mapped zero, negative AND NaN
+# to a finite -400 dBm. Canonical statement, with the reasoning:
+# sim/README.md -> "Watts-to-dBm edge convention". Each shared primitive's
 # characterization lives in sim/harness/tests/test_rf.py.
 # ---------------------------------------------------------------------------
 

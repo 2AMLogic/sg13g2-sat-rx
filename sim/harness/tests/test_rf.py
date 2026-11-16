@@ -350,8 +350,7 @@ def test_power_helpers_agree_on_the_positive_finite_domain():
     positive finite inputs -- the domain split B unifies."""
     for w in POWERS_W:
         assert_bits_equal(hrf.dbm_strict(w), mf.dbm(w), f"strict {w=}")
-        assert_bits_equal(
-            hrf.dbm_floored(w, lin.NEG_INF_DBM), lin.dbm_from_w(w), f"floored {w=}")
+        assert_bits_equal(hrf.dbm_strict(w), lin.dbm_from_w(w), f"strict vs lin {w=}")
     for dbm_value in DBMS:
         assert_bits_equal(hrf.watts(dbm_value), mf.watts(dbm_value),
                           f"watts {dbm_value=}")
@@ -371,39 +370,36 @@ def test_power_helpers_agree_on_the_positive_finite_domain():
                           lin.vs_peak_from_pav_dbm(p_dbm), f"vopen vs lin {p_dbm=}")
     for vs in VOLTS:
         assert_bits_equal(
-            hrf.dbm_floored(hrf.available_power_w(vs, hrf.Z0_OHM), lin.NEG_INF_DBM),
+            hrf.dbm_strict(hrf.available_power_w(vs, hrf.Z0_OHM)),
             lin.pav_dbm_from_vs_peak(vs), f"pav_dbm vs lin {vs=}")
         assert_bits_equal(
-            hrf.dbm_floored(hrf.delivered_power_w(vs, hrf.Z0_OHM), lin.NEG_INF_DBM),
+            hrf.dbm_strict(hrf.delivered_power_w(vs, hrf.Z0_OHM)),
             lin.delivered_dbm(vs), f"delivered_dbm vs lin {vs=}")
 
 
-def test_dbm_edge_conventions_are_per_site_and_unchanged():
-    """The one divergence split B preserves, asserted per site: mixfeas's
-    strict -inf/NaN-propagating convention vs linearity's finite -400.0
-    floor. A future convergence (split E) must come through here and
-    change these expectations deliberately."""
+def test_watts_to_dbm_edge_convention_is_repo_wide():
+    """Issue #268 settled the watts->dBm edge convention split E left open:
+    strict everywhere -- positive finite converts, zero and negative give
+    ``-inf``, NaN propagates -- so ``mf.dbm`` and ``lin.dbm_from_w`` agree on
+    every input, edges included, and linearity's former finite -400.0 floor
+    (``linearity.NEG_INF_DBM``) is gone with the site. The canonical
+    statement is ``sim/README.md`` -> "Watts-to-dBm edge convention"."""
     nan = float("nan")
     inf, minf = float("inf"), float("-inf")
-    # mixfeas: zero/negative -> -inf, NaN propagates.
+    # Both former sites now agree with the shared primitive on every edge.
+    for w in (*DBM_EDGES_W, -0.0, -1e-30):
+        assert_bits_equal(hrf.dbm_strict(w), mf.dbm(w), f"strict edge {w=}")
+        assert_bits_equal(hrf.dbm_strict(w), lin.dbm_from_w(w),
+                          f"strict edge vs lin {w=}")
     assert mf.dbm(0.0) == minf
     assert mf.dbm(-1.0) == minf
     assert math.isnan(mf.dbm(nan))
     assert mf.dbm(inf) == inf
     assert mf.dbm(minf) == minf
-    # linearity: zero, negative AND NaN all become the finite floor.
-    assert lin.dbm_from_w(0.0) == lin.NEG_INF_DBM == -400.0
-    assert lin.dbm_from_w(-1.0) == -400.0
-    assert lin.dbm_from_w(nan) == -400.0  # p_w > 0 is False for NaN
-    assert lin.dbm_from_w(inf) == inf
-    assert lin.dbm_from_w(minf) == -400.0
-    # The shared primitives reproduce each exactly.
-    for w in DBM_EDGES_W:
-        assert_bits_equal(hrf.dbm_strict(w), mf.dbm(w), f"strict edge {w=}")
-        assert_bits_equal(
-            hrf.dbm_floored(w, -400.0), lin.dbm_from_w(w), f"floored edge {w=}")
-    # The floor is the caller's, not a hidden default: another floor is
-    # honoured verbatim for every non-positive/NaN input.
+    assert not hasattr(lin, "NEG_INF_DBM")
+    # The floor primitive stays available as a named entry point for any
+    # future site that needs one: the caller's floor is honoured verbatim
+    # for every non-positive/NaN input, and no default floor exists.
     for floor in (-400.0, -300.0, 0.0):
         for w in (0.0, -1.0, nan, minf):
             assert hrf.dbm_floored(w, floor) == floor, (floor, w)
