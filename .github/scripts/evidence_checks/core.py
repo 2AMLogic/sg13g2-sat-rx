@@ -168,6 +168,14 @@ reinterprets a historical scientific claim; corrections go in a later record):
    non-blank ``statistical_card`` (absent on a false row); see DR-0007. It
    records bookkeeping only and never changes a spec value.
 
+4. Item-1 block coverage (``signoff/block-coverage.json``, issue #170): the
+   hand-kept attestation of which blocks the item-1 design-source inventory
+   covers must agree with ``design/`` -- a ``no_design_source`` block may not
+   have a source under ``design/``, and a ``sources_committed`` block must
+   have one (klt's signoff envelope has no free-form metrics to carry the
+   claim, so the attestation lives beside it). Dropping the file fails too:
+   it is the only honesty guard the attestation has.
+
 Exit status: 0 clean, 1 problems found, 2 usage/environment error.
 """
 
@@ -180,6 +188,7 @@ import sys
 from pathlib import Path
 
 from .artifact_manifests import MANIFEST_DIR, check_artifact_manifests, check_manifest_append_only
+from .block_coverage import block_coverage_problems
 from .common import PROTECTED_RE, Problems, RECORD_ID_PREFIX_RE, git, rel
 from .hbt_mismatch_pair import check_hbt_mismatch_pair
 from .kaband import check_kaband_record
@@ -194,6 +203,7 @@ from .mixer_pra import check_mixer_pumped_rf_admittance
 from .native import check_native_record
 from .passive_p1 import check_passive_p1
 from .readmes import check_bench_readmes
+from .reuse_masters import check_reuse_masters
 from .spec_rows import (COVERAGE_PATH, OVERCLAIM_RE, SPEC_PATH, VERDICTS, rows_mentioned, spec_table_rows)
 
 
@@ -239,6 +249,7 @@ def check_format(root: Path) -> Problems:
         problems.add("sim/", "no sim/*/testbench/tb.json benches found")
     check_bench_readmes(problems, root)
     check_artifact_manifests(problems, root)
+    problems.items += block_coverage_problems(root)
     bench_names = {e.name for e in exps}
     for d in sorted(p for p in sim.iterdir() if p.is_dir()):
         if d.name in bench_names:
@@ -484,6 +495,9 @@ def main(argv: list[str] | None = None) -> int:
     cov = check_row_coverage(root)
     print(f"row-coverage: {'FAILED' if cov else 'ok'} ({len(cov.items)} problem(s))")
     problems.items += cov.items
+    masters = check_reuse_masters(root)
+    print(f"reuse-masters: {'FAILED' if masters else 'ok'} ({len(masters.items)} problem(s))")
+    problems.items += masters.items
     if not args.skip_history:
         hist, note = check_append_only(root, args.base, args.require_base)
         print(f"append-only: {note}")

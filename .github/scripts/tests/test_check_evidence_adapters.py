@@ -23,7 +23,7 @@ sys.path.insert(0, str(SCRIPTS))
 sys.path.insert(0, str(REPO / "sim" / "passive-p1" / "scripts"))
 
 import check_evidence_formats as chk  # noqa: E402
-from _helpers import CheckerCase, commit, edit_json, mirror_manifests, run  # noqa: E402
+from _helpers import CheckerCase, commit, edit_json, mirror_manifests, mirror_signoff, run  # noqa: E402
 import freeze_package as fz  # noqa: E402
 
 PASSIVE = "passive-p1"
@@ -45,6 +45,7 @@ def copy_sim(dst: Path) -> Path:
     for name in COPIED:
         shutil.copytree(REPO / "sim" / name, dst / "sim" / name, symlinks=False, ignore=IGNORE)
     mirror_manifests(dst, REPO)
+    mirror_signoff(dst, REPO)
     return dst
 
 

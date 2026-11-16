@@ -103,6 +103,8 @@ layout/        klt layout-chain readiness probe + toolchain pin (no LNA layout y
 manifests/     artifact-store manifests for stored sim evidence
 measurements/  silicon characterization (empty until tape-out)
 ratification/  the two non-author review-key rubrics (EE + market)
+reuse.lock.json declared masters of the shared sim mechanics sibling repos consume
+               (issue #277); consumers pin a sha against it; guarded in CI
 signoff/       machine-graded T1 block manifest + tier verdict of record
 sim/           analog testbenches + PVT corner results
 spec/          target spec (partially ratified, DR-0003) + porting plan
@@ -110,7 +112,8 @@ spec/          target spec (partially ratified, DR-0003) + porting plan
 ```
 
 The machine-graded tier verdict of record is [`signoff/README.md`](signoff/README.md);
-the current roadmap, generated from label state, is [`WORK_PLAN.md`](WORK_PLAN.md).
+the narrative roadmap is [`docs/ROADMAP.md`](docs/ROADMAP.md), and the
+label-generated queue view is [`WORK_PLAN.md`](WORK_PLAN.md).
 
 ## Reproduce
 

@@ -8,6 +8,27 @@ Chronological record of merged pull requests and closed issues, maintained by th
 
 ### 2026-11-16
 
+- **PR #319**: ci: run the block-coverage honesty check in check_format
+- **Issue #310** (closed): Wire in or remove unused block_coverage evidence check (never called by CI checker)
+- **PR #320**: test(sim): isolate bench pytest namespaces so multi-bench runs pass
+- **Issue #302** (closed): Multi-bench pytest run (not just collection) fails in 3 benches that bare-import run_probe.py / ci_assert.py
+- **PR #318**: fix: use ast to decide declared-master symbols in reuse guard
+- **Issue #312** (closed): reuse_masters: column-0 docstring text counts as a top-level definition (measured), plus two adjacent precision gaps
+- **PR #316**: docs: point README roadmap line at docs/ROADMAP.md, keep WORK_PLAN.md as queue view
+- **Issue #309** (closed): README calls WORK_PLAN.md "the current roadmap" and does not link docs/ROADMAP.md
+- **PR #317**: docs: list DR-0006 and DR-0007 in the spec/README decision-record index
+- **Issue #315** (closed): spec/README.md decision-record index omits DR-0006, DR-0007 (and any new record)
+- **PR #289**: feat: declare reuse masters (reuse.lock.json) with a CI pointer check
+- **Issue #277** (closed): No stamped-copy convention or reuse.lock.json declaring the masters of the mechanics sibling repos consume from this repo
+- **PR #304**: test: pin the dft_bin_amplitude accessor's rounding-order bits
+- **Issue #284** (closed): Pin harness.rf.dft_bin_amplitude's exact bits: an abs(dft_bin(...)) simplification would move recorded amplitudes with green tests
+- **PR #297**: test: make the pow-vs-multiply probe platform-conditional via a seeded F-divergence selector
+- **Issue #279** (closed): test_rf.py's concrete pow-vs-multiply probe hard-asserts a libm property, so a correctly-rounded pow would fail CI
+- **PR #305**: test: catch aliased sha256 file hashers in the harness via an AST check
+- **PR #303**: lna-linearity: pin the DUT by declaration, run the post-#79 core campaign, supersede the pre-#79 record
+- **PR #245**: docs: roadmap as of 2026-11-13
+- **Issue #291** (closed): The harness single-hash guard matches one spelling (def sha256_file) — a differently-named file hash still passes it
+- **Issue #273** (closed): Re-run sim/lna-linearity on the post-#79 core (new declaration, one campaign)
 - **PR #293**: refactor: single-source the two-tone IIP3 estimator into sim/harness/iip3.py
 - **Issue #276** (closed): Two independent fit_iip3 implementations use different IIP3 estimators (free-slope intersection vs ideal-slope intercept) and can return different values for the same sweep rows
 - **PR #295**: docs: drop stale tool-provenance prose from lna_stage1 note and nf fixture

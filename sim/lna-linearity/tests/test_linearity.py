@@ -11,12 +11,14 @@ from __future__ import annotations
 import copy
 import json
 import math
+import types
 
 import pytest
 
 import analysis as A
 import fakes
 import linearity as L
+import run as R
 from conftest import BENCH
 
 PLAN = L.load_plan(BENCH / "testbench" / "plan.json")
@@ -485,6 +487,117 @@ def test_aborted_transient_is_a_published_sweep_outcome_not_corruption():
     assert p["status"] == "bounded" and "rejected" in p["reason"]
 
 
+# ---- DUT pin, supersedes surface and the batch capacity wait (issue #273) ----
+
+LIVE_SHA = R.sha256_file(R.REPO_ROOT / "design" / "netlist" / "lna_stage1.spice")
+PRE79_SHA = "ad4fe1be5754f21fc4b2dd67863234858dc399e2a8232d3b20cf530014b8c447"
+
+
+def test_plan_v3_declares_the_live_deck():
+    """plan-v3 is v2 byte-for-byte except plan_version/issue/dut.sha256/supersedes_interpretation,
+    and its pin is the sha256 of the live design deck, re-derived here from the tree."""
+    v2 = L.load_plan(BENCH / "testbench" / "plan-v2.json")
+    v3 = L.load_plan(BENCH / "testbench" / "plan-v3.json")
+    assert v3["plan_version"] == 3 and v3["issue"] == 273
+    assert v3["dut"]["sha256"] == LIVE_SHA
+    for k in set(v2) | set(v3):
+        if k in ("plan_version", "issue", "dut", "supersedes_interpretation"):
+            continue
+        assert v2[k] == v3[k], k
+    assert {k: v for k, v in v2["dut"].items() if k != "sha256"} == \
+           {k: v for k, v in v3["dut"].items() if k != "sha256"}
+    assert R.dut_pin_problems(v3) == []
+
+
+def test_unpinned_plans_keep_todays_behavior():
+    """The frozen v1/v2 declarations carry no dut.sha256: the pin check passes them through
+    untouched, so verify/collect of the pre-#79 record keeps working."""
+    for name in ("plan.json", "plan-v2.json"):
+        plan = L.load_plan(BENCH / "testbench" / name)
+        assert "sha256" not in plan["dut"]
+        assert R.dut_pin_problems(plan) == []
+    assert R.plan_problems(L.load_plan(BENCH / "testbench" / "plan-v2.json")) == []
+
+
+def test_python_controls_pass_on_every_committed_declaration():
+    """The closed-form controls (no simulator) pass under v1, v2 and v3 alike: the
+    out-of-limit negative control's synthetic rows carry the collector-current diagnostics
+    that a plan_version >= 2 policy always requires, so it tests the V_CE limit it names."""
+    for name in ("plan.json", "plan-v2.json", "plan-v3.json"):
+        res = R.python_controls(L.load_plan(BENCH / "testbench" / name))
+        assert res["pass"], name
+
+
+def test_pin_mismatch_refuses_naming_path_and_both_hashes(tmp_path, monkeypatch, capsys):
+    """frozen_dut.resolve never raises, so the refusal is the bench's own input check: a plan
+    whose pin the deck at the declared path does not carry refuses before anything is written.
+    A pre-#79 pin (which only the old record's frozen snapshot satisfies) is itself a mismatch:
+    this bench measures the design tree's deck, never a frozen copy."""
+    good = L.load_plan(BENCH / "testbench" / "plan-v3.json")
+    for bad_sha, snap_note in ((PRE79_SHA, True), ("f" * 64, False)):
+        plan = copy.deepcopy(good)
+        plan["dut"]["sha256"] = bad_sha
+        probs = R.dut_pin_problems(plan)
+        assert len(probs) == 1, probs
+        assert "DUT pin mismatch" in probs[0]
+        assert "design/netlist/lna_stage1.spice" in probs[0]
+        assert bad_sha in probs[0] and LIVE_SHA in probs[0]
+        assert ("frozen copy" in probs[0]) == snap_note
+        bad = tmp_path / "plan-bad.json"
+        bad.write_text(json.dumps(plan))
+        for attr in ("RECORDS", "LOGS", "SNAPS"):
+            monkeypatch.setattr(R, attr, tmp_path / attr)
+        monkeypatch.setattr(R, "PLAN_PATH", R.PLAN_PATH)  # main() rebinds it; restore after
+        assert R.main(["collect", "--plan", str(bad), "--backend", "batch", "--dry-run"]) == 1
+        err = capsys.readouterr().err
+        assert "DUT pin mismatch" in err and bad_sha in err and LIVE_SHA in err
+        assert "nothing was submitted or written" in err
+        for attr in ("RECORDS", "LOGS", "SNAPS"):
+            assert not (tmp_path / attr).exists()
+
+
+def _stub_collect_submits(monkeypatch, tmp_path):
+    """A collect whose klt submissions are captured; the fake submit succeeds and the record
+    finalize is stubbed, so every one of the serial submits runs and its command line is recorded."""
+    cmds: list[list[str]] = []
+    monkeypatch.setattr(R, "dirty_code", lambda: [])
+    monkeypatch.setattr(R, "SCRATCH", tmp_path)
+    monkeypatch.setattr(R.klt_driver, "find_pdk_or_exit",
+                        lambda *a, **k: types.SimpleNamespace(path=tmp_path, model_lib=tmp_path / "cornerHBT.lib"))
+
+    class Done:
+        returncode, stderr = 0, ""
+
+    monkeypatch.setattr(R.subprocess, "run", lambda cmd, *a, **k: cmds.append(list(cmd)) or Done())
+    monkeypatch.setattr(R, "read_unit", lambda rep: ({"corners": [{}]}, ""))
+    monkeypatch.setattr(R, "finalize", lambda *a, **k: 0)
+    return cmds
+
+
+def test_batch_submit_carries_wait_for_capacity_default_600(monkeypatch, tmp_path):
+    cmds = _stub_collect_submits(monkeypatch, tmp_path)
+    assert R.main(["collect", "--backend", "batch"]) == 0
+    sim = [c for c in cmds if "sim" in c]
+    assert len(sim) == 8  # analytic control + 3 placements x two/one kinds
+    for cmd in sim:
+        assert "--wait-for-capacity" in cmd
+        assert cmd[cmd.index("--wait-for-capacity") + 1] == "600"
+
+
+def test_local_backend_submit_omits_wait_for_capacity(monkeypatch, tmp_path):
+    cmds = _stub_collect_submits(monkeypatch, tmp_path)
+    assert R.main(["collect", "--backend", "local"]) == 0
+    for cmd in (c for c in cmds if "sim" in c):
+        assert "--wait-for-capacity" not in cmd
+
+
+def test_capacity_and_supersedes_flag_surface():
+    args = R.build_parser().parse_args(["collect"])
+    assert args.wait_for_capacity == 600
+    assert R.build_parser().parse_args(["collect", "--wait-for-capacity", "900"]).wait_for_capacity == 900
+    assert R.build_parser().parse_args(["collect", "--supersedes-new-dut", "X"]).supersedes_new_dut == "X"
+    with pytest.raises(SystemExit):  # collect-only flag: build must not take it
+        R.build_parser().parse_args(["build", "--supersedes-new-dut", "X"])
 # ---------------------------------------------------------------------------
 # characterization: the pre-consolidation capture (issue #276)
 # ---------------------------------------------------------------------------

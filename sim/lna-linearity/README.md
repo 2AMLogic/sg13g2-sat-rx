@@ -12,16 +12,17 @@ compliance for rows 7 or 8, the band (row 1) is still a draft, and nothing here
 relaxes a ratified target: a failing, bounded, unavailable or unconverged
 outcome is published as it is.
 
-**NO DUT PIN** (noted as a #250 disposition, verified 2026-11-14 against
-origin/main @ `88c2be4`). Unlike the other study benches, this one reads the
-LIVE `design/netlist/lna_stage1.spice`: `testbench/plan.json` (and
-`plan-v2.json`) declare `netlist` + `subckt` but no `sha256`, and `run.py`
-loads the live netlist, hashing it only as recorded provenance — never
-checking it against a declaration. A re-run therefore measures whatever the
-design currently is. The existing record (`20261010-174208-0f67eaf`) froze the
-pre-#79 deck (`ad4fe1be…`) as its DUT identity and stays valid as evidence for
-that circuit; since #79 changed the core (`7a74e7ae…`) it is no longer
-reproducible from the live tree. Re-running on the new core is filed as #273.
+**DUT PIN FROM plan_version 3** (updated 2026-11-16, issue #273). `testbench/plan-v3.json`
+declares `dut.sha256`, and `run.py` resolves the deck through
+`harness.frozen_dut.resolve`: `collect` refuses — naming the declared path and both hashes —
+when the deck at the declared path does not carry the declared hash, before anything is
+submitted or written. A plan with no pin keeps the old behavior: `plan.json` (v1) and
+`plan-v2.json` stay frozen and unpinned, and `run.py verify` still reproduces the records
+taken under them. The pre-#79 record (`20261010-174208-0f67eaf`) froze the old deck
+(`ad4fe1be…`) as its DUT identity and stays valid as evidence for that circuit; since #79
+changed the core (`7a74e7ae…`) it is no longer reproducible from the live tree. The re-run on
+the new core is delivered: `records/20261116-020942-22340f5.md` (plan-v3, post-#79 deck,
+supersedes the pre-#79 record as a new core revision — the circuit changed, not the method).
 
 ## Cold start
 

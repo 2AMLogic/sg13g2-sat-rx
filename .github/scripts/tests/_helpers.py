@@ -39,6 +39,19 @@ def mirror_manifests(root: Path, repo: Path) -> None:
         shutil.copytree(repo / "manifests", Path(root) / "manifests")
 
 
+def mirror_signoff(root: Path, repo: Path) -> None:
+    """Copy the committed item-1 block-coverage attestation into a fixture tree.
+
+    The format half runs the block-coverage check (issue #170) on every tree
+    it validates: without the committed ``signoff/block-coverage.json`` the
+    check refuses with "missing block_coverage". ``design/`` is absent in
+    fixtures, so the committed ``no_design_source`` mixer claim stays honest.
+    """
+    root = Path(root)
+    (root / "signoff").mkdir(exist_ok=True)
+    shutil.copyfile(repo / "signoff" / "block-coverage.json", root / "signoff" / "block-coverage.json")
+
+
 def commit(cwd, msg="c"):
     run(cwd, "git", "add", "-A")
     run(cwd, "git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", msg)

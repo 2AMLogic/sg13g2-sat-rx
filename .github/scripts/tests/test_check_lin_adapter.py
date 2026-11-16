@@ -26,7 +26,7 @@ BENCH = REPO / "sim" / "lna-linearity"
 sys.path.insert(0, str(SCRIPTS))
 
 import check_evidence_formats as chk  # noqa: E402
-from _helpers import CheckerCase, edit_json, mirror_manifests  # noqa: E402
+from _helpers import CheckerCase, edit_json, mirror_manifests, mirror_signoff  # noqa: E402
 
 NAME = "lna-linearity"
 SHA = "a" * 64
@@ -110,6 +110,7 @@ class Base(CheckerCase):
         shutil.copytree(REPO / "sim" / "lna-sparam-nf", self.root / "sim" / "lna-sparam-nf",
                         ignore=shutil.ignore_patterns("_build", "_selftest", "__pycache__"))
         mirror_manifests(self.root, REPO)
+        mirror_signoff(self.root, REPO)
         self.rid = build_record(self.root, limit_violation=self.limit_violation)
         self.exp = self.root / "sim" / NAME
         self.js = self.exp / "records" / f"{self.rid}.json"

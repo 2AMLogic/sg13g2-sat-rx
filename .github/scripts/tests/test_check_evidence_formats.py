@@ -25,7 +25,7 @@ REPO = SCRIPTS.parents[1]
 sys.path.insert(0, str(SCRIPTS))
 
 import check_evidence_formats as chk  # noqa: E402
-from _helpers import commit, mirror_manifests, run  # noqa: E402
+from _helpers import commit, mirror_manifests, mirror_signoff, run  # noqa: E402
 
 NATIVE = "lna-sparam-nf"
 NATIVE2 = "mixer-conversion-iip3"
@@ -51,11 +51,22 @@ def tree(tmp_path):
     (dst / "spec").mkdir()
     for name in ("target-spec.md", "row-coverage.json"):
         shutil.copyfile(REPO / "spec" / name, dst / "spec" / name)
+    # The reuse-masters check (issue #277) reads the root declared-masters lock
+    # and the sim/harness/ files it declares; the sim/ copy above ignores harness/.
+    shutil.copyfile(REPO / "reuse.lock.json", dst / "reuse.lock.json")
+    lock_doc = json.loads((REPO / "reuse.lock.json").read_text(encoding="utf-8"))
+    for entry in lock_doc["masters"]:
+        m = dst / entry["master"]
+        if m.exists():  # already in the symlink farm (masters outside sim/harness/)
+            continue
+        m.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(REPO / entry["master"], m)
     # Stored-evidence records (issue #226) need their committed manifests: the
     # checker refuses a record with a "## Stored evidence" section whose
     # manifests/artifacts/<bench>-<id>.manifest.json is missing.
     if (REPO / "manifests" / "artifacts").is_dir():
         shutil.copytree(REPO / "manifests", dst / "manifests")
+    mirror_signoff(dst, REPO)
     return dst
 
 
@@ -510,6 +521,7 @@ def upstream(tmp_path_factory):
     shutil.copytree(REPO / "sim", root / "sim", symlinks=False,
                     ignore=shutil.ignore_patterns("harness", "_build", "_selftest", "__pycache__"))
     mirror_manifests(root, REPO)
+    mirror_signoff(root, REPO)
     # the lna-linearity adapter reads the ratified row 7/8 targets from the spec table
     (root / "spec").mkdir()
     shutil.copyfile(REPO / "spec" / "target-spec.md", root / "spec" / "target-spec.md")
@@ -620,6 +632,7 @@ def test_no_base_is_skipped_loudly_or_fails_when_required(tmp_path):
     root = tmp_path / "lone"
     shutil.copytree(REPO / "sim" / NATIVE, root / "sim" / NATIVE)
     mirror_manifests(root, REPO)
+    mirror_signoff(root, REPO)
     run(root, "git", "init", "-q", "-b", "scratch")
     commit(root, "only commit")
     problems, note = chk.check_append_only(root, "0" * 40, False)
@@ -680,3 +693,22 @@ def test_mixer_source_with_no_design_source_claim_fails(tmp_path):
     (tmp_path / "design" / "mixer_core.sch").unlink()
     (tmp_path / "design" / "stage2.spice").write_text("* Gilbert MIXER core\n")
     assert block_coverage_problems(tmp_path)
+
+
+def test_block_coverage_rot_claim_fails_format(tree):
+    """The wired-in check (issue #310) refuses an attestation that overstates coverage."""
+    man = tree / "signoff" / "block-coverage.json"
+    doc = json.loads(man.read_text())
+    doc["block_coverage"]["mixer"] = "sources_committed"
+    man.write_text(json.dumps(doc))
+    assert any("block-coverage.json" in p for p in problems_of(tree))
+
+
+def test_block_coverage_missing_attestation_fails_format(tree):
+    """The attestation may not be dropped to escape the honesty check (it is the only guard on signoff/)."""
+    (tree / "signoff" / "block-coverage.json").unlink()
+    assert any("missing block_coverage" in p for p in problems_of(tree))
+
+
+def test_block_coverage_clean_attestation_keeps_format_green(tree):
+    assert problems_of(tree) == []
