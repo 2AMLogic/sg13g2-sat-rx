@@ -6,8 +6,7 @@ import json
 import re
 from pathlib import Path
 
-from .common import Problems, duplicates, load_json_object, read_gzip_text, rel
-from .passive_p1 import PASSIVE_PACKAGES, _sha256_of
+from .common import Problems, SOLVER_ARTIFACTS_DIR, all_numbers_allow_nan, corner_id, duplicates, load_json_object, read_gzip_text, reject_foreign_dirs, rel, sha256_of
 
 
 # ---------------------------------------------------------------------------
@@ -31,29 +30,21 @@ LNAMATCH_MD_MARKERS = (
 LNAMATCH_PROVENANCE = ("git", "ngspice", "klt", "pdk", "klt_requests", "frozen_inputs")
 
 
-def _lnamatch_cid(process: str, temp: float, vdd: float) -> str:
-    return f"{process}_{temp:g}c_{vdd:.2f}v"
-
-
 def lnamatch_expected_ids(decl: dict, shortlist: list) -> list[str]:
     """Declared cell ids from the FROZEN declaration (the record's own
     netlist-snapshots/<id>/study.json) and the record's shortlist: every
     declared network at the nominal screen point, and the shortlist plus every
     probe at every PVT point. Mirrors matchstudy.expected_cells."""
     n, pvt = decl["nominal"], decl["pvt"]
-    nom = _lnamatch_cid(n["process"], float(n["temp_c"]), float(n["vdd"]))
+    nom = corner_id(n["process"], float(n["temp_c"]), float(n["vdd"]))
     ids = [f"screen__{c['name']}__{nom}" for c in decl["candidates"]]
     probes = [c["name"] for c in decl["candidates"] if c.get("role") == "probe"]
     for name in list(shortlist) + probes:
         for p in pvt["processes"]:
             for t in pvt["temperatures_c"]:
                 for v in pvt["supplies_v"]:
-                    ids.append(f"corners__{name}__{_lnamatch_cid(p, float(t), float(v))}")
+                    ids.append(f"corners__{name}__{corner_id(p, float(t), float(v))}")
     return ids
-
-
-def _all_numbers(values) -> bool:
-    return all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in values)
 
 
 def check_lnamatch_cells(problems: Problems, root: Path, path: Path, cells: object, decl: dict | None,
@@ -95,7 +86,7 @@ def check_lnamatch_cells(problems: Problems, root: Path, path: Path, cells: obje
                 problems.add(wc, f"{cid}: rejected cell without a reason")
             continue
         sm = c.get("summary")
-        if not isinstance(sm, dict) or not sm or not _all_numbers(sm.values()):
+        if not isinstance(sm, dict) or not sm or not all_numbers_allow_nan(sm.values()):
             problems.add(wc, f"{cid}: ok cell with a missing or non-finite summary")
         if c.get("role") == "probe":
             continue
@@ -110,10 +101,10 @@ def check_lnamatch_cells(problems: Problems, root: Path, path: Path, cells: obje
             problems.add(wc, f"{cid}: band grid has {n} points, the declaration says {dense_n}")
         for key in ("s11_db", "s21_db", "s22_db", "s12_db", "nf_db", "k", "delta"):
             arr = band.get(key)
-            if not isinstance(arr, list) or len(arr) != n or not _all_numbers(arr):
+            if not isinstance(arr, list) or len(arr) != n or not all_numbers_allow_nan(arr):
                 problems.add(wc, f"{cid}: band.{key} missing, wrong length or non-finite")
         wide = c.get("wide")
-        if not isinstance(wide, dict) or not wide.get("k") or not _all_numbers(wide["k"]):
+        if not isinstance(wide, dict) or not wide.get("k") or not all_numbers_allow_nan(wide["k"]):
             problems.add(wc, f"{cid}: ok cell without a finite wide stability sweep")
         if not isinstance(c.get("screen"), dict) or "pass" not in c["screen"]:
             problems.add(wc, f"{cid}: ok cell without a screen outcome")
@@ -167,11 +158,11 @@ def check_lnamatch_record(problems: Problems, root: Path, exp_dir: Path, rid: st
     if isinstance(prov.get("pdk"), dict) and not prov["pdk"].get("model_sha256"):
         problems.add(wj, "provenance.pdk.model_sha256 missing or empty")
     decl_sha = (data.get("declaration") or {}).get("sha256")
-    if decl_path.is_file() and decl_sha != _sha256_of(decl_path):
+    if decl_path.is_file() and decl_sha != sha256_of(decl_path):
         problems.add(wj, "declaration.sha256 does not match the frozen netlist-snapshots/<id>/study.json")
     fi = prov.get("frozen_inputs") if isinstance(prov.get("frozen_inputs"), dict) else {}
     dut = snap / "lna_stage1.spice"
-    if dut.is_file() and fi.get("design_netlist_sha256") != _sha256_of(dut):
+    if dut.is_file() and fi.get("design_netlist_sha256") != sha256_of(dut):
         problems.add(wj, "frozen_inputs.design_netlist_sha256 does not match the frozen DUT snapshot")
     sl = data.get("shortlist") if isinstance(data.get("shortlist"), dict) else {}
     names = sl.get("names") if isinstance(sl.get("names"), list) else []
@@ -249,6 +240,4 @@ def check_lna_match_tradeoff(problems: Problems, root: Path, exp_dir: Path) -> N
             for p in sorted(d.iterdir()):
                 if p.name not in ids:
                     problems.add(rel(root, p), f"{sub} entry belongs to no record in this experiment (orphan evidence)")
-    for sub in ("probe-logs", PASSIVE_PACKAGES):
-        if (exp_dir / sub).exists():
-            problems.add(rel(root, exp_dir / sub), f"{sub}/ is not part of the lna-match-tradeoff evidence layout")
+    reject_foreign_dirs(problems, root, exp_dir, "lna-match-tradeoff", ("probe-logs", SOLVER_ARTIFACTS_DIR))
