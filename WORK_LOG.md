@@ -8,6 +8,9 @@ Chronological record of merged pull requests and closed issues, maintained by th
 
 ### 2026-11-16
 
+- **PR #294**: fix: remove pytest flat-namespace collection collisions across sim benches
+- **Issue #287** (closed): Running several sim/*/tests dirs in one pytest invocation fails at collection: bare 'from conftest import' collides across benches
+- **PR #311**: refactor(sim): bind Class A z0 defaults to rf.Z0_OHM; close pumped synth_marks divergence
 - **PR #319**: ci: run the block-coverage honesty check in check_format
 - **Issue #310** (closed): Wire in or remove unused block_coverage evidence check (never called by CI checker)
 - **PR #320**: test(sim): isolate bench pytest namespaces so multi-bench runs pass
