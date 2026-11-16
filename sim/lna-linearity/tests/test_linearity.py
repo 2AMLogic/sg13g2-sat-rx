@@ -11,6 +11,7 @@ from __future__ import annotations
 import copy
 import json
 import math
+from pathlib import Path
 import types
 
 import pytest
@@ -19,7 +20,8 @@ import analysis as A
 import fakes
 import linearity as L
 import run as R
-from conftest import BENCH
+
+BENCH = Path(__file__).resolve().parents[1]
 
 PLAN = L.load_plan(BENCH / "testbench" / "plan.json")
 C = PLAN["controls"]

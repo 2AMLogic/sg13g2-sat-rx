@@ -54,7 +54,7 @@ def _grid(tb, corner_names=("hbt",)):
 
 
 def _value(tb, name, process, temp, vdd):
-    from conftest import in_check_window
+    from harness.testsupport import in_check_window
 
     raw = 1.0 + list(tb.measure).index(name) + {"hbt_typ": 0.0, "hbt_bcs": 0.1, "hbt_wcs": 0.2}[process] \
         + temp / 100.0 + vdd

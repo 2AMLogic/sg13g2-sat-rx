@@ -21,6 +21,7 @@ BENCH_DIR = Path(__file__).resolve().parent
 SIM_DIR = BENCH_DIR.parent
 REPO_ROOT = SIM_DIR.parent
 LIN_DIR = SIM_DIR / "lna-linearity"
+_lin_inserted = str(LIN_DIR) not in sys.path
 for _p in (str(LIN_DIR), str(SIM_DIR)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
@@ -30,8 +31,11 @@ import small_signal as SS  # noqa: E402
 
 from harness import frozen_dut  # noqa: E402
 
-# the sibling bench's own run.py/analysis.py must not shadow this bench's modules
-if str(LIN_DIR) in sys.path:
+# the sibling bench's own run.py/analysis.py must not shadow this bench's
+# modules -- but only ever remove the entry THIS import itself inserted: in a
+# multi-bench pytest invocation lna-linearity's conftest may already host it
+# for its own tests, and stripping it would break those (issue #287)
+if _lin_inserted and str(LIN_DIR) in sys.path:
     sys.path.remove(str(LIN_DIR))
 
 PLAN_PATH = BENCH_DIR / "testbench" / "plan.json"

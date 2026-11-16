@@ -56,6 +56,8 @@ jobs:
         run: python -m pytest sim/lna-linearity/tests -q
       - name: lna-headroom variant / gate / ranking / baseline-reproduction tests (closed-form fake klt; no simulator)
         run: python -m pytest sim/lna-headroom/tests -q
+      - name: Multi-bench collection guard - all 12 bench test dirs in one pytest invocation must collect without name collisions (issue #287; a multi-bench run is NOT supported, see sim/README.md)
+        run: python -m pytest sim/*/tests --collect-only -q
 
   evidence-formats:
     name: evidence formats + append-only history
