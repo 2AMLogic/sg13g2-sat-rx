@@ -17,7 +17,7 @@ PR #293 moved the two-tone IIP3 estimator into `sim/harness/iip3.py`, which comp
 | home | published `iip3_dbm` is | source |
 |---|---|---|
 | `mixfeas.fit_iip3` (`sim/mixer-topology-feasibility`) | free-slope line intersection, lower of the two sidebands | `mixfeas.py:905-925` docstring ("intersection of the two fitted lines") |
-| `linearity.fit_iip3` (`sim/lna-linearity`, reused by `sim/lna-headroom` via `headroom.py:624`) | ideal-slope window centroid, `mean(pin + (Pfund - Pim3)/2)` over the run | `linearity.py:650-668` docstring |
+| `linearity.fit_iip3` (`sim/lna-linearity`, reused by `sim/lna-headroom` via `headroom.py:628`) | ideal-slope window centroid, `mean(pin + (Pfund - Pim3)/2)` over the run | `linearity.py:650-668` docstring |
 | `sim/mixer-conversion-iip3` in-deck bench | `iip3t`, slope-3-constrained read at the top-of-fit drive, `Pin + (Pfund - Pim3)/2` | `testbench/tb.json:164` (`"iip3_dbm": "iip3t"`), `tb.json:152` |
 
 The engine's `iip3_topfit_dbm` is the same formula as the deck's `iip3t` (`xs[j-1] + (fund_ys[j-1] - im3_ys[j-1]) / 2.0` at `iip3.py:146`; deck at `tb.json:152`). **This equivalence was read off the two expressions, not run.**
@@ -85,7 +85,7 @@ If ratified and then acted on (none of this is done by this record):
 - **Adopting the three-intercept key set is the same migration as the headline move, not a separate one.** Per `sim/lna-linearity/run.py:579`, a change to the published `placements` key set makes committed records fail "placements (fits, convergence, verdicts) do not reproduce from the frozen logs", exactly as a headline value change does. So it is one re-recording, and #293's opt-in `diagnostics=True` filter would be turned on permanently at the same time.
 - **Committed records that embed these fitters and would stop reproducing** (found by grepping for `fit_iip3` / `iip3_dbm` in `sim/` and `.github/`):
   - `sim/lna-linearity/records/20261010-174208-0f67eaf` and `20261116-020942-22340f5` (records guarded at `run.py:579`; re-running is #273's territory).
-  - `sim/lna-headroom/records/20261011-053527-d60e79a` and `20261031-222819-864b44f` (headroom calls `L.fit_iip3`, `headroom.py:624`, with a snapshotted `linearity-plan-v2.json` for the latter, `run.py:492,554,576`).
+  - `sim/lna-headroom/records/20261011-053527-d60e79a` and `20261031-222819-864b44f` (headroom calls `L.fit_iip3`, `headroom.py:628`, with a snapshotted `linearity-plan-v2.json` for the latter, `run.py:492,554,576`).
   - `sim/mixer-topology-feasibility/records/20261010-010744-a10c193` and `20261010-025859-2113f00` (`mixfeas.fit_iip3` via `collect.py:314`; both contain `iip3` fits).
   - `sim/mixer-conversion-iip3` is **not** affected on the headline (it already publishes `iip3t`); only if its diagnostics were renamed would it be.
 
