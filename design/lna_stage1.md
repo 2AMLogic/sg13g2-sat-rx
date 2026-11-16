@@ -232,14 +232,20 @@ the next reader does not re-derive it (issue #250; verified against origin/main
   `records/20261010-012923-6cad7fc.md` as a new core revision (not a method
   correction), and the old record stays valid as evidence for the pre-#79
   core.
-- `sim/lna-linearity` — **re-run, filed as its own campaign (#273,
-  `loom:triage`), not run here.** It is the strongest candidate: the bench has
-  no DUT pin (`testbench/plan.json` declares `netlist` + `subckt`, no
-  `sha256`; noted in its README), so it measures whatever the live netlist
-  is, and emitter degeneration is expected to move IIP3/P1dB. Its existing
-  record (`20261010-174208-0f67eaf`) froze the pre-#79 deck (`ad4fe1be…`) as
-  the DUT identity and stays valid for that circuit; it is no longer
-  reproducible from the live tree.
+- `sim/lna-linearity` — **re-run, delivered as its own campaign (#273; record
+  `records/20261116-020942-22340f5.md`, 2026-11-16).** It is the strongest candidate:
+  emitter degeneration is expected to move IIP3/P1dB. The campaign is a new declaration
+  (`testbench/plan-v3.json`, which pins the DUT by `dut.sha256` — the bench had no DUT pin
+  before v3, noted in its README): the new record supersedes
+  `20261010-174208-0f67eaf` as a new core revision (the circuit changed, not the method),
+  and the old record — which froze the pre-#79 deck (`ad4fe1be…`) as
+  the DUT identity — stays valid for that circuit and is no longer
+  reproducible from the live tree. On the post-#79 core (nominal corner
+  hbt_typ/27 C/2.5 V, ideal matching, placeholder circuit): IIP3 -8.58 / -8.18 / -6.45 dBm
+  at the low/mid/high placements, `meets` against the unchanged -15 dBm target at that
+  corner; input P1dB is again not determined within the row-17 operating limits — bounded
+  > -36 / > -34 / > -32 dBm — with the V_CE limit breaking from -34 / -32 / -30 dBm
+  single-tone. Not compliance; one corner, no corner dependence established.
 - `sim/lna-headroom` — **no re-run for now.** The study's subject is the DC
   bias divider / `Rd` headroom, and the operating point is the one thing #79
   claims not to move — a claim the new record now verifies directly across
@@ -258,12 +264,14 @@ the next reader does not re-derive it (issue #250; verified against origin/main
 ## What this does not do
 
 * No second stage, no real inductors (`Le1` included), no layout, no mismatch /
-  statistical sections, no sized input network, and no linearity bench result
-  on the current core.
-* **No IIP3 / P1dB characterization of the post-#79 core.** The full
-  S-parameter / NF / stability / operating-point grid now exists for it
-  (`records/20261114-211735-8a92c6e.md`, #250); linearity does not — the
-  lna-linearity record still measures the earlier core, and re-running it is
-  #273 (see the dispositions above).
+  statistical sections, no sized input network.
+* Linearity exists for the post-#79 core at the nominal corner only
+  (`records/20261116-020942-22340f5.md`, #273, 2026-11-16: IIP3
+  -8.58 / -8.18 / -6.45 dBm low/mid/high, `meets` vs -15 dBm; P1dB bounded
+  > -36 / > -34 / > -32 dBm — placeholder circuit, ideal matching): no corner
+  dependence is established and the band (row 1) is still open. The earlier
+  core's figures (-13.29 / -13.88 / -11.77 dBm; P1dB bounded
+  > -38 / -38 / -36 dBm) describe the pre-#79 circuit and are retained only by
+  its own record, `20261010-174208-0f67eaf`.
 * Not a wideband result: the match is detuned at the band edges and varies over
   corners; no flatness is claimed between the three band points.
