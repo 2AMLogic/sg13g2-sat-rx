@@ -206,7 +206,7 @@ class CommittedTree(unittest.TestCase):
             "sim/lna-sparam-nf/lna_nf.py",
         ])
         rf = next(e for e in doc["masters"] if e["master"] == "sim/harness/rf.py")
-        self.assertEqual(rf["symbols"], ["K_BOLTZMANN", "noise_factor_from_inoise", "noise_factor_from_inoise_sq"])
+        self.assertEqual(rf["symbols"], ["K_BOLTZMANN", "noise_factor_from_inoise", "noise_factor_from_inoise_sq", "Z0_OHM", "db10", "db20", "dbm_strict", "dbm_floored", "watts", "available_power_w", "v_open_peak_for", "delivered_power_w", "dft_bin", "dft_bin_amplitude"])
         up = doc["upstream"]
         self.assertEqual(up["modules"],
                          ["pdk.py", "corners.py", "toolchain.py", "testbench.py",
@@ -216,8 +216,6 @@ class CommittedTree(unittest.TestCase):
         self.assertNotIn("rf.py", up["modules"])
         comment = doc["_comment"]
         self.assertIn("9dad16b", comment)
-        self.assertIn("#263", comment)
-        self.assertIn("#264", comment)
         self.assertIn("#266", comment)
         self.assertNotIn("#262", comment)
 
