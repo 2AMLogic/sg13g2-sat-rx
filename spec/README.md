@@ -29,6 +29,8 @@ spec/
                               classification of every spec row (proposed)
     0008-lo-drive-path-after-no-acceptable-drive.md   mixer LO-drive path
                               after #61 (proposed; comparative, selects nothing)
+    0010-iip3-intercept-definition-reference.md   IIP3 intercept reference
+                              (proposed; recommends iip3t, selects nothing)
 ```
 
 ## Status: partially ratified — targets, not compliance
