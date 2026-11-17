@@ -422,10 +422,11 @@ def test_decision_record_matches_measurement():
             f"record does not quote the {factor:g}x window-gate loosening (n={n:g})")
         assert f"{MIX_TOL / n:g}" in text, (
             f"record does not quote the {MIX_TOL / n:g} old relative window bound")
-    # numbering: one greater than the highest existing record on main
+    # numbering: 0009 follows its predecessor 0008; records added after 0009
+    # are the numbering rule working, not drift, and are free to exceed it
     nums = sorted(int(p.name[:4]) for p in (ROOT / "spec" / "decision-records").glob("*.md")
                   if p.name[:4].isdigit())
-    assert nums[-1] == 9 and 8 in nums, f"decision-record numbering drifted: {nums}"
+    assert 9 in nums and 8 in nums, f"decision-record numbering drifted (0008/0009 missing): {nums}"
 
 
 # ---------------------------------------------------------------------------

@@ -13,8 +13,9 @@
 Two functions named `coherence_problems`, in two benches, both decide whether
 an analysed spectral bin is coherent with the retained window, and they
 disagree: **1000x in tolerance** (`tol=1e-6` vs `tol=1e-9`) and **4x in
-Nyquist margin** (2 vs 8 samples per period). Verified at this issue's base
-commit `c498b96`:
+Nyquist margin** (2 vs 8 samples per period). Verified at commit `c498b96`,
+the base at which these criteria were transcribed; both functions are
+unchanged at this PR's head:
 
 - `sim/mixer-topology-feasibility/mixfeas.py:465` — `coherence_problems(run, tol=1e-6)`:
   window-integer-steps test **absolute** (`abs(steps - round(steps)) > 1e-6`),
@@ -284,6 +285,12 @@ Checkable conditions, each independently sufficient:
   3–4 decades above fp noise and ≥3 decades below the smallest meaningful
   decimal typo: physically meaningless territory, but stated plainly because
   it is a real loosening.
+- **The mixer campaign's per-bin cycle test tightens by 1000x** (relative
+  `1e-6` → relative `1e-9`), the counterpart of the window loosening above:
+  both conventions were already relative here, so the single-tolerance rule
+  moves the mixer side only. A tightening cannot admit a bin the mixer
+  campaign previously rejected; measured cost today is zero — every cycle
+  residual in the committed table is exactly `0.0`.
 - **The mixer campaign's non-positive-frequency exclusion is retained — and
   generalised**: sub-test 3 keeps mixfeas's `f <= 0` bin guard verbatim and
   applies it to every analysed frequency, tones included. mixfeas tests bins
@@ -308,8 +315,9 @@ Checkable conditions, each independently sufficient:
 - Criteria transcribed/applied from: `sim/lna-linearity/linearity.py:121`,
   `sim/lna-linearity/linearity.py:157`, `sim/mixer-topology-feasibility/mixfeas.py:465`
   (parse-time gate `mixfeas.py:342`; `RunSpec` `mixfeas.py:361`), third
-  consumer `sim/lna-headroom/headroom.py:170` — at base commit `c498b96`.
-- Numbering: highest existing record on `main` was `0008` at the base commit;
+  consumer `sim/lna-headroom/headroom.py:170` — at commit `c498b96`, where
+  these criteria were transcribed (unchanged at this PR's head).
+- Numbering: highest existing record on `main` was `0008` at `c498b96`;
   `0009` chosen per `TEMPLATE.md`'s numbering rule and re-checked at PR time
   (asserted by `test_decision_record_matches_measurement`).
 - Issue: #266 (split D of #257). Sibling splits #262 (split A), #263 (B),
