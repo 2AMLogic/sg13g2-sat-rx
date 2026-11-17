@@ -6,7 +6,7 @@ import json
 import re
 from pathlib import Path
 
-from .common import (Problems, SHA1_RE, SOLVER_ARTIFACTS_DIR, check_sidecar_group_bench, has_section, header_field, is_number_not_nan, load_json_object, need_record_commit, need_sha256, need_str, read_gzip_text, rel, sha256_of)
+from .common import (Problems, SHA1_RE, SOLVER_ARTIFACTS_DIR, check_sidecar_group_bench, has_section, header_field, is_number_not_nan, is_usable_floor_dbm, load_json_object, need_record_commit, need_sha256, need_str, read_gzip_text, rel, sha256_of)
 from .spec_rows import SPEC_PATH, SPEC_ROW_RE
 
 
@@ -186,7 +186,7 @@ def lin_check_sweeps(problems: Problems, where: str, plan: dict, sweeps: object)
                     keys = LIN_TWO_KEYS if kind == "two" else ("p_f0_dbm",)
                     if r.get("sim_failed"):
                         continue  # a published aborted transient: classified, no values
-                    if not all(is_number_not_nan(r.get(k)) for k in keys) or not is_number_not_nan(r.get("floor_dbm")):
+                    if not all(is_number_not_nan(r.get(k)) for k in keys) or not is_usable_floor_dbm(r.get("floor_dbm")):
                         problems.add(w, f"point {r.get('pin_dbm')!r}: missing delivered powers/floor ({', '.join(keys)}, floor_dbm); "
                                      "both IM3 sidebands are required in every two-tone point")
                     if not isinstance(r.get("excursion_v"), dict):
