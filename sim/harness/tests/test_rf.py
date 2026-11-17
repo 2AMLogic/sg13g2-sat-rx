@@ -349,6 +349,24 @@ def test_probe_selector_tries_the_recorded_probe_first():
     assert _find_f_diverging_density(predicate=only_recorded) == _RECORDED_PROBE
 
 
+def test_probe_selector_falls_back_to_the_seeded_scan():
+    """The branch taken on a libm where the recorded literal no longer
+    diverges: the scan must return a draw from the seeded stream itself,
+    never the recorded literal and never None."""
+    r = random.Random(262)
+    fifth = [r.uniform(1e-12, 1e-6) for _ in range(5)][-1]
+    calls = []
+
+    def reject_literal_accept_fifth(v):
+        calls.append(v)
+        # call 1 = recorded literal, calls 2..6 = seeded draws 1..5
+        return len(calls) == 6
+
+    assert _find_f_diverging_density(predicate=reject_literal_accept_fifth) == fifth
+    assert calls[0] == _RECORDED_PROBE
+    assert len(calls) == 6
+
+
 def test_probe_selector_with_the_real_predicate_returns_the_recorded_probe():
     if not _f_diverges(_RECORDED_PROBE):
         pytest.skip(
