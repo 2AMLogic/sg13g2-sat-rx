@@ -51,7 +51,7 @@ R = _load("lin_run", BENCH / "run.py")
 FAKES = _load("lin_fakes", BENCH / "tests" / "fakes.py", BENCH / "tests")
 
 
-def build_record(root: Path, *, limit_violation: bool = True) -> str:
+def build_record(root: Path, *, limit_violation: bool = True, floor_v: float = 1e-9) -> str:
     """Write one record into root/sim/lna-linearity with the real finalize()."""
     exp = root / "sim" / NAME
     for sub in ("records", "corners", "netlist-snapshots", "testbench"):
@@ -60,7 +60,7 @@ def build_record(root: Path, *, limit_violation: bool = True) -> str:
     shutil.copyfile(BENCH / "testbench" / "plan.json", exp / "testbench" / "plan.json")
     plan = L.load_plan(BENCH / "testbench" / "plan.json")
     amp40 = L.cubic_tone_amps(10.0, -2000.0, L.vs_peak_from_pav_dbm(-40.0), False)["f0"]
-    kw = dict(excursion_per_v=0.14 / amp40, floor_v=1e-9) if limit_violation else dict(floor_v=1e-9)
+    kw = dict(excursion_per_v=0.14 / amp40, floor_v=floor_v) if limit_violation else dict(floor_v=floor_v)
     texts = FAKES.fake_logs(plan, **kw)
     work = root / "work"
     work.mkdir(exist_ok=True)
@@ -100,6 +100,7 @@ def edit_gz_json(path: Path, fn) -> None:
 
 class Base(CheckerCase):
     limit_violation = True
+    floor_v = 1e-9
 
     def setUp(self):
         self._tmp = tempfile.TemporaryDirectory()
@@ -111,7 +112,7 @@ class Base(CheckerCase):
                         ignore=shutil.ignore_patterns("_build", "_selftest", "__pycache__"))
         mirror_manifests(self.root, REPO)
         mirror_signoff(self.root, REPO)
-        self.rid = build_record(self.root, limit_violation=self.limit_violation)
+        self.rid = build_record(self.root, limit_violation=self.limit_violation, floor_v=self.floor_v)
         self.exp = self.root / "sim" / NAME
         self.js = self.exp / "records" / f"{self.rid}.json"
         self.md = self.exp / "records" / f"{self.rid}.md"
@@ -383,6 +384,22 @@ class LimitedRecord(Base):
         self.sweeps.unlink()
         self.assertFails("sweeps file")
 
+    def test_floor_plus_inf_string_still_rejected(self):
+        edit_gz_json(self.sweeps, lambda d: d["low"]["base"]["two"][3].update(floor_dbm="+inf"))
+        self.assertFails("missing delivered powers/floor")
+
+    def test_floor_null_still_rejected(self):
+        edit_gz_json(self.sweeps, lambda d: d["low"]["base"]["two"][3].update(floor_dbm=None))
+        self.assertFails("missing delivered powers/floor")
+
+    def test_floor_other_string_still_rejected(self):
+        edit_gz_json(self.sweeps, lambda d: d["low"]["base"]["two"][3].update(floor_dbm="abc"))
+        self.assertFails("missing delivered powers/floor")
+
+    def test_floor_missing_still_rejected(self):
+        edit_gz_json(self.sweeps, lambda d: d["low"]["base"]["two"][3].pop("floor_dbm"))
+        self.assertFails("missing delivered powers/floor")
+
     def test_markdown_must_reference_artifacts_and_rows(self):
         self.md.write_text(self.md.read_text().replace(f"corners/{self.rid}/", "corners/elsewhere/"))
         self.assertFails(f"does not reference corners/{self.rid}/")
@@ -418,6 +435,47 @@ class UnlimitedRecord(Base):
     def test_output_p1db_consistency(self):
         edit_json(self.js, lambda d: d["placements"]["mid"]["results"]["p1db"].update(p1db_out_dbm=0.0))
         self.assertFails("p1db_out_dbm is inconsistent")
+
+
+class UnmeasurableFloorRecord(Base):
+    """Both floor bins identically zero: dbm_from_w -> -inf, _round -> "-inf".
+
+    The real writer must reach records/ with the string while delivered powers
+    stay finite, and the checker must accept it -- the in-memory rule
+    (_usable_floor) already calls such a point usable (issues #268/#300).
+    """
+    floor_v = 0.0
+
+    def test_writer_emits_the_string_and_checker_accepts(self):
+        with gzip.open(self.sweeps, "rt", encoding="utf-8") as fh:
+            sweeps = json.load(fh)
+        floors = [r.get("floor_dbm") for placement in sweeps.values() for variant in placement.values()
+                  for rows in variant.values() for r in rows]
+        self.assertTrue(floors)
+        self.assertEqual(set(floors), {"-inf"})
+        mixed = sweeps["low"]["base"]["two"][3]
+        self.assertEqual(mixed["floor_dbm"], "-inf")
+        for k in chk.LIN_TWO_KEYS:
+            self.assertTrue(chk.is_number_not_nan(mixed[k]), f"{k} must stay finite beside an unmeasurable floor")
+        self.assertEqual(self.problems(), [])
+
+
+class FloorEncodingConvention(unittest.TestCase):
+    """The checker predicate and the in-memory rule agree by construction (issue #300)."""
+
+    def test_usable_floor_and_checker_verdicts_agree(self):
+        for x in (1.0, float("-inf"), float("+inf"), float("nan")):
+            rounded = A._round(x)
+            self.assertEqual(L._usable_floor(x), chk.is_usable_floor_dbm(rounded),
+                             f"x={x!r}: _usable_floor={L._usable_floor(x)}, checker({rounded!r})={chk.is_usable_floor_dbm(rounded)}")
+
+    def test_shared_predicate_did_not_move(self):
+        self.assertFalse(chk.is_number_not_nan("-inf"))
+        self.assertTrue(chk.is_usable_floor_dbm("-inf"))
+        self.assertTrue(chk.is_number_not_nan(-400.0))
+        self.assertFalse(chk.is_usable_floor_dbm(float("inf")))
+        self.assertFalse(chk.is_usable_floor_dbm(None))
+        self.assertFalse(chk.is_usable_floor_dbm(True))
 
 
 class SpecTargets(unittest.TestCase):

@@ -159,6 +159,12 @@ Two consequences for call sites, both load-bearing:
   disqualify a sweep point — `linearity._usable_floor` admits `-inf` where a
   plain `math.isfinite` would have rejected it, keeping that input's verdict
   what it was when the floor was a finite -400 dBm.
+- The serialized side of the same rule lives in the evidence checker: the
+  `floor_dbm` gate uses `evidence_checks/common.py`'s `is_usable_floor_dbm`,
+  which accepts a finite number or the exact string `"-inf"` and still rejects
+  `"+inf"`, `null` and any other string — the same verdicts `_usable_floor`
+  gives the decoded values. When `_round`'s encoding or this predicate changes,
+  change them together.
 - `max` is not NaN-safe (`max(nan, x)` is NaN, `max(x, nan)` is `x`), so
   reducing the two floor bins to one `floor_dbm` goes through
   `linearity.floor_dbm_of`, which propagates NaN rather than letting argument

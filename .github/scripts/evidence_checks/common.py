@@ -82,6 +82,21 @@ def is_number_not_nan(v: object) -> bool:
     return isinstance(v, (int, float)) and not isinstance(v, bool) and v == v
 
 
+def is_usable_floor_dbm(v: object) -> bool:
+    # Floor-power sibling of is_number_not_nan, mirroring
+    # sim/lna-linearity/linearity.py's _usable_floor ("Watts-to-dBm edge
+    # convention", sim/README.md): a floor usable by an estimator is finite or
+    # -inf, the "no measurable numerical floor" that dbm_from_w returns for an
+    # identically-zero floor bin. The record writer (analysis._round) serializes
+    # -inf as the exact string "-inf", so that string is accepted here; "+inf",
+    # null (the NaN encoding) and any other string stay corruption. Scoped to
+    # the floor_dbm gate only -- is_number_not_nan keeps its meaning everywhere
+    # else.
+    if isinstance(v, str):
+        return v == "-inf"
+    return is_number_not_nan(v) and v != float("inf")
+
+
 def all_numbers_allow_nan(values) -> bool:
     return all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in values)
 
