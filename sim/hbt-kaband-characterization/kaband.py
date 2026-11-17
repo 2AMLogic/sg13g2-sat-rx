@@ -113,7 +113,7 @@ class Sweep:
     nf50_check_ohm: tuple[float, float]
     ft_sweep: str
     t0_k: tuple[float, ...]
-    z0_ohm: float = 50.0
+    z0_ohm: float = rf.Z0_OHM
 
     @property
     def n_bias_points(self) -> int:
@@ -165,7 +165,7 @@ def sweep_from_manifest(manifest: dict, profile: str = "full") -> Sweep:
         nf50_check_ohm=tuple(float(v) for v in merged["nf50_check_ohm"]),
         ft_sweep=str(merged["ft_sweep"]),
         t0_k=tuple(float(t) for t in merged["t0_k"]),
-        z0_ohm=float(merged.get("z0_ohm", 50.0)),
+        z0_ohm=float(merged.get("z0_ohm", rf.Z0_OHM)),
     )
     validate_sweep(sweep)
     return sweep
@@ -561,6 +561,8 @@ def parse_log(text: str) -> ParsedLog:
 
 def y_to_s(y11: complex, y12: complex, y21: complex, y22: complex, z0: float = 50.0):
     """Two-port Y -> S at a real reference impedance ``z0``."""
+    # z0 is the caller's normalization impedance, deliberately not the port
+    # convention rf.Z0_OHM.
     a11, a12, a21, a22 = y11 * z0, y12 * z0, y21 * z0, y22 * z0
     d = (1 + a11) * (1 + a22) - a12 * a21
     s11 = ((1 - a11) * (1 + a22) + a12 * a21) / d
@@ -675,6 +677,8 @@ def fit_noise_parameters(samples: list[tuple[complex, float]]) -> dict:
         raise NoiseFitError(f"need >= 4 source impedances, got {len(samples)}")
     # Columns are scaled by a reference impedance so the 4x4 normal
     # equations stay well conditioned for |Zs| of order 10..1000 ohm.
+    # zr is that solver conditioning scale, deliberately NOT the port
+    # convention (rf.Z0_OHM): it cancels out of the fit (b, c, d below).
     zr = 50.0
     rows, rhs = [], []
     for z, sv in samples:

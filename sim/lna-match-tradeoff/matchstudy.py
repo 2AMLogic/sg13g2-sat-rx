@@ -238,7 +238,7 @@ def validate_study(st: Study) -> list[str]:
 # ---------------------------------------------------------------------------
 
 
-def source_impedance(cand: Candidate | dict, f_hz: float, z0: float = 50.0) -> complex:
+def source_impedance(cand: Candidate | dict, f_hz: float, z0: float = rf.Z0_OHM) -> complex:
     """Impedance seen from the device side of the input network (node in2)
     looking back toward a z0 source: z0 || C1, + jwL, || C2."""
     if isinstance(cand, Candidate):
@@ -252,14 +252,17 @@ def source_impedance(cand: Candidate | dict, f_hz: float, z0: float = 50.0) -> c
 
 
 def gamma(z: complex, z0: float = 50.0) -> complex:
+    # z0 is the caller's normalization impedance (generic two-port algebra),
+    # deliberately not the port convention rf.Z0_OHM; callers pass it.
     return (z - z0) / (z + z0)
 
 
 def z_from_gamma(g: complex, z0: float = 50.0) -> complex:
+    # z0 is the caller's normalization impedance, deliberately not rf.Z0_OHM.
     return z0 * (1 + g) / (1 - g)
 
 
-def synthesize(zs: complex, f_hz: float, z0: float = 50.0) -> dict[str, dict | str]:
+def synthesize(zs: complex, f_hz: float, z0: float = rf.Z0_OHM) -> dict[str, dict | str]:
     """Lowpass L-sections presenting ``zs`` at ``f_hz``.
 
     Returns ``{"shunt_first": {...} | reason, "series_first": {...} | reason}``;
@@ -540,7 +543,7 @@ def body_text(st: Study, frozen_netlist: str, cands: list[Candidate], vdd: float
     return "\n".join(lines)
 
 
-def pad_dut(loss_ratio_v: float = 2.0, z0: float = 50.0) -> str:
+def pad_dut(loss_ratio_v: float = 2.0, z0: float = rf.Z0_OHM) -> str:
     """Normalization control DUT: the parameterized input network followed by
     a matched resistive pi pad of voltage ratio K (power loss L = K^2). With
     the thru network and the pad at T: F = 1 + (L - 1) T / T0 exactly."""
@@ -657,7 +660,7 @@ def parse_log(text: str) -> ParsedLog:
 # ---------------------------------------------------------------------------
 
 
-def nf_db_from_inoise(inoise: float, t0_k: float = 300.15, z0: float = 50.0) -> float:
+def nf_db_from_inoise(inoise: float, t0_k: float = 300.15, z0: float = rf.Z0_OHM) -> float:
     """F = 1 + inoise^2/(4 k T0 z0) (noiseless reference source, issue #22)."""
     return 10 * math.log10(rf.noise_factor_from_inoise(inoise, t0_k, z0))
 

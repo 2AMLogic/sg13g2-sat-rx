@@ -168,6 +168,46 @@ class McpairAdapterTest(unittest.TestCase):
         problems = self.check(self.tmp)
         self.assertTrue(any("belongs to no record" in p for p in problems.items), problems.items)
 
+    def test_foreign_corners_dir_is_caught(self):
+        write_run(self.tmp)
+        (self.tmp / "sim" / NAME / "corners").mkdir()
+        problems = self.check(self.tmp)
+        hits = [p for p in problems.items if "corners/" in p and "not part of" in p]
+        self.assertEqual(len(hits), 1, problems.items)
+        self.assertIn("corners/ is not part of the hbt-mismatch-pair evidence layout", hits[0])
+
+    def test_foreign_netlist_snapshots_dir_is_caught(self):
+        write_run(self.tmp)
+        (self.tmp / "sim" / NAME / "netlist-snapshots").mkdir()
+        problems = self.check(self.tmp)
+        hits = [p for p in problems.items if "netlist-snapshots/" in p and "not part of" in p]
+        self.assertEqual(len(hits), 1, problems.items)
+        self.assertIn("netlist-snapshots/ is not part of the hbt-mismatch-pair evidence layout", hits[0])
+
+    def test_foreign_solver_artifacts_dir_is_caught(self):
+        write_run(self.tmp)
+        (self.tmp / "sim" / NAME / "solver-artifacts").mkdir()
+        problems = self.check(self.tmp)
+        hits = [p for p in problems.items if "solver-artifacts/" in p and "not part of" in p]
+        self.assertEqual(len(hits), 1, problems.items)
+        self.assertIn("solver-artifacts/ is not part of the hbt-mismatch-pair evidence layout", hits[0])
+
+    def test_stray_file_in_probe_logs_is_caught(self):
+        write_run(self.tmp)
+        (self.tmp / "sim" / NAME / "probe-logs" / "stray.txt").write_text("x\n")
+        problems = self.check(self.tmp)
+        hits = [p for p in problems.items if "probe-logs entry is not a" in p]
+        self.assertEqual(len(hits), 1, problems.items)
+        self.assertIn("probe-logs/stray.txt", hits[0])
+
+    def test_non_record_id_dir_in_probe_logs_is_caught(self):
+        write_run(self.tmp)
+        (self.tmp / "sim" / NAME / "probe-logs" / "not-a-record-id").mkdir()
+        problems = self.check(self.tmp)
+        hits = [p for p in problems.items if "probe-logs entry is not a" in p]
+        self.assertEqual(len(hits), 1, problems.items)
+        self.assertIn("probe-logs/not-a-record-id", hits[0])
+
     def test_status_disagreeing_with_filename_is_caught(self):
         exp = write_run(self.tmp)
         js = exp / "records" / f"{RID_STATUS}.json"

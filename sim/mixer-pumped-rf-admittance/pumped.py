@@ -102,7 +102,12 @@ CONVERGENCE_TOL_KEY = {"halving": "halving_rel_tol", "window": "window_rel_tol",
                        "timestep": "timestep_rel_tol"}
 
 # ---- fixtures -----------------------------------------------------------------------
-#: fixture -> (port node, sense source, termination node or None, z0 or None)
+#: fixture -> (port node, sense source, termination node or None, z0 or None).
+#: The z0 slot is this file's single port-impedance declaration (issue #286): it
+#: is the Python mirror of the physical termination resistor in the fixture
+#: decks (e.g. ``Rks kp krs 50``), deliberately a literal that tracks the deck
+#: rather than harness.rf.Z0_OHM -- and every consumer (port_vi, synth_marks)
+#: must read this slot, never re-spell the value.
 FIXTURES = {
     "rc":  ("kp", "vksense", "krs", 50.0),      # passive RC known answer, Norton drive
     "md":  ("mp", "vmsense", None, None),       # ideal periodically modulated, ideal V drive
@@ -461,14 +466,14 @@ def synth_marks(dut_y: dict | None = None, perturb: dict | None = None, baseline
     known ``ib`` term.
     """
     perturb = perturb or {}
-    models = {"rc": (rc_y or rc_expected(), 50.0), "md": (md_y or md_expected(), None)}
+    models = {"rc": rc_y or rc_expected(), "md": md_y or md_expected()}
     if dut_y is not None:
-        models["dut"] = (dut_y, 50.0)
+        models["dut"] = dut_y
     base = {"md": {"u": (0j, sin_tone_phasor(MD_IB, MD_PHB_DEG)), "l": (0j, 0j)}}
     base.update(baseline or {})
     mk: dict[str, float] = {}
-    for fx, (y, z0) in models.items():
-        _, _, term, _ = FIXTURES[fx]
+    for fx, y in models.items():
+        _, _, term, z0 = FIXTURES[fx]
         for run, (a, phu, phl, refined) in RUNS.items():
             for win in run_windows(run):
                 yy = dict(y)

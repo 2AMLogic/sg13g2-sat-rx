@@ -44,6 +44,7 @@ import matchstudy as ms  # noqa: E402
 sys.path.insert(0, str(SIM_DIR))
 
 from harness import frozen_dut  # noqa: E402
+from harness import rf  # noqa: E402
 
 DECLARATION = BENCH_DIR / "testbench" / "variants.json"
 METHOD_STUDY = METHOD_DIR / "testbench" / "study.json"
@@ -336,7 +337,7 @@ def parse_scan(text: str, n: int) -> list[list[float]]:
     return [rows[i] for i in range(n)]
 
 
-def scan_metric(kind: str, row: list[float], z0: float = 50.0) -> float:
+def scan_metric(kind: str, row: list[float], z0: float = rf.Z0_OHM) -> float:
     """``zin_f0``: Re(Z_in) of the core at f0 from S11 = 2 V(p1) - 1;
     ``ic_q1``: Q1 collector current (A)."""
     if kind == "zin_f0":

@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from .common import Problems, SOLVER_ARTIFACTS_DIR, has_section, load_json_object, read_gzip_text, reject_foreign_dirs, rel
+from .common import Problems, SOLVER_ARTIFACTS_DIR, has_section, load_json_object, read_gzip_text, reject_foreign_dirs, reject_orphan_sidecars, rel
 
 
 # ---------------------------------------------------------------------------
@@ -109,10 +109,5 @@ def check_lna_headroom(problems: Problems, root: Path, exp_dir: Path) -> None:
                 for cid in cand_ids:
                     if not (snap / f"variant_{cid}.spice").is_file():
                         problems.add(rel(root, snap / f"variant_{cid}.spice"), "missing frozen evidence file")
-    for sub in ("corners", "netlist-snapshots"):
-        d = exp_dir / sub
-        if d.is_dir():
-            for p in sorted(d.iterdir()):
-                if p.name not in ids:
-                    problems.add(rel(root, p), f"{sub} entry belongs to no record in this experiment (orphan evidence)")
+    reject_orphan_sidecars(problems, root, exp_dir, ids)
     reject_foreign_dirs(problems, root, exp_dir, HEADROOM_BENCH, ("probe-logs", SOLVER_ARTIFACTS_DIR))

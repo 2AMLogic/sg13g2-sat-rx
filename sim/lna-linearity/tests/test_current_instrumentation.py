@@ -23,7 +23,8 @@ import pytest
 import analysis as A
 import fakes
 import linearity as L
-from conftest import BENCH
+
+BENCH = Path(__file__).resolve().parents[1]
 
 PLAN1 = L.load_plan(BENCH / "testbench" / "plan.json")
 PLAN2 = L.load_plan(BENCH / "testbench" / "plan-v2.json")

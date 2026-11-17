@@ -4,6 +4,7 @@ record satisfies the repo's evidence-format checker."""
 
 import importlib.util
 import json
+import shutil
 from pathlib import Path
 
 import pytest
@@ -16,6 +17,18 @@ from harness import testbench as T
 
 SIM = Path(__file__).resolve().parents[2]
 CHECKER = SIM.parent / ".github" / "scripts" / "check_evidence_formats.py"
+
+
+@pytest.fixture(autouse=True)
+def _mirror_block_coverage(tmp_path):
+    """``check_format`` runs the block-coverage honesty check (#170) on every
+    tree it validates, and refuses a tree without the item-1 attestation. These
+    synthetic trees have no ``design/``, so the committed ``no_design_source``
+    mixer claim stays honest; copy it in so the checks below isolate the
+    contract they test (the same role ``mirror_signoff`` plays in
+    ``.github/scripts/tests``)."""
+    (tmp_path / "signoff").mkdir()
+    shutil.copyfile(SIM.parent / "signoff" / "block-coverage.json", tmp_path / "signoff" / "block-coverage.json")
 
 
 def grid(temps=(-40, 27, 125), supplies=(2.25, 2.5, 2.75), corners=("hbt",)):

@@ -30,6 +30,7 @@ nfmethod test skips if numpy is missing). From the repo root:
 """
 
 import math
+import platform
 import random
 import re
 import struct
@@ -256,17 +257,123 @@ def test_lna_nf_squaring_divergence_is_recorded_not_smoothed():
             assert_bits_equal(f_pow, f_mul, f"squarings agree, F must too {v=}")
 
 
+#: The concrete density PR #275 recorded: zero-based draw index 1522 (the
+#: 1523rd draw) of ``random.Random(262).uniform(1e-12, 1e-6)`` -- the first
+#: draw of that stream whose pow-vs-multiply squaring divergence survives the
+#: shared division and reaches the final ``F``. Tried first so a platform
+#: where it still diverges exercises exactly this recorded evidence.
+_RECORDED_PROBE = 8.202961983264469e-07
+
+#: Fallback scan size, matching the companion scan above; the stream's first
+#: F-diverging draw on the recording host is at index 1522, so the margin is
+#: ~13x. A budget is counted in draws taken and must exceed index 1522 to
+#: reach the recorded literal's position at all.
+_SCAN_BUDGET = 20000
+
+
+def _f_diverges(v) -> bool:
+    """Does the pow-vs-multiply squaring divergence survive the shared
+    division and reach the final ``F`` for this density? This -- not
+    ``v ** 2 != v * v`` -- is the selection predicate: the shared division
+    absorbs the last bit for ~6% of the densities whose squarings diverge,
+    so a squaring-selected probe would flake the test's own ``F`` assert."""
+    f_pow = nf.f_from_added_noise(v)  # lna_nf: v ** 2
+    f_mul = kaband.measured_noise_factor(v, complex(50.0, 0.0), 300.15)  # v * v
+    return _bits(f_pow) != _bits(f_mul)
+
+
+def _find_f_diverging_density(predicate=_f_diverges):
+    """Return a density whose pow-vs-multiply divergence reaches ``F``, or
+    ``None`` if this platform's ``pow`` rounds the exponent-2 squaring
+    correctly so no such density exists in the scanned stream. The recorded
+    PR #275 probe is tried first; otherwise the same seeded stream the
+    companion scan uses is searched within a bounded budget."""
+    if predicate(_RECORDED_PROBE):
+        return _RECORDED_PROBE
+    rng = random.Random(262)
+    for _ in range(_SCAN_BUDGET):
+        v = rng.uniform(1e-12, 1e-6)
+        if predicate(v):
+            return v
+    return None
+
+
 def test_pow_vs_multiply_divergence_reaches_f_concrete():
-    """The concrete companion to the scan above: on this libm there are
-    realistic densities where the pow-squared and multiply-squared F differ
-    in the last bit (the division does not always absorb the squaring).
-    Recorded so the lna_nf ``** 2`` preservation in its wrapper is understood
-    as evidence-preservation, not style."""
-    v = 8.202961983264469e-07
+    """The concrete companion to the scan above: on libms whose pow is not
+    correctly rounded for exponent 2 there are realistic densities where the
+    pow-squared and multiply-squared F differ in the last bit (the division
+    does not always absorb the squaring). Recorded so the lna_nf ``** 2``
+    preservation in its wrapper is understood as evidence-preservation, not
+    style. The divergence is a property of the platform's pow, not of this
+    repo's arithmetic: where no diverging probe exists the test skips with
+    an explicit reason instead of asserting -- but wherever a probe is
+    found, the claim that the divergence reaches F is hard-asserted."""
+    v = _find_f_diverging_density()
+    if v is None:
+        pytest.skip(
+            "no density in the seeded scan makes the pow-vs-multiply "
+            "divergence reach F on this platform "
+            f"({platform.platform()}, {sys.version})"
+        )
     assert v ** 2 != v * v
     f_pow = nf.f_from_added_noise(v)
     f_mul = kaband.measured_noise_factor(v, complex(50.0, 0.0), 300.15)
-    assert _bits(f_pow) != _bits(f_mul), (f_pow, f_mul)
+    assert _bits(f_pow) != _bits(f_mul), (f_pow, f_mul, f"probe {v=!r}")
+
+
+def test_probe_selector_returns_none_when_no_density_diverges():
+    """The 'no diverging probe on this platform' branch, exercised without a
+    second libc: a predicate that never diverges must exhaust the budget and
+    return None (which the concrete test turns into a skip), never raise and
+    never loop unboundedly."""
+    calls = []
+
+    def never(v):
+        calls.append(v)
+        return False
+
+    assert _find_f_diverging_density(predicate=never) is None
+    # the recorded probe was tried first, then the full seeded budget
+    assert len(calls) == 1 + _SCAN_BUDGET
+    assert calls[0] == _RECORDED_PROBE
+
+
+def test_probe_selector_tries_the_recorded_probe_first():
+    """A platform where the recorded literal still diverges must exercise
+    exactly that number -- no silent renumbering of PR #275's evidence and
+    no scan draws needed."""
+
+    def only_recorded(v):
+        return v == _RECORDED_PROBE
+
+    assert _find_f_diverging_density(predicate=only_recorded) == _RECORDED_PROBE
+
+
+def test_probe_selector_falls_back_to_the_seeded_scan():
+    """The branch taken on a libm where the recorded literal no longer
+    diverges: the scan must return a draw from the seeded stream itself,
+    never the recorded literal and never None."""
+    r = random.Random(262)
+    fifth = [r.uniform(1e-12, 1e-6) for _ in range(5)][-1]
+    calls = []
+
+    def reject_literal_accept_fifth(v):
+        calls.append(v)
+        # call 1 = recorded literal, calls 2..6 = seeded draws 1..5
+        return len(calls) == 6
+
+    assert _find_f_diverging_density(predicate=reject_literal_accept_fifth) == fifth
+    assert calls[0] == _RECORDED_PROBE
+    assert len(calls) == 6
+
+
+def test_probe_selector_with_the_real_predicate_returns_the_recorded_probe():
+    if not _f_diverges(_RECORDED_PROBE):
+        pytest.skip(
+            "the recorded probe does not diverge on this platform "
+            f"({platform.platform()}, {sys.version})"
+        )
+    assert _find_f_diverging_density() == _RECORDED_PROBE
 
 
 def test_t0_k_is_required_no_default():
@@ -501,6 +608,10 @@ def test_z0_is_declared_exactly_once_and_shared_by_identity():
 #: survivor convention reads it as a*(sin(phi) + j cos(phi)).
 _A, _F, _PHI, _N, _DT = 0.37, 5.0, 0.9, 200, 0.005
 COHERENT = [_A * math.sin(2 * math.pi * _F * k * _DT + _PHI) for k in range(_N)]
+#: Deliberately off-bin tone (5.37 Hz in the same 1 s window): one of the
+#: two characterization vectors where ``dft_bin_amplitude`` and
+#: ``abs(dft_bin(...))`` differ in the last bit (issue #284).
+INCOHERENT = [0.6 * math.sin(2 * math.pi * 5.37 * k * _DT + 0.2) for k in range(_N)]
 
 
 def test_dft_bin_pins_the_deck_kernel_convention_on_a_known_wave():
@@ -520,18 +631,32 @@ def test_dft_bin_pins_the_deck_kernel_convention_on_a_known_wave():
     assert hrf.dft_bin_amplitude(COHERENT, _DT, _F) == pytest.approx(_A, rel=1e-12)
 
 
+def test_dft_bin_amplitude_pins_the_accessor_rounding_order_bits():
+    """Issue #284: the accessor is ``2*hypot(re, im)/n``, NOT
+    ``abs(dft_bin(...))`` -- scaling before ``hypot`` rounds twice where this
+    rounds once. These are the two characterization vectors where the two
+    forms differ in the last bit, so they are what stops a future
+    ``return abs(dft_bin(...))`` simplification landing green (``coherent``
+    does not discriminate: its accessor equals its own ``abs()``)."""
+    assert_bits_equal(
+        hrf.dft_bin_amplitude(INCOHERENT, _DT, 5.37), 0.610897536868886,
+        "incoherent amplitude (accessor rounding order)")
+    assert_bits_equal(
+        hrf.dft_bin_amplitude(COHERENT, _DT, _F, 0.1), 0.37,
+        "nonzero t0 amplitude (accessor rounding order)")
+
+
 def test_single_bin_dft_magnitude_agrees_across_all_three_implementations():
     """Exact magnitude agreement between mixfeas's copy, linearity's copy and
     the survivor over every characterization vector -- written before the
     wrappers delegated, kept after as the no-recorded-number-moved proof."""
-    incoherent = [0.6 * math.sin(2 * math.pi * 5.37 * k * _DT + 0.2) for k in range(_N)]
     dc_offset = [0.25 + v for v in COHERENT]
     cases = [
         # (label, samples, dt, freq, t0) -- coherent known bin, deliberately
         # incoherent bin, DC offset on a tone, the DC bin itself, a non-zero
         # window start, and a single-sample "window".
         ("coherent", COHERENT, _DT, _F, 0.0),
-        ("incoherent", incoherent, _DT, 5.37, 0.0),
+        ("incoherent", INCOHERENT, _DT, 5.37, 0.0),
         ("dc-offset tone", dc_offset, _DT, _F, 0.0),
         ("dc bin", dc_offset, _DT, 0.0, 0.0),
         ("nonzero t0", COHERENT, _DT, _F, 0.1),
@@ -544,8 +669,7 @@ def test_single_bin_dft_magnitude_agrees_across_all_three_implementations():
         amp = hrf.dft_bin_amplitude(samples, dt, f, t0)
         assert isinstance(got_c, complex) and isinstance(got_m, float), label
         assert isinstance(z, complex) and isinstance(amp, float), label
-        # linearity's copy == the survivor's amplitude accessor, bit-for-bit
-        # (same 2*hypot(re, im)/n scale-and-divide order its numbers carry).
+        # post-#283 window_dft delegates to dft_bin_amplitude, so this pins the delegation (keeps it a delegation), not a cross-implementation guard.
         assert_bits_equal(got_m, amp, f"window_dft == dft_bin_amplitude ({label})")
         # mixfeas's copy == the survivor's complex bin, bit-for-bit.
         assert_bits_equal(got_c.real, z.real, f"dft_bin re ({label})")
