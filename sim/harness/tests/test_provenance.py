@@ -62,33 +62,83 @@ def _reads_own_param(node: ast.AST, params: set[str]) -> bool:
     return False
 
 
-def _module_level_sha256_file_hashers(path: Path) -> set[str]:
-    """Module-level def names in *path* that hash data read from their own params.
+def _hashlib_import_aliases(tree: ast.AST) -> tuple[set[str], set[str]]:
+    """Names *tree*'s imports bind to the ``hashlib`` module and to
+    ``hashlib.sha256`` directly.
 
-    A def is a file-hasher candidate when its body reaches the attribute
-    ``hashlib.sha256`` and reads one of its own parameters via
-    :func:`_reads_own_param`. Nested defs' own parameters are not the outer
-    def's, so a nested helper hashing its own argument is not attributed
-    here.
+    Covers ``import hashlib``, ``import hashlib as hl``, ``from hashlib
+    import sha256`` and ``from hashlib import sha256 as h``. A plain
+    assignment (``sha256 = sha256_file``) is not an import, so it binds
+    nothing here.
     """
-    hashers: set[str] = set()
-    for node in ast.parse(path.read_text()).body:
-        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+    modules: set[str] = set()
+    names: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                if alias.name == "hashlib":
+                    modules.add(alias.asname or alias.name)
+        elif isinstance(node, ast.ImportFrom) and node.module == "hashlib":
+            for alias in node.names:
+                if alias.name == "sha256":
+                    names.add(alias.asname or alias.name)
+    return modules, names
+
+
+def _calls_sha256(nodes, modules: set[str], names: set[str]) -> bool:
+    """True when any of *nodes* is a call reaching ``hashlib.sha256``.
+
+    Both spellings count: the attribute form ``hashlib.sha256(...)`` (or any
+    module alias of it) and the bare-name form ``sha256(...)`` when ``sha256``
+    was imported from hashlib.
+    """
+    for n in nodes:
+        if not isinstance(n, ast.Call):
             continue
-        params = {a.arg for a in [*node.args.posonlyargs, *node.args.args,
-                                  *node.args.kwonlyargs]}
-        params -= {"self", "cls"}
-        if not params:
-            continue
-        body = list(ast.walk(node))
-        if any(_reads_own_param(n, params) for n in body) and any(
-                isinstance(n, ast.Attribute)
-                and n.attr == "sha256"
-                and isinstance(n.value, ast.Name)
-                and n.value.id == "hashlib"
-                for n in body):
-            hashers.add(node.name)
-    return hashers
+        func = n.func
+        if isinstance(func, ast.Attribute):
+            if (func.attr == "sha256" and isinstance(func.value, ast.Name)
+                    and func.value.id in modules):
+                return True
+        elif isinstance(func, ast.Name) and func.id in names:
+            return True
+    return False
+
+
+def _hashes_own_param(node, modules: set[str], names: set[str]) -> bool:
+    """True when *node* (a def) hashes data read from its own parameters."""
+    params = {a.arg for a in [*node.args.posonlyargs, *node.args.args,
+                              *node.args.kwonlyargs]}
+    params -= {"self", "cls"}
+    if not params:
+        return False
+    body = list(ast.walk(node))
+    return (any(_reads_own_param(n, params) for n in body)
+            and _calls_sha256(body, modules, names))
+
+
+def _sha256_file_hashers(path: Path) -> set[str]:
+    """Def names in *path* that hash data read from their own params.
+
+    Module-level defs *and* class methods are candidates (the def's params
+    for a method are its parameters minus ``self``/``cls``, so a ``@property``
+    digest with only ``self`` is not one). The body may reach the digest
+    through any import spelling of ``hashlib.sha256`` -- see
+    :func:`_hashlib_import_aliases`. Nested defs' own parameters are not the
+    enclosing def's, so a nested helper hashing its own argument is not
+    attributed here.
+    """
+    tree = ast.parse(path.read_text())
+    modules, names = _hashlib_import_aliases(tree)
+    defs: list = []
+    for stmt in tree.body:
+        if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            defs.append(stmt)
+        elif isinstance(stmt, ast.ClassDef):
+            defs.extend(s for s in stmt.body
+                        if isinstance(s, (ast.FunctionDef, ast.AsyncFunctionDef)))
+    return {d.name for d in defs
+            if _hashes_own_param(d, modules, names)}
 
 
 def test_sha256_is_the_single_definition_in_the_harness():
@@ -107,17 +157,21 @@ def test_sha256_is_the_single_definition_in_the_harness():
     assert definitions == {"provenance.py", "evidence_store.py"}
     # The name needle above is blind to a second file hasher under any
     # other name, so this AST check also requires: no harness module
-    # defines a module-level def that hashes data read from its own
-    # parameter, whatever it is called. The two survivors are exactly the
-    # allow-listed pair; the inline digests of literals (evidence_store's
-    # empty-bytes constant and uri-scheme probe) and the @property
-    # netlist/manifest digests (no parameter beyond ``self``) are excluded
-    # structurally, and frozen_dut.sha256_path delegates without ever
-    # touching hashlib.
+    # defines a module-level def or class method that hashes data read
+    # from its own parameter, whatever it is called and however hashlib
+    # is imported. The two survivors are exactly the allow-listed pair;
+    # everything else is excluded structurally: the inline digests of
+    # literals (evidence_store's empty-bytes constant and uri-scheme
+    # probe) read no parameter, the @property netlist/manifest digests
+    # keep only ``self`` once self/cls are subtracted from a method's
+    # parameters, and frozen_dut.sha256_path delegates without ever
+    # touching hashlib. A plain assignment (``provenance.sha256 =
+    # sha256_file``) is not a hashlib import, so it binds no bare-name
+    # alias for the detector.
     hashers = {
         (p.name, name)
         for p in harness_dir.glob("*.py")
-        for name in _module_level_sha256_file_hashers(p)
+        for name in _sha256_file_hashers(p)
     }
     assert hashers == {("provenance.py", "sha256_file"),
                        ("evidence_store.py", "sha256_file")}
