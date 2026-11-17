@@ -62,14 +62,19 @@ def _reads_own_param(node: ast.AST, params: set[str]) -> bool:
     return False
 
 
-def _hashlib_import_aliases(tree: ast.AST) -> tuple[set[str], set[str]]:
-    """Names *tree*'s imports bind to the ``hashlib`` module and to
-    ``hashlib.sha256`` directly.
+def _hashlib_aliases(tree: ast.AST) -> tuple[set[str], set[str]]:
+    """Names *tree* binds to the ``hashlib`` module and to ``hashlib.sha256``
+    as a callable.
 
-    Covers ``import hashlib``, ``import hashlib as hl``, ``from hashlib
-    import sha256`` and ``from hashlib import sha256 as h``. A plain
-    assignment (``sha256 = sha256_file``) is not an import, so it binds
-    nothing here.
+    Imports: ``import hashlib``, ``import hashlib as hl``, ``from hashlib
+    import sha256`` and ``from hashlib import sha256 as h``. Rebindings: a
+    bare-name assignment whose value *is* the module attribute
+    (``h = hashlib.sha256``) binds a callable alias too -- calling it is
+    still a direct call reaching the digest. ``h = hashlib.sha256()`` is a
+    hasher construction, not a rebinding, and binds nothing here; neither
+    does a plain assignment from another hasher (``sha256 = sha256_file``),
+    and a rebound name is not followed through further name-to-name
+    assignments.
     """
     modules: set[str] = set()
     names: set[str] = set()
@@ -78,19 +83,32 @@ def _hashlib_import_aliases(tree: ast.AST) -> tuple[set[str], set[str]]:
             for alias in node.names:
                 if alias.name == "hashlib":
                     modules.add(alias.asname or alias.name)
-        elif isinstance(node, ast.ImportFrom) and node.module == "hashlib":
+    # Second pass: rebindings resolve against the completed module-alias
+    # set, so collection order cannot depend on statement order.
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom) and node.module == "hashlib":
             for alias in node.names:
                 if alias.name == "sha256":
                     names.add(alias.asname or alias.name)
+        elif isinstance(node, ast.Assign):
+            value = node.value
+            if (isinstance(value, ast.Attribute) and value.attr == "sha256"
+                    and isinstance(value.value, ast.Name)
+                    and value.value.id in modules):
+                for target in node.targets:
+                    if isinstance(target, ast.Name):
+                        names.add(target.id)
     return modules, names
 
 
 def _calls_sha256(nodes, modules: set[str], names: set[str]) -> bool:
     """True when any of *nodes* is a call reaching ``hashlib.sha256``.
 
-    Both spellings count: the attribute form ``hashlib.sha256(...)`` (or any
-    module alias of it) and the bare-name form ``sha256(...)`` when ``sha256``
-    was imported from hashlib.
+    Three spellings count, and each is a *direct* call -- the call's own
+    ``func`` must spell the digest: the attribute form ``hashlib.sha256(...)``
+    (or any module alias of it), the bare-name form ``sha256(...)`` when
+    ``sha256`` was imported from hashlib, and a bare name rebound to the
+    attribute (``h = hashlib.sha256`` then ``h(...)``).
     """
     for n in nodes:
         if not isinstance(n, ast.Call):
@@ -120,16 +138,23 @@ def _hashes_own_param(node, modules: set[str], names: set[str]) -> bool:
 def _sha256_file_hashers(path: Path) -> set[str]:
     """Def names in *path* that hash data read from their own params.
 
+    Enforced scope: the digest must be reached by a *direct call* -- the
+    call's own func spelled ``<hashlib-alias>.sha256``, a name imported
+    from hashlib, or a name rebound to the attribute (see
+    :func:`_hashlib_aliases`) -- so a def that merely *references*
+    ``hashlib.sha256`` without calling it is not caught; and the result is
+    keyed by bare def name, so same-named defs in one file collapse to one
+    element (a module-level ``sha256_file`` masks a method
+    ``C.sha256_file`` in the same file).
+
     Module-level defs *and* class methods are candidates (the def's params
     for a method are its parameters minus ``self``/``cls``, so a ``@property``
-    digest with only ``self`` is not one). The body may reach the digest
-    through any import spelling of ``hashlib.sha256`` -- see
-    :func:`_hashlib_import_aliases`. Nested defs' own parameters are not the
-    enclosing def's, so a nested helper hashing its own argument is not
-    attributed here.
+    digest with only ``self`` is not one). Nested defs' own parameters are
+    not the enclosing def's, so a nested helper hashing its own argument is
+    not attributed here.
     """
     tree = ast.parse(path.read_text())
-    modules, names = _hashlib_import_aliases(tree)
+    modules, names = _hashlib_aliases(tree)
     defs: list = []
     for stmt in tree.body:
         if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef)):
@@ -159,15 +184,21 @@ def test_sha256_is_the_single_definition_in_the_harness():
     # other name, so this AST check also requires: no harness module
     # defines a module-level def or class method that hashes data read
     # from its own parameter, whatever it is called and however hashlib
-    # is imported. The two survivors are exactly the allow-listed pair;
+    # is imported. Its enforced scope: the digest must be reached by a
+    # direct call -- attribute form, imported form, or a name rebound to
+    # ``hashlib.sha256`` -- so a def that only references hashlib.sha256
+    # without calling it is not one; and the result is keyed by bare def
+    # name, so same-named defs in one file collapse to one element. The
+    # two survivors are exactly the allow-listed pair;
     # everything else is excluded structurally: the inline digests of
     # literals (evidence_store's empty-bytes constant and uri-scheme
     # probe) read no parameter, the @property netlist/manifest digests
     # keep only ``self`` once self/cls are subtracted from a method's
     # parameters, and frozen_dut.sha256_path delegates without ever
     # touching hashlib. A plain assignment (``provenance.sha256 =
-    # sha256_file``) is not a hashlib import, so it binds no bare-name
-    # alias for the detector.
+    # sha256_file``) is not a hashlib import and not a rebinding of the
+    # attribute, so it binds no callable alias for the detector --
+    # whereas ``h = hashlib.sha256`` does.
     hashers = {
         (p.name, name)
         for p in harness_dir.glob("*.py")
@@ -175,6 +206,65 @@ def test_sha256_is_the_single_definition_in_the_harness():
     }
     assert hashers == {("provenance.py", "sha256_file"),
                        ("evidence_store.py", "sha256_file")}
+
+
+def test_detector_catches_sha256_rebound_to_a_bare_name(tmp_path):
+    # Regression probe (issue #328 case A): the digest is reached by a
+    # direct call through a name rebound to ``hashlib.sha256`` -- inside
+    # the def or at module scope. Before the rebound-alias rule both
+    # probes were missed even though each def hashes its own parameter's
+    # bytes; the same-named-collapse and reference-without-call scopes
+    # below must stay as documented.
+    in_def = tmp_path / "rebind_in_def.py"
+    in_def.write_text(
+        "import hashlib\n"
+        "def digest_a(path):\n"
+        "    h = hashlib.sha256\n"
+        "    return h(path.read_bytes()).hexdigest()\n"
+    )
+    assert _sha256_file_hashers(in_def) == {"digest_a"}
+    at_module = tmp_path / "rebind_at_module.py"
+    at_module.write_text(
+        "import hashlib\n"
+        "h = hashlib.sha256\n"
+        "def digest_a(path):\n"
+        "    return h(path.read_bytes()).hexdigest()\n"
+    )
+    assert _sha256_file_hashers(at_module) == {"digest_a"}
+
+
+def test_detector_ignores_a_reference_without_a_call(tmp_path):
+    # Regression probe (issue #328 case C, must stay gone): a def that
+    # binds ``hashlib.sha256`` to a name but never calls it, while
+    # reading its own parameter, is not a file hasher. The rebinding rule
+    # only fires on a direct call of the rebound name, so widening the
+    # alias set must not resurrect this false positive.
+    probe = tmp_path / "ref_without_call.py"
+    probe.write_text(
+        "import hashlib\n"
+        "def not_a_hasher(path):\n"
+        "    ref = hashlib.sha256\n"
+        "    return path.read_bytes()\n"
+    )
+    assert _sha256_file_hashers(probe) == set()
+
+
+def test_detector_collapses_same_named_defs_in_one_file(tmp_path):
+    # Documented scope (issue #328 case B): the detector keys its result
+    # by bare def name, so a module-level def and a class method sharing
+    # one name in one file collapse to a single element and the method is
+    # masked. Pinning that here so any later widening of the key has to
+    # revisit this scope statement rather than silently change it.
+    probe = tmp_path / "same_named_defs.py"
+    probe.write_text(
+        "import hashlib\n"
+        "def sha256_file(path):\n"
+        "    return hashlib.sha256(path.read_bytes()).hexdigest()\n"
+        "class C:\n"
+        "    def sha256_file(self, path):\n"
+        "        return hashlib.sha256(path.read_bytes()).hexdigest()\n"
+    )
+    assert _sha256_file_hashers(probe) == {"sha256_file"}
 
 
 # ---- git provenance: the probe record shape is exactly {"commit", "dirty"} -------------------
