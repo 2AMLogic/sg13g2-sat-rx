@@ -74,7 +74,11 @@ def _hashlib_aliases(tree: ast.AST) -> tuple[set[str], set[str]]:
     hasher construction, not a rebinding, and binds nothing here; neither
     does a plain assignment from another hasher (``sha256 = sha256_file``),
     and a rebound name is not followed through further name-to-name
-    assignments.
+    assignments. Collection is per *file*, not per scope: a rebound alias
+    bound anywhere in the tree -- including inside a def -- counts for the
+    whole file, and a later def that shadows the name with another value
+    does not unbind it (see the enforced scope of
+    :func:`_sha256_file_hashers`).
     """
     modules: set[str] = set()
     names: set[str] = set()
@@ -145,7 +149,12 @@ def _sha256_file_hashers(path: Path) -> set[str]:
     ``hashlib.sha256`` without calling it is not caught; and the result is
     keyed by bare def name, so same-named defs in one file collapse to one
     element (a module-level ``sha256_file`` masks a method
-    ``C.sha256_file`` in the same file).
+    ``C.sha256_file`` in the same file). The alias sets behind the
+    direct-call check are collected per *file*, not per scope: a
+    rebinding made inside one def is attributed to every def in the
+    file, and a def that locally shadows the name with another value is
+    still read as calling the alias -- the shadow does not unbind it
+    (see :func:`_hashlib_aliases`).
 
     Module-level defs *and* class methods are candidates (the def's params
     for a method are its parameters minus ``self``/``cls``, so a ``@property``
@@ -265,6 +274,28 @@ def test_detector_collapses_same_named_defs_in_one_file(tmp_path):
         "        return hashlib.sha256(path.read_bytes()).hexdigest()\n"
     )
     assert _sha256_file_hashers(probe) == {"sha256_file"}
+
+
+def test_detector_collects_rebound_aliases_file_wide_across_defs(tmp_path):
+    # Documented scope (issue #330): the alias set is collected per
+    # file, not per scope. ``binder`` binds ``tok`` to hashlib.sha256
+    # inside a def; ``unrelated`` shadows the same name to ``str`` and
+    # calls it on its own parameter's bytes. The shadow does not unbind
+    # the file-wide binding, so the detector attributes ``unrelated``
+    # as a file hasher -- a known false-positive class, pinned here so
+    # any later per-scope collection has to revisit this scope
+    # statement rather than silently change it.
+    probe = tmp_path / "alias_leak.py"
+    probe.write_text(
+        "import hashlib\n"
+        "def binder():\n"
+        "    tok = hashlib.sha256\n"
+        "    return tok\n"
+        "def unrelated(path):\n"
+        "    tok = str\n"
+        "    return tok(path.read_bytes())\n"
+    )
+    assert _sha256_file_hashers(probe) == {"unrelated"}
 
 
 # ---- git provenance: the probe record shape is exactly {"commit", "dirty"} -------------------
