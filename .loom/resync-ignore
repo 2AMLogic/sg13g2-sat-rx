@@ -1,0 +1,10 @@
+# Paths Loom must not overwrite or delete (repo-owned pins).
+# The three Guide surfaces below are pinned for sg13g2-sat-rx#332: the docs-PR
+# body template now carries a keyword-safety rule (never write close(s|d),
+# fix(es|ed) or resolve(s|d) directly before an issue/PR reference) plus a
+# post-create closingIssuesReferences check. Upstream fix tracked in
+# 2AMLogic/loom#14176 — lift these pins (loom-daemon resync-pin remove/status)
+# once that lands and the copies are re-synced from defaults/.
+roles/guide.md
+commands/loom/guide.md
+agents-skills/loom-guide/SKILL.md

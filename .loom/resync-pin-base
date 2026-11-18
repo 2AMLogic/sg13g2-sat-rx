@@ -1,0 +1,8 @@
+# .loom/resync-pin-base — upstream fork point of each .loom/resync-ignore pin.
+# Written by `loom-daemon resync-pin add`; read by `loom-daemon resync-pin status`.
+# Columns (tab-separated): pin label, upstream Loom commit, source path at that
+# commit, how the commit was chosen (explicit | install-metadata).
+# Commit this file alongside .loom/resync-ignore. Resync never rewrites it.
+roles/guide.md	e7af83ea29897351d216cdfd4036ecf628cb96cc	defaults/.claude/commands/loom/guide.md	explicit
+commands/loom/guide.md	e7af83ea29897351d216cdfd4036ecf628cb96cc	defaults/.claude/commands/loom/guide.md	explicit
+agents-skills/loom-guide/SKILL.md	e7af83ea29897351d216cdfd4036ecf628cb96cc	defaults/.agents/skills/loom-guide/SKILL.md	explicit
