@@ -31,13 +31,13 @@ _None._
 
 Issues currently being built (`loom:building`).
 
-- **#332**: Guide docs-maintenance PR bodies emit "closed #N", which auto-closes N on merge
+_None._
 
 ## PRs Awaiting Review
 
 PRs waiting on Judge (`loom:review-requested`).
 
-- **#333**: fix: keep closing keywords out of Guide docs-PR bodies
+_None._
 
 ## Approved (Awaiting Merge)
 
@@ -51,7 +51,6 @@ Issues carrying `loom:curated`.
 
 - **#38**: Auditor Capability Request: Python runtime for local harness smoke validation *(curated)* *(held)*
 - **#110**: sim: execute the prepared p1 EM campaign and reproduce frozen results *(curated)* *(held)*
-- **#332**: Guide docs-maintenance PR bodies emit "closed #N", which auto-closes N on merge *(curated)*
 
 ## Proposed (Architect / Hermit)
 
@@ -71,10 +70,10 @@ _None._
 | Very important | 0 |
 | Important | 1 |
 | Ready (`loom:issue`) | 0 |
-| In Progress (`loom:building`) | 1 |
-| PRs awaiting review | 1 |
+| In Progress (`loom:building`) | 0 |
+| PRs awaiting review | 0 |
 | Approved PRs awaiting merge | 0 |
-| Curated | 3 |
+| Curated | 2 |
 | Architect / Hermit proposals | 3 |
 | Active epics | 0 |
 <!-- guide:plan-body:end -->
