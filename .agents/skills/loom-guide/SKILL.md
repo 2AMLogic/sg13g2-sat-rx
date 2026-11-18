@@ -2495,6 +2495,11 @@ Automated document maintenance by Guide triage agent."
 Automated document maintenance by the Guide triage agent.
 
 ### Changes
+<!-- Keyword-safety: never write close(s|d), fix(es|ed) or resolve(s|d)
+     directly before an issue/PR reference — GitHub parses that as a closing
+     link, and merging this docs-only PR would then close that issue.
+     Describe dropped or merged roadmap items as "drops completed #A, #B" or
+     "drops #A, #B" — the intervening word is what breaks the link. -->
 - **WORK_LOG.md**: Appended entries for recently merged PRs and closed issues
 - **WORK_PLAN.md**: Regenerated roadmap from current GitHub label state
 - **README.md**: Updated if architectural changes were detected
@@ -2517,6 +2522,24 @@ PRBODY
 )")
   echo "$DOCS_PR_URL"
   DOCS_PR_NUMBER="${DOCS_PR_URL##*/}"
+
+  # A docs-only PR must never close an issue (sg13g2-sat-rx#332): GitHub
+  # parses close(s|d)/fix(es|ed)/resolve(s|d) immediately before `#N` in the
+  # body as a closing link, so one stray keyword in the ### Changes prose
+  # above would silently close a curated issue on merge. The keyword-safety
+  # note inside the body template guards the wording at compose time; this
+  # re-checks the PR GitHub actually built (plain `gh`, not `$GH_READ`, for
+  # the same freshness reason as the open-PR recheck above). Loud but
+  # non-fatal — the PR already exists and the lock below must still be
+  # released; the message directs this tick (or an operator) to reword the
+  # body before merge.
+  DOCS_PR_CLOSING="$(gh pr view "$DOCS_PR_NUMBER" \
+    --json closingIssuesReferences \
+    --jq '[.closingIssuesReferences[].number] | map(tostring) | join(",")' \
+    | tr -d '"')"
+  if [ -n "$DOCS_PR_CLOSING" ]; then
+    echo "ERROR: docs PR #$DOCS_PR_NUMBER has closingIssuesReferences = #$DOCS_PR_CLOSING — a docs-only PR must not close any issue. Reword the PR body now to break any close(s|d)/fix(es|ed)/resolve(s|d)-before-reference wording (e.g. write 'drops completed #N' or 'drops #N') before this PR merges." >&2
+  fi
 
   # Fleet observability (issue #6136): emit doc-maintenance telemetry BEFORE
   # releasing the lock, so `docs-guide-lock.sh age` still reports this tick's
