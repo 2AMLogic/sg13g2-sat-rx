@@ -2532,13 +2532,22 @@ PRBODY
   # the same freshness reason as the open-PR recheck above). Loud but
   # non-fatal — the PR already exists and the lock below must still be
   # released; the message directs this tick (or an operator) to reword the
-  # body before merge.
-  DOCS_PR_CLOSING="$(gh pr view "$DOCS_PR_NUMBER" \
-    --json closingIssuesReferences \
-    --jq '[.closingIssuesReferences[].number] | map(tostring) | join(",")' \
-    | tr -d '"')"
-  if [ -n "$DOCS_PR_CLOSING" ]; then
-    echo "ERROR: docs PR #$DOCS_PR_NUMBER has closingIssuesReferences = #$DOCS_PR_CLOSING — a docs-only PR must not close any issue. Reword the PR body now to break any close(s|d)/fix(es|ed)/resolve(s|d)-before-reference wording (e.g. write 'drops completed #N' or 'drops #N') before this PR merges." >&2
+  # body before merge. If `gh` itself fails, a WARNING names the check as
+  # skipped — an unreadable PR must never read as a verified "no closing
+  # refs".
+  DOCS_PR_GH_RAW="$(gh pr view "$DOCS_PR_NUMBER" --json closingIssuesReferences)" \
+    && DOCS_PR_VIEW_OK=1 || DOCS_PR_VIEW_OK=0
+  if [ "$DOCS_PR_VIEW_OK" = 1 ]; then
+    # gh succeeded: an empty result here is a verified "no closing refs".
+    DOCS_PR_CLOSING="$(printf '%s' "$DOCS_PR_GH_RAW" \
+      | jq -r '[.closingIssuesReferences[].number] | map(tostring) | join(",")' \
+      | tr -d '"')"
+    if [ -n "$DOCS_PR_CLOSING" ]; then
+      echo "ERROR: docs PR #$DOCS_PR_NUMBER has closingIssuesReferences = #$DOCS_PR_CLOSING — a docs-only PR must not close any issue. Reword the PR body now to break any close(s|d)/fix(es|ed)/resolve(s|d)-before-reference wording (e.g. write 'drops completed #N' or 'drops #N') before this PR merges." >&2
+    fi
+  else
+    # gh failed (auth/GraphQL/network): say so instead of passing silently.
+    echo "WARNING: closingIssuesReferences check skipped for docs PR #$DOCS_PR_NUMBER — 'gh pr view' failed, so 'no closing refs' was NOT verified. Manually confirm the body carries no close(s|d)/fix(es|ed)/resolve(s|d) keyword directly before a #N reference." >&2
   fi
 
   # Fleet observability (issue #6136): emit doc-maintenance telemetry BEFORE
