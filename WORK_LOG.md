@@ -8,6 +8,8 @@ Chronological record of merged pull requests and closed issues, maintained by th
 
 ### 2026-11-18
 
+- **PR #333**: fix: keep closing keywords out of Guide docs-PR bodies
+- **Issue #332** (closed): Guide docs-maintenance PR bodies emit "closed #N", which auto-closes N on merge
 - **Issue #286** (closed): Decide whether the ten z0=50.0 function defaults in matchstudy/kaband are the same constant as harness.rf.Z0_OHM
 
 ### 2026-11-17
