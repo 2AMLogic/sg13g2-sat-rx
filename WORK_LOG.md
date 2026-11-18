@@ -6,8 +6,31 @@ Chronological record of merged pull requests and closed issues, maintained by th
 
 - [2026-09](work_log/WORK_LOG_2026-09.md)
 
+### 2026-11-18
+
+- **Issue #286** (closed): Decide whether the ten z0=50.0 function defaults in matchstudy/kaband are the same constant as harness.rf.Z0_OHM
+
+### 2026-11-17
+
+- **PR #331**: docs: state the sha256 alias guard's file-wide collection scope
+- **Issue #330** (closed): sha256 guard: rebound-name aliases are collected file-wide, so a shadowed name in another def can false-positive
+- **PR #329**: test: catch sha256 rebound to a bare name and record the guard's enforced scope
+- **Issue #328** (closed): sha256 single-definition guard: digest must be reached by a direct call, and same-named defs in one file collapse
+- **PR #327**: test: widen sha256 single-definition guard to class methods and aliased hashlib imports
+- **Issue #306** (closed): sha256 harness guard: class methods and aliased hashlib imports are still outside the needle
+- **PR #326**: fix: accept the "-inf" floor_dbm encoding at the lna-linearity evidence gate
+- **Issue #300** (closed): Evidence checker rejects the `"-inf"` floor_dbm encoding the #268 watts-to-dBm convention can now produce
+- **PR #325**: test: cover the probe selector's fallback-scan return branch
+- **Issue #307** (closed): test_rf.py: the probe selector's 'fallback scan found a probe' branch has no test
+- **PR #313**: spec: propose IIP3 intercept reference definition (DR-0010, proposed)
+- **Issue #299** (closed): Decision record: which IIP3 intercept definition is the single reference for the Python fitters
+- **PR #292**: spec: propose coherent-bin criterion 0009 with committed cross-criterion measurement
+- **Issue #266** (closed): Ratify a coherent-bin criterion in spec/: the two coherence_problems disagree 1000x in tolerance and 4x in Nyquist margin, and neither is ratified (decision record only, no code)
+- **Issue #257** (closed): Consolidate the RF/DSP arithmetic duplicated across sim campaigns: two reference DFTs, two definitions of a coherent bin, three dB conventions
+
 ### 2026-11-16
 
+- **Issue #322** (closed): sim/README.md one-bench-per-invocation note (PR #294) contradicts the multi-bench support landed by PR #320
 - **PR #294**: fix: remove pytest flat-namespace collection collisions across sim benches
 - **Issue #287** (closed): Running several sim/*/tests dirs in one pytest invocation fails at collection: bare 'from conftest import' collides across benches
 - **PR #311**: refactor(sim): bind Class A z0 defaults to rf.Z0_OHM; close pumped synth_marks divergence
