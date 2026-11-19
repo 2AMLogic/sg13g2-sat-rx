@@ -13,7 +13,10 @@ re-run by CI on every push (`.github/workflows/signoff.yml`).
 |---|---|
 | `block-manifest.json` | The **claim**. Block name, block kind, and — per T1 item — the evidence envelope that backs it. Graded by `klt signoff --manifest`. |
 | `tier-report.json` | The **verdict of record**. `klt signoff --manifest`'s own JSON output, committed verbatim. Regenerated and re-compared by CI. |
-| `design-evidence-tiers.md` | The **governing checklist**, pinned (see below). `klt signoff` parses the T1 item skeleton out of this file — the item list is the doc's, never hand-transcribed. |
+
+The **governing checklist** is not vendored here: it is the copy bundled in
+the pinned klt wheel (see below), which `klt signoff` parses the T1 item
+skeleton out of — the item list is the doc's, never hand-transcribed.
 
 ## Reading the current verdict
 
@@ -65,8 +68,8 @@ the machine verdict.
 `klt signoff` exit codes for `--manifest` mode: `0` = every rendered T1 item
 met (tier T1), `3` = report rendered successfully with at least one unmet
 item (this block's expected exit today), `1`/`2` = the manifest, a cited
-evidence file, or the tiers doc could not be read/parsed. Exit `3` is a
-rendered, usable report — not an error.
+evidence file, or the bundled checklist could not be read/parsed. Exit `3`
+is a rendered, usable report — not an error.
 
 **Grader pin: `klayout-tools==0.8.0`** (`.github/workflows/signoff.yml`),
 raised from 0.7.0 (issue #234); history: 0.5.0 -> 0.7.0 was done in the same
@@ -86,39 +89,50 @@ build, whose `build` block differs).
 ```
 cd <repo root>
 klt signoff --manifest signoff/block-manifest.json \
-            --tiers-doc signoff/design-evidence-tiers.md \
             --format json > signoff/tier-report.json
 ```
 
-`git diff` on `tier-report.json` then shows exactly which verdicts moved.
-Commit a regenerated report **in the same change** that touches the
-manifest, any cited evidence artifact, or the pinned tiers doc — CI re-runs
-the grade and fails if the committed report does not match what the current
-tree grades to (a stale-citation fence: a manifest citing an artifact that
-has since changed renders `stale_evidence`, not a false pass, and the
-comparison turns that into a red build rather than silent rot).
+The grade reads the checklist bundled in the pinned klt wheel; pass no
+`--tiers-doc` and leave `KLT_TIERS_DOC` unset so the report's `source_doc`
+stays the canonical `docs/design-evidence-tiers.md` label CI compares
+against. `git diff` on `tier-report.json` then shows exactly which verdicts
+moved. Commit a regenerated report **in the same change** that touches the
+manifest, any cited evidence artifact, or the grader pin (whose wheel
+bundles the checklist) — CI re-runs the grade and fails if the committed
+report does not match what the current tree grades to (a stale-citation
+fence: a manifest citing an artifact that has since changed renders
+`stale_evidence`, not a false pass, and the comparison turns that into a
+red build rather than silent rot).
 
-## Why the checklist is pinned in-repo
+## Where the checklist lives
 
-`--tiers-doc` pins the checklist so the rendered item set is deterministic
-and the report states which checklist graded it. The pinned copy is the
-checklist bundled in the klt wheel of the grader pin (11 items, including
-item 11 "Power delivery (structural)",
-[klayout-tools#2025](https://github.com/2AMLogic/klayout-tools/issues/2025)),
-which klt 0.8.0 grades. An *uncited* item 11 renders honestly as
-`unmet`/`no_evidence`. A report counts only against current inputs, and that
-includes the checklist it was graded against, so `tier-report.json`'s
-`source_doc_content_hash` must equal the SHA-256 below.
+`klt signoff` pins the checklist through the grader pin itself: with no
+`--tiers-doc` override and `KLT_TIERS_DOC` unset, the 0.8.0 wheel grades the
+copy bundled in it, and the rendered item set is deterministic. The report
+states which checklist graded it — `source_doc` is the canonical
+`docs/design-evidence-tiers.md` label and `source_doc_content_hash` must
+equal the SHA-256 below. The checklist bundled at v0.8.0 is published at
+[klayout-tools v0.8.0 `docs/design-evidence-tiers.md`](https://github.com/2AMLogic/klayout-tools/blob/v0.8.0/docs/design-evidence-tiers.md)
+(11 items, including item 11 "Power delivery (structural)",
+[klayout-tools#2025](https://github.com/2AMLogic/klayout-tools/issues/2025)).
+An *uncited* item 11 renders honestly as `unmet`/`no_evidence`. A report
+counts only against current inputs, and that includes the checklist it was
+graded against.
 
-Provenance of the pinned copy:
+Provenance of the graded copy:
 
 - Source: `klayout-tools==0.8.0` wheel, `klayout_tools/data/design-evidence-tiers.md`
 - SHA-256: `a26b90262320d0fbd32b3f549a02b6300832706041797a559d8bf6bdb62efdc7`
-- License: MIT (klayout-tools); copied verbatim, unmodified.
-- Previously: klayout-tools commit `b15edf5` (2026-09-21), SHA-256 `c7a1e7e1…f318`.
+- License: MIT (klayout-tools).
+- Previously vendored in-repo at `signoff/design-evidence-tiers.md`,
+  byte-identical to the 0.8.0 bundled copy; removed in the fleet checklist
+  rollout (2AMLogic/2am#7794). Before that: klayout-tools commit `b15edf5`
+  (2026-09-21), SHA-256 `c7a1e7e1…f318`.
 
-Re-pin deliberately with every grader pin bump: update the doc, this
-provenance block, and the tier report together.
+Move the checklist deliberately with every grader pin bump: the new wheel
+bundles the new checklist, so bumping the pin changes both the grader and
+the governing doc — update the pin, this provenance block, and the tier
+report together in one change.
 
 ## Adding a citation (the discipline that keeps the verdict honest)
 

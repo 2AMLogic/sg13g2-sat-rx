@@ -44,14 +44,15 @@ jobs:
       - name: Re-grade the committed block manifest
         run: |
           set +e
+          # The checklist is the copy bundled in the pinned klt wheel
+          # (klayout-tools==0.8.0); no --tiers-doc override is passed.
           klt signoff --manifest signoff/block-manifest.json \
-                      --tiers-doc signoff/design-evidence-tiers.md \
                       --format json > regenerated-tier-report.json
           rc=$?
           set -e
           # Exit 0 = every rendered T1 item met; 3 = report rendered with
           # unmet items (this is a rendered, usable report, not an error).
-          # Anything else means the manifest, the pinned tiers doc, or a
+          # Anything else means the manifest, the bundled checklist, or a
           # cited evidence file could not be read/graded.
           if [ "$rc" -ne 0 ] && [ "$rc" -ne 3 ]; then
             echo "klt signoff failed to render a report (exit $rc)" >&2
@@ -80,7 +81,8 @@ jobs:
 
           print(
               'FAIL: signoff/tier-report.json no longer matches what the '
-              'committed manifest + pinned tiers doc grade to today.',
+              'committed manifest + the pinned wheel\'s bundled checklist '
+              'grade to today.',
               file=sys.stderr)
           print(
               '  committed: tier={} T1 {}/{} met'.format(
@@ -115,7 +117,7 @@ jobs:
                       k[0], k[1], f.get('title'), c['status'], c.get('reason'),
                       f['status'], f.get('reason')), file=sys.stderr)
           print(
-              '  A cited artifact, the manifest, or the pinned tiers doc '
+              '  A cited artifact, the manifest, or the bundled checklist '
               'changed without the verdict of record being regenerated. '
               'Re-run the grade command from signoff/README.md and commit '
               'the updated signoff/tier-report.json in the same change.',
