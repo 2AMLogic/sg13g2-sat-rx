@@ -44,10 +44,9 @@ jobs:
       - name: Re-grade the committed block manifest
         run: |
           set +e
-          # The checklist is the copy bundled in the pinned klt wheel
-          # (klayout-tools==0.8.0); no --tiers-doc override is passed.
-          klt signoff --manifest signoff/block-manifest.json \
-                      --format json > regenerated-tier-report.json
+          # Clear inherited checklist overrides to use the pinned wheel's copy.
+          KLT_TIERS_DOC='' klt signoff --manifest signoff/block-manifest.json \
+              --format json > regenerated-tier-report.json
           rc=$?
           set -e
           # Exit 0 = every rendered T1 item met; 3 = report rendered with

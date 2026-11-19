@@ -46,8 +46,8 @@ file, with the pinned klt and the repo's test dependencies on `PATH` (item 9's
 cold start imports numpy and pytest):
 
 ```
-klt signoff --attest N --inventory signoff/inventories/itemN.json \
-            -o signoff/evidence/<item N envelope>.json
+KLT_TIERS_DOC='' klt signoff --attest N --inventory signoff/inventories/itemN.json \
+    -o signoff/evidence/<item N envelope>.json
 ```
 
 then copy the envelope's `provenance.input.content_hash` (the inventory hash)
@@ -80,22 +80,22 @@ Regenerate the report with the pinned release, not a dev build (a dev build
 writes its commit into the report's `build` block and would not compare equal
 to CI's re-grade). A throwaway venv does it without touching host tools:
 `uv venv /tmp/klt080 && uv pip install --python /tmp/klt080/bin/python
-klayout-tools==0.8.0 && /tmp/klt080/bin/klt signoff ...` (checked at 0.7.0:
+klayout-tools==0.8.0 && KLT_TIERS_DOC='' /tmp/klt080/bin/klt signoff ...` (checked at 0.7.0:
 `uvx --from klayout-tools==0.7.0` resolved to the host's already-installed dev
 build, whose `build` block differs).
 
 ## Regenerating the verdict of record
 
+From the repository root:
+
 ```
-cd <repo root>
-klt signoff --manifest signoff/block-manifest.json \
-            --format json > signoff/tier-report.json
+KLT_TIERS_DOC='' klt signoff --manifest signoff/block-manifest.json \
+    --format json > signoff/tier-report.json
 ```
 
-The grade reads the checklist bundled in the pinned klt wheel; pass no
-`--tiers-doc` and leave `KLT_TIERS_DOC` unset so the report's `source_doc`
-stays the canonical `docs/design-evidence-tiers.md` label CI compares
-against. `git diff` on `tier-report.json` then shows exactly which verdicts
+The command clears `KLT_TIERS_DOC` so the grader reads the copy bundled in
+the pinned wheel. The report uses the canonical `docs/design-evidence-tiers.md`
+label that CI expects. `git diff` on `tier-report.json` shows which verdicts
 moved. Commit a regenerated report **in the same change** that touches the
 manifest, any cited evidence artifact, or the grader pin (whose wheel
 bundles the checklist) — CI re-runs the grade and fails if the committed
@@ -106,12 +106,10 @@ red build rather than silent rot).
 
 ## Where the checklist lives
 
-`klt signoff` pins the checklist through the grader pin itself: with no
-`--tiers-doc` override and `KLT_TIERS_DOC` unset, the 0.8.0 wheel grades the
-copy bundled in it, and the rendered item set is deterministic. The report
-states which checklist graded it — `source_doc` is the canonical
-`docs/design-evidence-tiers.md` label and `source_doc_content_hash` must
-equal the SHA-256 below. The checklist bundled at v0.8.0 is published at
+The 0.8.0 grader pin fixes the checklist and its item set. The regeneration
+command clears `KLT_TIERS_DOC` so it always selects the pinned wheel's copy.
+The report records the canonical `docs/design-evidence-tiers.md` label as
+`source_doc`. Its `source_doc_content_hash` must equal the SHA-256 below. The checklist bundled at v0.8.0 is published at
 [klayout-tools v0.8.0 `docs/design-evidence-tiers.md`](https://github.com/2AMLogic/klayout-tools/blob/v0.8.0/docs/design-evidence-tiers.md)
 (11 items, including item 11 "Power delivery (structural)",
 [klayout-tools#2025](https://github.com/2AMLogic/klayout-tools/issues/2025)).
