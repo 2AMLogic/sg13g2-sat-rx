@@ -3,7 +3,7 @@
 This roadmap is generated from the repository's current GitHub label state by the Loom Guide role.
 
 <!-- guide:plan-body:start -->
-_Generated: 2026-11-19T01:15:00Z (snapshot; compare against live labels)_
+_Generated: 2026-11-19T02:27:23Z (snapshot; compare against live labels)_
 ## Operator Attention: Merge-Risk-Hold Pileup
 
 Judge-approved PRs under a hold (`loom:blocked` or `loom:operator`) — only a human merge decision is missing.
@@ -32,7 +32,7 @@ _None._
 
 Issues currently being built (`loom:building`).
 
-- **#336**: Use the pinned klayout-tools checklist for T1 signoff
+_None._
 
 ## PRs Awaiting Review
 
@@ -50,7 +50,6 @@ _None._
 
 Issues carrying `loom:curated`.
 
-- **#336**: Use the pinned klayout-tools checklist for T1 signoff *(curated)*
 - **#38**: Auditor Capability Request: Python runtime for local harness smoke validation *(curated)* *(held)*
 - **#110**: sim: execute the prepared p1 EM campaign and reproduce frozen results *(curated)* *(held)*
 
@@ -72,10 +71,10 @@ _None._
 | Very important | 0 |
 | Important | 1 |
 | Ready (`loom:issue`) | 0 |
-| In Progress (`loom:building`) | 1 |
+| In Progress (`loom:building`) | 0 |
 | PRs awaiting review | 0 |
 | Approved PRs awaiting merge | 0 |
-| Curated | 3 |
+| Curated | 2 |
 | Architect / Hermit proposals | 3 |
 | Active epics | 0 |
 <!-- guide:plan-body:end -->

@@ -6,6 +6,11 @@ Chronological record of merged pull requests and closed issues, maintained by th
 
 - [2026-09](work_log/WORK_LOG_2026-09.md)
 
+### 2026-11-19
+
+- **PR #338**: signoff: grade against the klt wheel's bundled checklist
+- **Issue #336** (closed): Use the pinned klayout-tools checklist for T1 signoff
+
 ### 2026-11-18
 
 - **PR #333**: fix: keep closing keywords out of Guide docs-PR bodies
