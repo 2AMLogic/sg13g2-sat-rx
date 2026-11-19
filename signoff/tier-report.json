@@ -6,7 +6,7 @@
   "t1_item_count": 11,
   "build_t1_item_count": 11,
   "t1_met_count": 3,
-  "source_doc": "signoff/design-evidence-tiers.md",
+  "source_doc": "docs/design-evidence-tiers.md",
   "source_doc_content_hash": "sha256:a26b90262320d0fbd32b3f549a02b6300832706041797a559d8bf6bdb62efdc7",
   "build": {
     "version": "0.8.0",
