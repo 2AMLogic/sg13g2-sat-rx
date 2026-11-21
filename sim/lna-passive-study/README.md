@@ -21,8 +21,8 @@ The per-element sizings come from `layout/lna_stage1/passive_sizing.json`
 (issue #340 part 1): PDK models, not `R = rsh*L/W` — the `r3_cmc` resistor
 model's drawn-to-electrical width correction and end/contact resistance and the
 MIM models' area + perimeter capacitance are included, verified against the
-instanced models. The full collection uses the batch backend. The bounded
-input-match screen can also run on an OSDI-capable ngspice installation with
+instanced models. Collection and the input-match screen default to batch.
+Both can run locally on an OSDI-capable ngspice installation with
 the pinned IHP model files and compiled resistor model. The upstream issue
 tracks support for PDK-relative OSDI paths. [klayout-tools #7039](https://github.com/2AMLogic/klayout-tools/issues/7039)
 
@@ -38,14 +38,18 @@ python3 sim/lna-passive-study/run.py prematch       # probe, screen, then select
 python3 sim/lna-passive-study/run.py prematch --backend local
 python3 sim/lna-passive-study/run.py variants       # regenerate current decks after prematch
 python3 sim/lna-passive-study/run.py build          # bodies/requests under _build/
-python3 sim/lna-passive-study/run.py collect        # batch-set the grid, write ONE record
-python3 sim/lna-passive-study/run.py verify         # re-derive verdicts from the sidecars
+python3 sim/lna-passive-study/run.py collect        # batch grid and stored record
+# On a simulation workstation, use collect --backend local for the same grid.
+python3 sim/lna-passive-study/run.py verify         # check grids, deck identities and summaries
 ```
 
 `collect` needs the plan, the sizing table, the variant decks and the prematch
 outcome frozen. It checks the generated decks against the plan and stores the raw
 evidence bytes in the fleet artifact store (issue #226); git keeps the record,
 its JSON sidecar and the manifest. Evidence under `records/` is append-only.
+To repeat the four gates and every subtraction on archived measurements,
+use `verify RECORD_ID --cells BUNDLE.json.gz`. The historical erratum gives
+the corresponding fetch command.
 
 ## Method
 
@@ -92,7 +96,10 @@ What this study adds, all frozen in `testbench/plan.json` **before** collection:
   four-cell selection grid and an ideal 31.89 fF shunt for its 1 pF V04.
   Its original deck is [v1/V04.spice](testbench/variants/v1/V04.spice).
   DR-0011 supersedes the record's initial V03 inductance explanation and
-  input-block recommendation. The revised V04 has an eight-cell follow-up.
+  input-block recommendation. The [historical erratum](errata/20261121-044750-495011a.md)
+  rechecks all four gates, corrects the noise-figure legend and gives whole-grid
+  stability extrema. The [revised 2 pF record](records/20261121-101130-e6a7e3e.md)
+  includes 63 cells each for the control and all four current candidate decks.
 * **Gates.** The control must agree with the post-#79 record's published
   per-cell operating points at every 2.5 V hbt x temperature cell (10 mV / 2 %),
   sit inside its published per-measure envelopes, be inert to the passive corner

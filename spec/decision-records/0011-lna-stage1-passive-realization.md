@@ -20,10 +20,10 @@ elements with no PDK primitive selected, `Re1` (3 Ω) is below minimum geometry
 in every flavour at minimum width, `Cb2` (10 pF) exceeds `cmim`'s declared
 8 pF maximum, and `Cblk_in` (1 nF) needs ~0.67 mm² of MIM plate. Issue #340
 prepared four candidate sets for the operator. The original 63-cell comparison
-per deck used a same-deck ideal-passive control checked against the post-#79
-operating points. Its V04 used an ideal shunt. The eight-cell follow-up uses
-a drawn shunt, repeats the selection, and measures the selected circuit and
-its control with the pinned two-port and noise method.
+per deck used a same-deck ideal-passive control. The archived measurements
+reproduce the post-#79 operating points. The original V04 used an ideal shunt.
+The revised study uses a drawn shunt, repeats the eight-cell selection screen,
+and measures the 2 pF circuit and its control across the full 63-cell grid.
 [Original study](../../sim/lna-passive-study/records/20261121-044750-495011a.md) ·
 [Follow-up measurements and deck hashes](../../sim/lna-passive-study/testbench/prematch.json)
 
@@ -40,7 +40,7 @@ with the selected capacitor process corner.
 
 | class | elements | feasible flavours (min-area sizing) | measured consequence |
 |---|---|---|---|
-| bias ladder | `Rref`, `Rbr`, `Rbias`, `R1b`, `R2b` | `rppd` (85.3 µm² total) or `rhigh` (15.3 µm²). For the 8 kΩ reference, the full spans are 19.65% and 48.01%, respectively. | Across the bound cells and frequencies, V01 ΔS21 is −0.84…+0.53 dB and ΔNF −0.27…+0.32 dB. V02 ΔS21 is −1.49…+1.52 dB, ΔNF −0.25…+0.57 dB and ΔS11 −2.94…+2.65 dB. |
+| bias ladder | `Rref`, `Rbr`, `Rbias`, `R1b`, `R2b` | `rppd` (85.3 µm² total) or `rhigh` (15.3 µm²). For the 8 kΩ reference, the full spans are 19.65% and 48.01%, respectively. | At the row-2/3 worst-HBT, 125 °C cells, V01 ΔS21 spans −0.211…−0.119 dB and ΔNF +0.003…+0.015 dB. V02 ΔS21 spans +0.476…+0.957 dB and ΔNF +0.032…+0.143 dB. V02 ΔS11 spans −2.94…+2.65 dB at the eight row-4 cells. |
 | collector damping | `Rd` 465 Ω | `rppd` (0.50 × 0.64 µm), `rsil` (16.6 µm²) or `rhigh` (7.9 µm²) | V01 and V02 exercise the compact `rppd` geometry. |
 | degeneration | `Rer` 24 Ω, `Re1` 3 Ω | For `Re1`, `rsil` at 5 × 0.87 µm gives 3.013 Ω. A legal `rppd` at 70 × 0.54 µm gives 3.005 Ω and uses 37.8 µm². The table also gives a 495 µm² `rhigh` solution. | V01 exercises `rsil` for both resistors. The body of its `Re1` occupies 4.35 µm². |
 
@@ -84,11 +84,14 @@ earlier core. The changed schematic requires fresh characterization. Rows
 The study measured four frozen candidate sets against a same-deck control
 (the committed ideal-passive DUT) with the lna-sparam-nf method pinned by
 sha256, at 63 cells per deck (7 process bundles — hbt and the four
-`res_*`/`cap_*` cross extremes — × 3 temperatures × 3 supplies); the control
-passed the op-table gate against the post-#79 record (≤ 10 mV / 2 % on all
-nine 2.5 V cells) and the passive-inertness negative control. The deltas are
-comparative only — row 4's own note says S11 is not simulatable as a claim
-until EM extraction lands — so no row is shown met or missed anywhere above.
+`res_*`/`cap_*` cross extremes — × 3 temperatures × 3 supplies). The recheck of the archived control covered all 27 reference
+transistor rows. The maximum voltage difference was 0.4985 mV and the maximum
+collector-current difference was 0.1884%. All 63 controls were inside all 18
+published RF envelopes. The passive-inertness and finite-measurement checks
+also passed. The historical erratum reports each gate and corrects the
+whole-grid stability extrema and the sign of ΔNF. These comparisons use
+ideal inductors and make no spec-row claim.
+[Historical erratum](../../sim/lna-passive-study/errata/20261121-044750-495011a.md)
 
 **RF-MIM isolation.** At typical process, 27 °C, 2.5 V and 19.45 GHz, V01
 has 18.378 dB gain. Replacing only `Cshunt` gives 18.254 dB and replacing
@@ -130,9 +133,21 @@ the original ideal-shunt V04 gain deltas included −0.565 dB.
 | wcs / wcs | -40 °C | −10.151 / −24.824 / −13.127 | −0.795 / −0.901 / −1.048 |
 | wcs / wcs | 125 °C | −10.009 / −26.529 / −11.665 | −1.026 / −1.174 / −1.389 |
 
-The follow-up is a row-4 screen with ngspice 47. The original record remains
-the source for the 63-cell deltas on its four frozen decks.
-[Follow-up inputs, absolute measurements and model probe](../../sim/lna-passive-study/testbench/prematch.json)
+The revised 2 pF deck and matched control also ran with ngspice 47 at all
+63 declared cells. At the worst HBT process and 125 °C the row-2/3 comparison
+is as follows, in the same low / mid / high frequency order.
+
+| Supply | ΔS21 (dB) | ΔNF (dB) |
+|---|---|---|
+| 2.25 V | −0.019 / +0.315 / +1.252 | −1.088 / −1.272 / −1.550 |
+| 2.50 V | +0.048 / +0.382 / +1.291 | −1.101 / −1.294 / −1.572 |
+| 2.75 V | +0.147 / +0.498 / +1.367 | −1.115 / −1.322 / −1.607 |
+
+Across the full row-6 grid, the revised V04’s minimum absolute sweep k
+is 10.5714 at res_bcs/cap_bcs, −40 °C, 2.75 V (Δk +1.6903). Its smallest
+Δk is +0.6126 at hbt_wcs, 125 °C, 2.25 V.
+[Revised record and stored evidence](../../sim/lna-passive-study/records/20261121-101130-e6a7e3e.md) ·
+[Screen and model probe](../../sim/lna-passive-study/testbench/prematch.json)
 
 ## Alternatives considered
 

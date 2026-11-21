@@ -382,3 +382,10 @@ def test_stored_bundle_digest_is_checked_before_ingest(tmp_path):
     path = tmp_path / "cells.json.gz"
     path.write_bytes(b"wrong object")
     assert "digest mismatch" in run._verify_stored_cells({"record_id": rid}, path)[0]
+
+
+def test_record_markdown_reproduces_after_sorted_json_round_trip():
+    import run
+    for path in sorted(run.RECORDS.glob("*.json")):
+        rec = json.loads(json.dumps(PS.load_json(path), sort_keys=True))
+        assert run._verify_one(rec, path.with_suffix(".md").read_text()) == []

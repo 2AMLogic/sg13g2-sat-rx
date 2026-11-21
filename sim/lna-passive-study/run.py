@@ -5,17 +5,15 @@
     python3 sim/lna-passive-study/run.py variants [--check]   # frozen variant DUT decks
     python3 sim/lna-passive-study/run.py prematch [--dry-run] # V04's re-match probe + grid
     python3 sim/lna-passive-study/run.py build [--workdir DIR]
-    python3 sim/lna-passive-study/run.py collect [--dry-run]
+    python3 sim/lna-passive-study/run.py collect [--backend batch|local] [--dry-run]
     python3 sim/lna-passive-study/run.py verify [RECORD_ID ...]
+    python3 sim/lna-passive-study/run.py verify RECORD_ID --cells BUNDLE.json.gz
 
-``collect`` defaults to the ``klt sim`` batch fleet. An explicit local backend
-uses the pinned PDK and ngspice on a simulation workstation. Evidence bytes go to the fleet artifact store (issue #226); git keeps
-the record, its JSON sidecar and the manifest. ``verify`` re-derives every
-published verdict from the committed sidecars with no simulator and no
-broker.
-
-The bounded prematch probe can also run with an explicitly selected local
-backend on a workstation with the pinned PDK and OSDI-capable ngspice.
+Collection defaults to the klt sim batch fleet. Both collection and the bounded
+prematch probe support an explicit local backend with the pinned PDK and OSDI.
+The artifact store holds raw evidence. The committed sidecars support offline
+verification of grid coverage, deck identity and summaries. Passing the archived
+cell bundle also reproduces the control checks and cell-by-cell deltas.
 """
 
 from __future__ import annotations
@@ -935,7 +933,8 @@ def _render_md(rec: dict) -> str:
                      "and the candidate sets are those the table shows.")
         L.append("")
     L += ["## Controls and method identity", ""]
-    for name, description in plan["gates"].items():
+    for name in ("baseline_op_table", "baseline_envelope", "passive_inertness", "finite_values"):
+        description = plan["gates"][name]
         result = "PASS" if rec["gates"]["checks"][name] else "FAIL"
         L.append(f"- {description}: **{result}**.")
     for p in rec["gates"]["problems"][:20]:
