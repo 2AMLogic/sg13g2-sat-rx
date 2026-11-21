@@ -77,12 +77,19 @@ def test_v04_freezes_the_prematch_selection(plan, sizing, prematch) -> None:
     deck = variant_decks(plan, sizing, prematch)["V04"]
     sel = prematch["selection"]
     assert sel, "prematch selected nothing; V04 must be dropped, not frozen"
-    assert f"l={sel['cblk_side_um']:g}u" in deck.replace("l=25.77u", "l=25.77u")
-    assert f"{sel['lin_h']:.4g}" in deck or sel["lin_h"] > 0
-    # the re-matched Cshunt appears with its own value, not the committed 170f
-    line = next(l for l in deck.splitlines() if l.startswith("Cshunt "))
-    assert "170f" not in line
-    assert sel["worst_s11_db"] <= PS.S11_TARGET_DB
+    match = prematch["rematches"][f"{sel['cblk_f']:g}"]
+    for ref, nodes, side in (("Xblk_in", "in2 b1", match["side_um"]),
+                             ("Xshunt", "in gnd", match["shunt_side_um"])):
+        assert f"{ref} {nodes} cap_cmim w={side:g}u l={side:g}u" in deck
+    assert f"Lin in in2 {sel['lin_h']*1e9:.4g}n" in deck
+    assert prematch["runs"]["V04"]["deck_sha256"] == PS.sha256_text(deck)
+    bounds = []
+    for i, value in enumerate(sorted(PS.PREMATCH_GRID_F), 1):
+        bound = max(cell[f"s11_db_{band}_c{i}"] for cell in prematch["grid"].values()
+                    for band in ("lo", "mid", "hi"))
+        bounds.append((value, bound))
+    assert next(pair for pair in bounds if pair[1] <= PS.S11_TARGET_DB) == (
+        sel["cblk_f"], sel["worst_s11_db"])
 
 
 def test_prematch_grid_and_corners_are_the_declared_ones(prematch, plan) -> None:
@@ -91,6 +98,14 @@ def test_prematch_grid_and_corners_are_the_declared_ones(prematch, plan) -> None
     assert set(prematch["grid"]) == {
         f"{proc}/novdd/{t:g}C" for proc in PS.PREMATCH_CORNERS
         for t in PS.PREMATCH_TEMPS_C}
+    assert set(prematch["selected_row4"]) == set(prematch["grid"])
+    assert len(prematch["grid"]) == 8
+    tag = PS.PREMATCH_GRID_F.index(prematch["selection"]["cblk_f"]) + 1
+    for cell, bands in prematch["selected_row4"].items():
+        for band in ("lo", "mid", "hi"):
+            assert bands[band]["s11_db"] == pytest.approx(
+                prematch["grid"][cell][f"s11_db_{band}_c{tag}"], abs=0.001)
+            assert math.isfinite(bands[band]["delta_nf_db"])
     # every grid cell measured every candidate at every band point
     tags = range(1, len(PS.PREMATCH_GRID_F) + 1)
     for cell in prematch["grid"].values():
@@ -102,6 +117,22 @@ def test_prematch_grid_and_corners_are_the_declared_ones(prematch, plan) -> None
 def test_m_multiplier_check_passed(prematch) -> None:
     check = prematch["probe"]["m_multiplier_check"]
     assert abs(check["m2_f"] / check["two_f"] - 1.0) <= 0.01
+
+
+def test_rf_multiplier_with_substrate_loading(prematch) -> None:
+    probe = prematch["probe"]["rf_array_at_19_45_ghz"]
+    for name in ("input_a", "out_v", "bulk_a"):
+        for part in ("real", "imag"):
+            explicit = probe[f"rf_e_{name}_{part}"]
+            assert explicit != 0
+            assert probe[f"rf_m_{name}_{part}"] == pytest.approx(explicit, rel=1e-8)
+
+
+def test_wide_resistor_choices_reach_three_ohms(sizing) -> None:
+    re1 = next(r for r in sizing["resistors"] if r["refdes"] == "Re1")["candidates"]
+    for flavour in ("rsil", "rppd", "rhigh"):
+        assert re1[flavour]["r_ohm"]["typ"] == pytest.approx(3.0, rel=0.01)
+    assert re1["rsil"]["body_area_um2"] < re1["rppd"]["body_area_um2"]
 
 
 def test_cell_keys_and_control_mapping() -> None:

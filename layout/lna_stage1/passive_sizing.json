@@ -4,7 +4,7 @@
   "issue": 340,
   "note": "PDK-model sizing of every stage-1 resistor and capacitor onto rsil/rppd/rhigh (r3_cmc, drawn-to-electrical width correction and end/contact resistance included) and cap_cmim/cap_rfcmim (area + perimeter capacitance). A measurement feeding the DR-0011 proposal: it selects nothing and edits no schematic.",
   "resistor_model": "R = rsh*l/(w + 2*lwd) + 2*rzspec/w per corner section of cornerRES.lib; lwd and rzspec parsed from resistors_mod.lib and cross-checked against sg13g2_tech.json. Verified against the instanced r3_cmc OSDI model on the klt batch fleet at 1 uA bias (see _PROBE_MEASURED in passive_sizing.py and the sim/lna-passive-study record).",
-  "capacitor_model": "C = cap_carea*l*w + 40 fF/um * 2*(l+w) per corner section of cornerCAP.lib; only cap_carea is corner-scaled (0.9x/1.0x/1.1x), the perimeter term is not -- measured on cap_cmim and cap_rfcmim instanced on the batch fleet at 1 MHz.",
+  "capacitor_model": "C = cap_carea*l*w + 0.040 fF/um * 2*(l+w) per corner section of cornerCAP.lib; only cap_carea is corner-scaled (0.9x/1.0x/1.1x), the perimeter term is not -- measured on cap_cmim and cap_rfcmim instanced on the batch fleet at 1 MHz.",
   "inputs": {
     "netlist": {
       "path": "design/netlist/lna_stage1.spice",
@@ -210,7 +210,7 @@
         },
         "rsil": {
           "infeasible": true,
-          "why": "no width on the sizing grid puts the model within 1 percent of the design value: at minimum width the body would need 4522.66 um (the PDK's minimum length here is 0.5 um), and the length/width grids clamp every other combination away from 6.09e+04 ohm"
+          "why": "No sampled width from 0.5 to 1000 um gives a legal length within 1% of the design resistance."
         }
       },
       "flavour_choice_body_area_spread": 6.4
@@ -226,8 +226,18 @@
       "schematic_symbol": "res.sym",
       "candidates": {
         "rhigh": {
-          "infeasible": true,
-          "why": "no width on the sizing grid puts the model within 1 percent of the design value: at minimum width the body would need -0.09 um (the PDK's minimum length here is 0.96 um), and the length/width grids clamp every other combination away from 24 ohm"
+          "w_um": 70.0,
+          "l_um": 1.12,
+          "squares": 0.016,
+          "body_area_um2": 78.4,
+          "contact_floor_ohm": 2.286,
+          "r_ohm": {
+            "typ": 24.0706,
+            "bcs": 18.6244,
+            "wcs": 29.5168
+          },
+          "r_error_vs_design_pct": 0.2942,
+          "corner_spread_pct": 45.25
         },
         "rppd": {
           "w_um": 10.0,
@@ -258,7 +268,7 @@
           "corner_spread_pct": 14.0
         }
       },
-      "flavour_choice_body_area_spread": 6.6
+      "flavour_choice_body_area_spread": 78.4
     },
     {
       "refdes": "Rbias",
@@ -381,12 +391,32 @@
       "schematic_symbol": "res.sym",
       "candidates": {
         "rhigh": {
-          "infeasible": true,
-          "why": "contact floor 2*rzspec/w exceeds the design value for every width on the grid (needs w >= 53.33 um just to reach 3 ohm with zero body)"
+          "w_um": 500.0,
+          "l_um": 0.99,
+          "squares": 0.002,
+          "body_area_um2": 495.0,
+          "contact_floor_ohm": 0.32,
+          "r_ohm": {
+            "typ": 3.01323,
+            "bcs": 2.33992,
+            "wcs": 3.68654
+          },
+          "r_error_vs_design_pct": 0.441,
+          "corner_spread_pct": 44.69
         },
         "rppd": {
-          "infeasible": true,
-          "why": "no width on the sizing grid puts the model within 1 percent of the design value: at minimum width the body would need -0.27 um (the PDK's minimum length here is 0.5 um), and the length/width grids clamp every other combination away from 3 ohm"
+          "w_um": 70.0,
+          "l_um": 0.54,
+          "squares": 0.008,
+          "body_area_um2": 37.8,
+          "contact_floor_ohm": 1.0,
+          "r_ohm": {
+            "typ": 3.00537,
+            "bcs": 2.80483,
+            "wcs": 3.20591
+          },
+          "r_error_vs_design_pct": 0.179,
+          "corner_spread_pct": 13.35
         },
         "rsil": {
           "w_um": 5.0,
@@ -403,7 +433,7 @@
           "corner_spread_pct": 11.27
         }
       },
-      "flavour_choice_body_area_spread": null
+      "flavour_choice_body_area_spread": 115.1
     },
     {
       "refdes": "R1b",

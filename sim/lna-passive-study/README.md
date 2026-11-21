@@ -21,14 +21,10 @@ The per-element sizings come from `layout/lna_stage1/passive_sizing.json`
 (issue #340 part 1): PDK models, not `R = rsh*L/W` — the `r3_cmc` resistor
 model's drawn-to-electrical width correction and end/contact resistance and the
 MIM models' area + perimeter capacitance are included, verified against the
-instanced models on the batch fleet. The `r3_cmc` model needs OSDI support this
-host's ngspice does not have, so **every simulation here runs on the `klt sim`
-batch fleet** (`--backend batch`, `--wait-for-capacity 600` per the host rules);
-there is no local fallback. klayout-tools friction met: `options.osdi_preload`
-has no PDK-relative form the way per-section corner libraries do (the request
-must hard-code the runner's `$PDK_ROOT/<variant>/...` layout) — filed as
-[2AMLogic/klayout-tools#7039](https://github.com/2AMLogic/klayout-tools/issues/7039);
-meanwhile the requests stage the OSDI file so the report hashes the exact bytes.
+instanced models. The full collection uses the batch backend. The bounded
+input-match screen can also run on an OSDI-capable ngspice installation with
+the pinned IHP model files and compiled resistor model. The upstream issue
+tracks support for PDK-relative OSDI paths. [klayout-tools #7039](https://github.com/2AMLogic/klayout-tools/issues/7039)
 
 ## Cold start
 
@@ -37,14 +33,17 @@ python3 -m pytest sim/lna-passive-study/tests -q   # no simulator needed
 python3 sim/lna-passive-study/run.py check-plan    # plan vs sizing table vs DUT
 python3 sim/lna-passive-study/run.py variants --check
 python3 sim/lna-passive-study/run.py prematch --dry-run   # V04's re-match probe + grid requests
-python3 sim/lna-passive-study/run.py prematch       # submits both, writes testbench/prematch.json
+python3 sim/lna-passive-study/run.py prematch       # probe, screen, then selected circuit and control
+# To reproduce the bounded screen on a workstation with ngspice 47 and OSDI:
+python3 sim/lna-passive-study/run.py prematch --backend local
+python3 sim/lna-passive-study/run.py variants       # regenerate current decks after prematch
 python3 sim/lna-passive-study/run.py build          # bodies/requests under _build/
 python3 sim/lna-passive-study/run.py collect        # batch-set the grid, write ONE record
 python3 sim/lna-passive-study/run.py verify         # re-derive verdicts from the sidecars
 ```
 
 `collect` needs the plan, the sizing table, the variant decks and the prematch
-outcome committed (it refuses a dirty tree of those inputs) and stores the raw
+outcome frozen. It checks the generated decks against the plan and stores the raw
 evidence bytes in the fleet artifact store (issue #226); git keeps the record,
 its JSON sidecar and the manifest. Evidence under `records/` is append-only.
 
@@ -76,17 +75,24 @@ What this study adds, all frozen in `testbench/plan.json` **before** collection:
   (minimum area, widest `res_*` spread) — isolates the resistor-flavour delta.
   V03 = V01's resistors with the `rfcmim` route (substrate nodes admitted) and
   `Cblk_in` as an on-chip 1 nF `rfcmim` array — isolates the cap-primitive and
-  on-chip-`Cblk_in` delta. V04 = V01 with the **smallest on-chip `cmim`
-  `Cblk_in` that still closes the input match**, re-matched (DR-0011 option b).
-* **V04's bounded re-match iteration** (`testbench/prematch.json`, committed
-  before the collection): a one-corner probe of the substituted core's base
-  impedance at 19.45 GHz by the design's own methodology (measured:
-  48.17 − j143.38 ohm), an L-section re-match per grid value
-  {0.5, 1, 2, 5, 10} pF, a four-corner-cell S11 grid, and the selection rule
-  "smallest value holding S11 ≤ −10 dB at all three band points at every cell"
-  (row 4's ratified target, used here as a design-iteration rule, NOT a claim).
-  Measured outcome: 1 pF closes (worst −10.15 dB) at 664 um² of plate — about
-  1000x less plate than the 1 nF array; 0.5 pF does not (−9.90 dB at one cell).
+  on-chip-`Cblk_in` delta as a combined set. The nominal probe repeats each RF
+  substitution individually and compares the three-terminal `m=119` instance
+  with 119 explicit units under the same load and substrate connection.
+* **V04 input match.** The base probe gives 48.17 − j143.38 Ω at 19.45 GHz.
+  Version 2 sizes both the blocking and shunt capacitors as `cap_cmim`. It
+  screens 0.5, 1, 2, 5 and 10 pF at three frequencies, four resistor/capacitor
+  corner pairs and two temperatures at 2.5 V. The 10 pF point uses two plates.
+  The smallest passing tested value is **2 pF** with a 4.56 µm square shunt.
+  At 17.7 GHz, `res_wcs / cap_wcs` and 125 °C, S11 is −10.0086 dB. The
+  1 pF option reaches −9.7526 dB. The selected circuit and V00 are then
+  measured with the original two-port and NF method at the same eight cells.
+  Per-frequency S11, gain and NF comparisons, body hashes and the nominal RF
+  substitution probe are in [prematch.json](testbench/prematch.json).
+* **Historical record.** The append-only 63-cell-per-deck record used a
+  four-cell selection grid and an ideal 31.89 fF shunt for its 1 pF V04.
+  Its original deck is [v1/V04.spice](testbench/variants/v1/V04.spice).
+  DR-0011 supersedes the record's initial V03 inductance explanation and
+  input-block recommendation. The revised V04 has an eight-cell follow-up.
 * **Gates.** The control must agree with the post-#79 record's published
   per-cell operating points at every 2.5 V hbt x temperature cell (10 mV / 2 %),
   sit inside its published per-measure envelopes, be inert to the passive corner

@@ -30,7 +30,7 @@ Capacitor model (``cap_cmim`` / ``cap_rfcmim``, native ngspice):
 
     C = cap_carea * l * w + cpspec * 2 * (l + w)    (l, w in um)
 
-``cpspec`` (40 fF/um, the ``CJSW`` of ``cmim_core``) is NOT rescaled by the
+``cpspec`` (0.040 fF/um, the ``CJSW`` of ``cmim_core``) is NOT rescaled by the
 corner sections -- only ``cap_carea`` is (0.9x/1.0x/1.1x), a measured fact the
 corner spread records. ``cap_rfcmim``'s own header declares w and l valid on
 7..75 um only, so the single-device ceiling is ~8.45 pF typ regardless of the
@@ -277,10 +277,10 @@ def size_resistor(value_ohm: float, flavour: dict) -> dict | None:
     the narrowest width off a fixed grid that clears the PDK's own minimum
     length, with the length then inverted onto the 0.01 um grid.
 
-    Returns None when no legal single device reaches the value (the flavour
-    cannot realize it: contact floor or geometry limits).
+    Returns None when none of the sampled widths meets the tolerance.
     """
-    width_grid = [0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 5.0, 8.0, 10.0, 15.0, 20.0, 30.0, 50.0]
+    width_grid = [0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 5.0, 8.0, 10.0, 15.0, 20.0, 30.0, 50.0,
+                  70.0, 100.0, 200.0, 500.0, flavour["max_w_um"]]
     best = None
     for w in width_grid:
         if w < flavour["min_w_um"] or w > flavour["max_w_um"]:
@@ -384,26 +384,12 @@ def build(netlist_path: str, install: str) -> dict:
             if sized is not None:
                 candidates[flavour] = sized
             else:
-                reasons = []
-                contact_min_w = 2.0 * model["rzspec_um"] / element["value"]
-                if contact_min_w > 50.0:
-                    reasons.append(
-                        f"contact floor 2*rzspec/w exceeds the design value for every "
-                        f"width on the grid (needs w >= {contact_min_w:.2f} um just to "
-                        f"reach {element['value']:.4g} ohm with zero body)")
-                else:
-                    l_min_w = (element["value"] - 2.0 * model["rzspec_um"]
-                               / max(model["min_w_um"], 0.5)) \
-                        * (max(model["min_w_um"], 0.5) + 2 * model["lwd_um"]) \
-                        / model["sheet_ohm_per_sq"]["typ"]
-                    reasons.append(
-                        f"no width on the sizing grid puts the model within "
-                        f"{_VALUE_TOLERANCE_PCT:g} percent of the design value: at "
-                        f"minimum width the body would need {l_min_w:.2f} um (the "
-                        f"PDK's minimum length here is {model['min_l_um']} um), and "
-                        f"the length/width grids clamp every other combination away "
-                        f"from {element['value']:.4g} ohm")
-                candidates[flavour] = {"infeasible": True, "why": "; ".join(reasons)}
+                candidates[flavour] = {
+                    "infeasible": True,
+                    "why": (f"No sampled width from {model['min_w_um']:g} to "
+                            f"{model['max_w_um']:g} um gives a legal length within "
+                            f"{_VALUE_TOLERANCE_PCT:g}% of the design resistance."),
+                }
         areas = [c["body_area_um2"] for c in candidates.values() if "body_area_um2" in c]
         res_out.append({
             "refdes": element["refdes"],
@@ -494,7 +480,7 @@ def build(netlist_path: str, install: str) -> dict:
             "sim/lna-passive-study record)."
         ),
         "capacitor_model": (
-            "C = cap_carea*l*w + 40 fF/um * 2*(l+w) per corner section of "
+            "C = cap_carea*l*w + 0.040 fF/um * 2*(l+w) per corner section of "
             "cornerCAP.lib; only cap_carea is corner-scaled (0.9x/1.0x/1.1x), "
             "the perimeter term is not -- measured on cap_cmim and cap_rfcmim "
             "instanced on the batch fleet at 1 MHz."

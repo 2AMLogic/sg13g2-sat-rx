@@ -19,16 +19,19 @@ the stage's 8 resistors and 4 capacitors are generic `res.sym`/`capa.sym`
 elements with no PDK primitive selected, `Re1` (3 Ω) is below minimum geometry
 in every flavour at minimum width, `Cb2` (10 pF) exceeds `cmim`'s declared
 8 pF maximum, and `Cblk_in` (1 nF) needs ~0.67 mm² of MIM plate. Issue #340
-prepared the measured options; this record is the proposal those measurements
-argue. Every number below carries its source; the deltas are from the study
-record [`sim/lna-passive-study/records/20261121-044750-495011a.md`](../../sim/lna-passive-study/records/20261121-044750-495011a.md)
-(comparative deltas vs a same-deck ideal-passive control, lna-sparam-nf method
-pinned by sha256, 63 cells per deck, control gate-passed against the post-#79
-record's op table)
-and the sizing table
-[`layout/lna_stage1/passive_sizing.json`](../../layout/lna_stage1/passive_sizing.json)
-(PDK models: `R = rsh·l/(w+2·lwd) + 2·rzspec/w`, `C = carea·l·w + 40 fF/µm·2(l+w)`,
-each verified against the instanced `r3_cmc`/MIM models on the batch fleet).
+prepared four candidate sets for the operator. The original 63-cell comparison
+per deck used a same-deck ideal-passive control checked against the post-#79
+operating points. Its V04 used an ideal shunt. The eight-cell follow-up uses
+a drawn shunt, repeats the selection, and measures the selected circuit and
+its control with the pinned two-port and noise method.
+[Original study](../../sim/lna-passive-study/records/20261121-044750-495011a.md) ·
+[Follow-up measurements and deck hashes](../../sim/lna-passive-study/testbench/prematch.json)
+
+The sizing equations for drawn dimensions in µm are
+`R = rsh·l/(w+2·lwd) + 2·rzspec/w` and
+`C = carea·l·w + (0.040 fF/µm)·2(l+w)`. Only the area capacitance varies
+with the selected capacitor process corner.
+[PDK-model sizing table](../../layout/lna_stage1/passive_sizing.json)
 
 ## Options, sized from the PDK models, and what each measures out to
 
@@ -37,50 +40,44 @@ each verified against the instanced `r3_cmc`/MIM models on the batch fleet).
 
 | class | elements | feasible flavours (min-area sizing) | measured consequence |
 |---|---|---|---|
-| bias ladder | `Rref` 8k, `Rbr` 60.9k, `Rbias` 10k, `R1b` 1.5k, `R2b` 7k | `rppd` (85.3 µm² total, ±20 % spread) or `rhigh` (15.3 µm² total, ±48 % spread); `rsil` out of range for `Rbr` (4.5 mm body > 1 mm maxL) | V01 (`rppd`) vs V02 (`rhigh`): both within ±1.5 dB S21 / ±0.5 dB NF / ±3 dB S11 of the ideal control at every row-2/3/4/6 bound cell; `rhigh`'s ±48 % spread moves the bias visibly further (S21 −1.5 dB at `res_wcs`/`cap_wcs`, −40 °C) |
-| collector damping | `Rd` 465 | `rppd` (0.5×0.64 µm, 0.3 µm²), `rsil` (16.6 µm²), `rhigh` (w=5 µm) | in V01/V02 (`rppd`): sub-dB deltas |
-| emitter / mirror degeneration | `Rer` 24, `Re1` 3 | `Rer`: `rsil` (0.75×1.32 µm) or wide `rppd`; **`Re1`: `rsil` only** (w=5 µm, l=0.87 µm — the deliberately wide, short body #198 predicted; `rppd` and `rhigh` contact floors exceed 3 Ω at every width) | `rsil` in V01: sub-dB deltas |
+| bias ladder | `Rref`, `Rbr`, `Rbias`, `R1b`, `R2b` | `rppd` (85.3 µm² total) or `rhigh` (15.3 µm²). For the 8 kΩ reference, the full spans are 19.65% and 48.01%, respectively. | Across the bound cells and frequencies, V01 ΔS21 is −0.84…+0.53 dB and ΔNF −0.27…+0.32 dB. V02 ΔS21 is −1.49…+1.52 dB, ΔNF −0.25…+0.57 dB and ΔS11 −2.94…+2.65 dB. |
+| collector damping | `Rd` 465 Ω | `rppd` (0.50 × 0.64 µm), `rsil` (16.6 µm²) or `rhigh` (7.9 µm²) | V01 and V02 exercise the compact `rppd` geometry. |
+| degeneration | `Rer` 24 Ω, `Re1` 3 Ω | For `Re1`, `rsil` at 5 × 0.87 µm gives 3.013 Ω. A legal `rppd` at 70 × 0.54 µm gives 3.005 Ω and uses 37.8 µm². The table also gives a 495 µm² `rhigh` solution. | V01 exercises `rsil` for both resistors. The body of its `Re1` occupies 4.35 µm². |
 
-**Capacitors**:
+**Capacitors**
 
-| element | options measured | area | verdict the deltas argue |
-|---|---|---|---|
-| `Cm` 57.8 fF | `cmim` 6.16 µm side | 38 µm² | `cmim` — `rfcmim`'s 7 µm geometry floor is already 74.6 fF (> design value) |
-| `Cshunt` 170 fF | `cmim` 10.6 µm side | 112 µm² | `cmim` — V03 measures `rfcmim` unusable in the Ka signal path (below) |
-| `Cb2` 10 pF | (i) 2 parallel `cmim` 5 pF (57.69 µm sides), (ii) 2 parallel `rfcmim` 5 pF, (iii) single `rfcmim` 10 pF | 6 656 µm² (i = ii); (iii) is outside the model's own 7–75 µm valid window | two parallel `cmim` — (ii) buys nothing (same plates, plus a substrate node the schematic lacks) and V03 rules the primitive out of the signal path anyway; `Cb2` sits on a bias node, so it is the *least* constrained element |
-| `Cblk_in` 1 nF | (a) on-chip `rfcmim` array: 119 × 74.8 µm at the model's largest valid plate | **0.666 mm²** total plate | **measured out.** V03 carries it: S21 **−43 dB**, S11 **+8 dB**, NF **+38 dB** vs control at the row-2/3 cell — `cap_rfcmim`'s own model includes the plate/feed inductances (`lplate`+`lfeed` ≈ 13 nH at 74.8 µm with the PDK-default `wfeed`, still ≈ 9 nH at the model's largest legal `wfeed` = 30 µm), i.e. > 1 kΩ of series reactance at 19.45 GHz. The PDK's own model rules the primitive out of the Ka-band signal path at these plate sizes |
-| | (b) smallest on-chip `cmim` that still closes the input match, **re-matched** (Lin/Cshunt re-derived at 19.45 GHz from the probed substituted-core base impedance 48.17 − j143.4 Ω, the design's own L-section method) | **1 pF** (25.77 µm side) = **664 µm²** | measured in: holds S11 ≤ −10.15 dB at all three DRAFT band points at all four row-4 bound corner cells (0.5 pF misses at −9.90 dB). V04: dS21 +0.0…+1.5 dB, **dNF −0.8…−1.6 dB (better than the ideal 1 nF network)**, dS11 −2…−22 dB across the row-4 cells — the re-match also deepens the match and lowers input-network loss |
-| | (c) off-chip with a boundary port (designed 1 nF value kept as an ideal element; pad/bond/PCB path unmodelled — a stated omission) | 0 µm² on-chip | the V01/V02 baseline: sub-dB deltas; the omission is what the operator accepts |
+| Element | Options and area | Evidence |
+|---|---|---|
+| `Cm` 57.8 fF | One 6.16 µm square `cmim`, 38 µm² | The 7 µm minimum `rfcmim` plate gives 74.62 fF, above the design value. |
+| `Cshunt` | V01 uses a 10.6 µm square `cmim` for 170 fF. The revised V04 uses a 4.56 µm square for 31.92 fF typical. | A single `rfcmim` substitution on V01 costs 0.12 dB of gain at the nominal midband probe. |
+| `Cb2` 10 pF | Two 57.69 µm square `cmim` plates, 6,656 µm² total. Each plate fits the 8 pF limit. A single 10 pF RF plate needs an 81.6 µm side, above the 75 µm model limit. | V01 exercises the two-plate bias bypass. The two-terminal multiplier probe reproduces the explicit pair. |
+| `Cblk_in` (a), on-chip 1 nF | 119 parallel 74.8 µm square `rfcmim` plates, 0.666 mm² | V03 loses about 43 dB of gain at band centre. The one-at-a-time and terminal probes below identify the effect of the array in this circuit. |
+| `Cblk_in` (b), on-chip with re-match | 2 pF `cmim`, 36.47 µm side, 1,330 µm². The 4.56 µm shunt and ideal 1.283 nH `Lin` complete the input match. | Smallest passing tested value in the corrected screen. The worst sampled S11 is −10.0086 dB. |
+| `Cblk_in` (c), off-chip | V01 and V02 retain the intended 1 nF as an ideal DC block. On-chip plate area is zero. | This boundary requires a board capacitor. Pad, bond, PCB and external component parasitics remain unmodelled. |
 
 ## Decision (proposed — nothing is selected by this record)
 
-For the operator to ratify or amend, per element class:
+1. Prefer `rppd` for the bias ladder. For `Rref` the best/typical/worst values
+   are 7.215/8.001/8.787 kΩ (±9.8%). The smaller `rhigh` alternative gives
+   6.100/8.027/9.953 kΩ (±24.0%) and the larger measured gain and NF excursions.
+2. Prefer `rppd` for `Rd` and `rsil` for `Rer` and `Re1` on the measured V01
+   geometries and their body area.
+3. Prefer `cmim` for `Cm` and for the drawn input shunt. Only `Cm` has the
+   RF-MIM minimum-capacitance exclusion.
+4. Prefer two parallel 5 pF `cmim` plates for `Cb2` on the bias node.
+5. Carry the **2 pF on-chip block** into layout and extraction if the operator
+   chooses integrated DC blocking. The historical 1 pF recommendation depended
+   on an ideal shunt and four screened cells. Option (c) is still available
+   if the board supplies the block. Full-band row-4 compliance awaits EM
+   extraction and re-characterization.
 
-1. **Bias ladder → `rppd`** (V01): 85.3 µm² total, ±20 % corner spread, sub-dB
-   measured cost. `rhigh` (V02) is the area option (15.3 µm²) at the price of a
-   ±48 % spread that visibly detunes bias across corners; take it only if a
-   later area budget forces it.
-2. **RF path → `rppd` for `Rd`, `rsil` for `Rer` and `Re1`** (`Re1` has no other
-   feasible flavour; w = 5 µm wide-short body).
-3. **`Cm`, `Cshunt` → `cmim`**; `rfcmim` is measured out of the Ka-band signal
-   path (V03) and its 7 µm floor exceeds `Cm`'s value outright.
-4. **`Cb2` → two parallel `cmim` (5 pF each)**, 6 656 µm²; revisit only if the
-   area budget forces `rfcmim` on this non-RF node.
-5. **`Cblk_in` → option (b): 1 pF `cmim` + re-match (Lin 1.317 nH, Cshunt
-   31.9 fF)** — 664 µm² (a 1000× area saving over the 1 nF array) with the
-   match *closing* at the row-4 corner cells and a measured NF improvement.
-   Option (c) (off-chip) remains the fallback if the operator prefers not to
-   re-spin the input network now. Option (a) is measured out.
-
-Adopting any option set changes `design/lna_stage1.sch` (adds substrate/body
-nodes for the 3-terminal resistor and any `rfcmim`, changes `Cblk_in`'s value
-and the match elements), so **it invalidates at minimum**: the post-#79
-characterization record (`sim/lna-sparam-nf/records/20261114-211735-8a92c6e.md`)
-and every `lna-*` record measured on that DUT (headroom, linearity,
-match-tradeoff), each of which stays valid as evidence for the earlier core.
-Rows 2–6 stay `placeholder_circuit` in `spec/row-coverage.json` until the
-re-characterization lands; no row, area target, tier roll-up or evidence rule
-changes by this record.
+Adopting a set replaces generic devices in `design/lna_stage1.sch` and
+requires body connections for three-terminal parts. Option (b) also changes
+the input blocking value, shunt and series inductor. The [post-#79
+characterization](../../sim/lna-sparam-nf/records/20261114-211735-8a92c6e.md)
+and sibling headroom, linearity and match-tradeoff records describe the
+earlier core. The changed schematic requires fresh characterization. Rows
+2–6 retain their `placeholder_circuit` disposition.
 
 ## Argument
 
@@ -92,37 +89,66 @@ passed the op-table gate against the post-#79 record (≤ 10 mV / 2 % on all
 nine 2.5 V cells) and the passive-inertness negative control. The deltas are
 comparative only — row 4's own note says S11 is not simulatable as a claim
 until EM extraction lands — so no row is shown met or missed anywhere above.
-The one degraded-mechanism finding (V03) is not a spec failure to recover:
-the bounded iteration that would "recover" it is the option-(b) re-match,
-which V04 already measures.
+
+**RF-MIM isolation.** At typical process, 27 °C, 2.5 V and 19.45 GHz, V01
+has 18.378 dB gain. Replacing only `Cshunt` gives 18.254 dB and replacing
+only `Cb2` gives 18.523 dB. Replacing only `Cblk_in` gives −25.061 dB,
+close to the complete V03 at −25.297 dB. This identifies the blocking array
+as the dominant substitution at that point. The model equations give 26.90 pH
+for `lplate` and 10.83 pH for `lfeed` on one 74.8 µm plate with a 2 µm feed.
+Their sum contributes 4.61 Ω of inductive reactance per plate at band centre.
+The full RF model also has skin, feed and substrate branches.
+
+With a 1 V AC input, 50 Ω load and grounded substrate, one RF instance with
+`m=119` reproduces 119 explicit units at that frequency. Input current is
+0.05411+j0.47550 A, load voltage is 1.01223−j0.00632 V, and substrate
+current is 0.03386+j0.47563 A. Each real and imaginary component agrees
+within 1e−10 in its reported unit. The large substrate current is present
+in both simulations.
+
+**Realized input match.** The probe gives 48.17−j143.38 Ω at band centre.
+With both capacitors sized for each candidate, worst sampled S11 for
+0.5, 1, 2, 5 and 10 pF is respectively −9.173, −9.753, −10.009, −10.066
+and −10.101 dB. The 10 pF point uses two legal 5 pF plates. The limiting
+2 pF cell is `res_wcs / cap_wcs`, 125 °C, 17.7 GHz, with only 0.0086 dB
+margin to the design screen. A separate run of the frozen two-port method
+reproduced each selected grid S11 within 0.001 dB.
+
+All cells below use typical HBT process and 2.5 V. Each triple is ordered
+17.7 / 19.45 / 21.2 GHz. NF deltas compare the revised V04 with the ideal
+control at the same cell. Its gain deltas span −0.506…+1.418 dB. For context,
+the original ideal-shunt V04 gain deltas included −0.565 dB.
+
+| Resistor / capacitor corner | Temperature | Absolute S11 (dB) | ΔNF (dB) |
+|---|---:|---|---|
+| bcs / bcs | -40 °C | −10.982 / −22.763 / −12.303 | −0.781 / −0.896 / −1.049 |
+| bcs / bcs | 125 °C | −11.374 / −29.091 / −10.775 | −1.017 / −1.198 / −1.437 |
+| bcs / wcs | -40 °C | −10.873 / −21.340 / −12.450 | −0.790 / −0.884 / −1.025 |
+| bcs / wcs | 125 °C | −11.304 / −33.293 / −11.092 | −1.052 / −1.182 / −1.391 |
+| wcs / bcs | -40 °C | −10.223 / −27.019 / −12.845 | −0.785 / −0.915 / −1.077 |
+| wcs / bcs | 125 °C | −10.051 / −24.702 / −11.253 | −0.988 / −1.198 / −1.448 |
+| wcs / wcs | -40 °C | −10.151 / −24.824 / −13.127 | −0.795 / −0.901 / −1.048 |
+| wcs / wcs | 125 °C | −10.009 / −26.529 / −11.665 | −1.026 / −1.174 / −1.389 |
+
+The follow-up is a row-4 screen with ngspice 47. The original record remains
+the source for the 63-cell deltas on its four frozen decks.
+[Follow-up inputs, absolute measurements and model probe](../../sim/lna-passive-study/testbench/prematch.json)
 
 ## Alternatives considered
 
-- **`rhigh` everywhere it fits (minimum area)** — rejected as the primary
-  recommendation: 5.6× less ladder area but a ±48 % `res_*` spread on nodes
-  that set bias; V02 measures the consequence (S21 −1.5 dB at the
-  `res_wcs`/`cap_wcs` cell). Kept as the documented area fallback.
-- **`rsil` ladder** — out of range for `Rbr` (4.5 mm body vs the PDK's 1 mm
-  maxL); not a candidate set.
-- **On-chip 1 nF `Cblk_in` (`rfcmim` array)** — measured out by the PDK's own
-  model (V03); 0.67 mm² of plate *and* > 1 kΩ of model feed reactance at
-  19.45 GHz.
-- **`Cb2` as one 10 pF `rfcmim`** — outside the model's declared 7–75 µm
-  geometry window (81.6 µm side needed); two `cmim` reach it inside every
-  declared range.
-- **Off-chip `Cblk_in`** — viable (option c) but keeps a board-level part and
-  an unmodelled pad/bond path on the noisiest node in the receiver; the
-  measured option (b) removes both for 664 µm².
+The `rhigh` ladder saves a factor of 5.6 in body area. The `rsil` geometry
+for the 60.9 kΩ `Rbr` would exceed its 1 mm length limit at minimum width.
+The off-chip block avoids on-chip plate area while adding a board component.
+The 1 nF RF array uses about 500 times the plate area of the 2 pF option and
+has the measured loss described above.
 
 ## Trigger to revisit / what will decide this
 
-Ratification (two-key) or amendment by the operator. #110's EM campaign
-decides the inductor half; if a ratified inductor route changes the input
-network topology, the option-(b) re-match (and V04's numbers) must be
-re-derived — the prematch probe and grid are frozen in
-`sim/lna-passive-study/testbench/prematch.json` and re-runnable. If a future
-PDK release ships a `cap_rfcmim` model without the feed-inductance dominance
-at large plates, option (a) can be re-measured unchanged.
+Ratification requires the operator's two-key decision. #110 and DR-0005
+govern the inductor route. Extract the complete input, including pad, routing
+and realized passives, and repeat the band and corner sweep before claiming
+input match. A change to the core impedance or inductor route also requires
+a new re-match.
 
 ## Consequences
 
@@ -134,14 +160,12 @@ at large plates, option (a) can be re-measured unchanged.
   sibling `lna-*` records as evidence *for the new core* (they stay valid for
   the old one); the input-match section of `design/lna_stage1.md` (V04's
   re-match numbers replace the pre-`Le1` sizing if option (b) is taken).
-- **Costs**: 664 µm² (`Cblk_in`) + 6 656 µm² (`Cb2`) + ~150 µm² (resistors +
-  `Cm`/`Cshunt`) ≈ 7.5 µm × 7.5 µm of added passives; two substrate/body node
-  classes admitted into the schematic (`rsil`/`rppd` bodies, `cmim` is
-  2-terminal); the `res_*`/`cap_*` corner axes become real and enter every
-  future corner campaign (row 4's bound corner already names them).
-- **Bad consequences kept visible**: the `rhigh` fallback's ±48 % spread; the
-  unmodelled off-chip path if option (c) is chosen; `Cblk_in` at 1 pF puts
-  818 Ω of reactance in series with the base at band centre — legal only with
-  the re-match, and the re-match must be re-derived if anything upstream of
-  the base changes; and nothing about this record relaxes row 17's open
-  2.75 V excursion question — that stays an operator decision.
+- **Area**. Option (b) uses about 1,330 µm² for the blocking plate,
+  6,656 µm² for the bypass pair and 150 µm² for resistors, `Cm` and the
+  smaller shunt. Their sum is about 8,136 µm², equivalent to a 90.2 µm
+  square before spacing, routing and inductors. The earlier 1 pF estimate
+  of 7,470 µm² corresponds to an 86.4 µm square.
+- **Electrical consequences**. At 19.45 GHz the ideal reactance of a 1 pF
+  block is −j8.18 Ω and that of a 2 pF block is −j4.09 Ω. Resistor bodies
+  require substrate connections. Resistor and capacitor corners enter future
+  comparisons. The row-17 disposition of the 2.75 V excursion stays open.

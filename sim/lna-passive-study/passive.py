@@ -90,7 +90,7 @@ S11_TARGET_DB = -10.0
 #: sizing table's own inversion (the plan stores the farads; the derived side
 #: is checked against passive_sizing.json).
 PREMATCH_GRID_F = (0.5e-12, 1e-12, 2e-12, 5e-12, 10e-12)
-PREMATCH_CORNERS = ("res_bcs__cap_bcs", "res_wcs__cap_wcs")
+PREMATCH_CORNERS = tuple(c["name"] for c in PROCESS_CORNERS if c["name"].startswith("res_"))
 PREMATCH_TEMPS_C = (-40.0, 125.0)
 
 #: Study statuses (the record's Markdown must state the JSON's status).
@@ -420,8 +420,8 @@ def cap_side_for_value(sizing: dict, primitive: str, value_f: float) -> dict:
 def plan_problems(plan: dict, dut_text: str, sizing: dict) -> list[str]:
     """Why the plan cannot be the frozen declaration of this study."""
     problems: list[str] = []
-    if plan.get("plan_version") != 1:
-        problems.append("plan_version must be 1")
+    if plan.get("plan_version") != 2:
+        problems.append("plan_version must be 2")
     scope = plan.get("scope", "")
     for needle in ("IDEAL", "no spec row", "selects nothing", "DR-0011",
                    "comparative deltas only"):
@@ -456,6 +456,9 @@ def plan_problems(plan: dict, dut_text: str, sizing: dict) -> list[str]:
     prematch = plan.get("prematch", {})
     if prematch.get("grid_f") != list(PREMATCH_GRID_F):
         problems.append("prematch.grid_f must be exactly this module's PREMATCH_GRID_F")
+    if (prematch.get("corners") != list(PREMATCH_CORNERS)
+            or prematch.get("temperatures_c") != list(PREMATCH_TEMPS_C)):
+        problems.append("prematch must cover all eight row-4 cells")
     if abs(prematch.get("s11_target_db", 0) - S11_TARGET_DB) > 1e-9:
         problems.append("prematch.s11_target_db must be the row-4 target -10 dB")
 
@@ -478,7 +481,7 @@ def plan_problems(plan: dict, dut_text: str, sizing: dict) -> list[str]:
                 # the sizing table keys candidates by the PDK's short name
                 short = spec["primitive"].removeprefix("cap_")
                 cand = sizing_cap[refdes]["candidates"].get(short, {})
-                if refdes == "Cblk_in" and spec.get("from_prematch"):
+                if refdes in ("Cblk_in", "Cshunt") and spec.get("from_prematch"):
                     continue  # frozen by the prematch outcome, checked elsewhere
                 single = cand.get("single_device", {})
                 arr = cand.get("parallel_array", {})

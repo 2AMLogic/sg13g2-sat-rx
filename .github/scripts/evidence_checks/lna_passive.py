@@ -171,7 +171,10 @@ def check_lna_passive(problems: Problems, root: Path, exp_dir: Path) -> None:
             if not set(variants) <= set(declared):
                 problems.add(rel(root, js_path), "publishes variants outside the frozen plan")
             for vid in variants:
-                deck = exp_dir / "testbench" / "variants" / f"{vid}.spice"
+                folder = exp_dir / "testbench" / "variants"
+                if vid == "V04" and rec.get("plan_declaration", {}).get("plan_version") == 1:
+                    folder = folder / "v1"
+                deck = folder / f"{vid}.spice"
                 if not deck.is_file():
                     problems.add(rel(root, deck), f"committed variant deck of {vid} is missing")
                 elif rec.get("variant_deck_sha256", {}).get(vid) != _sha(deck):

@@ -16,9 +16,8 @@ the record, its JSON sidecar and the manifest. ``verify`` re-derives every
 published verdict from the committed sidecars with no simulator and no
 broker.
 
-The r3_cmc OSDI model the substituted resistors need cannot run on this
-host's ngspice (no OSDI support) -- every simulation in this study is
-off-host by necessity, which is also what the host rules want.
+The bounded prematch probe can also run with an explicitly selected local
+backend on a workstation with the pinned PDK and OSDI-capable ngspice.
 """
 
 from __future__ import annotations
@@ -30,6 +29,7 @@ import json
 import math
 import shlex
 import subprocess
+import tempfile
 import sys
 from pathlib import Path
 
@@ -40,6 +40,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "layout" / "lna_sta
 import passive as PS  # noqa: E402
 from harness import evidence_store as store_mod  # noqa: E402
 from harness import klt_driver  # noqa: E402
+from harness.provenance import sha256_file
 from harness.report import RecordExists, allocate_record_id, git_provenance  # noqa: E402
 
 RECORDS = PS.BENCH_DIR / "records"
@@ -68,23 +69,21 @@ def assignment_for(plan_variant: dict, sizing: dict, prematch: dict | None) -> d
         if prematch is None or not prematch.get("selection"):
             raise CollectionError("V04 needs testbench/prematch.json with a selection")
         sel = prematch["selection"]
-        assignment["Cblk_in"] = {
-            "kind": "capacitor", "primitive": "cap_cmim",
-            "side_um": sel["cblk_side_um"], "m": 1,
-            "c_typ_f": sel["cblk_c_typ_f"],
-        }
-        assignment["Cshunt"] = {"kind": "ideal_value",
-                                "value_text": _fmt_farads(sel["cshunt_f"])}
-        assignment["Lin"] = {"kind": "ideal_value",
-                             "value_text": _fmt_henries(sel["lin_h"])}
+        assignment.update(rematch_assignment(prematch["rematches"][f"{sel['cblk_f']:g}"]))
     return assignment
 
 
-def _fmt_farads(value_f: float) -> str:
-    for div, suffix in ((1e-12, "p"), (1e-9, "n"), (1e-15, "f"), (1e-6, "u")):
-        if value_f >= div:
-            return f"{value_f / div:.4g}{suffix}"
-    return f"{value_f:.4g}"
+def rematch_assignment(match: dict) -> dict:
+    """Use the same drawn components in the screen and the frozen V04 deck."""
+    return {
+        "Cblk_in": {"kind": "capacitor", "primitive": "cap_cmim",
+                    "side_um": match["side_um"], "m": match["plates"],
+                    "c_typ_f": match["c_typ_f"]},
+        "Cshunt": {"kind": "capacitor", "primitive": "cap_cmim",
+                   "side_um": match["shunt_side_um"], "m": 1,
+                   "c_typ_f": match["shunt_c_typ_f"]},
+        "Lin": {"kind": "ideal_value", "value_text": _fmt_henries(match["lin_h"])},
+    }
 
 
 def _fmt_henries(value_h: float) -> str:
@@ -160,6 +159,25 @@ def cmd_variants(args) -> int:
 # prematch: probe + grid
 # ---------------------------------------------------------------------------
 
+def _rf_substitution_probe(plan):
+    """Measured V01-to-V03 substitutions, one at a time at the nominal probe point."""
+    variants = {v["id"]: v["assignment"] for v in plan["variants"]}
+    dut = PS.DUT_PATH.read_text()
+    circuits, measures = [], []
+    for name in ("V01", "Cshunt", "Cb2", "Cblk_in", "V03"):
+        if name in variants:
+            parts = variants[name]
+        else:
+            parts = variants["V01"] | {name: variants["V03"][name]}
+        tag = name.lower()
+        deck = PS.variant_dut_text(dut, parts, "").replace(".subckt lna_stage1 ", f".subckt iso_{tag} ")
+        circuits += [deck, f"Xiso_{tag} pin_{tag} pout_{tag} vdd 0 iso_{tag}",
+                     f"Vsrc_{tag} src_{tag} 0 DC 0 AC 1",
+                     f"Rsrc_{tag} src_{tag} pin_{tag} 50", f"Rload_{tag} pout_{tag} 0 50"]
+        measures += [f"let m_iso_s21_{tag} = db(2*v(pout_{tag}))", f"print m_iso_s21_{tag}"]
+    return circuits, measures
+
+
 def _probe_body(tb: dict, plan: dict) -> str:
     """One-corner probe of the substituted core's base impedance (input
     network dropped, excitation DC-blocked by a 1 F ideal cap so the bias
@@ -177,6 +195,16 @@ def _probe_body(tb: dict, plan: dict) -> str:
                               "\n".join(header))
     dut = dut.replace(".subckt lna_stage1 in out vdd gnd",
                       ".subckt lna_probe b1 out vdd gnd")
+    terminal_measures = []
+    for tag in ("m", "e"):
+        terminals = {"input_a": f"-i(vrf{tag})", "out_v": f"v(o{tag})",
+                     "bulk_a": f"i(vbulk_{tag})"}
+        for name, expression in terminals.items():
+            for part in ("real", "imag"):
+                vector = f"m_rf_{tag}_{name}_{part}"
+                terminal_measures.extend([f"  let {vector} = {part}({expression})",
+                                          f"  print {vector}"])
+    iso_circuits, iso_measures = _rf_substitution_probe(plan)
     lines = [
         f".param vdd_nom={tb['nominal_supply_v']!r}",
         ".param vdd_val=2.5",
@@ -199,6 +227,17 @@ def _probe_body(tb: dict, plan: dict) -> str:
         "Xcb1 cbn 0 cap_cmim w=6.16u l=6.16u",
         "Xcb2 cbn 0 cap_cmim w=6.16u l=6.16u",
         "",
+        # Compare the complete three-terminal RF network at band centre.
+        # A zero-volt source senses substrate current in each copy.
+        *iso_circuits,
+        "Vrfm im 0 AC 1",
+        "Vbulk_m bm 0 0",
+        "Rload_m om 0 50",
+        "Xrfm im om bm cap_rfcmim w=74.8u l=74.8u m=119",
+        "Vrfe ie 0 AC 1",
+        "Vbulk_e be 0 0",
+        "Rload_e oe 0 50",
+        *(f"Xrfe{i} ie oe be cap_rfcmim w=74.8u l=74.8u" for i in range(119)),
         ".control",
         "set numdgt=10",
         "set noaskquit",
@@ -209,6 +248,8 @@ def _probe_body(tb: dict, plan: dict) -> str:
         "  let m_vb = mag(v(b1))",
         "  let m_zre = real(50*v(b1)/(v(s1n)-v(s1x)))",
         "  let m_zim = imag(50*v(b1)/(v(s1n)-v(s1x)))",
+        *iso_measures,
+        *terminal_measures,
         "  print m_vs m_vsx m_vb m_zre m_zim",
         "  ac lin 1 1e6 1e6",
         "  let m_ca_f = imag(i(vca))/6.283185307/1e6",
@@ -239,17 +280,9 @@ def _grid_body(tb: dict, plan: dict, matches: dict[float, dict]) -> str:
         m = matches[cblk_f]
         tag = f"c{i+1}"
         assignment = {k: dict(v) for k, v in plan["variants"][0]["assignment"].items()}
-        assignment["Cblk_in"] = {
-            "kind": "capacitor", "primitive": "cap_cmim",
-            "side_um": m["side_um"], "m": 1, "c_typ_f": m["c_typ_f"]}
-        assignment["Cshunt"] = {"kind": "ideal_value",
-                                "value_text": _fmt_farads(m["cshunt_f"])}
-        assignment["Lin"] = {"kind": "ideal_value",
-                             "value_text": _fmt_henries(m["lin_h"])}
-        header = [f"* prematch grid candidate {tag}: Cblk_in = {cblk_f:g} F "
-                  f"(cmim side {m['side_um']} um), Lin = {m['lin_h']*1e9:.4g} nH, "
-                  f"Cshunt = {m['cshunt_f']*1e12:.4g} pF (ideal during the grid; "
-                  f"V04 freezes the cmim side)"]
+        assignment.update(rematch_assignment(m))
+        header = [f"* prematch grid candidate {tag}: Cblk_in = {cblk_f:g} F, "
+                  f"shunt and blocking capacitors use sized cap_cmim plates"]
         dut = PS.variant_dut_text(PS.DUT_PATH.read_text(encoding="utf-8"), assignment,
                                   "\n".join(header))
         dut = dut.replace(".subckt lna_stage1 in out vdd gnd",
@@ -284,13 +317,32 @@ def _osdi_abs_path() -> str:
     return str(pdk.path / "libs.tech/ngspice/osdi/r3_cmc.osdi")
 
 
-def _probe_request(body_name: str) -> dict:
-    req = PS.klt_request(body_name, ["typ"], [27.0], 600, _osdi_abs_path())
-    # Only the sentinel is a klt-graded measurement: klt's own .control block
-    # runs AFTER the body's, and control-block vectors do not survive between
-    # blocks, so the probe's real values are parsed from the body's printed
-    # lines instead (see _parse_control_log).
-    return req
+def _prematch_run(work, name, body, processes, temperatures, args):
+    """Prepare a request and require one successful log per requested cell."""
+    body_file = work / f"body_{name}.spice"
+    body_file.write_text(body)
+    request = PS.klt_request(body_file.name, processes, temperatures, 600, _osdi_abs_path())
+    request_file = work / f"request_{name}.json"
+    request_file.write_text(json.dumps(request, indent=2) + "\n")
+    if args.dry_run:
+        return {}, {}
+    report = klt_driver.submit_request(request_file, work / f"report_{name}.json", name,
+                                       args.backend, args.klt_cmd, work,
+                                       wait_for_capacity=args.wait_for_capacity)
+    data = PS.load_json(report)
+    if args.backend == "batch":
+        _verify_model_identity([report])
+    cells = {}
+    for corner in data["corners"]:
+        log = klt_driver.corner_log_path(corner, report)
+        if corner["status"] != "pass" or log is None:
+            raise CollectionError(f"{name}: failed {corner['corner_id']}")
+        cells[corner["corner_id"]] = PS.parse_log(log.read_text())
+    expected = {f"{p}/novdd/{t:g}C" for p in processes for t in temperatures}
+    if set(cells) != expected or len(data["corners"]) != len(expected):
+        raise CollectionError(f"{name}: missing or duplicate cells")
+    return cells, {"body_sha256": PS.sha256_text(body),
+                   "engine_version": data["environment"]["engine_version"]}
 
 
 def cmd_prematch(args) -> int:
@@ -299,24 +351,23 @@ def cmd_prematch(args) -> int:
     if PS.plan_problems(plan, PS.DUT_PATH.read_text(encoding="utf-8"), sizing):
         print("prematch: plan invalid; run check-plan first", file=sys.stderr)
         return 1
+    pdk = klt_driver.find_pdk_or_exit(PS.SIM_DIR, require_artifact=True)
+    passive_pins = sizing["inputs"]["pdk"]["files"]
+    for path, digest in passive_pins.items():
+        if sha256_file(pdk.path / path) != digest.removeprefix("sha256:"):
+            raise CollectionError(f"prematch: PDK input mismatch for {path}")
+    osdi_hash = sha256_file(Path(_osdi_abs_path()))
+    if osdi_hash != plan["prematch"]["osdi_sha256"]:
+        raise CollectionError("prematch: r3_cmc OSDI hash differs from the study pin")
     tb = json.loads(PS.METHOD_TB.read_text(encoding="utf-8"))
-    work = SCRATCH / "prematch"
+    work = SCRATCH / "prematch-v2"
     work.mkdir(parents=True, exist_ok=True)
-    probe_body = work / "body_probe.spice"
-    probe_body.write_text(_probe_body(tb, plan))
-    probe_req = work / "request_probe.json"
-    probe_req.write_text(json.dumps(_probe_request(probe_body.name), indent=2) + "\n")
+    work = Path(tempfile.mkdtemp(prefix="run-", dir=work))
+    probe, probe_identity = _prematch_run(work, "probe", _probe_body(tb, plan), ["typ"], [27.0], args)
     if args.dry_run:
-        print(f"--dry-run: probe request under {work}; nothing submitted")
+        print(f"--dry-run: probe request under {work}")
         return 0
-    report = klt_driver.submit_request(probe_req, work / "report_probe.json", "probe",
-                                       "batch", args.klt_cmd, work,
-                                       wait_for_capacity=args.wait_for_capacity)
-    data = json.loads(report.read_text())
-    corner = data["corners"][0]
-    log_path = klt_driver.corner_log_path(corner, report)
-    text = log_path.read_text()
-    meas = _parse_control_log(text)
+    meas = probe["typ/novdd/27C"]
     zre, zim = meas["zre"], meas["zim"]
     if zre <= 0:
         print(f"prematch: probed Z_b = {zre:.4g}{zim:+.4g}j ohm is not a passive load",
@@ -330,27 +381,24 @@ def cmd_prematch(args) -> int:
     matches = {}
     for cblk_f in PS.PREMATCH_GRID_F:
         lin_h, cshunt_f = PS.l_section_match(zre, zim, cblk_f, PS.BAND_CENTRE_HZ)
-        side = PS.cap_side_for_value(sizing, "cmim", cblk_f)
+        plates = math.ceil(cblk_f / sizing["capacitor_models"]["cmim"]["declared_max_c_f"])
+        side = PS.cap_side_for_value(sizing, "cmim", cblk_f / plates)
+        shunt = PS.cap_side_for_value(sizing, "cmim", cshunt_f)
         matches[cblk_f] = {"lin_h": lin_h, "cshunt_f": cshunt_f,
                            "side_um": side["side_um"],
-                           "c_typ_f": side["c_typ_f"]}
-    grid_body = work / "body_grid.spice"
-    grid_body.write_text(_grid_body(tb, plan, matches))
-    grid_req = work / "request_grid.json"
-    grid_req.write_text(json.dumps(PS.klt_request(
-        grid_body.name, list(PS.PREMATCH_CORNERS), list(PS.PREMATCH_TEMPS_C),
-        600, _osdi_abs_path()), indent=2) + "\n")
-    report = klt_driver.submit_request(grid_req, work / "report_grid.json", "grid",
-                                       "batch", args.klt_cmd, work,
-                                       wait_for_capacity=args.wait_for_capacity)
-    data = json.loads(report.read_text())
-    cells = {}
-    for corner in data["corners"]:
-        text = klt_driver.corner_log_path(corner, report).read_text()
-        cells[corner["corner_id"]] = _parse_control_log(text)
+                           "c_typ_f": plates * side["c_typ_f"], "plates": plates,
+                           "shunt_side_um": shunt["side_um"],
+                           "shunt_c_typ_f": shunt["c_typ_f"]}
+    processes, temps = list(PS.PREMATCH_CORNERS), list(PS.PREMATCH_TEMPS_C)
+    cells, grid_identity = _prematch_run(work, "grid", _grid_body(tb, plan, matches),
+                                         processes, temps, args)
+    for cell in cells.values():
+        for i in range(1, len(matches) + 1):
+            if not all(math.isfinite(cell[f"s11_db_{band}_c{i}"]) for band in ("lo", "mid", "hi")):
+                raise CollectionError("non-finite S11 in the row-4 grid")
     selection = None
-    for cblk_f in sorted(PS.PREMATCH_GRID_F):
-        tag = "c%d" % (sorted(PS.PREMATCH_GRID_F).index(cblk_f) + 1)
+    for i, cblk_f in enumerate(sorted(matches), 1):
+        tag = f"c{i}"
         worst = max(
             cells[cid][f"s11_db_{band}_{tag}"]
             for cid in cells for band in ("lo", "mid", "hi"))
@@ -361,18 +409,50 @@ def cmd_prematch(args) -> int:
                 "cshunt_f": matches[cblk_f]["cshunt_f"],
                 "cblk_side_um": matches[cblk_f]["side_um"],
                 "cblk_c_typ_f": matches[cblk_f]["c_typ_f"],
-                "plate_area_um2": round(matches[cblk_f]["side_um"] ** 2, 1),
+                "plate_area_um2": round(matches[cblk_f]["plates"] * matches[cblk_f]["side_um"] ** 2, 1),
             }
             break
     prematch = {
+        "runs": {"backend": args.backend, "probe": probe_identity, "grid": grid_identity},
         "probe": {"z_b_ohm": [zre, zim],
+                  "single_substitution_s21_db": {
+                      name: meas[f"iso_s21_{name}"]
+                      for name in ("v01", "cshunt", "cb2", "cblk_in", "v03")},
+                  "rf_array_at_19_45_ghz": {k: v for k, v in meas.items() if k.startswith("rf_")},
                   "m_multiplier_check": {"m2_f": meas["ca_f"], "two_f": meas["cb_f"]}},
         "rematches": {f"{c:g}": m for c, m in matches.items()},
         "grid": cells,
         "selection": selection,
         "rule": plan["prematch"]["rule"],
     }
-    PS.PREMATCH_PATH.write_text(json.dumps(prematch, indent=1, sort_keys=True) + "\n")
+    if selection:
+        dut = PS.DUT_PATH.read_text()
+        decks = {"V00": PS.control_dut_text(dut), "V04": variant_decks(plan, sizing, prematch)["V04"]}
+        measures = {}
+        for vid, deck in decks.items():
+            body = PS.body_text(vid, deck, tb, 2.5, "* row-4 follow-up with the frozen NF method")
+            measured, identity = _prematch_run(work, vid, body, processes, temps, args)
+            measures[vid] = measured
+            prematch["runs"][vid] = dict(identity, deck_sha256=PS.sha256_text(deck))
+        relative = {}
+        for cid, row in measures["V04"].items():
+            control = measures["V00"][cid]
+            relative[cid] = {}
+            for band in ("lo", "mid", "hi"):
+                s11 = row[f"s11_db_{band}"]
+                if abs(s11 - cells[cid][f"s11_db_{band}_{tag}"]) > 0.001:
+                    raise CollectionError(f"{cid}: selected V04 S11 differs from its grid circuit")
+                relative[cid][band] = {
+                    "s11_db": s11,
+                    "delta_nf_db": row[f"nf_db_{band}"] - control[f"nf_db_{band}"],
+                    "delta_s21_db": row[f"s21_db_{band}"] - control[f"s21_db_{band}"],
+                }
+        prematch["selected_row4"] = relative
+    result = json.dumps(prematch, indent=1, sort_keys=True, allow_nan=False) + "\n"
+    (work / "prematch.json").write_text(result)
+    temporary = work / "completed.json"
+    temporary.write_text(result)
+    temporary.replace(PS.PREMATCH_PATH)
     if selection:
         print(f"prematch: selected Cblk_in = {selection['cblk_f']:g} F "
               f"(side {selection['cblk_side_um']} um, worst S11 {selection['worst_s11_db']:.2f} dB); "
@@ -381,20 +461,6 @@ def cmd_prematch(args) -> int:
         print("prematch: NO grid value closes the input match at -10 dB; V04 is dropped "
               f"and the record will say so; wrote {PS.PREMATCH_PATH}")
     return 0
-
-
-def _parse_control_log(text: str) -> dict[str, float]:
-    out: dict[str, float] = {}
-    for line in text.splitlines():
-        if "=" not in line:
-            continue
-        name, _, value = line.partition("=")
-        key = name.strip().removeprefix("m_")
-        try:
-            out[key] = float(value)
-        except ValueError:
-            pass
-    return out
 
 
 # ---------------------------------------------------------------------------
@@ -605,8 +671,11 @@ def cmd_collect(args) -> int:
               "selection; run prematch first (or the record must say V04 is dropped)",
               file=sys.stderr)
         return 1
+    if cmd_variants(argparse.Namespace(check=True)):
+        raise CollectionError("frozen decks do not match the current plan and prematch")
     started = _dt.datetime.now(_dt.timezone.utc)
-    work = SCRATCH / "collect"
+    run_inputs = PS.sha256_text(PS.PLAN_PATH.read_text() + PS.PREMATCH_PATH.read_text())
+    work = SCRATCH / "collect" / run_inputs.removeprefix("sha256:")
     work.mkdir(parents=True, exist_ok=True)
     reqs = _requests(plan, sizing, prematch, work, args)
     if args.dry_run:
@@ -615,13 +684,18 @@ def cmd_collect(args) -> int:
     reports = klt_driver.submit_set(reqs, work, klt_cmd=args.klt_cmd,
                                     wait_for_capacity=args.wait_for_capacity,
                                     capacity_retries=args.capacity_retries)
-    # the prematch reports, so their provenance rides the same identity gate
-    for name in ("probe", "grid"):
-        rp = SCRATCH / "prematch" / f"report_{name}.json"
-        if rp.is_file():
-            reports[f"prematch_{name}"] = rp
+    # Attach raw prematch reports only when they produced the exact frozen result.
+    # The bounded local probe checks its models separately from the off-host jobs.
+    frozen = PS.PREMATCH_PATH.read_bytes()
+    for outcome in sorted((SCRATCH / "prematch-v2").glob("run-*/prematch.json")):
+        if outcome.read_bytes() == frozen:
+            for name in ("probe", "grid", "V00", "V04"):
+                rp = outcome.parent / f"report_{name}.json"
+                if rp.is_file():
+                    reports[f"prematch_{name}"] = rp
+            break
     try:
-        identity = _verify_model_identity(list(reports.values()))
+        identity = _verify_model_identity([rp for key, rp in reports.items() if key.startswith("V")])
     except CollectionError as exc:
         print(f"collect: model identity: {exc}", file=sys.stderr)
         return 1
@@ -697,14 +771,9 @@ def _build_record(plan, prematch, status, gates, cells, deltas, variant_ids,
             "off-chip part costs no on-chip area and carries no PDK primitive; the "
             "pad/bond/PCB path and the part's own parasitics are NOT modelled -- a "
             "stated omission, DR-0011 option c).",
-            "V03's large deltas are the measured rfcmim parasitic network, not a "
-            "failed run: cap_rfcmim's own model carries the plate/feed inductances "
-            "lplate+lfeed (about 5.5 nH at the 10.6 um Cshunt plate, about 13 nH at "
-            "the 74.8 um Cblk_in plate with the PDK-default wfeed = 2 um; even the "
-            "model's largest legal wfeed = 30 um leaves ~9 nH), i.e. over 1 kohm of "
-            "series reactance in the 19.45 GHz signal path. The PDK's own model "
-            "therefore rules the primitive out of the Ka-band signal path at these "
-            "plate sizes -- a decisive DR-0011 input, measured, not asserted.",
+            "V03 changes Cshunt, Cb2 and Cblk_in together. Its deltas characterize "
+            "the complete substituted deck. See the prematch three-terminal RF array "
+            "probe and DR-0011 for the limits of the comparison.",
             "Substrate parasitics of the large on-chip bodies (rfcmim Cox/Csub/Rsub "
             "network, r3_cmc body capacitances) ARE modelled here, through the PDK's "
             "own subcircuits instanced in the variant decks; the one omission is the "
@@ -828,8 +897,8 @@ def _render_md(rec: dict) -> str:
           f"pinned install's sha256, cross-recorded in passive_sizing.json; "
           f"{rec['model_identity']['jobs']} batch jobs, every one "
           f"runner_compatibility=match with hash-verified staged model inputs.",
-          "- All simulations ran off-host on the klt batch fleet (ngspice with OSDI "
-          "support; this host's ngspice cannot load r3_cmc.osdi).",
+          "- The 63-cell-per-deck collection used the batch backend. The prematch backend "
+          "and simulator version are recorded separately in testbench/prematch.json.",
           f"- Variant DUT decks (frozen inputs, committed): " + "; ".join(
               f"`{vid}` sha256 `{rec['variant_deck_sha256'][vid]}`"
               for vid in rec["variants"]) + ".",
@@ -957,7 +1026,10 @@ def _verify_one(rec: dict, md: str) -> list[str]:
     if not set(rec["variants"]) <= set(declared):
         problems.append("record publishes variants outside the frozen plan")
     for vid in rec["variants"]:
-        deck = PS.VARIANTS_DIR / f"{vid}.spice"
+        folder = PS.VARIANTS_DIR
+        if vid == "V04" and rec.get("plan_declaration", {}).get("plan_version") == 1:
+            folder = folder / "v1"
+        deck = folder / f"{vid}.spice"
         if not deck.is_file() or PS.sha256_text(deck.read_text()) != \
                 rec["variant_deck_sha256"][vid]:
             problems.append(f"{vid}: committed deck does not match the record's hash")
@@ -994,6 +1066,8 @@ def main(argv=None) -> int:
     for name in ("prematch", "build", "collect", "verify"):
         q = sub.add_parser(name)
         q.add_argument("--dry-run", action="store_true")
+        if name == "prematch":
+            q.add_argument("--backend", choices=("batch", "local"), default="batch")
         if name == "build":
             q.add_argument("--workdir", default=None)
         if name == "verify":
