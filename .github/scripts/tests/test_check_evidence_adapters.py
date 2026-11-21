@@ -110,6 +110,7 @@ class CommittedEvidence(FormatBase):
         self.assertEqual(set(chk.ADAPTERS), {PASSIVE, MIXER, LNAMATCH, CMPROBE, PRA,
                                              "lna-core-variants",
                                              "lna-linearity", "lna-headroom",
+                                             "lna-passive-study",
                                              "hbt-mismatch-pair"})
 
     def test_adapters_actually_run(self):

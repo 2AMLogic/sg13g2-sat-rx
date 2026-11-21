@@ -137,7 +137,10 @@ A `spec/` decision record covering **passive realization for the LNA stage**,
 not only the inductors:
 
 1. which PDK primitive realizes each resistor, and at what W/L — or that the
-   resistors move off-chip;
+   resistors move off-chip — **now prepared**: the PDK-model sizing table
+   [`passive_sizing.json`](passive_sizing.json) (issue #340, part 1 of the
+   **proposed** [DR-0011](../../spec/decision-records/0011-lna-stage1-passive-realization.md),
+   which still selects nothing and turns no key);
 2. which MIM primitive realizes each capacitor, and what happens to `Cb2` and
    `Cblk_in`, whose values no 2-terminal PDK primitive declares a range for
    (a circuit change, an `rfcmim` with its substrate node admitted into the

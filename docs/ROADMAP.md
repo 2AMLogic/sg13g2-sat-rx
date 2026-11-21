@@ -146,7 +146,7 @@ Evidence on `main` (all append-only records under `sim/*/records/`):
 | DR-0008 validation plan | separate authorization of simulation spend, which the record does not grant |
 | #38 auditor Python runtime | operator hold |
 | #4 T1 tracker | nothing — resting on `loom:blocked` as a tracking artifact by operator triage of 2026-10-15 (its park record); the body still quotes an older grade, and `signoff/tier-report.json` is the verdict |
-| LNA stage-1 passive realization — the T1 item 2/3 gate | a `spec/` decision record; operator call per the #198 realizability study, since every option changes the circuit and would invalidate the post-#79 characterization |
+| LNA stage-1 passive realization — the T1 item 2/3 gate | the operator call on the **proposed** [DR-0011](../spec/decision-records/0011-lna-stage1-passive-realization.md) (issue #340: per-element PDK-model sizings in `layout/lna_stage1/passive_sizing.json`, four re-simulated candidate sets in `sim/lna-passive-study`, all inductors still ideal per #110); ratifying an option set changes the circuit and invalidates the post-#79 characterization — the gate is still the decision, now with a record to decide on |
 | Runset-engine reference-side conversion (the T1 item 4 gap after #260) | [klayout-tools#5796](https://github.com/2AMLogic/klayout-tools/issues/5796); upstream work, this repo files and waits |
 
 ## Not planned

@@ -31,6 +31,9 @@ spec/
                               after #61 (proposed; comparative, selects nothing)
     0010-iip3-intercept-definition-reference.md   IIP3 intercept reference
                               (proposed; recommends iip3t, selects nothing)
+    0011-lna-stage1-passive-realization.md   LNA stage-1 resistor/capacitor
+                              realization (proposed; sized + re-simulated
+                              options, selects nothing — operator call)
 ```
 
 ## Status: partially ratified — targets, not compliance

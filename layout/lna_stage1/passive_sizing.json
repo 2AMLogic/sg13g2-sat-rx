@@ -1,0 +1,821 @@
+{
+  "schema_version": 1,
+  "analysis": "lna_stage1_passive_sizing",
+  "issue": 340,
+  "note": "PDK-model sizing of every stage-1 resistor and capacitor onto rsil/rppd/rhigh (r3_cmc, drawn-to-electrical width correction and end/contact resistance included) and cap_cmim/cap_rfcmim (area + perimeter capacitance). A measurement feeding the DR-0011 proposal: it selects nothing and edits no schematic.",
+  "resistor_model": "R = rsh*l/(w + 2*lwd) + 2*rzspec/w per corner section of cornerRES.lib; lwd and rzspec parsed from resistors_mod.lib and cross-checked against sg13g2_tech.json. Verified against the instanced r3_cmc OSDI model on the klt batch fleet at 1 uA bias (see _PROBE_MEASURED in passive_sizing.py and the sim/lna-passive-study record).",
+  "capacitor_model": "C = cap_carea*l*w + 0.040 fF/um * 2*(l+w) per corner section of cornerCAP.lib; only cap_carea is corner-scaled (0.9x/1.0x/1.1x), the perimeter term is not -- measured on cap_cmim and cap_rfcmim instanced on the batch fleet at 1 MHz.",
+  "inputs": {
+    "netlist": {
+      "path": "design/netlist/lna_stage1.spice",
+      "scope": "repo",
+      "content_hash": "sha256:7a74e7ae611d4eacd94ed768940758e703eaba6b25a3f465bec5ed0841deee37"
+    },
+    "pdk": {
+      "install_subtree": "ihp-sg13g2",
+      "pin": "sim/pdk-artifact.json",
+      "files": {
+        "libs.tech/klayout/python/sg13g2_pycell_lib/sg13g2_tech.json": "sha256:089d6b136876256d46a751752d23b8322465083587c9fe0a0e741408c53c4bea",
+        "libs.tech/ngspice/models/cornerRES.lib": "sha256:2c18502104146804444a567abfe7d00520752bf75426809f9d79f40198fe9c1e",
+        "libs.tech/ngspice/models/resistors_mod.lib": "sha256:c2329110bcb66894936e942d4cb73fc5eb9188c5230e1bebf18f60d9b00c5c7f",
+        "libs.tech/ngspice/models/cornerCAP.lib": "sha256:4fc4a0f17ca2aef66ca38c2d2e7cead3307b69508d304ed073129565ec1c3e56",
+        "libs.tech/ngspice/models/capacitors_mod.lib": "sha256:94b569e695fd8a223a5a49a5b5a6b0d8a62408820bf0c2ed9dbcb0a8ab7d957e"
+      }
+    }
+  },
+  "resistor_models": {
+    "rsil": {
+      "model_subckt": "rsil",
+      "terminals": 3,
+      "sheet_ohm_per_sq": {
+        "typ": 7.0,
+        "bcs": 6.02,
+        "wcs": 7.98
+      },
+      "lwd_um": 0.01,
+      "rzspec_um": 4.5,
+      "contact_ohm_per_end_at_w": "rzspec/w",
+      "tc1_per_k": 0.0031,
+      "tc2_per_k2": 3e-07,
+      "min_w_um": 0.5,
+      "min_l_um": 0.5,
+      "max_w_um": 1000.0,
+      "max_l_um": 1000.0
+    },
+    "rppd": {
+      "model_subckt": "rppd",
+      "terminals": 3,
+      "sheet_ohm_per_sq": {
+        "typ": 260.0,
+        "bcs": 234.0,
+        "wcs": 286.0
+      },
+      "lwd_um": 0.006,
+      "rzspec_um": 35.0,
+      "contact_ohm_per_end_at_w": "rzspec/w",
+      "tc1_per_k": 0.00017,
+      "tc2_per_k2": 4e-07,
+      "min_w_um": 0.5,
+      "min_l_um": 0.5,
+      "max_w_um": 1000.0,
+      "max_l_um": 1000.0
+    },
+    "rhigh": {
+      "model_subckt": "rhigh",
+      "terminals": 3,
+      "sheet_ohm_per_sq": {
+        "typ": 1360.0,
+        "bcs": 1020.0,
+        "wcs": 1700.0
+      },
+      "lwd_um": -0.04,
+      "rzspec_um": 80.0,
+      "contact_ohm_per_end_at_w": "rzspec/w",
+      "tc1_per_k": -0.0023,
+      "tc2_per_k2": 2.1e-06,
+      "min_w_um": 0.5,
+      "min_l_um": 0.96,
+      "max_w_um": 1000.0,
+      "max_l_um": 1000.0
+    }
+  },
+  "capacitor_models": {
+    "cmim": {
+      "model_subckt": "cap_cmim",
+      "terminals": 2,
+      "area_cap_f_per_um2": {
+        "typ": 1.5e-15,
+        "bcs": 1.35e-15,
+        "wcs": 1.65e-15
+      },
+      "perim_cap_f_per_um": 4e-17,
+      "perim_cap_corner_scaled": false,
+      "declared_min_c_f": 1e-15,
+      "declared_max_c_f": 8e-12,
+      "min_lw_um": 1.14,
+      "model_valid_lw_um": null
+    },
+    "rfcmim": {
+      "model_subckt": "cap_rfcmim",
+      "terminals": 3,
+      "area_cap_f_per_um2": {
+        "typ": 1.5e-15,
+        "bcs": 1.35e-15,
+        "wcs": 1.65e-15
+      },
+      "perim_cap_f_per_um": 4e-17,
+      "perim_cap_corner_scaled": false,
+      "declared_min_c_f": 5.0542000000000004e-14,
+      "declared_max_c_f": 1.5000000000000002e-09,
+      "min_lw_um": 7.0,
+      "model_valid_lw_um": [
+        7.0,
+        75.0
+      ]
+    }
+  },
+  "resistors": [
+    {
+      "refdes": "Rref",
+      "nodes": [
+        "vdd",
+        "nr"
+      ],
+      "value_ohm": 8000.0,
+      "value_text": "8k",
+      "schematic_symbol": "res.sym",
+      "candidates": {
+        "rhigh": {
+          "w_um": 0.5,
+          "l_um": 2.38,
+          "squares": 5.667,
+          "body_area_um2": 1.2,
+          "contact_floor_ohm": 320.0,
+          "r_ohm": {
+            "typ": 8026.67,
+            "bcs": 6100.0,
+            "wcs": 9953.33
+          },
+          "r_error_vs_design_pct": 0.3333,
+          "corner_spread_pct": 48.01
+        },
+        "rppd": {
+          "w_um": 0.5,
+          "l_um": 15.48,
+          "squares": 30.234,
+          "body_area_um2": 7.7,
+          "contact_floor_ohm": 140.0,
+          "r_ohm": {
+            "typ": 8000.94,
+            "bcs": 7214.84,
+            "wcs": 8787.03
+          },
+          "r_error_vs_design_pct": 0.0117,
+          "corner_spread_pct": 19.65
+        },
+        "rsil": {
+          "w_um": 0.5,
+          "l_um": 592.95,
+          "squares": 1140.288,
+          "body_area_um2": 296.5,
+          "contact_floor_ohm": 18.0,
+          "r_ohm": {
+            "typ": 8000.02,
+            "bcs": 6882.54,
+            "wcs": 9117.5
+          },
+          "r_error_vs_design_pct": 0.0002,
+          "corner_spread_pct": 27.94
+        }
+      },
+      "flavour_choice_body_area_spread": 247.1
+    },
+    {
+      "refdes": "Rbr",
+      "nodes": [
+        "nr",
+        "br"
+      ],
+      "value_ohm": 60900.0,
+      "value_text": "60.9k",
+      "schematic_symbol": "res.sym",
+      "candidates": {
+        "rhigh": {
+          "w_um": 0.5,
+          "l_um": 18.71,
+          "squares": 44.548,
+          "body_area_um2": 9.4,
+          "contact_floor_ohm": 320.0,
+          "r_ohm": {
+            "typ": 60904.8,
+            "bcs": 45758.6,
+            "wcs": 76051.0
+          },
+          "r_error_vs_design_pct": 0.0078,
+          "corner_spread_pct": 49.74
+        },
+        "rppd": {
+          "w_um": 0.5,
+          "l_um": 119.66,
+          "squares": 233.711,
+          "body_area_um2": 59.8,
+          "contact_floor_ohm": 140.0,
+          "r_ohm": {
+            "typ": 60904.8,
+            "bcs": 54828.4,
+            "wcs": 66981.3
+          },
+          "r_error_vs_design_pct": 0.008,
+          "corner_spread_pct": 19.95
+        },
+        "rsil": {
+          "infeasible": true,
+          "why": "No sampled width from 0.5 to 1000 um gives a legal length within 1% of the design resistance."
+        }
+      },
+      "flavour_choice_body_area_spread": 6.4
+    },
+    {
+      "refdes": "Rer",
+      "nodes": [
+        "er",
+        "gnd"
+      ],
+      "value_ohm": 24.0,
+      "value_text": "24",
+      "schematic_symbol": "res.sym",
+      "candidates": {
+        "rhigh": {
+          "w_um": 70.0,
+          "l_um": 1.12,
+          "squares": 0.016,
+          "body_area_um2": 78.4,
+          "contact_floor_ohm": 2.286,
+          "r_ohm": {
+            "typ": 24.0706,
+            "bcs": 18.6244,
+            "wcs": 29.5168
+          },
+          "r_error_vs_design_pct": 0.2942,
+          "corner_spread_pct": 45.25
+        },
+        "rppd": {
+          "w_um": 10.0,
+          "l_um": 0.66,
+          "squares": 0.066,
+          "body_area_um2": 6.6,
+          "contact_floor_ohm": 7.0,
+          "r_ohm": {
+            "typ": 24.1394,
+            "bcs": 22.4255,
+            "wcs": 25.8534
+          },
+          "r_error_vs_design_pct": 0.581,
+          "corner_spread_pct": 14.2
+        },
+        "rsil": {
+          "w_um": 0.75,
+          "l_um": 1.32,
+          "squares": 1.714,
+          "body_area_um2": 1.0,
+          "contact_floor_ohm": 12.0,
+          "r_ohm": {
+            "typ": 24.0,
+            "bcs": 22.32,
+            "wcs": 25.68
+          },
+          "r_error_vs_design_pct": 0.0,
+          "corner_spread_pct": 14.0
+        }
+      },
+      "flavour_choice_body_area_spread": 78.4
+    },
+    {
+      "refdes": "Rbias",
+      "nodes": [
+        "nr",
+        "b1"
+      ],
+      "value_ohm": 10000.0,
+      "value_text": "10k",
+      "schematic_symbol": "res.sym",
+      "candidates": {
+        "rhigh": {
+          "w_um": 0.5,
+          "l_um": 2.99,
+          "squares": 7.119,
+          "body_area_um2": 1.5,
+          "contact_floor_ohm": 320.0,
+          "r_ohm": {
+            "typ": 10001.9,
+            "bcs": 7581.43,
+            "wcs": 12422.4
+          },
+          "r_error_vs_design_pct": 0.019,
+          "corner_spread_pct": 48.4
+        },
+        "rppd": {
+          "w_um": 0.5,
+          "l_um": 19.42,
+          "squares": 37.93,
+          "body_area_um2": 9.7,
+          "contact_floor_ohm": 140.0,
+          "r_ohm": {
+            "typ": 10001.7,
+            "bcs": 9015.55,
+            "wcs": 10987.9
+          },
+          "r_error_vs_design_pct": 0.0172,
+          "corner_spread_pct": 19.72
+        },
+        "rsil": {
+          "w_um": 0.5,
+          "l_um": 741.53,
+          "squares": 1426.019,
+          "body_area_um2": 370.8,
+          "contact_floor_ohm": 18.0,
+          "r_ohm": {
+            "typ": 10000.1,
+            "bcs": 8602.64,
+            "wcs": 11397.6
+          },
+          "r_error_vs_design_pct": 0.0013,
+          "corner_spread_pct": 27.95
+        }
+      },
+      "flavour_choice_body_area_spread": 247.2
+    },
+    {
+      "refdes": "Rd",
+      "nodes": [
+        "vdd",
+        "oc"
+      ],
+      "value_ohm": 465.0,
+      "value_text": "465",
+      "schematic_symbol": "res.sym",
+      "candidates": {
+        "rhigh": {
+          "w_um": 5.0,
+          "l_um": 1.57,
+          "squares": 0.319,
+          "body_area_um2": 7.9,
+          "contact_floor_ohm": 32.0,
+          "r_ohm": {
+            "typ": 465.984,
+            "bcs": 357.488,
+            "wcs": 574.48
+          },
+          "r_error_vs_design_pct": 0.2116,
+          "corner_spread_pct": 46.57
+        },
+        "rppd": {
+          "w_um": 0.5,
+          "l_um": 0.64,
+          "squares": 1.25,
+          "body_area_um2": 0.3,
+          "contact_floor_ohm": 140.0,
+          "r_ohm": {
+            "typ": 465.0,
+            "bcs": 432.5,
+            "wcs": 497.5
+          },
+          "r_error_vs_design_pct": 0.0,
+          "corner_spread_pct": 13.98
+        },
+        "rsil": {
+          "w_um": 0.5,
+          "l_um": 33.21,
+          "squares": 63.865,
+          "body_area_um2": 16.6,
+          "contact_floor_ohm": 18.0,
+          "r_ohm": {
+            "typ": 465.058,
+            "bcs": 402.47,
+            "wcs": 527.646
+          },
+          "r_error_vs_design_pct": 0.0124,
+          "corner_spread_pct": 26.92
+        }
+      },
+      "flavour_choice_body_area_spread": 55.3
+    },
+    {
+      "refdes": "Re1",
+      "nodes": [
+        "e1d",
+        "gnd"
+      ],
+      "value_ohm": 3.0,
+      "value_text": "3",
+      "schematic_symbol": "res.sym",
+      "candidates": {
+        "rhigh": {
+          "w_um": 500.0,
+          "l_um": 0.99,
+          "squares": 0.002,
+          "body_area_um2": 495.0,
+          "contact_floor_ohm": 0.32,
+          "r_ohm": {
+            "typ": 3.01323,
+            "bcs": 2.33992,
+            "wcs": 3.68654
+          },
+          "r_error_vs_design_pct": 0.441,
+          "corner_spread_pct": 44.69
+        },
+        "rppd": {
+          "w_um": 70.0,
+          "l_um": 0.54,
+          "squares": 0.008,
+          "body_area_um2": 37.8,
+          "contact_floor_ohm": 1.0,
+          "r_ohm": {
+            "typ": 3.00537,
+            "bcs": 2.80483,
+            "wcs": 3.20591
+          },
+          "r_error_vs_design_pct": 0.179,
+          "corner_spread_pct": 13.35
+        },
+        "rsil": {
+          "w_um": 5.0,
+          "l_um": 0.87,
+          "squares": 0.173,
+          "body_area_um2": 4.3,
+          "contact_floor_ohm": 1.8,
+          "r_ohm": {
+            "typ": 3.01315,
+            "bcs": 2.84331,
+            "wcs": 3.18299
+          },
+          "r_error_vs_design_pct": 0.4382,
+          "corner_spread_pct": 11.27
+        }
+      },
+      "flavour_choice_body_area_spread": 115.1
+    },
+    {
+      "refdes": "R1b",
+      "nodes": [
+        "vdd",
+        "b2"
+      ],
+      "value_ohm": 1500.0,
+      "value_text": "1.5k",
+      "schematic_symbol": "res.sym",
+      "candidates": {
+        "rhigh": {
+          "w_um": 1.5,
+          "l_um": 1.46,
+          "squares": 1.028,
+          "body_area_um2": 2.2,
+          "contact_floor_ohm": 106.667,
+          "r_ohm": {
+            "typ": 1504.98,
+            "bcs": 1155.4,
+            "wcs": 1854.55
+          },
+          "r_error_vs_design_pct": 0.3318,
+          "corner_spread_pct": 46.46
+        },
+        "rppd": {
+          "w_um": 0.5,
+          "l_um": 2.68,
+          "squares": 5.234,
+          "body_area_um2": 1.3,
+          "contact_floor_ohm": 140.0,
+          "r_ohm": {
+            "typ": 1500.94,
+            "bcs": 1364.84,
+            "wcs": 1637.03
+          },
+          "r_error_vs_design_pct": 0.0625,
+          "corner_spread_pct": 18.13
+        },
+        "rsil": {
+          "w_um": 0.5,
+          "l_um": 110.1,
+          "squares": 211.731,
+          "body_area_um2": 55.0,
+          "contact_floor_ohm": 18.0,
+          "r_ohm": {
+            "typ": 1500.12,
+            "bcs": 1292.62,
+            "wcs": 1707.61
+          },
+          "r_error_vs_design_pct": 0.0077,
+          "corner_spread_pct": 27.66
+        }
+      },
+      "flavour_choice_body_area_spread": 42.3
+    },
+    {
+      "refdes": "R2b",
+      "nodes": [
+        "b2",
+        "gnd"
+      ],
+      "value_ohm": 7000.0,
+      "value_text": "7k",
+      "schematic_symbol": "res.sym",
+      "candidates": {
+        "rhigh": {
+          "w_um": 0.5,
+          "l_um": 2.07,
+          "squares": 4.929,
+          "body_area_um2": 1.0,
+          "contact_floor_ohm": 320.0,
+          "r_ohm": {
+            "typ": 7022.86,
+            "bcs": 5347.14,
+            "wcs": 8698.57
+          },
+          "r_error_vs_design_pct": 0.3265,
+          "corner_spread_pct": 47.72
+        },
+        "rppd": {
+          "w_um": 0.5,
+          "l_um": 13.51,
+          "squares": 26.387,
+          "body_area_um2": 6.8,
+          "contact_floor_ohm": 140.0,
+          "r_ohm": {
+            "typ": 7000.55,
+            "bcs": 6314.49,
+            "wcs": 7686.6
+          },
+          "r_error_vs_design_pct": 0.0078,
+          "corner_spread_pct": 19.6
+        },
+        "rsil": {
+          "w_um": 0.5,
+          "l_um": 518.67,
+          "squares": 997.442,
+          "body_area_um2": 259.3,
+          "contact_floor_ohm": 18.0,
+          "r_ohm": {
+            "typ": 7000.1,
+            "bcs": 6022.6,
+            "wcs": 7977.59
+          },
+          "r_error_vs_design_pct": 0.0014,
+          "corner_spread_pct": 27.93
+        }
+      },
+      "flavour_choice_body_area_spread": 259.3
+    }
+  ],
+  "capacitors": [
+    {
+      "refdes": "Cb2",
+      "nodes": [
+        "b2",
+        "gnd"
+      ],
+      "value_f": 1e-11,
+      "value_text": "10p",
+      "schematic_symbol": "capa.sym",
+      "candidates": {
+        "cmim": {
+          "single_device": {
+            "side_um": 81.6,
+            "plate_area_um2": 6658.6,
+            "c_f": {
+              "typ": 1.00009e-11,
+              "bcs": 9.00211e-12,
+              "wcs": 1.09997e-11
+            },
+            "c_error_vs_design_pct": 0.009,
+            "corner_spread_pct": 19.97,
+            "in_declared_range": false,
+            "meets_design_value": true
+          },
+          "parallel_array": {
+            "m": 2,
+            "per_device": {
+              "side_um": 57.69,
+              "plate_area_um2": 3328.1,
+              "c_f": {
+                "typ": 5.00143e-12,
+                "bcs": 4.50221e-12,
+                "wcs": 5.50065e-12
+              },
+              "c_error_vs_design_pct": 0.0287,
+              "corner_spread_pct": 19.96,
+              "in_declared_range": true,
+              "meets_design_value": true
+            },
+            "total_plate_area_um2": 6656.2
+          }
+        },
+        "rfcmim": {
+          "single_device": {
+            "side_um": 81.6,
+            "plate_area_um2": 6658.6,
+            "c_f": {
+              "typ": 1.00009e-11,
+              "bcs": 9.00211e-12,
+              "wcs": 1.09997e-11
+            },
+            "c_error_vs_design_pct": 0.009,
+            "corner_spread_pct": 19.97,
+            "in_declared_range": true,
+            "meets_design_value": true,
+            "in_model_valid_geometry": false,
+            "model_valid_lw_um": [
+              7.0,
+              75.0
+            ]
+          },
+          "parallel_array": {
+            "m": 2,
+            "per_device": {
+              "side_um": 57.69,
+              "plate_area_um2": 3328.1,
+              "c_f": {
+                "typ": 5.00143e-12,
+                "bcs": 4.50221e-12,
+                "wcs": 5.50065e-12
+              },
+              "c_error_vs_design_pct": 0.0287,
+              "corner_spread_pct": 19.96,
+              "in_declared_range": true,
+              "meets_design_value": true,
+              "in_model_valid_geometry": true,
+              "model_valid_lw_um": [
+                7.0,
+                75.0
+              ]
+            },
+            "total_plate_area_um2": 6656.2
+          }
+        }
+      }
+    },
+    {
+      "refdes": "Cshunt",
+      "nodes": [
+        "in",
+        "gnd"
+      ],
+      "value_f": 1.7e-13,
+      "value_text": "170f",
+      "schematic_symbol": "capa.sym",
+      "candidates": {
+        "cmim": {
+          "single_device": {
+            "side_um": 10.6,
+            "plate_area_um2": 112.4,
+            "c_f": {
+              "typ": 1.70236e-13,
+              "bcs": 1.53382e-13,
+              "wcs": 1.8709e-13
+            },
+            "c_error_vs_design_pct": 0.1388,
+            "corner_spread_pct": 19.8,
+            "in_declared_range": true,
+            "meets_design_value": true
+          }
+        },
+        "rfcmim": {
+          "single_device": {
+            "side_um": 10.6,
+            "plate_area_um2": 112.4,
+            "c_f": {
+              "typ": 1.70236e-13,
+              "bcs": 1.53382e-13,
+              "wcs": 1.8709e-13
+            },
+            "c_error_vs_design_pct": 0.1388,
+            "corner_spread_pct": 19.8,
+            "in_declared_range": true,
+            "meets_design_value": true,
+            "in_model_valid_geometry": true,
+            "model_valid_lw_um": [
+              7.0,
+              75.0
+            ]
+          }
+        }
+      }
+    },
+    {
+      "refdes": "Cblk_in",
+      "nodes": [
+        "in2",
+        "b1"
+      ],
+      "value_f": 1e-09,
+      "value_text": "1n",
+      "schematic_symbol": "capa.sym",
+      "candidates": {
+        "cmim": {
+          "single_device": {
+            "side_um": 816.45,
+            "plate_area_um2": 666590.6,
+            "c_f": {
+              "typ": 1.00002e-09,
+              "bcs": 9.00028e-10,
+              "wcs": 1.10001e-09
+            },
+            "c_error_vs_design_pct": 0.0017,
+            "corner_spread_pct": 20.0,
+            "in_declared_range": false,
+            "meets_design_value": true
+          },
+          "parallel_array": {
+            "m": 126,
+            "per_device": {
+              "side_um": 72.69,
+              "plate_area_um2": 5283.8,
+              "c_f": {
+                "typ": 7.93738e-12,
+                "bcs": 7.14481e-12,
+                "wcs": 8.72996e-12
+              },
+              "c_error_vs_design_pct": 0.011,
+              "corner_spread_pct": 19.97,
+              "in_declared_range": true,
+              "meets_design_value": true
+            },
+            "total_plate_area_um2": 665758.8
+          }
+        },
+        "rfcmim": {
+          "single_device": {
+            "side_um": 816.45,
+            "plate_area_um2": 666590.6,
+            "c_f": {
+              "typ": 1.00002e-09,
+              "bcs": 9.00028e-10,
+              "wcs": 1.10001e-09
+            },
+            "c_error_vs_design_pct": 0.0017,
+            "corner_spread_pct": 20.0,
+            "in_declared_range": true,
+            "meets_design_value": true,
+            "in_model_valid_geometry": false,
+            "model_valid_lw_um": [
+              7.0,
+              75.0
+            ]
+          },
+          "parallel_array": {
+            "m": 119,
+            "per_device": {
+              "side_um": 74.8,
+              "plate_area_um2": 5595.0,
+              "c_f": {
+                "typ": 8.40453e-12,
+                "bcs": 7.56527e-12,
+                "wcs": 9.24378e-12
+              },
+              "c_error_vs_design_pct": 0.0139,
+              "corner_spread_pct": 19.97,
+              "in_declared_range": true,
+              "meets_design_value": true,
+              "in_model_valid_geometry": true,
+              "model_valid_lw_um": [
+                7.0,
+                75.0
+              ]
+            },
+            "total_plate_area_um2": 665805.0
+          }
+        }
+      }
+    },
+    {
+      "refdes": "Cm",
+      "nodes": [
+        "oc",
+        "out"
+      ],
+      "value_f": 5.78e-14,
+      "value_text": "57.8f",
+      "schematic_symbol": "capa.sym",
+      "candidates": {
+        "cmim": {
+          "single_device": {
+            "side_um": 6.16,
+            "plate_area_um2": 37.9,
+            "c_f": {
+              "typ": 5.7904e-14,
+              "bcs": 5.22122e-14,
+              "wcs": 6.35958e-14
+            },
+            "c_error_vs_design_pct": 0.1799,
+            "corner_spread_pct": 19.66,
+            "in_declared_range": true,
+            "meets_design_value": true
+          }
+        },
+        "rfcmim": {
+          "single_device": {
+            "side_um": 7.0,
+            "plate_area_um2": 49.0,
+            "c_f": {
+              "typ": 7.462e-14,
+              "bcs": 6.727e-14,
+              "wcs": 8.197e-14
+            },
+            "c_error_vs_design_pct": 29.1003,
+            "corner_spread_pct": 19.7,
+            "in_declared_range": true,
+            "meets_design_value": false,
+            "in_model_valid_geometry": true,
+            "model_valid_lw_um": [
+              7.0,
+              75.0
+            ]
+          },
+          "parallel_array": {
+            "m": null,
+            "why": "single device clamps at the model's geometry floor (7.462e-14 F at a 7.0 um side), above the 5.78e-14 F design value; no count <= 2000 of identical model-valid square devices in the declared range reaches the value"
+          }
+        }
+      }
+    }
+  ]
+}
