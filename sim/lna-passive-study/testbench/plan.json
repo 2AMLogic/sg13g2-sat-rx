@@ -1,0 +1,498 @@
+{
+  "plan_version": 1,
+  "issue": 340,
+  "scope": "NON-CLAIMING substituted-primitive study of design/lna_stage1 feeding the DR-0011 proposal: at most four candidate sets of PDK-modelled resistors (rsil/rppd/rhigh) and MIM capacitors (cap_cmim/cap_rfcmim), compared against a same-deck CONTROL (the committed ideal-passive DUT) as comparative deltas ONLY at the bound corners of ratified rows 2, 3, 4 and 6. Inductors (Lin, Lfeed, Le1) stay IDEAL in every variant and every record (#110 / DR-0005 own them). This plan selects nothing, turns no ratification key, claims no spec row (row 4's own note says S11 is not simulatable as a claim until EM extraction lands), and edits neither the schematic nor the bench it reuses. If a candidate set degrades a ratified row's margin, that is recorded as measured, with the bounded design iteration named that would recover it.",
+  "baseline_record": "sim/lna-sparam-nf/records/20261114-211735-8a92c6e.md",
+  "baseline_record_id": "20261114-211735-8a92c6e",
+  "baseline_gate": "The control's operating points must agree with the post-#79 record's published per-cell op table at every 2.5 V hbt x temperature cell within +-10 mV on V_CE/V_BE and +-2 percent on I_C; S-parameters and NF must sit inside the record's published per-measure min/max envelope. A failure is CONTROLS_FAILED: no variant is ranked and nothing is claimed.",
+  "method": {
+    "tb_file": "sim/lna-sparam-nf/testbench/tb.json",
+    "tb_sha256": "sha256:8b6b7b88a1d8211ead7492456b01723a5fea664e0f426051683196f22122cc42",
+    "fixture_file": "sim/lna-sparam-nf/testbench/lna_stage1.spice",
+    "fixture_sha256": "sha256:b1fe66e4b86a9a3efae4733d0ae5132f8cd15c66cbd63b56eca6876f60125ccd",
+    "what_is_reused": "the whole .control block (analyses + measurement expressions, including the corrected issue-#22 NF method at T0=300.15 K, the 3-point DRAFT-band set, the 1-100 GHz stability sweep and the per-device operating-point let-lines) and the two-port fixture (Thevenin Z0=50 sources, forward/reverse by alterparam+reset), byte-for-byte as the lna-sparam-nf klt body emits them"
+  },
+  "sizing_table": "layout/lna_stage1/passive_sizing.json",
+  "sizing_sha256": "sha256:3e178774b814a785345c5a1f93c0f19584fe30388674fba36452ac471ec7e791",
+  "corner_axis": [
+    {
+      "name": "typ",
+      "sections": {
+        "hbt": "hbt_typ",
+        "res": "res_typ",
+        "cap": "cap_typ"
+      }
+    },
+    {
+      "name": "hbt_wcs",
+      "sections": {
+        "hbt": "hbt_wcs",
+        "res": "res_typ",
+        "cap": "cap_typ"
+      }
+    },
+    {
+      "name": "hbt_bcs",
+      "sections": {
+        "hbt": "hbt_bcs",
+        "res": "res_typ",
+        "cap": "cap_typ"
+      }
+    },
+    {
+      "name": "res_bcs__cap_bcs",
+      "sections": {
+        "hbt": "hbt_typ",
+        "res": "res_bcs",
+        "cap": "cap_bcs"
+      }
+    },
+    {
+      "name": "res_wcs__cap_wcs",
+      "sections": {
+        "hbt": "hbt_typ",
+        "res": "res_wcs",
+        "cap": "cap_wcs"
+      }
+    },
+    {
+      "name": "res_bcs__cap_wcs",
+      "sections": {
+        "hbt": "hbt_typ",
+        "res": "res_bcs",
+        "cap": "cap_wcs"
+      }
+    },
+    {
+      "name": "res_wcs__cap_bcs",
+      "sections": {
+        "hbt": "hbt_typ",
+        "res": "res_wcs",
+        "cap": "cap_bcs"
+      }
+    }
+  ],
+  "temperatures_c": [
+    -40.0,
+    27.0,
+    125.0
+  ],
+  "supplies_v": [
+    2.25,
+    2.5,
+    2.75
+  ],
+  "row_bound_cells": {
+    "row2": "hbt_wcs, 125 C, 2.25 V (gain bound corner); delta read at the hbt_wcs process of this axis",
+    "row3": "hbt_wcs, 125 C (NF bound corner)",
+    "row4": "the four passive-extreme processes (res_* x cap_* cross product) x temperature extremes, hbt_typ",
+    "row6": "the stability sweep minimum across every declared cell (worst process x temp x supply; post-#79's worst k cell was hbt_typ/-40 C/2.75 V)"
+  },
+  "variants": [
+    {
+      "id": "V01",
+      "description": "rppd bias ladder + rsil RF path + cmim everywhere reachable + Cb2 as two parallel cmim + Cblk_in OFF-CHIP (boundary port, its designed 1 nF value kept as an IDEAL element: no on-chip area, no pad/bond/PCB parasitics -- a stated omission): the mid-sheet-resistor, two-terminal-cap route",
+      "assignment": {
+        "Rref": {
+          "kind": "resistor",
+          "flavour": "rppd",
+          "w_um": 0.5,
+          "l_um": 15.48,
+          "r_typ_ohm": 8000.94
+        },
+        "Rbr": {
+          "kind": "resistor",
+          "flavour": "rppd",
+          "w_um": 0.5,
+          "l_um": 119.66,
+          "r_typ_ohm": 60904.8
+        },
+        "Rbias": {
+          "kind": "resistor",
+          "flavour": "rppd",
+          "w_um": 0.5,
+          "l_um": 19.42,
+          "r_typ_ohm": 10001.7
+        },
+        "R1b": {
+          "kind": "resistor",
+          "flavour": "rppd",
+          "w_um": 0.5,
+          "l_um": 2.68,
+          "r_typ_ohm": 1500.94
+        },
+        "R2b": {
+          "kind": "resistor",
+          "flavour": "rppd",
+          "w_um": 0.5,
+          "l_um": 13.51,
+          "r_typ_ohm": 7000.55
+        },
+        "Rd": {
+          "kind": "resistor",
+          "flavour": "rppd",
+          "w_um": 0.5,
+          "l_um": 0.64,
+          "r_typ_ohm": 465.0
+        },
+        "Rer": {
+          "kind": "resistor",
+          "flavour": "rsil",
+          "w_um": 0.75,
+          "l_um": 1.32,
+          "r_typ_ohm": 24.0
+        },
+        "Re1": {
+          "kind": "resistor",
+          "flavour": "rsil",
+          "w_um": 5.0,
+          "l_um": 0.87,
+          "r_typ_ohm": 3.01315
+        },
+        "Cm": {
+          "kind": "capacitor",
+          "primitive": "cap_cmim",
+          "side_um": 6.16,
+          "m": 1,
+          "c_typ_f": 5.7904e-14
+        },
+        "Cshunt": {
+          "kind": "capacitor",
+          "primitive": "cap_cmim",
+          "side_um": 10.6,
+          "m": 1,
+          "c_typ_f": 1.7024e-13
+        },
+        "Cb2": {
+          "kind": "capacitor",
+          "primitive": "cap_cmim",
+          "side_um": 57.69,
+          "m": 2,
+          "c_typ_f": 1.00029e-11
+        },
+        "Cblk_in": {
+          "kind": "offchip_ideal"
+        }
+      }
+    },
+    {
+      "id": "V02",
+      "description": "rhigh bias ladder (minimum body area, widest res_* corner spread) + the same RF path and capacitors as V01 (Cblk_in likewise off-chip, ideal): isolates the bias-ladder flavour delta against V01",
+      "assignment": {
+        "Rref": {
+          "kind": "resistor",
+          "flavour": "rhigh",
+          "w_um": 0.5,
+          "l_um": 2.38,
+          "r_typ_ohm": 8026.67
+        },
+        "Rbr": {
+          "kind": "resistor",
+          "flavour": "rhigh",
+          "w_um": 0.5,
+          "l_um": 18.71,
+          "r_typ_ohm": 60904.8
+        },
+        "Rbias": {
+          "kind": "resistor",
+          "flavour": "rhigh",
+          "w_um": 0.5,
+          "l_um": 2.99,
+          "r_typ_ohm": 10001.9
+        },
+        "R1b": {
+          "kind": "resistor",
+          "flavour": "rhigh",
+          "w_um": 1.5,
+          "l_um": 1.46,
+          "r_typ_ohm": 1504.98
+        },
+        "R2b": {
+          "kind": "resistor",
+          "flavour": "rhigh",
+          "w_um": 0.5,
+          "l_um": 2.07,
+          "r_typ_ohm": 7022.86
+        },
+        "Rd": {
+          "kind": "resistor",
+          "flavour": "rppd",
+          "w_um": 0.5,
+          "l_um": 0.64,
+          "r_typ_ohm": 465.0
+        },
+        "Rer": {
+          "kind": "resistor",
+          "flavour": "rsil",
+          "w_um": 0.75,
+          "l_um": 1.32,
+          "r_typ_ohm": 24.0
+        },
+        "Re1": {
+          "kind": "resistor",
+          "flavour": "rsil",
+          "w_um": 5.0,
+          "l_um": 0.87,
+          "r_typ_ohm": 3.01315
+        },
+        "Cm": {
+          "kind": "capacitor",
+          "primitive": "cap_cmim",
+          "side_um": 6.16,
+          "m": 1,
+          "c_typ_f": 5.7904e-14
+        },
+        "Cshunt": {
+          "kind": "capacitor",
+          "primitive": "cap_cmim",
+          "side_um": 10.6,
+          "m": 1,
+          "c_typ_f": 1.7024e-13
+        },
+        "Cb2": {
+          "kind": "capacitor",
+          "primitive": "cap_cmim",
+          "side_um": 57.69,
+          "m": 2,
+          "c_typ_f": 1.00029e-11
+        },
+        "Cblk_in": {
+          "kind": "offchip_ideal"
+        }
+      }
+    },
+    {
+      "id": "V03",
+      "description": "V01's resistors with the rfcmim route for every cap that can take it (substrate nodes admitted) and Cblk_in as an on-chip 1 nF rfcmim parallel array (119 x 74.8 um, ~0.67 mm2 of plate): isolates the cap-primitive and on-chip-Cblk delta against V01",
+      "assignment": {
+        "Rref": {
+          "kind": "resistor",
+          "flavour": "rppd",
+          "w_um": 0.5,
+          "l_um": 15.48,
+          "r_typ_ohm": 8000.94
+        },
+        "Rbr": {
+          "kind": "resistor",
+          "flavour": "rppd",
+          "w_um": 0.5,
+          "l_um": 119.66,
+          "r_typ_ohm": 60904.8
+        },
+        "Rbias": {
+          "kind": "resistor",
+          "flavour": "rppd",
+          "w_um": 0.5,
+          "l_um": 19.42,
+          "r_typ_ohm": 10001.7
+        },
+        "R1b": {
+          "kind": "resistor",
+          "flavour": "rppd",
+          "w_um": 0.5,
+          "l_um": 2.68,
+          "r_typ_ohm": 1500.94
+        },
+        "R2b": {
+          "kind": "resistor",
+          "flavour": "rppd",
+          "w_um": 0.5,
+          "l_um": 13.51,
+          "r_typ_ohm": 7000.55
+        },
+        "Rd": {
+          "kind": "resistor",
+          "flavour": "rppd",
+          "w_um": 0.5,
+          "l_um": 0.64,
+          "r_typ_ohm": 465.0
+        },
+        "Rer": {
+          "kind": "resistor",
+          "flavour": "rsil",
+          "w_um": 0.75,
+          "l_um": 1.32,
+          "r_typ_ohm": 24.0
+        },
+        "Re1": {
+          "kind": "resistor",
+          "flavour": "rsil",
+          "w_um": 5.0,
+          "l_um": 0.87,
+          "r_typ_ohm": 3.01315
+        },
+        "Cm": {
+          "kind": "capacitor",
+          "primitive": "cap_cmim",
+          "side_um": 6.16,
+          "m": 1,
+          "c_typ_f": 5.7904e-14
+        },
+        "Cshunt": {
+          "kind": "capacitor",
+          "primitive": "cap_rfcmim",
+          "side_um": 10.6,
+          "m": 1,
+          "c_typ_f": 1.7024e-13
+        },
+        "Cb2": {
+          "kind": "capacitor",
+          "primitive": "cap_rfcmim",
+          "side_um": 57.69,
+          "m": 2,
+          "c_typ_f": 1.00029e-11
+        },
+        "Cblk_in": {
+          "kind": "capacitor",
+          "primitive": "cap_rfcmim",
+          "side_um": 74.8,
+          "m": 119,
+          "c_typ_f": 1.0055e-09
+        }
+      }
+    },
+    {
+      "id": "V04",
+      "description": "V01 with the SMALLEST on-chip cmim Cblk_in that still closes the input match, re-matched (Lin/Cshunt re-derived at the DRAFT band centre by the design's own L-section method): DR-0011 option (b). The value, side and re-match values are frozen by testbench/prematch.json BEFORE the collection; if no grid value closes, V04 is dropped and the record says so",
+      "assignment": {
+        "Rref": {
+          "kind": "resistor",
+          "flavour": "rppd",
+          "w_um": 0.5,
+          "l_um": 15.48,
+          "r_typ_ohm": 8000.94
+        },
+        "Rbr": {
+          "kind": "resistor",
+          "flavour": "rppd",
+          "w_um": 0.5,
+          "l_um": 119.66,
+          "r_typ_ohm": 60904.8
+        },
+        "Rbias": {
+          "kind": "resistor",
+          "flavour": "rppd",
+          "w_um": 0.5,
+          "l_um": 19.42,
+          "r_typ_ohm": 10001.7
+        },
+        "R1b": {
+          "kind": "resistor",
+          "flavour": "rppd",
+          "w_um": 0.5,
+          "l_um": 2.68,
+          "r_typ_ohm": 1500.94
+        },
+        "R2b": {
+          "kind": "resistor",
+          "flavour": "rppd",
+          "w_um": 0.5,
+          "l_um": 13.51,
+          "r_typ_ohm": 7000.55
+        },
+        "Rd": {
+          "kind": "resistor",
+          "flavour": "rppd",
+          "w_um": 0.5,
+          "l_um": 0.64,
+          "r_typ_ohm": 465.0
+        },
+        "Rer": {
+          "kind": "resistor",
+          "flavour": "rsil",
+          "w_um": 0.75,
+          "l_um": 1.32,
+          "r_typ_ohm": 24.0
+        },
+        "Re1": {
+          "kind": "resistor",
+          "flavour": "rsil",
+          "w_um": 5.0,
+          "l_um": 0.87,
+          "r_typ_ohm": 3.01315
+        },
+        "Cm": {
+          "kind": "capacitor",
+          "primitive": "cap_cmim",
+          "side_um": 6.16,
+          "m": 1,
+          "c_typ_f": 5.7904e-14
+        },
+        "Cb2": {
+          "kind": "capacitor",
+          "primitive": "cap_cmim",
+          "side_um": 57.69,
+          "m": 2,
+          "c_typ_f": 1.00029e-11
+        },
+        "Cblk_in": {
+          "kind": "capacitor",
+          "primitive": "cap_cmim",
+          "side_um": null,
+          "m": 1,
+          "from_prematch": true
+        },
+        "Cshunt": {
+          "kind": "ideal_value",
+          "value_text": null,
+          "from_prematch": true
+        },
+        "Lin": {
+          "kind": "ideal_value",
+          "value_text": null,
+          "from_prematch": true
+        }
+      }
+    }
+  ],
+  "prematch": {
+    "grid_f": [
+      5e-13,
+      1e-12,
+      2e-12,
+      5e-12,
+      1e-11
+    ],
+    "s11_target_db": -10.0,
+    "corners": [
+      "res_bcs__cap_bcs",
+      "res_wcs__cap_wcs"
+    ],
+    "temperatures_c": [
+      -40.0,
+      125.0
+    ],
+    "rule": "smallest grid value whose re-matched input holds S11 <= -10 dB at all three DRAFT band points at every declared prematch corner cell; the re-match (Lin, Cshunt) is re-derived per grid value at the band centre from the probed substituted-core base impedance by the L-section method of design/lna_stage1.md",
+    "output": "testbench/prematch.json (committed before the collection; V04's frozen values come from it)"
+  },
+  "gates": {
+    "baseline_op_table": "control vs post-#79 record per-cell op table at the nine 2.5 V hbt x temperature cells: |dV_CE| and |dV_BE| <= 10 mV, |dI_C| <= 2 percent",
+    "baseline_envelope": "control S11/S21/S22/S12/NF/k inside the post-#79 record's published per-measure min/max",
+    "passive_inertness": "the control's cells at the four passive-extreme processes equal its typ-process cells at the same temperature and supply within 1e-6 relative (the ideal netlist instances no passive device, so the res_*/cap_* sections cannot change it; this is the negative control that proves it)",
+    "finite_values": "every declared cell of every variant and the control has finite values for every measure of the reused method"
+  },
+  "record": {
+    "spec_rows_claimed_met": [],
+    "statuses": [
+      "COLLECTED",
+      "CONTROLS_FAILED",
+      "PREMATCH_FAILED"
+    ],
+    "delta_measures": [
+      "s21_db_lo",
+      "s21_db_mid",
+      "s21_db_hi",
+      "nf_db_lo",
+      "nf_db_mid",
+      "nf_db_hi",
+      "s11_db_lo",
+      "s11_db_mid",
+      "s11_db_hi",
+      "k_lo",
+      "k_mid",
+      "k_hi",
+      "sw_kmin",
+      "sw_nunst"
+    ]
+  }
+}

@@ -195,6 +195,7 @@ from .kaband import check_kaband_record
 from .lna_core import check_lna_core_variants
 from .lna_headroom import check_lna_headroom
 from .lna_linearity import check_lna_linearity
+from .lna_passive import check_lna_passive
 from .lna_match import check_lna_match_tradeoff
 from .mixer_cm import check_mixer_cm_interface_probe
 from .mixer_feas import check_mixfeas_record, is_mixfeas
@@ -218,6 +219,7 @@ ADAPTERS = {
     "lna-core-variants": check_lna_core_variants,
     "lna-linearity": check_lna_linearity,
     "lna-headroom": check_lna_headroom,
+    "lna-passive-study": check_lna_passive,
     "hbt-mismatch-pair": check_hbt_mismatch_pair,
 }
 EVIDENCE_DIRS = ("records", "corners", "netlist-snapshots", "probe-logs", "solver-artifacts")
