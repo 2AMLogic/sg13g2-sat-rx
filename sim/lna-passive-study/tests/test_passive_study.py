@@ -151,11 +151,18 @@ def test_deltas_need_every_control_cell() -> None:
                                                       "nf_db_mid": 3.0}}
     control = {PS.cell_key("V00", "typ", 27.0, 2.5): {"s21_db_mid": 17.0,
                                                       "nf_db_mid": 2.5}}
+    for deck in (variant, control):
+        for row in deck.values():
+            for name in PS.DELTA_MEASURES:
+                row.setdefault(name, 0.0)
     d = PS.deltas(variant, control)
     assert d[PS.cell_key("V01", "typ", 27.0, 2.5)]["s21_db_mid"] == pytest.approx(1.0)
     assert d[PS.cell_key("V01", "typ", 27.0, 2.5)]["nf_db_mid"] == pytest.approx(0.5)
     with pytest.raises(ValueError):
         PS.deltas(variant, {})
+    del next(iter(variant.values()))["nf_db_mid"]
+    with pytest.raises(ValueError, match="missing nf_db_mid"):
+        PS.deltas(variant, control)
 
 
 def test_l_section_match_matches_exactly_at_f0_below_50() -> None:
@@ -226,3 +233,128 @@ def test_requests_use_per_section_corner_bundles() -> None:
     assert req["options"]["osdi_preload"] == ["/abs/r3_cmc.osdi"]
     assert req["options"]["stage_model_inputs"] is True
     assert req["models"]["pdk"] == "ihp-sg13g2"
+
+
+def test_control_gates_check_the_reference_rows_and_envelopes():
+    import run
+    # Populate the nominal device measurements from each actual table row.
+    text = (REPO / PS.BASELINE_RECORD).read_text()
+    cells = {ck: dict.fromkeys(PS.load_json(PS.METHOD_TB)["measure"], 0.)
+             for ck in run._grid("V00")}
+    for line in text.splitlines():
+        if line.startswith("- `") and "`: min " in line:
+            name = line.split("`")[1]
+            for row in cells.values():
+                row[name] = float(line.split(": min ")[1].split()[0])
+        if line.startswith("| hbt_") and "c_2.50v |" in line:
+            cols = [c.strip() for c in line.split("|")]
+            device = {"Q1 (CE)": "q1", "Q2 (CB)": "q2", "Qref (mirror)": "qr"}.get(cols[3])
+            if device:
+                proc, temp, _ = cols[1].rsplit("_", 2)
+                ck = PS.cell_key("V00", "typ" if proc == "hbt_typ" else proc,
+                                 float(temp[:-1]), 2.5)
+                for measure, raw in zip(("vce", "vbe", "ic"), cols[4:7]):
+                    cells[ck][f"{device}_{measure}"] = float(raw) / (1000 if measure == "ic" else 1)
+    for proc in PS.PREMATCH_CORNERS:
+        for temp in PS.TEMPERATURES_C:
+            cells[PS.cell_key("V00", proc, temp, 2.5)] = cells[PS.cell_key("V00", "typ", temp, 2.5)].copy()
+    assert run._gate_control(cells)["pass"]
+    ck = PS.cell_key("V00", "hbt_wcs", 125, 2.5)
+    cells[ck]["qr_ic"] *= 1000
+    cells[ck]["s11_db_lo"] = 99.
+    assert run._gate_control(cells)["checks"] == {
+        "baseline_op_table": False, "baseline_envelope": False,
+        "finite_values": True, "passive_inertness": True}
+    row = next(line for line in text.splitlines() if "| hbt_wcs_125c_2.50v" in line and "Qref" in line)
+    assert any("required 27" in msg for msg in run._baseline_checks(cells, text.replace(row, ""))[0])
+
+
+def test_verify_rejects_incomplete_historical_variant():
+    import run
+    rid = "20261121-044750-495011a"
+    rec = PS.load_json(run.RECORDS / f"{rid}.json")
+    for row in rec["deltas"]["V01"].values():
+        del row["nf_db_mid"]
+    del rec["worst"]["V01"]["nf_db_mid"]
+    assert any("nf_db_mid" in msg for msg in run._verify_one(rec, (run.RECORDS / f"{rid}.md").read_text()))
+
+
+def test_collect_requires_complete_screen_and_propagates_store_failure(monkeypatch, tmp_path, prematch):
+    import run
+    from argparse import Namespace
+    args = Namespace(backend="batch", dry_run=True, klt_cmd="klt", wait_for_capacity=1,
+                     capacity_retries=0, timeout_s=10)
+    path = tmp_path / "prematch.json"
+    monkeypatch.setattr(PS, "PREMATCH_PATH", path)
+    monkeypatch.setattr(run, "SCRATCH", tmp_path / "work")
+    monkeypatch.setattr(run, "_osdi_abs_path", lambda: "/unused/r3_cmc.osdi")
+    path.write_text('{"selection": null}')
+    assert run.cmd_collect(args) == 1
+    screen = dict(prematch, selection=None,
+                  grid={k: dict.fromkeys(row, -9.) for k, row in prematch["grid"].items()})
+    path.write_text(json.dumps(screen))
+    assert run.cmd_collect(args) == 0
+    reqs = list(run.SCRATCH.rglob("request_*.json"))
+    assert len(reqs) == 12 and not any("V04" in p.name for p in reqs)
+    args.dry_run = False
+    monkeypatch.setattr(run.klt_driver, "submit_set", lambda *a, **kw: {})
+    monkeypatch.setattr(run, "_verify_model_identity", lambda *a: {})
+    monkeypatch.setattr(run, "_read_cells", lambda *a: {})
+    monkeypatch.setattr(run, "_gate_control", lambda *a: {"pass": True})
+    monkeypatch.setattr(run, "_build_record", lambda *a: {})
+    monkeypatch.setattr(run, "_write_record", lambda *a: 10)
+    assert run.cmd_collect(args) == 10
+
+
+def test_ingest_rejects_failed_duplicate_and_incomplete_corners(tmp_path):
+    import run
+    body = tmp_path / "body_V01_2.50v.spice"
+    body.write_text("fixture")
+    log = tmp_path / "ngspice.log"
+    log.write_text("m_s21_db_mid = 1\n")
+    report = tmp_path / "report.json"
+    corner = {"process": "typ", "temperature_c": 27., "status": "pass",
+              "artifacts": {"log": str(log)}}
+    for corners, message in [([dict(corner, status="fail")], "failed"),
+                             ([corner, corner], "duplicate"), ([corner], "missing")]:
+        report.write_text(json.dumps({"status": "pass", "corners": corners,
+                                      "environment": {"netlist_sha256": run.sha256_file(body)}}))
+        with pytest.raises(run.CollectionError, match=message):
+            run._read_cells([("V01_2.50v", report)], ["V01"])
+    grid = {ck: dict.fromkeys(PS.DELTA_MEASURES, 0.) for ck in run._grid("V01")}
+    grid[next(iter(grid))]["nf_db_mid"] = math.nan
+    assert any("nf_db_mid" in msg for msg in run._measurement_problems(
+        grid, run._grid("V01"), PS.DELTA_MEASURES))
+
+
+def test_batch_model_identity_requires_each_pin_and_runner_preload(tmp_path, monkeypatch):
+    import run
+    from harness import pdk
+    from types import SimpleNamespace
+    monkeypatch.setattr(pdk, "find_pdk", lambda _: SimpleNamespace(path=tmp_path))
+    pins = PS.load_json(PS.SIM_DIR / "pdk-artifact.json")["files"]
+    pins.update({rel: PS.load_sizing()["inputs"]["pdk"]["files"][rel][7:] for rel in run.EXTRA_MODEL_FILES[:-1]})
+    osdi = run.EXTRA_MODEL_FILES[-1]
+    pins[osdi] = PS.load_plan()["prematch"]["osdi_sha256"]
+    for rel in pins:
+        path = tmp_path / rel
+        path.parent.mkdir(exist_ok=True, parents=True)
+        path.touch()
+    monkeypatch.setattr(run, "sha256_file", lambda p: pins[p.relative_to(tmp_path).as_posix()])
+    assets = [{"name": Path(rel).name, "sha256": digest} for rel, digest in pins.items()]
+    remote = {"runner_compatibility": "match", "runner_model_inputs": assets,
+              "runner_osdi_preload": [assets[-1]]}
+    env = {"backend": {"resolved": "batch"}, "remote": remote, "staged_model_inputs": assets}
+    report = tmp_path / "report.json"
+    report.write_text(json.dumps({"environment": env}))
+    assert run._verify_model_identity([report])["jobs"] == 1
+    for rel in run.EXTRA_MODEL_FILES:
+        env["staged_model_inputs"] = [a for a in assets if a["name"] != Path(rel).name]
+        report.write_text(json.dumps({"environment": env}))
+        with pytest.raises(run.CollectionError, match="missing or mismatched"):
+            run._verify_model_identity([report])
+    env["staged_model_inputs"] = assets
+    remote["runner_osdi_preload"] = [dict(assets[-1], sha256="0" * 64)]
+    report.write_text(json.dumps({"environment": env}))
+    with pytest.raises(run.CollectionError, match="loaded OSDI"):
+        run._verify_model_identity([report])

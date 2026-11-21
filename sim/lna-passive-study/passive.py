@@ -353,8 +353,11 @@ def deltas(variant_cells: dict[str, dict[str, float]],
             raise ValueError(f"no control cell for {key}")
         row = {}
         for name in DELTA_MEASURES:
-            if name in meas and name in ctrl:
-                row[name] = meas[name] - ctrl[name]
+            if name not in meas or name not in ctrl:
+                raise ValueError(f"{key}: missing {name} in variant or control")
+            row[name] = meas[name] - ctrl[name]
+            if not math.isfinite(row[name]):
+                raise ValueError(f"{key}: non-finite delta for {name}")
         out[key] = row
     return out
 

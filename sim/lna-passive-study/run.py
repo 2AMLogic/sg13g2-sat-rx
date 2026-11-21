@@ -8,10 +8,8 @@
     python3 sim/lna-passive-study/run.py collect [--dry-run]
     python3 sim/lna-passive-study/run.py verify [RECORD_ID ...]
 
-``collect`` submits every request to the ``klt sim`` batch fleet with an
-EXPLICIT ``--backend batch`` (never a local ngspice loop; this host is a
-dispatch worker, not a simulation box) and waits for capacity per the host
-rule. Evidence bytes go to the fleet artifact store (issue #226); git keeps
+``collect`` defaults to the ``klt sim`` batch fleet. An explicit local backend
+uses the pinned PDK and ngspice on a simulation workstation. Evidence bytes go to the fleet artifact store (issue #226); git keeps
 the record, its JSON sidecar and the manifest. ``verify`` re-derives every
 published verdict from the committed sidecars with no simulator and no
 broker.
@@ -27,8 +25,7 @@ import datetime as _dt
 import gzip
 import json
 import math
-import shlex
-import subprocess
+import re
 import tempfile
 import sys
 from pathlib import Path
@@ -149,7 +146,10 @@ def cmd_variants(args) -> int:
     expected = {v["id"] for v in plan["variants"]}
     missing = expected - set(decks)
     if missing:
-        print(f"note: {sorted(missing)} wait for testbench/prematch.json (V04)", flush=True)
+        if _completed_screen(prematch):
+            print("V04 dropped: no tested block passed the input-match screen")
+        else:
+            print(f"{sorted(missing)} await the completed prematch screen")
     if not args.check:
         print(f"wrote {len(decks)} variant decks under {PS.VARIANTS_DIR}")
     return 1 if bad else 0
@@ -330,8 +330,7 @@ def _prematch_run(work, name, body, processes, temperatures, args):
                                        args.backend, args.klt_cmd, work,
                                        wait_for_capacity=args.wait_for_capacity)
     data = PS.load_json(report)
-    if args.backend == "batch":
-        _verify_model_identity([report])
+    _verify_model_identity([report], args.backend)
     cells = {}
     for corner in data["corners"]:
         log = klt_driver.corner_log_path(corner, report)
@@ -503,158 +502,197 @@ def cmd_build(args) -> int:
     return 0
 
 
-def _verify_model_identity(report_paths: list[Path]) -> dict:
-    """Every off-host job: runner_compatibility == match, and every staged
-    model input's digest equals the local pinned-install file's hash. The HBT
-    half must additionally match sim/pdk-artifact.json's pin; the passive half
-    (cornerRES/cornerCAP + mods + r3_cmc.osdi) is outside that pin's closure
-    BY DESIGN, so it is bound to the local install's own hashes -- the same
-    hashes layout/lna_stage1/passive_sizing.json records."""
-    from harness import pdkartifact
-    from harness.provenance import sha256_file as _sha
+def _verify_model_identity(report_paths: list[Path], backend="batch") -> dict:
+    """Compare reported model inputs and the OSDI preload with the frozen pins."""
     from harness.pdk import find_pdk
-    pdk = find_pdk(PS.SIM_DIR)
-    pin = json.loads((PS.SIM_DIR / "pdk-artifact.json").read_text())
-    pinned = pin["files"]
-    models_dir = pdk.path / "libs.tech" / "ngspice" / "models"
-    local = {rel: _sha(pdk.path / rel) for rel in list(pinned) + list(EXTRA_MODEL_FILES)}
-    problems: list[str] = []
+
+    pdk = find_pdk(PS.SIM_DIR).path
+    pins = PS.load_json(PS.SIM_DIR / "pdk-artifact.json")["files"].copy()
+    sizing_pins = PS.load_sizing()["inputs"]["pdk"]["files"]
+    for rel in EXTRA_MODEL_FILES[:-1]:
+        pins[rel] = sizing_pins[rel].removeprefix("sha256:")
+    osdi = EXTRA_MODEL_FILES[-1]
+    pins[osdi] = PS.load_plan()["prematch"]["osdi_sha256"]
+    for rel, digest in pins.items():
+        if sha256_file(pdk / rel) != digest:
+            raise CollectionError(f"local {rel} disagrees with the study pin")
+    if not report_paths:
+        raise CollectionError("no reports to verify")
     for path in report_paths:
-        env = (json.loads(path.read_text()).get("environment") or {})
-        remote = env.get("remote") or {}
-        if remote.get("runner_compatibility") != "match":
-            problems.append(f"{path.name}: runner_compatibility "
-                            f"{remote.get('runner_compatibility')!r}")
-        staged = env.get("staged_model_inputs") or []
-        if not staged:
-            problems.append(f"{path.name}: no staged_model_inputs")
+        env = PS.load_json(path).get("environment", {})
+        if env.get("backend", {}).get("resolved") != backend:
+            raise CollectionError(f"{path.name}: expected {backend} backend")
+        if backend == "local":
+            # ngspice loads the section libraries from this verified installation.
+            reported = {a["name"]: a["sha256"] for a in env.get("corner_section_libs") or []}
+            for rel in PS.MODEL_LIBS.values():
+                if reported.get(Path(rel).name) != pins[rel]:
+                    raise CollectionError(f"{path.name}: local section library {rel} differs")
+            if env.get("engine_host") != "local" or not _osdi_matches(env.get("osdi_preload"), pins[osdi]):
+                raise CollectionError(f"{path.name}: local OSDI preload is unverified")
             continue
-        for asset in staged:
+        remote = env.get("remote") or {}
+        received = {a["name"]: a["sha256"] for a in remote.get("runner_model_inputs") or []}
+        if remote.get("runner_compatibility") != "match":
+            raise CollectionError(f"{path.name}: runner compatibility is unverified")
+        staged = {}
+        for asset in env.get("staged_model_inputs") or []:
             name = asset.get("name", "")
-            digest = asset.get("source_sha256") if asset.get("rewritten") \
-                else asset.get("sha256")
-            rel = next((r for r in local if r.endswith("/" + name) or r == name), None)
-            if rel is None:
-                # the stage closure also ships the corner libs' own .include
-                # targets (mismatch/stat variants the selected sections never
-                # load); bind them to the local install by path
-                candidate = models_dir / name
-                if candidate.is_file():
-                    local[str(candidate.relative_to(pdk.path))] = _sha(candidate)
-                    rel = str(candidate.relative_to(pdk.path))
-            if rel is None or digest != local[rel]:
-                problems.append(f"{path.name}: staged {name} (sha {str(digest)[:12]}) "
-                                f"does not match the local pinned install")
-                continue
-            if rel in pinned and digest != pinned[rel]:
-                problems.append(f"{path.name}: staged {name} disagrees with "
-                                f"sim/pdk-artifact.json's pin")
-        for required in pinned:
-            base = required.rsplit("/", 1)[-1]
-            if not any((a.get("name") or "").rsplit("/", 1)[-1] == base for a in staged):
-                problems.append(f"{path.name}: pinned model {required} was not staged")
+            if not name or Path(name).name != name or name in staged:
+                raise CollectionError(f"{path.name}: invalid or duplicate staged name {name}")
+            digest = asset.get("source_sha256") if asset.get("rewritten") else asset.get("sha256")
+            source = pdk / (osdi if name == Path(osdi).name else f"libs.tech/ngspice/models/{name}")
+            if not source.is_file() or digest != sha256_file(source):
+                raise CollectionError(f"{path.name}: staged {name} differs from the pinned install")
+            if received.get(name) != asset.get("sha256") or not received.get(name):
+                raise CollectionError(f"{path.name}: runner digest missing or different for {name}")
+            staged[name] = digest
+        for rel, digest in pins.items():
+            if staged.get(Path(rel).name) != digest:
+                raise CollectionError(f"{path.name}: missing or mismatched staged {rel}")
+        if not _osdi_matches(remote.get("runner_osdi_preload"), pins[osdi]):
+            raise CollectionError(f"{path.name}: loaded OSDI digest differs from the study pin")
+    return {"backend": backend, "hbt_pin": "sim/pdk-artifact.json (verified per job)",
+            "passive_closure": {"files": {rel: pins[rel] for rel in EXTRA_MODEL_FILES}},
+            "jobs": len(report_paths)}
+
+
+def _osdi_matches(loaded, digest):
+    return [(a.get("name"), a.get("sha256")) for a in loaded or []] == [("r3_cmc.osdi", digest)]
+
+
+def _grid(vid):
+    return [PS.cell_key(vid, proc["name"], t, v) for proc in PS.PROCESS_CORNERS
+            for t in PS.TEMPERATURES_C for v in PS.SUPPLIES_V]
+
+
+def _measurement_problems(cells, expected, measures):
+    problems = []
+    for key in sorted(set(cells) ^ set(expected)):
+        problems.append(f"{key}: {'unexpected' if key in cells else 'missing'} cell")
+    for key, row in cells.items():
+        for name in measures:
+            value = row.get(name)
+            if type(value) not in (int, float) or not math.isfinite(value):
+                problems.append(f"{key}: missing or non-finite {name}")
+    return problems
+
+
+def _read_cells(report_paths, variant_ids):
+    """Require one successful corner and every method measure at each planned point."""
+    cells = {}
+    for key, path in report_paths:
+        data = PS.load_json(path)
+        variant, supply = key.rsplit("_", 1)
+        body = path.with_name(f"body_{key}.spice")
+        if not body.is_file() or data.get("environment", {}).get("netlist_sha256") != sha256_file(body):
+            raise CollectionError(f"{path.name}: reported netlist differs from the requested body")
+        if data.get("status") != "pass" or not data.get("corners"):
+            raise CollectionError(f"{path.name}: incomplete or failed report")
+        for corner in data["corners"]:
+            ck = PS.cell_key(variant, corner["process"], corner["temperature_c"], float(supply[:-1]))
+            log = klt_driver.corner_log_path(corner, path)
+            if corner.get("status") != "pass" or log is None or not log.is_file() or ck in cells:
+                raise CollectionError(f"{path.name}/{ck}: failed, missing log, or duplicate corner")
+            cells[ck] = PS.parse_log(log.read_text())
+    problems = _measurement_problems(cells, [ck for vid in variant_ids for ck in _grid(vid)],
+                                     PS.load_json(PS.METHOD_TB)["measure"])
     if problems:
         raise CollectionError("; ".join(problems[:8]))
-    return {
-        "hbt_pin": "sim/pdk-artifact.json (verified per job)",
-        "passive_closure": {
-            "note": "outside the pdk-artifact HBT closure by design; bound to the "
-                    "local install's sha256, cross-recorded in "
-                    "layout/lna_stage1/passive_sizing.json",
-            "files": {rel: local[rel] for rel in EXTRA_MODEL_FILES},
-        },
-        "jobs": len(report_paths),
-    }
-
-
-def _read_cells(report_paths: list[tuple[str, Path]]) -> dict[str, dict[str, float]]:
-    """cell_key -> measurements from every corner of every report. The key
-    embeds the request's variant and supply (from the request filename) and
-    the corner's process and temperature."""
-    cells: dict[str, dict[str, float]] = {}
-    for key, path in report_paths:
-        data = json.loads(path.read_text())
-        variant = key.rsplit("_", 1)[0]
-        vdd = float(key.rsplit("_", 1)[1][:-1])
-        if "corners" not in data:
-            raise CollectionError(f"{path.name}: no corners ({data.get('error')})")
-        for corner in data["corners"]:
-            log = klt_driver.corner_log_path(corner, path)
-            if log is None:
-                raise CollectionError(f"{path.name}/{corner.get('corner_id')}: no log")
-            meas = PS.parse_log(log.read_text())
-            ck = PS.cell_key(variant, corner["process"], float(corner["temperature_c"]), vdd)
-            cells[ck] = meas
     return cells
 
 
-def _gate_control(cells: dict[str, dict[str, float]]) -> dict:
-    """The three plan gates over the control's own cells."""
-    problems: list[str] = []
-    # passive inertness: the four passive-extreme processes must equal typ at
-    # the same temperature and supply.
-    for proc in ("res_bcs__cap_bcs", "res_wcs__cap_wcs", "res_bcs__cap_wcs",
-                 "res_wcs__cap_bcs"):
-        for temp in PS.TEMPERATURES_C:
-            for vdd in PS.SUPPLIES_V:
-                a = cells.get(PS.cell_key("V00", "typ", temp, vdd))
-                b = cells.get(PS.cell_key("V00", proc, temp, vdd))
-                if a is None or b is None:
-                    problems.append(f"missing control cells for {proc} {temp}C {vdd}V")
-                    continue
-                for name in PS.DELTA_MEASURES:
-                    if name not in a or name not in b:
-                        problems.append(f"{proc}: control lacks {name}")
-                    elif abs(a[name] - b[name]) > 1e-6 * max(1.0, abs(a[name])):
-                        problems.append(f"{proc} {temp}C {vdd}V: control {name} moved "
-                                        f"{a[name] - b[name]:.3g} -- passive sections are "
-                                        f"NOT inert for the ideal DUT")
-    # finite values everywhere
-    for ck, meas in sorted(cells.items()):
-        for name, value in meas.items():
-            if not math.isfinite(value):
-                problems.append(f"{ck}: {name} = {value}")
-    # op-table agreement with the post-#79 record (9 cells at 2.5 V)
-    record = PS.REPO_ROOT / PS.BASELINE_RECORD
-    if record.is_file():
-        text = record.read_text(encoding="utf-8")
-        for line in text.splitlines():
-            m = _OP_ROW_RE().match(line)
-            if not m or m.group("supply") != "2.50v":
-                continue
-            ck = PS.cell_key(
-                "V00", "typ" if m.group("hbt") == "hbt_typ" else m.group("hbt"),
-                float(m.group("temp")), 2.5)
-            got = cells.get(ck)
-            if got is None:
-                problems.append(f"op-table: no control cell {ck}")
-                continue
-            for dev, names in (("q1", ("vce", "vbe")), ("q2", ("vce", "vbe")),
-                               ("qr", ("vce",))):
-                for what in names:
-                    want = float(m.group(f"{dev}_{what}"))
-                    have = got.get(f"{dev}_{what}")
-                    if have is not None and abs(have - want) > 0.010:
-                        problems.append(
-                            f"op-table: control {ck} {dev}_{what} = {have:.4f} vs "
-                            f"post-#79 {want:.4f} (tol 10 mV)")
-            ic = got.get("q1_ic")
-            if ic is not None and abs(ic - float(m.group("q1_ic"))) / float(
-                    m.group("q1_ic")) > 0.02:
-                problems.append(f"op-table: control {ck} q1_ic = {ic:.6g} vs post-#79 "
-                                f"{m.group('q1_ic')} (tol 2 percent)")
-    return {"pass": not problems, "problems": problems}
+def _baseline_checks(control, reference):
+    """Check one reference row per device at 2.5 V and each published RF envelope."""
+    devices = {"Q1 (CE)": "q1", "Q2 (CB)": "q2", "Qref (mirror)": "qr"}
+    expected = {(PS.cell_key("V00", proc, temp, 2.5), dev)
+                for proc in ("hbt_bcs", "typ", "hbt_wcs") for temp in PS.TEMPERATURES_C
+                for dev in devices.values()}
+    seen = set()
+    op = []
+    for line in reference.splitlines():
+        cols = [c.strip() for c in line.strip("|").split("|")]
+        if len(cols) < 6 or cols[2] not in devices:
+            continue
+        m = re.fullmatch(r"hbt_(typ|bcs|wcs)_(-?\d+)c_2\.50v", cols[0])
+        if not m:
+            continue
+        process = "typ" if m[1] == "typ" else f"hbt_{m[1]}"
+        ck = PS.cell_key("V00", process, float(m[2]), 2.5)
+        dev = devices[cols[2]]
+        if (ck, dev) in seen:
+            op.append(f"duplicate reference row for {ck} {dev}")
+        seen.add((ck, dev))
+        for name, raw in zip(("vce", "vbe", "ic"), cols[3:6]):
+            try:
+                target = float(raw) * (1e-3 if name == "ic" else 1)
+            except ValueError:
+                target = math.nan
+            value = control.get(ck, {}).get(f"{dev}_{name}", math.nan)
+            tol = 0.02 * abs(target) if name == "ic" else 0.010
+            if not abs(value - target) <= tol:
+                op.append(f"{ck} {dev}_{name}: {value:g} vs reference {target:g}")
+    if seen != expected:
+        op.append(f"reference device rows differ from the required 27: {sorted(seen ^ expected)}")
+
+    envelopes = {}
+    rf = []
+    required = {f"{name}_{band}" for name in ("s11_db", "s21_db", "s22_db", "s12_db", "nf_db", "k")
+                for band in ("lo", "mid", "hi")}
+    for name, low, high in re.findall(r"^- `(\w+)`: min (\S+) \([^)]*\), max (\S+) ", reference, re.M):
+        if name not in required:
+            continue
+        if name in envelopes:
+            rf.append(f"duplicate reference envelope for {name}")
+        envelopes[name] = (float(low), float(high))
+    for name in sorted(required - envelopes.keys()):
+        rf.append(f"missing reference envelope for {name}")
+    for ck in _grid("V00"):
+        for name, (low, high) in envelopes.items():
+            # The reference Summary prints extrema with six significant digits.
+            value = float(f"{control.get(ck, {}).get(name, math.nan):.6g}")
+            if not low <= value <= high:
+                rf.append(f"{ck} {name}: {value:g} outside [{low:g}, {high:g}]")
+    return op, rf
 
 
-def _OP_ROW_RE():
-    import re as _re
-    return _re.compile(
-        r"^\|\s*(?P<hbt>hbt_\w+)_(?P<temp>-?\d+)c_(?P<supply>[\d.]+v)\s*\|[^|]*\|"
-        r"\s*Q1 \(CE\)\s*\|\s*(?P<q1_vce>[\d.]+)\s*\|\s*(?P<q1_vbe>[\d.]+)\s*\|"
-        r"\s*(?P<q1_ic>[\d.]+)\s*\|"
-        r"[^|]*\|[^|]*\|\s*Q2 \(CB\)\s*\|\s*(?P<q2_vce>[\d.]+)\s*\|\s*(?P<q2_vbe>[\d.]+)\s*\|"
-        r"\s*(?P<q2_ic>[\d.]+)\s*\|"
-        r"[^|]*\|[^|]*\|\s*Qref \(mirror\)\s*\|\s*(?P<qr_vce>[\d.]+)\s*\|")
+def _gate_control(cells, variant_ids=("V00",)):
+    control = {k: v for k, v in cells.items() if k.startswith("V00__")}
+    expected = [ck for vid in variant_ids for ck in _grid(vid)]
+    required = PS.load_json(PS.METHOD_TB)["measure"]
+    reference = PS.REPO_ROOT / PS.BASELINE_RECORD
+    op, rf = _baseline_checks(control, reference.read_text() if reference.is_file() else "")
+    inert = []
+    for proc in PS.PREMATCH_CORNERS:
+        for t in PS.TEMPERATURES_C:
+            for v in PS.SUPPLIES_V:
+                ck = PS.cell_key("V00", proc, t, v)
+                a = control.get(PS.cell_key("V00", "typ", t, v), {})
+                b = control.get(ck, {})
+                for name in required:
+                    typ = a.get(name, math.nan)
+                    if not abs(typ - b.get(name, math.nan)) <= 1e-6 * max(1.0, abs(typ)):
+                        inert.append(f"{ck}: control {name} differs from typ or is missing")
+    failures = {"baseline_op_table": op, "baseline_envelope": rf, "passive_inertness": inert,
+                "finite_values": _measurement_problems(cells, expected, required)}
+    problems = [f"{gate}: {p}" for gate, issues in failures.items() for p in issues]
+    return {"pass": not problems, "problems": problems,
+            "checks": {gate: not issues for gate, issues in failures.items()}}
+
+
+def _completed_screen(prematch):
+    if not prematch or "selection" not in prematch:
+        return False
+    grid = prematch.get("grid", {})
+    expected = [f"{proc}/novdd/{t:g}C" for proc in PS.PREMATCH_CORNERS for t in PS.PREMATCH_TEMPS_C]
+    values = sorted(PS.PREMATCH_GRID_F)
+    names = [f"s11_db_{band}_c{i}" for band in ("lo", "mid", "hi") for i in range(1, len(values) + 1)]
+    if _measurement_problems(grid, expected, names):
+        return False
+    for i, value in enumerate(values, 1):
+        if max(row[f"s11_db_{band}_c{i}"] for row in grid.values() for band in ("lo", "mid", "hi")) <= PS.S11_TARGET_DB:
+            return (prematch["selection"] or {}).get("cblk_f") == value
+    return prematch["selection"] is None
 
 
 def cmd_collect(args) -> int:
@@ -665,25 +703,27 @@ def cmd_collect(args) -> int:
         print("collect: plan invalid; nothing submitted", file=sys.stderr)
         return 1
     prematch = json.loads(PS.PREMATCH_PATH.read_text()) if PS.PREMATCH_PATH.is_file() else None
-    if any(v["id"] == "V04" for v in plan["variants"]) and (
-            prematch is None or not prematch.get("selection")):
-        print("collect: V04 is declared but testbench/prematch.json carries no "
-              "selection; run prematch first (or the record must say V04 is dropped)",
-              file=sys.stderr)
+    if any(v["id"] == "V04" for v in plan["variants"]) and not _completed_screen(prematch):
+        print("collect: V04 needs a completed prematch screen", file=sys.stderr)
         return 1
     if cmd_variants(argparse.Namespace(check=True)):
         raise CollectionError("frozen decks do not match the current plan and prematch")
     started = _dt.datetime.now(_dt.timezone.utc)
     run_inputs = PS.sha256_text(PS.PLAN_PATH.read_text() + PS.PREMATCH_PATH.read_text())
-    work = SCRATCH / "collect" / run_inputs.removeprefix("sha256:")
+    work = SCRATCH / "collect" / args.backend / run_inputs.removeprefix("sha256:")
     work.mkdir(parents=True, exist_ok=True)
     reqs = _requests(plan, sizing, prematch, work, args)
     if args.dry_run:
         print(f"--dry-run: {len(reqs)} requests prepared under {work}; nothing submitted")
         return 0
-    reports = klt_driver.submit_set(reqs, work, klt_cmd=args.klt_cmd,
-                                    wait_for_capacity=args.wait_for_capacity,
-                                    capacity_retries=args.capacity_retries)
+    if args.backend == "batch":
+        reports = klt_driver.submit_set(reqs, work, klt_cmd=args.klt_cmd,
+                                        wait_for_capacity=args.wait_for_capacity,
+                                        capacity_retries=args.capacity_retries)
+    else:
+        reports = {key: klt_driver.submit_request(req, work / f"report_{key}.json",
+                                                  key, "local", args.klt_cmd, work)
+                   for key, req in reqs}
     # Attach raw prematch reports only when they produced the exact frozen result.
     # The bounded local probe checks its models separately from the off-host jobs.
     frozen = PS.PREMATCH_PATH.read_bytes()
@@ -695,16 +735,15 @@ def cmd_collect(args) -> int:
                     reports[f"prematch_{name}"] = rp
             break
     try:
-        identity = _verify_model_identity([rp for key, rp in reports.items() if key.startswith("V")])
+        identity = _verify_model_identity([rp for key, rp in reports.items() if key.startswith("V")], args.backend)
     except CollectionError as exc:
         print(f"collect: model identity: {exc}", file=sys.stderr)
         return 1
-    cells = _read_cells(sorted(item for item in reports.items()
-                               if item[0].startswith("V")))
+    variant_ids = list(variant_decks(plan, sizing, prematch))
+    deck_ids = ["V00", *variant_ids]
+    cells = _read_cells(sorted(item for item in reports.items() if item[0].startswith("V")), deck_ids)
     control = {k: v for k, v in cells.items() if k.startswith("V00__")}
-    gates = _gate_control(control)
-    variant_ids = [vid for vid in (v["id"] for v in plan["variants"])
-                   if any(k.startswith(vid + "__") for k in cells)]
+    gates = _gate_control(cells, deck_ids)
     status = "COLLECTED" if gates["pass"] else "CONTROLS_FAILED"
     deltas = {}
     for vid in variant_ids:
@@ -712,16 +751,13 @@ def cmd_collect(args) -> int:
         deltas[vid] = PS.deltas(vc, control)
     record = _build_record(plan, prematch, status, gates, cells, deltas,
                            variant_ids, identity, started, reports, work)
-    _write_record(plan, record, cells, reports, work)
-    return 0 if status == "COLLECTED" else 1
+    write_status = _write_record(plan, record, cells, reports, work)
+    return write_status or (0 if status == "COLLECTED" else 1)
 
 
 # ---------------------------------------------------------------------------
 # record
 # ---------------------------------------------------------------------------
-
-_ROW_BOUND_GROUPS = ("row2_row3", "row4", "row6")
-
 
 def _bound_cells(vid: str) -> dict[str, list[str]]:
     return {
@@ -730,10 +766,41 @@ def _bound_cells(vid: str) -> dict[str, list[str]]:
                  for p in ("res_bcs__cap_bcs", "res_wcs__cap_wcs",
                            "res_bcs__cap_wcs", "res_wcs__cap_bcs")
                  for t in (-40.0, 125.0) for v in (2.5,)],
-        "row6": [PS.cell_key(vid, "typ", -40.0, 2.75),
-                 PS.cell_key(vid, "hbt_bcs", -40.0, 2.75),
-                 PS.cell_key(vid, "hbt_wcs", 125.0, 2.25)],
+        "row6": _grid(vid),
     }
+
+
+def _worst(deltas, bounds):
+    worst = {}
+    for name in PS.DELTA_MEASURES:
+        if name.startswith(("k_", "sw_")):
+            keys = bounds["row6"]
+        elif name.startswith("s11_"):
+            keys = bounds["row4"]
+        else:
+            keys = bounds["row2_row3"]
+        values = [deltas[ck][name] for ck in keys]
+        worst[name] = {"min": min(values), "max": max(values)}
+    return worst
+
+
+def _sweep_deltas(absolute, grid):
+    values = {}
+    for ck in grid:
+        _, rest = ck.split("__", 1)
+        process, t, v = rest.rsplit("__", 2)
+        control = PS.control_cell_key(process, float(t[:-1]), float(v[:-1]))
+        values[ck] = absolute[ck] - absolute[control]
+    return values
+
+
+def _stability(absolute, grid):
+    differences = _sweep_deltas(absolute, grid)
+    limiting = min(sorted(grid), key=absolute.get)
+    min_delta = min(sorted(grid), key=differences.get)
+    return {"limiting_cell": limiting, "minimum_k": absolute[limiting],
+            "delta_at_limiting_cell": round(differences[limiting], 4),
+            "minimum_delta_cell": min_delta, "minimum_delta": round(differences[min_delta], 4)}
 
 
 def _build_record(plan, prematch, status, gates, cells, deltas, variant_ids,
@@ -742,6 +809,10 @@ def _build_record(plan, prematch, status, gates, cells, deltas, variant_ids,
     rid = allocate_record_id(PS.REPO_ROOT, RECORDS, started, git)
     rec = {
         "record_id": rid,
+        "record_version": 2,
+        "control_deck_sha256": PS.sha256_text(PS.control_dut_text(PS.DUT_PATH.read_text())),
+        "sweep_kmin": {ck: row["sw_kmin"] for ck, row in sorted(cells.items())},
+        "stability": {},
         "status": status,
         "experiment": "lna-passive-study",
         "issue": 340,
@@ -792,17 +863,9 @@ def _build_record(plan, prematch, status, gates, cells, deltas, variant_ids,
     for vid in variant_ids:
         path = PS.VARIANTS_DIR / f"{vid}.spice"
         rec["variant_deck_sha256"][vid] = PS.sha256_text(path.read_text())
-        bound = {ck for group in rec["bound_cells"][vid].values() for ck in group}
-        worst = {}
-        for name in PS.DELTA_MEASURES:
-            values = [row[name] for row in rec["deltas"][vid].values()
-                      if name in row]
-            values_all = [row[name] for ck, row in rec["deltas"][vid].items()
-                          if name in row and ck in bound]
-            if values_all:
-                worst[name] = {"min": round(min(values_all), 4),
-                               "max": round(max(values_all), 4)}
-        rec["worst"][vid] = worst
+        values = rec["deltas"][vid]
+        rec["worst"][vid] = _worst(values, rec["bound_cells"][vid])
+        rec["stability"][vid] = _stability(rec["sweep_kmin"], values)
     return rec
 
 
@@ -852,20 +915,15 @@ def _render_md(rec: dict) -> str:
             L.append("- NO grid value closed the input match at -10 dB; V04 is dropped "
                      "and the candidate sets are those the table shows.")
         L.append("")
-    L += ["## Controls and method identity", "",
-          f"- Operating-point gate vs the post-#79 record's per-cell op table "
-          f"(|dV_CE|, |dV_BE| <= 10 mV; |dI_C| <= 2 %, all nine 2.5 V hbt x temp cells): "
-          f"**{'PASS' if rec['gates']['pass'] else 'FAIL'}**.",
-          f"- Passive-inertness negative control (the ideal control DUT must not react "
-          f"to res_*/cap_* sections): "
-          f"**{'PASS' if rec['gates']['pass'] else 'FAIL'}**.",
-          f"- Finite values on every declared cell: "
-          f"**{'PASS' if rec['gates']['pass'] else 'FAIL'}**."]
+    L += ["## Controls and method identity", ""]
+    for name, description in plan["gates"].items():
+        result = "PASS" if rec["gates"]["checks"][name] else "FAIL"
+        L.append(f"- {description}: **{result}**.")
     for p in rec["gates"]["problems"][:20]:
         L.append(f"  - {p}")
     L += ["", "## Comparative deltas at the row bound cells (variant - control)", "",
-          "Comparative deltas ONLY: no row is shown met or missed. Negative dS21/dNF "
-          "means the variant is worse than the ideal-passive control.", ""]
+          "Deltas are variant minus control. Negative ΔS21 means lower gain. "
+          "Negative ΔNF means lower noise figure. Δk is evaluated over all 63 cells.", ""]
     for vid in rec["variants"]:
         L.append(f"### {vid}")
         L.append("")
@@ -874,7 +932,11 @@ def _render_md(rec: dict) -> str:
         L.append("|---|---|---|---|---|---|")
         bounds = rec["bound_cells"][vid]
         for group in ("row2_row3", "row4", "row6"):
-            for ck in bounds[group]:
+            keys = bounds[group]
+            if group == "row6":
+                stability = rec["stability"][vid]
+                keys = sorted({stability["limiting_cell"], stability["minimum_delta_cell"]})
+            for ck in keys:
                 row = rec["deltas"][vid].get(ck, {})
                 if not row:
                     continue
@@ -885,20 +947,20 @@ def _render_md(rec: dict) -> str:
                 L.append(f"| {ck} ({group}) | {_3('s21_db')} | {_3('nf_db')} | "
                          f"{_3('s11_db')} | {_3('k')} | "
                          f"{f'{dkmin:+.2f}' if dkmin is not None else 'n/a'} |")
-        L.append("")
+        st = rec["stability"][vid]
+        L += ["", f"Minimum absolute sweep k = {st['minimum_k']:g} at {st['limiting_cell']} "
+              f"(Δk {st['delta_at_limiting_cell']:+g}). Minimum Δk = {st['minimum_delta']:+g} "
+              f"at {st['minimum_delta_cell']}.", ""]
     L += ["## Worst-case deltas per variant (over the bound cells)", ""]
     for vid in rec["variants"]:
         L.append(f"- **{vid}**: " + "; ".join(
             f"{name} [{w['min']:+.2f}, {w['max']:+.2f}]"
             for name, w in sorted(rec["worst"][vid].items())))
     L += ["", "## Provenance and stored evidence", "",
-          f"- Model identity: HBT closure against `sim/pdk-artifact.json`; passive "
-          f"closure (cornerRES/cornerCAP + mods + r3_cmc.osdi) against the local "
-          f"pinned install's sha256, cross-recorded in passive_sizing.json; "
-          f"{rec['model_identity']['jobs']} batch jobs, every one "
-          f"runner_compatibility=match with hash-verified staged model inputs.",
-          "- The 63-cell-per-deck collection used the batch backend. The prematch backend "
-          "and simulator version are recorded separately in testbench/prematch.json.",
+          f"- Collection backend: {rec['model_identity']['backend']}. Model hashes "
+          f"verified for all {rec['model_identity']['jobs']} jobs against the HBT, "
+          "passive-model and OSDI pins. The prematch backend is recorded separately.",
+          f"- V00 control DUT sha256 `{rec['control_deck_sha256']}`.",
           f"- Variant DUT decks (frozen inputs, committed): " + "; ".join(
               f"`{vid}` sha256 `{rec['variant_deck_sha256'][vid]}`"
               for vid in rec["variants"]) + ".",
@@ -909,10 +971,10 @@ def _render_md(rec: dict) -> str:
     return "\n".join(L)
 
 
-def _write_record(plan, rec, cells, reports, work) -> None:
+def _write_record(plan, rec, cells, reports, work) -> int:
     rid = rec["record_id"]
     RECORDS.mkdir(parents=True, exist_ok=True)
-    if (RECORDS / f"{rid}.md").exists():
+    if any((RECORDS / f"{rid}.{ext}").exists() for ext in ("md", "json")):
         raise RecordExists(f"{RECORDS / (rid + '.md')} exists")
     md = _render_md(rec)
     # stored evidence: per-cell logs + snapshot package
@@ -976,16 +1038,17 @@ def _write_record(plan, rec, cells, reports, work) -> None:
     # store accepted every byte, so a store failure leaves no half-record.
     try:
         store_mod.preflight(PS.REPO_ROOT, klt="klt")
+        store_mod.store_files(
+            files, repo_root=PS.REPO_ROOT, bench="lna-passive-study", rid=rid,
+            summary_text=md, summary_path=RECORDS / f"{rid}.md", klt="klt")
     except store_mod.StoreError as exc:
         print(f"EVIDENCE STORE UNAVAILABLE -- nothing committed (fail closed): {exc}",
               file=sys.stderr)
         return 10
-    store_mod.store_files(
-        files, repo_root=PS.REPO_ROOT, bench="lna-passive-study", rid=rid,
-        summary_text=md, summary_path=RECORDS / f"{rid}.md", klt="klt")
     (RECORDS / f"{rid}.json").write_text(json.dumps(rec, indent=1, sort_keys=True) + "\n")
     print(f"wrote {RECORDS / (rid + '.md')}")
     print(f"wrote {RECORDS / (rid + '.json')}")
+    return 0
 
 
 def cmd_verify(args) -> int:
@@ -1033,17 +1096,45 @@ def _verify_one(rec: dict, md: str) -> list[str]:
         if not deck.is_file() or PS.sha256_text(deck.read_text()) != \
                 rec["variant_deck_sha256"][vid]:
             problems.append(f"{vid}: committed deck does not match the record's hash")
-        # deltas re-derive from the sidecar's own cells (embedded in deltas +
-        # gates re-checkable): recompute worst over the record's bound cells
-        bound = {ck for group in rec["bound_cells"][vid].values() for ck in group}
-        worst = {}
-        for name in PS.DELTA_MEASURES:
-            values = [row[name] for ck, row in rec["deltas"][vid].items()
-                      if name in row and ck in bound]
-            if values:
-                worst[name] = {"min": round(min(values), 4), "max": round(max(values), 4)}
-        if worst != rec["worst"][vid]:
-            problems.append(f"{vid}: published worst-case deltas do not re-derive")
+        grid = _grid(vid)
+        values = rec.get("deltas", {}).get(vid, {})
+        missing = _measurement_problems(values, grid, PS.DELTA_MEASURES)
+        if missing:
+            problems.extend(missing)
+            continue
+        bounds = rec["bound_cells"][vid]
+        if rec.get("record_version") == 2:
+            if bounds != _bound_cells(vid):
+                problems.append(f"{vid}: incorrect row bound cells")
+            if rec["worst"][vid] != _worst(values, _bound_cells(vid)):
+                problems.append(f"{vid}: worst-case deltas do not re-derive")
+            absolute = rec.get("sweep_kmin", {})
+            if all(type(absolute.get(k)) in (int, float) and math.isfinite(absolute[k])
+                   for k in [*grid, *_grid("V00")]):
+                for ck, delta in _sweep_deltas(absolute, grid).items():
+                    if round(delta, 4) != values[ck]["sw_kmin"]:
+                        problems.append(f"{ck}: stability delta differs from absolute k")
+                if rec.get("stability", {}).get(vid) != _stability(absolute, grid):
+                    problems.append(f"{vid}: stability extrema do not re-derive")
+            else:
+                problems.append(f"{vid}: incomplete absolute stability grid")
+        else:
+            # The immutable v1 summary used the union of its original bound cells.
+            bound = {ck for group in bounds.values() for ck in group}
+            worst = {name: {"min": min(values[ck][name] for ck in bound),
+                            "max": max(values[ck][name] for ck in bound)}
+                     for name in PS.DELTA_MEASURES}
+            if worst != rec["worst"][vid]:
+                problems.append(f"{vid}: historical worst-case deltas do not re-derive")
+    if rec.get("record_version") == 2:
+        checks = rec["gates"].get("checks", {})
+        if set(checks) != set(plan["gates"]) or rec["gates"]["pass"] != all(checks.values()):
+            problems.append("independent gate results disagree with the overall status")
+        control_sha = PS.sha256_text(PS.control_dut_text(PS.DUT_PATH.read_text()))
+        if rec.get("control_deck_sha256") != control_sha:
+            problems.append("control deck hash mismatch")
+        if not problems and not md.startswith(_render_md(rec).rstrip() + "\n"):
+            problems.append("Markdown does not reproduce from the record")
     if rec["status"] == "COLLECTED" and not rec["gates"]["pass"]:
         problems.append("status COLLECTED but gates did not pass")
     return problems
@@ -1066,7 +1157,7 @@ def main(argv=None) -> int:
     for name in ("prematch", "build", "collect", "verify"):
         q = sub.add_parser(name)
         q.add_argument("--dry-run", action="store_true")
-        if name == "prematch":
+        if name in ("prematch", "collect"):
             q.add_argument("--backend", choices=("batch", "local"), default="batch")
         if name == "build":
             q.add_argument("--workdir", default=None)
