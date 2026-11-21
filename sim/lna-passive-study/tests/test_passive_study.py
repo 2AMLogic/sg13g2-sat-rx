@@ -358,3 +358,27 @@ def test_batch_model_identity_requires_each_pin_and_runner_preload(tmp_path, mon
     report.write_text(json.dumps({"environment": env}))
     with pytest.raises(run.CollectionError, match="loaded OSDI"):
         run._verify_model_identity([report])
+
+
+def test_row6_absolute_minimum_and_minimum_delta_can_be_different_cells():
+    import run
+    grid = run._bound_cells("V04")["row6"]
+    assert len(grid) == 63
+    absolute = dict.fromkeys(run._grid("V00"), 8.)
+    absolute.update(dict.fromkeys(grid, 10.))
+    limiting = PS.cell_key("V04", "hbt_wcs", 125, 2.75)
+    worst_change = PS.cell_key("V04", "res_bcs__cap_wcs", 27, 2.25)
+    absolute[limiting] = 6.
+    absolute[worst_change] = 7.
+    absolute[PS.control_cell_key("res_bcs__cap_wcs", 27, 2.25)] = 12.
+    assert run._stability(absolute, grid) == {
+        "limiting_cell": limiting, "minimum_k": 6., "delta_at_limiting_cell": -2.,
+        "minimum_delta_cell": worst_change, "minimum_delta": -5.}
+
+
+def test_stored_bundle_digest_is_checked_before_ingest(tmp_path):
+    import run
+    rid = "20261121-044750-495011a"
+    path = tmp_path / "cells.json.gz"
+    path.write_bytes(b"wrong object")
+    assert "digest mismatch" in run._verify_stored_cells({"record_id": rid}, path)[0]

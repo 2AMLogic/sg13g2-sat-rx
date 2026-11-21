@@ -519,7 +519,8 @@ def _verify_model_identity(report_paths: list[Path], backend="batch") -> dict:
     if not report_paths:
         raise CollectionError("no reports to verify")
     for path in report_paths:
-        env = PS.load_json(path).get("environment", {})
+        data = PS.load_json(path)
+        env = data.get("environment", {})
         if env.get("backend", {}).get("resolved") != backend:
             raise CollectionError(f"{path.name}: expected {backend} backend")
         if backend == "local":
@@ -530,6 +531,20 @@ def _verify_model_identity(report_paths: list[Path], backend="batch") -> dict:
                     raise CollectionError(f"{path.name}: local section library {rel} differs")
             if env.get("engine_host") != "local" or not _osdi_matches(env.get("osdi_preload"), pins[osdi]):
                 raise CollectionError(f"{path.name}: local OSDI preload is unverified")
+            # The top-level hashes alone cannot distinguish two installations
+            # with identical corner libraries but different relative .includes.
+            for corner in data["corners"]:
+                deck = Path(corner.get("artifacts", {}).get("deck") or "")
+                deck = path.parent / deck
+                if not deck.is_file():
+                    raise CollectionError(f"{path.name}: missing local corner deck")
+                sections = next((proc["sections"] for proc in PS.PROCESS_CORNERS
+                                 if proc["name"] == corner["process"]), {})
+                required = {f".lib {pdk / PS.MODEL_LIBS[family]} {section}"
+                            for family, section in sections.items()}
+                required.add(f"pre_osdi {pdk / osdi}")
+                if not sections or not required.issubset(deck.read_text().splitlines()):
+                    raise CollectionError(f"{path.name}: corner used a different model path or section")
             continue
         remote = env.get("remote") or {}
         received = {a["name"]: a["sha256"] for a in remote.get("runner_model_inputs") or []}
@@ -686,11 +701,14 @@ def _completed_screen(prematch):
     grid = prematch.get("grid", {})
     expected = [f"{proc}/novdd/{t:g}C" for proc in PS.PREMATCH_CORNERS for t in PS.PREMATCH_TEMPS_C]
     values = sorted(PS.PREMATCH_GRID_F)
-    names = [f"s11_db_{band}_c{i}" for band in ("lo", "mid", "hi") for i in range(1, len(values) + 1)]
+    names = [f"s11_db_{band}_c{i}" for band in ("lo", "mid", "hi")
+             for i in range(1, len(values) + 1)]
     if _measurement_problems(grid, expected, names):
         return False
     for i, value in enumerate(values, 1):
-        if max(row[f"s11_db_{band}_c{i}"] for row in grid.values() for band in ("lo", "mid", "hi")) <= PS.S11_TARGET_DB:
+        worst_s11 = max(row[f"s11_db_{band}_c{i}"] for row in grid.values()
+                        for band in ("lo", "mid", "hi"))
+        if worst_s11 <= PS.S11_TARGET_DB:
             return (prematch["selection"] or {}).get("cblk_f") == value
     return prematch["selection"] is None
 
@@ -735,13 +753,14 @@ def cmd_collect(args) -> int:
                     reports[f"prematch_{name}"] = rp
             break
     try:
-        identity = _verify_model_identity([rp for key, rp in reports.items() if key.startswith("V")], args.backend)
+        study_reports = sorted(item for item in reports.items() if item[0].startswith("V"))
+        identity = _verify_model_identity([path for _, path in study_reports], args.backend)
     except CollectionError as exc:
         print(f"collect: model identity: {exc}", file=sys.stderr)
         return 1
     variant_ids = list(variant_decks(plan, sizing, prematch))
     deck_ids = ["V00", *variant_ids]
-    cells = _read_cells(sorted(item for item in reports.items() if item[0].startswith("V")), deck_ids)
+    cells = _read_cells(study_reports, deck_ids)
     control = {k: v for k, v in cells.items() if k.startswith("V00__")}
     gates = _gate_control(cells, deck_ids)
     status = "COLLECTED" if gates["pass"] else "CONTROLS_FAILED"
@@ -1054,11 +1073,16 @@ def _write_record(plan, rec, cells, reports, work) -> int:
 def cmd_verify(args) -> int:
     ids = args.records or sorted(
         p.name[: -len(".json")] for p in RECORDS.glob("*.json"))
+    if args.cells and len(ids) != 1:
+        print("verify --cells requires one record id", file=sys.stderr)
+        return 1
     bad = 0
     for rid in ids:
         rec = json.loads((RECORDS / f"{rid}.json").read_text())
         md = (RECORDS / f"{rid}.md").read_text(encoding="utf-8")
         problems = _verify_one(rec, md)
+        if args.cells:
+            problems += _verify_stored_cells(rec, Path(args.cells))
         for p in problems:
             print(f"FAIL {rid}: {p}", file=sys.stderr)
             bad += 1
@@ -1067,8 +1091,41 @@ def cmd_verify(args) -> int:
     return 1 if bad else 0
 
 
+def _verify_stored_cells(rec, path):
+    """Re-run the gates and whole-grid summaries against the archived measurements."""
+    rid = rec["record_id"]
+    manifest = PS.REPO_ROOT / "manifests" / "artifacts" / f"lna-passive-study-{rid}.manifest.json"
+    name = f"sim/lna-passive-study/records/{rid}-cells.json.gz"
+    hashes = [entry["sha256"] for entry in PS.load_json(manifest)["entries"] if entry["name"] == name]
+    if not path.is_file() or hashes != [sha256_file(path)]:
+        return [f"{name}: stored bundle digest mismatch"]
+    with gzip.open(path, "rt") as fp:
+        cells = json.load(fp)
+    gates = _gate_control(cells, ["V00", *rec["variants"]])
+    print("Rechecked gates:", json.dumps(gates["checks"], sort_keys=True))
+    if not gates["checks"]["finite_values"]:
+        return gates["problems"]
+    problems = []
+    if rec.get("record_version") == 2 and gates != rec["gates"]:
+        problems.append("recorded gate results differ from the stored measurements")
+    elif gates["pass"] != rec["gates"]["pass"]:
+        problems.append("stored measurements disagree with the published gate outcome")
+    absolute = {ck: row["sw_kmin"] for ck, row in cells.items()}
+    if rec.get("record_version") == 2 and absolute != rec["sweep_kmin"]:
+        problems.append("absolute sweep k differs from the stored measurements")
+    for vid in rec["variants"]:
+        grid = _grid(vid)
+        deltas = PS.deltas({ck: cells[ck] for ck in grid}, cells)
+        if {ck: {k: round(v, 4) for k, v in row.items()} for ck, row in deltas.items()} != rec["deltas"][vid]:
+            problems.append(f"{vid}: published deltas differ from the stored measurements")
+        print(vid, json.dumps(_stability(absolute, grid), sort_keys=True))
+    return problems
+
+
 def _verify_one(rec: dict, md: str) -> list[str]:
     problems: list[str] = []
+    if rec.get("record_version", 1) not in (1, 2):
+        return ["unrecognized record version"]
     if rec.get("spec_rows_claimed_met") != []:
         problems.append("spec_rows_claimed_met must be []")
     if rec["status"] not in PS.STATUSES or f"- **Status: {rec['status']}**" not in md:
@@ -1086,8 +1143,9 @@ def _verify_one(rec: dict, md: str) -> list[str]:
             problems.append(f"claim must state {needle!r}")
     plan = PS.load_plan()
     declared = [v["id"] for v in plan["variants"]]
-    if not set(rec["variants"]) <= set(declared):
-        problems.append("record publishes variants outside the frozen plan")
+    expected = [vid for vid in declared if vid != "V04" or (rec.get("prematch") or {}).get("selection")]
+    if rec["variants"] != expected or set(rec["deltas"]) != set(expected):
+        return problems + ["record differs from the declared variants and prematch outcome"]
     for vid in rec["variants"]:
         folder = PS.VARIANTS_DIR
         if vid == "V04" and rec.get("plan_declaration", {}).get("plan_version") == 1:
@@ -1163,6 +1221,8 @@ def main(argv=None) -> int:
             q.add_argument("--workdir", default=None)
         if name == "verify":
             q.add_argument("records", nargs="*")
+            q.add_argument("--cells", metavar="BUNDLE.json.gz",
+                           help="verify the stored cell bundle for one record and re-run its gates")
         q.set_defaults(func=globals()[f"cmd_{name.replace('-', '_')}"])
     args = p.parse_args(argv)
     return args.func(args)
