@@ -3,7 +3,7 @@
 This roadmap is generated from the repository's current GitHub label state by the Loom Guide role.
 
 <!-- guide:plan-body:start -->
-_Generated: 2026-11-21T09:12:35Z (snapshot; compare against live labels)_
+_Generated: 2026-11-22T00:56:33Z (snapshot; compare against live labels)_
 ## Operator Attention: Merge-Risk-Hold Pileup
 
 Judge-approved PRs under a hold (`loom:blocked` or `loom:operator`) — only a human merge decision is missing.
@@ -38,7 +38,7 @@ Issues currently being built (`loom:building`).
 
 PRs waiting on Judge (`loom:review-requested`).
 
-- **#344**: passives(lna): PDK-modelled stage-1 passive-realization options, lna-passive-study record and proposed DR-0011
+_None._
 
 ## Approved (Awaiting Merge)
 
@@ -73,7 +73,7 @@ _None._
 | Important | 1 |
 | Ready (`loom:issue`) | 0 |
 | In Progress (`loom:building`) | 1 |
-| PRs awaiting review | 1 |
+| PRs awaiting review | 0 |
 | Approved PRs awaiting merge | 0 |
 | Curated | 3 |
 | Architect / Hermit proposals | 3 |
