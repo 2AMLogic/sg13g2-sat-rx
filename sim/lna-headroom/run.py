@@ -230,15 +230,6 @@ def render_md(rid: str, status: str, rec: dict) -> str:
     return "\n".join(L)
 
 
-def _conv_line(c: dict) -> str:
-    est = c["estimator"]
-    pw_f = max([v["max_abs_delta_db"] for v in c["pointwise_fundamental"].values()] or [0.0])
-    d = est.get("delta_db")
-    return (f"{c['variant']}: {'PASS' if c['ok'] else 'FAIL'}; estimator {est['base_status']}->{est['other_status']}, "
-            f"delta {('n/a' if d is None else f'{d:+.3f}')} dB (tol {est['tol_db']}); max fundamental delta {pw_f:.3f} dB"
-            + (f" -- {est['reason']}" if est.get("reason") and not c["ok"] else ""))
-
-
 def render_md_v2(rid: str, status: str, rec: dict) -> str:
     hp, rk, bl = rec["plan_declaration"], rec["ranking"], rec["baseline_reproduction"]
     ref = hp["refinement"]
@@ -441,68 +432,13 @@ def collect(args) -> int:
 
 
 def finalize(hp, lp, work, reqs, texts, reports, pdk, started, args) -> int:
-    if H.refinement(hp):
-        return finalize_refined(hp, lp, work, reqs, texts, reports, pdk, started, args)
-    hist, hist_sw = H.load_historical(HIST_ID)
-    res = H.analyze(hp, lp, texts, hist, hist_sw)
-    if res["problems"]:
-        for p in res["problems"][:40]:
-            print("FAIL:", p, file=sys.stderr)
-        print("collect: log integrity gate failed; NO record written", file=sys.stderr)
-        return 1
-    git = git_provenance(REPO_ROOT)
-    git["dirty"] = bool(dirty_code())
-    rid = allocate_record_id(REPO_ROOT, RECORDS, git=git)
-    status = ("COLLECTED" if res["ngspice_control"]["pass"] and res["baseline_reproduction"]["reproduced"]
-              else "CONTROLS_FAILED" if not res["ngspice_control"]["pass"] else "BASELINE_NOT_REPRODUCED")
-    client = subprocess.run(shlex.split(args.klt_cmd) + ["--version"], capture_output=True, text=True)
-    requests = []
-    for key in H.request_keys(hp):
-        d = reports[key]
-        env = d.get("environment") or {}
-        requests.append({"key": key, "backend": args.backend, "status": d.get("status"), "engine": env.get("engine"),
-                         "engine_version": env.get("engine_version"), "models_lib_sha256": env.get("models_lib_sha256"),
-                         "netlist_sha256": env.get("netlist_sha256"), "remote": env.get("remote"),
-                         "klt_version": (d.get("provenance") or {}).get("klt_version")})
-    sweeps = res.pop("sweeps")
-    plan_rel = H.PLAN_PATH.relative_to(REPO_ROOT).as_posix()
-    rec = {"record_id": rid, "status": status, "stage": 1, "started_utc": started.isoformat(), "spec_rows_claimed_met": [],
-           "plan": {"file": plan_rel, "sha256": sha256_file(H.PLAN_PATH), "commit": git_out("log", "-1", "--format=%H", "--", plan_rel),
-                    "dirty": bool(dirty_code())},
-           "plan_declaration": hp,
-           "dut": {"file": H.DUT_PATH.relative_to(REPO_ROOT).as_posix(), "sha256": sha256_file(H.DUT_PATH)},
-           "ngspice_control": res["ngspice_control"], "baseline_reproduction": res["baseline_reproduction"],
-           "candidates": res["candidates"], "ranking": res["ranking"], "klt_requests": requests, "sweeps_file": f"{rid}-sweeps.json.gz",
-           "environment": {"git": git, "klt_client": (client.stdout or client.stderr).strip(),
-                           "pdk_artifact_sha256": sha256_file(SIM_DIR / "pdk-artifact.json"),
-                           "pdk": klt_driver.pdk_provenance(pdk, MODEL_FILES)}}
-    for d in (RECORDS, LOGS / rid, SNAPS / rid):
-        d.mkdir(parents=True, exist_ok=True)
-    published = H.roundtrip({k: v for k, v in rec.items() if k != "plan_declaration"})
-    published["plan_declaration"] = hp
-    (RECORDS / f"{rid}.json").write_text(json.dumps(published, indent=2) + "\n")
-    with gzip.open(RECORDS / f"{rid}-sweeps.json.gz", "wt", encoding="utf-8") as fh:
-        json.dump(H.roundtrip(sweeps), fh)
-    for key, text in texts.items():
-        with gzip.open(LOGS / rid / f"{key}.log.gz", "wt", encoding="utf-8") as fh:
-            fh.write(text)
-    snap = SNAPS / rid
-    (snap / "plan.json").write_bytes(H.PLAN_PATH.read_bytes())
-    (snap / "lna_stage1.spice").write_bytes(H.DUT_PATH.read_bytes())
-    (snap / "linearity-plan-v2.json").write_bytes((REPO_ROOT / hp["linearity_plan"]["file"]).read_bytes())
-    for key in reqs:
-        for stem in ("body_{}.spice", "request_{}.json", "report_{}.json"):
-            (snap / stem.format(key)).write_bytes((work / stem.format(key)).read_bytes())
-    for c in H.candidates(hp):
-        (snap / f"variant_{c['id']}.spice").write_text(H.variant_text(H.DUT_PATH.read_text(), c))
-    (RECORDS / f"{rid}.md").write_text(render_md(rid, status, json.loads((RECORDS / f"{rid}.json").read_text())))
-    print(f"record {rid}: {status}; outcome class {res['ranking']['outcome_class']}; shortlist {res['ranking']['shortlist']}")
-    return 0
-
-
-def finalize_refined(hp, lp, work, reqs, texts, reports, pdk, started, args) -> int:
-    refs = SS.load_refs(hp)
-    hist, hist_sw = H.load_stage1_historical(hp)
+    refined = bool(H.refinement(hp))
+    if refined:
+        refs = SS.load_refs(hp)
+        hist, hist_sw = H.load_stage1_historical(hp)
+    else:
+        refs = None
+        hist, hist_sw = H.load_historical(HIST_ID)
     res = H.analyze(hp, lp, texts, hist, hist_sw, refs=refs)
     if res["problems"]:
         for p in res["problems"][:40]:
@@ -526,7 +462,7 @@ def finalize_refined(hp, lp, work, reqs, texts, reports, pdk, started, args) -> 
                          "klt_version": (d.get("provenance") or {}).get("klt_version")})
     sweeps = res.pop("sweeps")
     plan_rel = H.PLAN_PATH.relative_to(REPO_ROOT).as_posix()
-    rec = {"record_id": rid, "status": status, "stage": 2, "started_utc": started.isoformat(),
+    rec = {"record_id": rid, "status": status, "stage": 2 if refined else 1, "started_utc": started.isoformat(),
            "spec_rows_claimed_met": [],
            "plan": {"file": plan_rel, "sha256": sha256_file(H.PLAN_PATH),
                     "commit": git_out("log", "-1", "--format=%H", "--", plan_rel), "dirty": bool(dirty_code())},
@@ -552,16 +488,19 @@ def finalize_refined(hp, lp, work, reqs, texts, reports, pdk, started, args) -> 
     (snap / "plan.json").write_bytes(H.PLAN_PATH.read_bytes())
     (snap / "lna_stage1.spice").write_bytes(H.DUT_PATH.read_bytes())
     (snap / "linearity-plan-v2.json").write_bytes((REPO_ROOT / hp["linearity_plan"]["file"]).read_bytes())
-    (snap / "sparam_fixture.spice").write_text(refs[0])
-    (snap / "sparam_tb.json").write_text(json.dumps(refs[1], indent=2) + "\n")
+    if refs is not None:
+        (snap / "sparam_fixture.spice").write_text(refs[0])
+        (snap / "sparam_tb.json").write_text(json.dumps(refs[1], indent=2) + "\n")
     for key in reqs:
         for stem in ("body_{}.spice", "request_{}.json", "report_{}.json"):
             (snap / stem.format(key)).write_bytes((work / stem.format(key)).read_bytes())
     dut_text = H.DUT_PATH.read_text()
     for c in H.candidates(hp):
         (snap / f"variant_{c['id']}.spice").write_text(H.variant_text(dut_text, c))
-    (RECORDS / f"{rid}.md").write_text(render_md_v2(rid, status, json.loads((RECORDS / f"{rid}.json").read_text())))
-    print(f"record {rid}: {status}; outcome class {res['ranking']['outcome_class']}; ranked {res['ranking']['ranked']}")
+    md = render_md_v2 if refined else render_md
+    (RECORDS / f"{rid}.md").write_text(md(rid, status, json.loads((RECORDS / f"{rid}.json").read_text())))
+    print(f"record {rid}: {status}; outcome class {res['ranking']['outcome_class']}; "
+          f"{'ranked' if refined else 'shortlist'} {res['ranking']['ranked' if refined else 'shortlist']}")
     return 0
 
 
