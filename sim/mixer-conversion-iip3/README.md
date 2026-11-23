@@ -7,6 +7,11 @@ evidence** and must not be compared to any `spec/target-spec.md` row. SSB noise
 figure is not measured (ngspice has no pnoise); see
 [`../README.md`](../README.md) ("mixer-conversion-iip3", "mixer-nf-method").
 
+`sim/mixer-conversion-iip3-convstudy/` is the scratch convergence-study variant
+(`--no-write`, records nothing) behind the STATED BOUND convergence note in
+`records/20261012-182524-9b9ad32.md` and `records/20261012-061538-2bdb5be.md`
+(line 28 of each).
+
 Records under `records/` are append-only. The only record predates the model
 pin and names the PDK as `unknown` (the harness reads a `SOURCES` file; IHP
 ships `.fetched-version`). It is not edited. The PDK revision a fresh run uses

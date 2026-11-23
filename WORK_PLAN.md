@@ -3,7 +3,7 @@
 This roadmap is generated from the repository's current GitHub label state by the Loom Guide role.
 
 <!-- guide:plan-body:start -->
-_Generated: 2026-11-21T09:12:35Z (snapshot; compare against live labels)_
+_Generated: 2026-11-23T03:23:42Z (snapshot; compare against live labels)_
 ## Operator Attention: Merge-Risk-Hold Pileup
 
 Judge-approved PRs under a hold (`loom:blocked` or `loom:operator`) — only a human merge decision is missing.
@@ -33,12 +33,13 @@ _None._
 Issues currently being built (`loom:building`).
 
 - **#340**: spec/design: propose (select nothing) the stage-1 passive-realization decision record for resistors and capacitors, with each option sized and re-simulated on PDK models
+- **#258**: Keep the root package.json and make npm checks report skipped verification
 
 ## PRs Awaiting Review
 
 PRs waiting on Judge (`loom:review-requested`).
 
-- **#344**: passives(lna): PDK-modelled stage-1 passive-realization options, lna-passive-study record and proposed DR-0011
+- **#347**: fix: fail npm checks honestly and drop dangling worktree:return alias
 
 ## Approved (Awaiting Merge)
 
@@ -72,7 +73,7 @@ _None._
 | Very important | 0 |
 | Important | 1 |
 | Ready (`loom:issue`) | 0 |
-| In Progress (`loom:building`) | 1 |
+| In Progress (`loom:building`) | 2 |
 | PRs awaiting review | 1 |
 | Approved PRs awaiting merge | 0 |
 | Curated | 3 |
