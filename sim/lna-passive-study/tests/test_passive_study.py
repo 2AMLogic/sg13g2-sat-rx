@@ -297,6 +297,7 @@ def test_collect_requires_complete_screen_and_propagates_store_failure(monkeypat
     reqs = list(run.SCRATCH.rglob("request_*.json"))
     assert len(reqs) == 12 and not any("V04" in p.name for p in reqs)
     args.dry_run = False
+    monkeypatch.setattr(run.store_mod, "preflight", lambda *a, **kw: None)
     monkeypatch.setattr(run.klt_driver, "submit_set", lambda *a, **kw: {})
     monkeypatch.setattr(run, "_verify_model_identity", lambda *a: {})
     monkeypatch.setattr(run, "_read_cells", lambda *a: {})
@@ -389,3 +390,64 @@ def test_record_markdown_reproduces_after_sorted_json_round_trip():
     for path in sorted(run.RECORDS.glob("*.json")):
         rec = json.loads(json.dumps(PS.load_json(path), sort_keys=True))
         assert run._verify_one(rec, path.with_suffix(".md").read_text()) == []
+
+
+def test_collect_checks_storage_before_any_submission(monkeypatch, tmp_path, prematch):
+    import run
+    from argparse import Namespace
+    path = tmp_path / "prematch.json"
+    path.write_text(json.dumps(prematch))
+    monkeypatch.setattr(PS, "PREMATCH_PATH", path)
+    monkeypatch.setattr(run, "SCRATCH", tmp_path / "work")
+    monkeypatch.setattr(run, "_osdi_abs_path", lambda: "/unused/r3_cmc.osdi")
+    calls = []
+
+    def refuse(*a, **kw):
+        calls.append("preflight")
+        raise run.store_mod.StoreError("no broker")
+
+    def submitted(*a, **kw):
+        calls.append("submit")
+        return {}
+
+    monkeypatch.setattr(run.store_mod, "preflight", refuse)
+    monkeypatch.setattr(run.klt_driver, "submit_set", submitted)
+    monkeypatch.setattr(run.klt_driver, "submit_request", submitted)
+    for backend in ("batch", "local"):
+        args = Namespace(backend=backend, dry_run=False, klt_cmd="klt", wait_for_capacity=1,
+                         capacity_retries=0, timeout_s=10)
+        assert run.cmd_collect(args) == 10
+    assert calls == ["preflight", "preflight"]
+    calls.clear()
+    args.dry_run = True  # a dry run submits nothing and needs no store
+    assert run.cmd_collect(args) == 0 and calls == []
+
+
+def test_raw_corner_log_bytes_reach_the_archive(tmp_path):
+    import run
+    body = tmp_path / "body_V01_2.50v.spice"
+    body.write_text("fixture")
+    text = "warning: something\nm_nf_db_mid = 2.865450e+00\n"
+    log = tmp_path / "ngspice.log"
+    log.write_text(text)
+    report = tmp_path / "report.json"
+    report.write_text(json.dumps({
+        "status": "pass", "environment": {"netlist_sha256": run.sha256_file(body)},
+        "corners": [{"process": "typ", "temperature_c": 27., "status": "pass",
+                     "artifacts": {"log": str(log)}}]}))
+    raw = {}
+    try:
+        run._read_cells([("V01_2.50v", report)], ["V01"], raw)
+    except run.CollectionError:
+        pass  # the one-cell fixture is not a full grid; raw capture precedes that check
+    assert list(raw.values()) == [text]
+
+
+def test_probe_capacitance_sign_and_annotations(sizing, plan) -> None:
+    import run
+    body = run._probe_body(PS.load_json(PS.METHOD_TB), plan)
+    assert "-imag(i(vca))" in body and "-imag(i(vcb))" in body
+    assert PS.model_cap_f(sizing, "cmim", 6.16) > 0
+    assert PS.cap_annotation_problems(plan, sizing) == []
+    assert not PS.ANNOTATION_ERRATA or all(
+        (PS.SIM_DIR / "lna-passive-study" / v).is_file() for v in PS.ANNOTATION_ERRATA.values())

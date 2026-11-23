@@ -400,6 +400,32 @@ def l_section_match(r_b: float, x_b: float, cblk_f: float, f0: float) -> tuple[f
     return lin_h, cshunt_f
 
 
+def model_cap_f(sizing: dict, primitive: str, side_um: float, corner: str = "typ") -> float:
+    """Model capacitance of one square plate, from the sizing table's own model."""
+    import passive_sizing as PS  # noqa: PLC0415
+    return PS.model_c_f(sizing["capacitor_models"][primitive], side_um, side_um, corner)
+
+
+# Frozen annotations known to disagree with the sizing table. The decks they appear in
+# are hash-bound to published records, so they are not rewritten; the erratum says why.
+ANNOTATION_ERRATA = {("V03", "Cblk_in"): "errata/20261121-101130-e6a7e3e.md"}
+
+
+def cap_annotation_problems(plan: dict, sizing: dict, tol: float = 1e-3) -> list[str]:
+    """Check each declared capacitor c_typ_f against m x the table's plate model."""
+    out = []
+    for var in plan.get("variants", []):
+        for refdes, spec in sorted(var.get("assignment", {}).items()):
+            if spec.get("kind") != "capacitor" or "c_typ_f" not in spec or "side_um" not in spec:
+                continue
+            want = spec.get("m", 1) * model_cap_f(
+                sizing, spec["primitive"].removeprefix("cap_"), spec["side_um"])
+            if abs(spec["c_typ_f"] / want - 1.0) > tol and (var["id"], refdes) not in ANNOTATION_ERRATA:
+                out.append(f"{var['id']}/{refdes}: c_typ_f {spec['c_typ_f']:.6g} F != "
+                           f"{want:.6g} F from the sizing model")
+    return out
+
+
 def cap_side_for_value(sizing: dict, primitive: str, value_f: float) -> dict:
     """The sizing table's own square-plate inversion for one capacitance
     (reused, not reimplemented: side and model C come from the table's
@@ -500,4 +526,5 @@ def plan_problems(plan: dict, dut_text: str, sizing: dict) -> list[str]:
                 continue
             else:
                 problems.append(f"{var['id']}/{refdes}: unknown kind {kind!r}")
+    problems.extend(cap_annotation_problems(plan, sizing))
     return problems

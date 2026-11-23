@@ -38,18 +38,18 @@ with the selected capacitor process corner.
 **Resistors** (per-element table in `passive_sizing.json`; corner spread is
 `res_wcs`−`res_bcs` over typ at 27 °C):
 
-| class | elements | feasible flavours (min-area sizing) | measured consequence |
+| class | elements | feasible flavours (smallest area among the sampled widths) | measured consequence |
 |---|---|---|---|
 | bias ladder | `Rref`, `Rbr`, `Rbias`, `R1b`, `R2b` | `rppd` (85.3 µm² total) or `rhigh` (15.3 µm²). For the 8 kΩ reference, the full spans are 19.65% and 48.01%, respectively. | At the row-2/3 worst-HBT, 125 °C cells, V01 ΔS21 spans −0.211…−0.119 dB and ΔNF +0.003…+0.015 dB. V02 ΔS21 spans +0.476…+0.957 dB and ΔNF +0.032…+0.143 dB. V02 ΔS11 spans −2.94…+2.65 dB at the eight row-4 cells. |
 | collector damping | `Rd` 465 Ω | `rppd` (0.50 × 0.64 µm), `rsil` (16.6 µm²) or `rhigh` (7.9 µm²) | V01 and V02 exercise the compact `rppd` geometry. |
-| degeneration | `Rer` 24 Ω, `Re1` 3 Ω | For `Re1`, `rsil` at 5 × 0.87 µm gives 3.013 Ω. A legal `rppd` at 70 × 0.54 µm gives 3.005 Ω and uses 37.8 µm². The table also gives a 495 µm² `rhigh` solution. | V01 exercises `rsil` for both resistors. The body of its `Re1` occupies 4.35 µm². |
+| degeneration | `Rer` 24 Ω, `Re1` 3 Ω | For `Re1`, `rsil` at 5 × 0.87 µm gives 3.013 Ω. A legal `rppd` at 70 × 0.54 µm gives 3.005 Ω and uses 37.8 µm². The table also gives a 495 µm² `rhigh` solution. The sampled widths do not reach the smallest `rsil` body: 4.18 × 0.51 µm gives 3.00311 Ω (within the script's 1% tolerance) in 2.1318 µm², against 4.35 µm² for the simulated 5 × 0.87 µm. | V01 exercises `rsil` for both resistors. The body of its `Re1` occupies 4.35 µm². |
 
 **Capacitors**
 
 | Element | Options and area | Evidence |
 |---|---|---|
-| `Cm` 57.8 fF | One 6.16 µm square `cmim`, 38 µm² | The 7 µm minimum `rfcmim` plate gives 74.62 fF, above the design value. |
-| `Cshunt` | V01 uses a 10.6 µm square `cmim` for 170 fF. The revised V04 uses a 4.56 µm square for 31.92 fF typical. | A single `rfcmim` substitution on V01 costs 0.12 dB of gain at the nominal midband probe. |
+| `Cm` 57.8 fF | One 6.16 µm square `cmim`, 38 µm² | The 7 µm minimum `rfcmim` plate gives 74.62 fF typical and 67.27 fF at `cap_bcs`, above the design value. |
+| `Cshunt` | V01 uses a 10.6 µm square `cmim` for 170 fF. The revised V04 uses a 4.56 µm square for 31.92 fF typical. | The 7 µm minimum `rfcmim` plate (74.62 fF typical, 67.27 fF at `cap_bcs`) also exceeds the revised 31.92 fF shunt, so `rfcmim` is excluded there too; the 170 fF V01 shunt can use either family. A single `rfcmim` substitution on V01 costs 0.12 dB of gain at the nominal midband probe. |
 | `Cb2` 10 pF | Two 57.69 µm square `cmim` plates, 6,656 µm² total. Each plate fits the 8 pF limit. A single 10 pF RF plate needs an 81.6 µm side, above the 75 µm model limit. | V01 exercises the two-plate bias bypass. The two-terminal multiplier probe reproduces the explicit pair. |
 | `Cblk_in` (a), on-chip 1 nF | 119 parallel 74.8 µm square `rfcmim` plates, 0.666 mm² | V03 loses about 43 dB of gain at band centre. The one-at-a-time and terminal probes below identify the effect of the array in this circuit. |
 | `Cblk_in` (b), on-chip with re-match | 2 pF `cmim`, 36.47 µm side, 1,330 µm². The 4.56 µm shunt and ideal 1.283 nH `Lin` complete the input match. | Smallest passing tested value in the corrected screen. The worst sampled S11 is −10.0086 dB. |
@@ -62,8 +62,10 @@ with the selected capacitor process corner.
    6.100/8.027/9.953 kΩ (±24.0%) and the larger measured gain and NF excursions.
 2. Prefer `rppd` for `Rd` and `rsil` for `Rer` and `Re1` on the measured V01
    geometries and their body area.
-3. Prefer `cmim` for `Cm` and for the drawn input shunt. Only `Cm` has the
-   RF-MIM minimum-capacitance exclusion.
+3. Prefer `cmim` for `Cm` and for the drawn input shunt. The minimum 7 × 7 µm
+   `rfcmim` plate (74.62 fF typical, 67.27 fF at `cap_bcs`) excludes the RF-MIM
+   family for both `Cm` (57.8 fF) and the revised V04 shunt (31.92 fF). The
+   170 fF V01 shunt is not excluded.
 4. Prefer two parallel 5 pF `cmim` plates for `Cb2` on the bias node.
 5. Carry the **2 pF on-chip block** into layout and extraction if the operator
    chooses integrated DC blocking. The historical 1 pF recommendation depended

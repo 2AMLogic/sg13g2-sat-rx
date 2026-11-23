@@ -250,8 +250,10 @@ def _probe_body(tb: dict, plan: dict) -> str:
         *terminal_measures,
         "  print m_vs m_vsx m_vb m_zre m_zim",
         "  ac lin 1 1e6 1e6",
-        "  let m_ca_f = imag(i(vca))/6.283185307/1e6",
-        "  let m_cb_f = imag(i(vcb))/6.283185307/1e6",
+        # ngspice's i(v) is the current INTO the source's + node, i.e. out of the
+        # cap; the current into the device is -i(v), so C = +imag(-i)/(2 pi f).
+        "  let m_ca_f = -imag(i(vca))/6.283185307/1e6",
+        "  let m_cb_f = -imag(i(vcb))/6.283185307/1e6",
         "  print m_ca_f m_cb_f",
         ".endc",
         "",
@@ -369,6 +371,12 @@ def cmd_prematch(args) -> int:
     if zre <= 0:
         print(f"prematch: probed Z_b = {zre:.4g}{zim:+.4g}j ohm is not a passive load",
               file=sys.stderr)
+        return 1
+    want_f = 2 * PS.model_cap_f(sizing, "cmim", 6.16)
+    if not (meas["ca_f"] > 0 and meas["cb_f"] > 0
+            and abs(meas["ca_f"] / want_f - 1.0) <= 0.02):
+        print(f"prematch: cap_cmim probe C = {meas['ca_f']:.6g} F is not the positive "
+              f"{want_f:.6g} F the sizing model gives for 2 x 6.16 um", file=sys.stderr)
         return 1
     m_ratio = meas["ca_f"] / meas["cb_f"]
     if abs(m_ratio - 1.0) > 0.01:
@@ -591,8 +599,11 @@ def _measurement_problems(cells, expected, measures):
     return problems
 
 
-def _read_cells(report_paths, variant_ids):
-    """Require one successful corner and every method measure at each planned point."""
+def _read_cells(report_paths, variant_ids, raw=None):
+    """Require one successful corner and every method measure at each planned point.
+
+    When ``raw`` is a dict, the simulator's original log text for each cell is
+    stored in it (cell key -> text) so the archive can keep the bytes."""
     cells = {}
     for key, path in report_paths:
         data = PS.load_json(path)
@@ -607,7 +618,10 @@ def _read_cells(report_paths, variant_ids):
             log = klt_driver.corner_log_path(corner, path)
             if corner.get("status") != "pass" or log is None or not log.is_file() or ck in cells:
                 raise CollectionError(f"{path.name}/{ck}: failed, missing log, or duplicate corner")
-            cells[ck] = PS.parse_log(log.read_text())
+            text = log.read_text()
+            cells[ck] = PS.parse_log(text)
+            if raw is not None:
+                raw[ck] = text
     problems = _measurement_problems(cells, [ck for vid in variant_ids for ck in _grid(vid)],
                                      PS.load_json(PS.METHOD_TB)["measure"])
     if problems:
@@ -732,6 +746,12 @@ def cmd_collect(args) -> int:
     if args.dry_run:
         print(f"--dry-run: {len(reqs)} requests prepared under {work}; nothing submitted")
         return 0
+    try:  # fail closed before the 315-cell campaign, not after it
+        store_mod.preflight(PS.REPO_ROOT, klt="klt")
+    except store_mod.StoreError as exc:
+        print(f"EVIDENCE STORE UNAVAILABLE -- nothing submitted (fail closed): {exc}",
+              file=sys.stderr)
+        return 10
     if args.backend == "batch":
         reports = klt_driver.submit_set(reqs, work, klt_cmd=args.klt_cmd,
                                         wait_for_capacity=args.wait_for_capacity,
@@ -758,7 +778,8 @@ def cmd_collect(args) -> int:
         return 1
     variant_ids = list(variant_decks(plan, sizing, prematch))
     deck_ids = ["V00", *variant_ids]
-    cells = _read_cells(study_reports, deck_ids)
+    raw_logs: dict[str, str] = {}
+    cells = _read_cells(study_reports, deck_ids, raw_logs)
     control = {k: v for k, v in cells.items() if k.startswith("V00__")}
     gates = _gate_control(cells, deck_ids)
     status = "COLLECTED" if gates["pass"] else "CONTROLS_FAILED"
@@ -768,7 +789,7 @@ def cmd_collect(args) -> int:
         deltas[vid] = PS.deltas(vc, control)
     record = _build_record(plan, prematch, status, gates, cells, deltas,
                            variant_ids, identity, started, reports, work)
-    write_status = _write_record(plan, record, cells, reports, work)
+    write_status = _write_record(plan, record, cells, reports, work, raw_logs)
     return write_status or (0 if status == "COLLECTED" else 1)
 
 
@@ -989,7 +1010,7 @@ def _render_md(rec: dict) -> str:
     return "\n".join(L)
 
 
-def _write_record(plan, rec, cells, reports, work) -> int:
+def _write_record(plan, rec, cells, reports, work, raw=None) -> int:
     rid = rec["record_id"]
     RECORDS.mkdir(parents=True, exist_ok=True)
     if any((RECORDS / f"{rid}.{ext}").exists() for ext in ("md", "json")):
@@ -1005,7 +1026,11 @@ def _write_record(plan, rec, cells, reports, work) -> int:
     prefix = "sim/lna-passive-study"
     for ck, meas in sorted(cells.items()):
         p = logdir / f"{ck}.log"
-        p.write_text(json.dumps(meas, indent=0, sort_keys=True) + "\n")
+        # the simulator's original bytes; the parsed values live in the cells sidecar
+        if raw is not None and ck in raw:
+            p.write_text(raw[ck])
+        else:
+            p.write_text(json.dumps(meas, indent=0, sort_keys=True) + "\n")
         files.append((p, f"{prefix}/corners/{rid}/{ck}.log"))
     # per-cell machine sidecar (stored, not committed: bulk data)
     gz = stage / f"{rid}-cells.json.gz"
