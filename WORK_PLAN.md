@@ -3,7 +3,7 @@
 This roadmap is generated from the repository's current GitHub label state by the Loom Guide role.
 
 <!-- guide:plan-body:start -->
-_Generated: 2026-11-23T03:23:42Z (snapshot; compare against live labels)_
+_Generated: 2026-11-23T09:25:45Z (snapshot; compare against live labels)_
 ## Operator Attention: Merge-Risk-Hold Pileup
 
 Judge-approved PRs under a hold (`loom:blocked` or `loom:operator`) — only a human merge decision is missing.
@@ -32,20 +32,20 @@ _None._
 
 Issues currently being built (`loom:building`).
 
+- **#254**: Remove the duplicated SPICE deck in sim/mixer-conversion-iip3-convstudy (byte-identical netlist, drifted header) and cite the study from the records it derives
 - **#340**: spec/design: propose (select nothing) the stage-1 passive-realization decision record for resistors and capacitors, with each option sized and re-simulated on PDK models
-- **#258**: Keep the root package.json and make npm checks report skipped verification
 
 ## PRs Awaiting Review
 
 PRs waiting on Judge (`loom:review-requested`).
 
-- **#347**: fix: fail npm checks honestly and drop dangling worktree:return alias
+_None._
 
 ## Approved (Awaiting Merge)
 
 PRs that passed review and are queued for Champion auto-merge (`loom:pr`).
 
-_None._
+- **#350**: docs(sim): cite convstudy dir in mixer IIP3 README and sync drifted deck header
 
 ## Proposed
 
@@ -53,13 +53,13 @@ Issues carrying `loom:curated`.
 
 - **#38**: Auditor Capability Request: Python runtime for local harness smoke validation *(curated)* *(held)*
 - **#110**: sim: execute the prepared p1 EM campaign and reproduce frozen results *(curated)* *(held)*
+- **#254**: Remove the duplicated SPICE deck in sim/mixer-conversion-iip3-convstudy (byte-identical netlist, drifted header) and cite the study from the records it derives *(curated)*
 - **#340**: spec/design: propose (select nothing) the stage-1 passive-realization decision record for resistors and capacitors, with each option sized and re-simulated on PDK models *(curated)*
 
 ## Proposed (Architect / Hermit)
 
 - **#252**: Remove the inert toolchain pin subsystem: sim/harness/toolchain.py checks a pins file that has never existed *(hermit)* *(held)*
-- **#254**: Remove the duplicated SPICE deck in sim/mixer-conversion-iip3-convstudy (byte-identical netlist, drifted header) and cite the study from the records it derives *(hermit)* *(held)*
-- **#258**: Remove the root package.json: an uncustomized Loom workspace stub whose test/lint/check scripts echo "not configured" and exit 0 *(hermit)* *(held)*
+- **#351**: Deduplicate finalize/finalize_refined and remove dead _conv_line in sim/lna-headroom/run.py *(hermit)*
 
 ## Epics
 
@@ -74,9 +74,9 @@ _None._
 | Important | 1 |
 | Ready (`loom:issue`) | 0 |
 | In Progress (`loom:building`) | 2 |
-| PRs awaiting review | 1 |
-| Approved PRs awaiting merge | 0 |
-| Curated | 3 |
-| Architect / Hermit proposals | 3 |
+| PRs awaiting review | 0 |
+| Approved PRs awaiting merge | 1 |
+| Curated | 4 |
+| Architect / Hermit proposals | 2 |
 | Active epics | 0 |
 <!-- guide:plan-body:end -->
