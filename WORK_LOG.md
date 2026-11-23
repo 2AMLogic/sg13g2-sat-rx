@@ -6,6 +6,11 @@ Chronological record of merged pull requests and closed issues, maintained by th
 
 - [2026-09](work_log/WORK_LOG_2026-09.md)
 
+### 2026-11-23
+
+- **PR #347**: fix: fail npm checks honestly and drop dangling worktree:return alias
+- **Issue #258** (closed): Keep the root package.json and make npm checks report skipped verification
+
 ### 2026-11-19
 
 - **PR #338**: signoff: grade against the klt wheel's bundled checklist
