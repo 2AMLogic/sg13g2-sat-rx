@@ -8,6 +8,8 @@ Chronological record of merged pull requests and closed issues, maintained by th
 
 ### 2026-11-23
 
+- **PR #350**: docs(sim): cite convstudy dir in mixer IIP3 README and sync drifted deck header
+- **Issue #254** (closed): Remove the duplicated SPICE deck in sim/mixer-conversion-iip3-convstudy (byte-identical netlist, drifted header) and cite the study from the records it derives
 - **PR #347**: fix: fail npm checks honestly and drop dangling worktree:return alias
 - **Issue #258** (closed): Keep the root package.json and make npm checks report skipped verification
 
@@ -335,11 +337,4 @@ Chronological record of merged pull requests and closed issues, maintained by th
 - **PR #32**: spec: DR-0004 proposed — LNA→mixer interface convention (#26)
 - **PR #33**: spec: literature citation table for (E)/NEEDS-VERIFICATION rows (#29)
 - **PR #34**: sim: bounded p1-only passive campaign (CAPABILITY_UNAVAILABLE) + DR-0005 deferred (#25)
-
-### 2026-09-21
-
-- **PR #13**: spec: DR-0003 target-spec first ratification pass — 11 rows ratified as targets, 9 explicitly open
-- **Issue #11** (closed): spec: ratify target-spec.md — it is DRAFT, which blocks T1 item 5 (and items 6/7/8 that grade against its rows)
-- **PR #12**: feat: add klt signoff block manifest, graded T1 report, and CI gate
-- **Issue #10** (closed): Commit a klt signoff block manifest so this block's T1 state is graded, not hand-read
 

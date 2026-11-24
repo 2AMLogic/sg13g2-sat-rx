@@ -2,6 +2,13 @@
 
 Sections moved byte-for-byte from [WORK_LOG.md](../WORK_LOG.md) by `loom-daemon work-docs archive`.
 
+### 2026-09-21
+
+- **PR #13**: spec: DR-0003 target-spec first ratification pass — 11 rows ratified as targets, 9 explicitly open
+- **Issue #11** (closed): spec: ratify target-spec.md — it is DRAFT, which blocks T1 item 5 (and items 6/7/8 that grade against its rows)
+- **PR #12**: feat: add klt signoff block manifest, graded T1 report, and CI gate
+- **Issue #10** (closed): Commit a klt signoff block manifest so this block's T1 state is graded, not hand-read
+
 ### 2026-09-12
 
 - **Issue #9** (closed): Remove unused pdk_available() helper in sim/harness/pdk.py
