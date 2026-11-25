@@ -6,6 +6,11 @@ Chronological record of merged pull requests and closed issues, maintained by th
 
 - [2026-09](work_log/WORK_LOG_2026-09.md)
 
+### 2026-11-24
+
+- **PR #353**: refactor: collapse lna-headroom finalize/finalize_refined, drop dead _conv_line
+- **Issue #351** (closed): Deduplicate finalize/finalize_refined and remove dead _conv_line in sim/lna-headroom/run.py
+
 ### 2026-11-23
 
 - **PR #350**: docs(sim): cite convstudy dir in mixer IIP3 README and sync drifted deck header
