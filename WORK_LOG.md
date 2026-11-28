@@ -6,6 +6,12 @@ Chronological record of merged pull requests and closed issues, maintained by th
 
 - [2026-09](work_log/WORK_LOG_2026-09.md)
 
+## Entries
+
+### 2026-11-28
+
+- **PR #357**: chore: resync installed Loom surfaces
+
 ### 2026-11-24
 
 - **PR #353**: refactor: collapse lna-headroom finalize/finalize_refined, drop dead _conv_line
