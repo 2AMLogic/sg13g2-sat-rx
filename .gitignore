@@ -88,6 +88,7 @@ sim/*/corners/_scratch/
 .loom/api-keys-*/
 .loom/account-health.json
 .loom/account-health.lock
+.loom/account-ranking.codex
 .loom/CANARY
 .loom/*.log
 .loom/*.sock
@@ -103,6 +104,8 @@ sim/*/corners/_scratch/
 .loom/gh-config-by-owner.*/
 .loom/gh-config-by-owner-*/
 /.loom-local/
+/node_modules/
+/pnpm-lock.yaml
 # <<< loom-managed <<<
 
 # hbt-mismatch-pair (issue #186): raw per-unit klt artifact trees are
